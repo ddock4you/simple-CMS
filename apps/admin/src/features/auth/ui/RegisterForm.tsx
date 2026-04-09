@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -18,35 +18,27 @@ import {
   CardTitle,
 } from '@/shared/ui/card';
 import {
-  loginSchema,
-  type LoginFormData,
-} from '@/features/auth/schemas/loginSchema';
+  registerSchema,
+  type RegisterFormData,
+} from '@/features/auth/schemas/registerSchema';
 
-const ERROR_MESSAGES: Record<string, string> = {
-  PENDING_APPROVAL:
-    '가입 승인 대기 중입니다. 관리자 승인 후 로그인이 가능합니다.',
-  ACCOUNT_SUSPENDED: '계정이 정지되었습니다. 관리자에게 문의하세요.',
-};
-
-export function LoginForm() {
+export function RegisterForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams?.get('callbackUrl') || '/dashboard';
   const [isLoading, setIsLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -55,15 +47,12 @@ export function LoginForm() {
       const result = await response.json();
 
       if (!response.ok) {
-        const message =
-          ERROR_MESSAGES[result.error] ??
-          result.error ??
-          '로그인에 실패했습니다.';
-        toast.error(message);
+        toast.error(result.error ?? '회원가입에 실패했습니다.');
         return;
       }
 
-      router.push(callbackUrl);
+      toast.success(result.data.message);
+      router.push('/login');
     } catch {
       toast.error('서버와 통신할 수 없습니다.');
     } finally {
@@ -74,7 +63,7 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
-        <CardTitle className="text-xl">관리자 로그인</CardTitle>
+        <CardTitle className="text-xl">회원가입</CardTitle>
         <CardDescription>Simple CMS</CardDescription>
       </CardHeader>
       <CardContent>
@@ -84,7 +73,7 @@ export function LoginForm() {
             <Input
               id="username"
               type="text"
-              placeholder="아이디를 입력하세요"
+              placeholder="영문, 숫자, 밑줄 4~20자"
               autoComplete="username"
               {...register('username')}
             />
@@ -96,12 +85,44 @@ export function LoginForm() {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="email">이메일 (선택사항)</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="이메일을 입력하세요"
+              autoComplete="email"
+              {...register('email')}
+            />
+            {errors.email && (
+              <p className="text-sm text-destructive">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="name">이름</Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="이름을 입력하세요"
+              autoComplete="name"
+              {...register('name')}
+            />
+            {errors.name && (
+              <p className="text-sm text-destructive">
+                {errors.name.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="password">비밀번호</Label>
             <Input
               id="password"
               type="password"
-              placeholder="비밀번호를 입력하세요"
-              autoComplete="current-password"
+              placeholder="8자 이상"
+              autoComplete="new-password"
               {...register('password')}
             />
             {errors.password && (
@@ -111,16 +132,32 @@ export function LoginForm() {
             )}
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="passwordConfirm">비밀번호 확인</Label>
+            <Input
+              id="passwordConfirm"
+              type="password"
+              placeholder="비밀번호를 다시 입력하세요"
+              autoComplete="new-password"
+              {...register('passwordConfirm')}
+            />
+            {errors.passwordConfirm && (
+              <p className="text-sm text-destructive">
+                {errors.passwordConfirm.message}
+              </p>
+            )}
+          </div>
+
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? '로그인 중...' : '로그인'}
+            {isLoading ? '가입 신청 중...' : '가입 신청'}
           </Button>
 
           <div className="text-center text-sm">
             <Link
-              href="/register"
+              href="/login"
               className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
             >
-              회원가입
+              로그인으로 돌아가기
             </Link>
           </div>
         </form>
