@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -31,6 +32,7 @@ interface ProfileFormProps {
 
 export function ProfileForm({ user }: ProfileFormProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -63,6 +65,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       }
 
       toast.success('프로필이 변경되었습니다.');
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       router.refresh();
     } catch {
       toast.error('서버와 통신할 수 없습니다.');
