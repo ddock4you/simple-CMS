@@ -211,7 +211,7 @@ workspace/
 | 2c   | Admin 레이아웃 (사이드바/헤더) + **대시보드 껍데기**         | 로그인 후 사이드바 있는 관리 화면                 | **완료** |
 | 2d   | 사용자 관리 API + **목록/승인/거절/정지 UI**                 | PENDING 유저 승인 → ACTIVE 전환                   | **완료** |
 | 2e   | 프로필 API + **프로필/비밀번호 변경 UI**                     | 이름·이메일·비밀번호 변경 직접 테스트             | **완료** |
-| 2f   | 역할/권한 관리 API + **권한 매트릭스 UI** + 사이드바 필터링  | 역할 생성 → 권한 설정 → 사이드바 메뉴 필터링 확인 | 대기 |
+| 2f   | 역할/권한 관리 API + **권한 매트릭스 UI** + 사이드바 필터링  | 역할 생성 → 권한 설정 → 사이드바 메뉴 필터링 확인 | **완료** |
 
 ### Stage 3 — Admin CMS 기능
 
@@ -357,12 +357,12 @@ features/{domain}/model/
 
 entities/auth/
 ├── lib/getCurrentUser.ts       # 쿠키 → 세션 검증 → User + Role 반환 (서버 전용)
-├── lib/checkPermission.ts      # hasPermission(user, resource, action) 권한 체크 ← Stage 2f에서 구현
+├── lib/checkPermission.ts      # hasPermission(user, resource, action) 권한 체크
 └── model/auth.types.ts         # SessionUser 타입 (role + permissions 포함)
 
 shared/lib/
-├── requirePermission.ts        # API Route용 인증+인가 래퍼 (401/403 반환) ← Stage 2f에서 구현
-└── sidebarPermissions.ts       # getVisibleMenuItems() 사이드바 권한 필터링 ← Stage 2f에서 구현
+├── requirePermission.ts        # API Route용 인증+인가 래퍼 (401/403 반환)
+└── sidebarPermissions.ts       # getVisibleMenuItems() 사이드바 권한 필터링
 ```
 
 ## 감사 로그 (Audit Log)

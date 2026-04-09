@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { NAV_MAIN, NAV_GROUPS } from '@/shared/config/navigation';
+import { getVisibleMenuItems } from '@/shared/lib/sidebarPermissions';
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -19,14 +19,22 @@ function isActive(pathname: string | null, url: string): boolean {
   return pathname === url || pathname.startsWith(url + '/');
 }
 
-export function SidebarMainNav() {
+interface SidebarUser {
+  role: {
+    isSystem: boolean;
+    permissions: unknown;
+  } | null;
+}
+
+export function SidebarMainNav({ user }: { user: SidebarUser | null }) {
   const pathname = usePathname();
+  const { main } = getVisibleMenuItems(user);
 
   return (
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
-          {NAV_MAIN.map((item) => (
+          {main.map((item) => (
             <SidebarMenuItem key={item.url}>
               <SidebarMenuButton
                 render={<Link href={item.url} />}
@@ -43,12 +51,13 @@ export function SidebarMainNav() {
   );
 }
 
-export function SidebarNavGroups() {
+export function SidebarNavGroups({ user }: { user: SidebarUser | null }) {
   const pathname = usePathname();
+  const { groups } = getVisibleMenuItems(user);
 
   return (
     <>
-      {NAV_GROUPS.map((group) => (
+      {groups.map((group) => (
         <SidebarGroup key={group.label}>
           <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
           <SidebarGroupContent>

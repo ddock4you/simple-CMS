@@ -13,7 +13,9 @@ export default async function AuthenticatedLayout({
   const layoutUser = {
     name: user.name,
     username: user.username,
-    role: user.role ? { name: user.role.name } : null,
+    role: user.role
+      ? { name: user.role.name, isSystem: user.role.isSystem, permissions: user.role.permissions }
+      : null,
   };
 
   return (

@@ -20,7 +20,7 @@ interface AppSidebarProps {
   user: {
     name: string;
     username: string;
-    role: { name: string } | null;
+    role: { name: string; isSystem: boolean; permissions: unknown } | null;
   };
 }
 
@@ -45,8 +45,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarMainNav />
-        <SidebarNavGroups />
+        <SidebarMainNav user={user} />
+        <SidebarNavGroups user={user} />
       </SidebarContent>
       <SidebarFooter>
         <UserNavFooter user={user} />

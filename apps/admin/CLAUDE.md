@@ -82,7 +82,15 @@ src/
   - `POST /api/users/[id]/suspend` — 정지 (ACTIVE→SUSPENDED, 세션 즉시 삭제)
   - `POST /api/users/[id]/reactivate` — 해제 (SUSPENDED→ACTIVE)
   - `PATCH /api/users/[id]/role` — 역할 변경
-  - `GET /api/roles` — 역할 목록 (드롭다운용)
+  - `GET /api/roles` — 역할 목록 (드롭다운용 + 권한 관리)
+- 역할/권한 관리 API Routes:
+  - `GET /api/roles` — 목록 (userCount 포함)
+  - `POST /api/roles` — 역할 생성
+  - `GET /api/roles/[id]` — 역할 상세 (permissions 포함)
+  - `PATCH /api/roles/[id]` — 이름/설명 수정
+  - `DELETE /api/roles/[id]` — 삭제 (isSystem/isDefault 차단)
+  - `PATCH /api/roles/[id]/permissions` — 권한 매트릭스 변경 (isSystem 차단)
+  - `POST /api/roles/[id]/set-default` — 기본 역할 설정 (트랜잭션)
 
 ## 라우팅
 
