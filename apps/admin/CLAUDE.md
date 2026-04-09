@@ -227,7 +227,7 @@ src/
   - 입력: 현재 비밀번호, 새 비밀번호, 새 비밀번호 확인
   - 현재 비밀번호 검증 필수 (bcryptjs compare)
   - 새 비밀번호: 8자 이상
-- API Routes: `PATCH /api/profile`, `POST /api/profile/change-password`
+- API Routes: `PATCH /api/profile` (이름+이메일 변경), `POST /api/profile/change-password`
 - 감사 로그:
   - 이름 변경: `{ before: { name: "old" }, after: { name: "new" } }`
   - 비밀번호 변경: `{ after: { passwordChanged: true } }` (비밀번호 값은 절대 기록 금지)
