@@ -1,0 +1,46 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build outputs
+dist/
+.next/
+out/
+build/
+
+# turbo
+.turbo/
+
+# env files
+.env
+.env.local
+.env.*.local
+
+# prisma
+packages/db/prisma/generated/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# test coverage
+coverage/
+
+# storybook
+storybook-static/
+
+# docker
+docker/data/
+
+# misc
+*.log
+*.tsbuildinfo
+
+docs/

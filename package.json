@@ -1,0 +1,25 @@
+{
+  "name": "simple-cms",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "clean": "turbo clean",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:generate": "pnpm --filter @simple-cms/db generate",
+    "db:push": "pnpm --filter @simple-cms/db push",
+    "db:migrate": "pnpm --filter @simple-cms/db migrate",
+    "db:studio": "pnpm --filter @simple-cms/db studio"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.1",
+    "turbo": "^2.9.5"
+  }
+}
