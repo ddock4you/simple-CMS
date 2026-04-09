@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
+import { Geist } from 'next/font/google';
 
+import { Toaster } from '@/shared/ui/sonner';
+import { cn } from '@/shared/lib/utils';
 import './globals.css';
+
+const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   title: 'Simple CMS Admin',
@@ -13,8 +18,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ko">
-      <body>{children}</body>
+    <html lang="ko" className={cn('font-sans', geist.variable)}>
+      <body>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

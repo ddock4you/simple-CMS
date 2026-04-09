@@ -2,7 +2,9 @@
   "extends": "@simple-cms/config/tsconfig/base",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/generated"]
 }

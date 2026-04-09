@@ -1,0 +1,354 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum BoardSkinType {
+  LIST
+  GALLERY
+}
+
+enum HomeSectionType {
+  HERO
+  RECOMMENDED
+  SHORTCUT
+  LATEST_POSTS
+  CTA
+  NOTICE
+}
+
+enum HomePopupType {
+  CONTENT
+  IMAGE
+}
+
+enum PageBlockType {
+  HTML
+  IMAGE
+  IFRAME
+}
+
+enum NavigationMenuItemType {
+  PAGE
+  BOARD
+  EXTERNAL
+  CUSTOM
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+}
+
+enum AuditEntityType {
+  PAGE
+  BOARD
+  POST
+  NAVIGATION_MENU
+  NAVIGATION_MENU_ITEM
+  HOME_SECTION
+  HOME_POPUP
+  USER
+  ROLE
+  SITE_SETTINGS
+  ERROR_LOG
+  MEDIA
+}
+
+enum ErrorLevel {
+  ERROR
+  WARN
+}
+
+enum ErrorSource {
+  SERVER_SSR
+  SERVER_API
+  SERVER_MIDDLEWARE
+  CLIENT_REACT
+  CLIENT_JS
+}
+
+// ─── Models ──────────────────────────────────────────────
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  permissions Json     @default("{}")
+  isSystem    Boolean  @default(false)
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users User[]
+
+  @@index([isDefault])
+}
+
+model User {
+  id        String     @id @default(cuid())
+  username  String     @unique
+  password  String
+  email     String?    @unique
+  name      String
+  status    UserStatus @default(PENDING)
+  roleId    String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  role      Role?      @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  sessions  Session[]
+  auditLogs AuditLog[]
+  posts     Post[]
+
+  @@index([roleId])
+  @@index([status])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expires])
+}
+
+model Page {
+  id              String        @id @default(cuid())
+  title           String
+  slug            String        @unique
+  seoTitle        String?
+  seoDescription  String?
+  contentJson     Json?
+  content         String?       @db.Text
+  customHtml      String?       @db.Text
+  customCss       String?       @db.Text
+  status          ContentStatus @default(DRAFT)
+  publishedAt     DateTime?
+  featuredImageId String?
+  displayOrder    Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  featuredImage       Media?               @relation(fields: [featuredImageId], references: [id], onDelete: SetNull)
+  blocks              PageBlock[]
+  navigationMenuItems NavigationMenuItem[] @relation("PageMenuItems")
+}
+
+model Board {
+  id           String        @id @default(cuid())
+  name         String
+  slug         String        @unique
+  description  String?
+  skinType     BoardSkinType @default(LIST)
+  isPublic     Boolean       @default(true)
+  displayOrder Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  posts               Post[]
+  navigationMenuItems NavigationMenuItem[] @relation("BoardMenuItems")
+}
+
+model Post {
+  id              String        @id @default(cuid())
+  title           String
+  slug            String
+  boardId         String
+  contentJson     Json?
+  content         String?       @db.Text
+  status          ContentStatus @default(DRAFT)
+  publishedAt     DateTime?
+  featuredImageId String?
+  authorId        String?
+  displayOrder    Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  board         Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  author        User?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  featuredImage Media? @relation(fields: [featuredImageId], references: [id], onDelete: SetNull)
+
+  @@unique([boardId, slug])
+  @@index([boardId])
+  @@index([authorId])
+}
+
+model HomeSection {
+  id           String          @id @default(cuid())
+  sectionType  HomeSectionType
+  title        String
+  configJson   Json
+  isVisible    Boolean         @default(true)
+  displayOrder Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model HomePopup {
+  id           String        @id @default(cuid())
+  popupType    HomePopupType
+  title        String
+  contentJson  Json?
+  content      String?       @db.Text
+  imageUrl     String?
+  imageAlt     String?
+  linkUrl      String?
+  buttonLabel  String?
+  isVisible    Boolean       @default(true)
+  displayOrder Int           @default(0)
+  startDate    DateTime?
+  endDate      DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model PageBlock {
+  id           String        @id @default(cuid())
+  pageId       String
+  blockType    PageBlockType
+  configJson   Json
+  isVisible    Boolean       @default(true)
+  displayOrder Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+}
+
+model Media {
+  id               String   @id @default(cuid())
+  filename         String
+  originalFilename String
+  mimeType         String
+  size             Int
+  url              String
+  alt              String?
+  createdAt        DateTime @default(now())
+
+  pages Page[]
+  posts Post[]
+}
+
+model NavigationMenu {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items NavigationMenuItem[]
+}
+
+model NavigationMenuItem {
+  id           String                 @id @default(cuid())
+  menuId       String
+  parentId     String?
+  label        String
+  itemType     NavigationMenuItemType
+  pageId       String?
+  boardId      String?
+  url          String?
+  isVisible    Boolean                @default(true)
+  openInNewTab Boolean                @default(false)
+  displayOrder Int                    @default(0)
+  startDate    DateTime?
+  endDate      DateTime?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  menu     NavigationMenu      @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parent   NavigationMenuItem? @relation("MenuItemChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children NavigationMenuItem[] @relation("MenuItemChildren")
+  page     Page?               @relation("PageMenuItems", fields: [pageId], references: [id], onDelete: SetNull)
+  board    Board?              @relation("BoardMenuItems", fields: [boardId], references: [id], onDelete: SetNull)
+
+  @@index([menuId])
+  @@index([parentId])
+}
+
+model AuditLog {
+  id          String           @id @default(cuid())
+  action      AuditAction
+  entityType  AuditEntityType?
+  entityId    String?
+  entityTitle String?
+  changes     Json?
+  userId      String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime         @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+model SiteSettings {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ErrorLog {
+  id         String      @id @default(cuid())
+  level      ErrorLevel
+  source     ErrorSource
+  message    String
+  stack      String?     @db.Text
+  url        String?
+  method     String?
+  statusCode Int?
+  userAgent  String?
+  ipAddress  String?
+  referer    String?
+  digest     String?
+  fingerprint String?
+  metadata   Json?
+  isResolved Boolean     @default(false)
+  resolvedAt DateTime?
+  resolvedBy String?
+  createdAt  DateTime    @default(now())
+
+  @@index([createdAt])
+  @@index([level])
+  @@index([source])
+  @@index([fingerprint])
+  @@index([isResolved, createdAt])
+  @@index([url])
+}
