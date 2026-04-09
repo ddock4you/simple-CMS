@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
+import { FetchError } from '@/shared/api/fetchClient';
+import { changePassword } from '@/features/auth/api/authFetchers';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
@@ -36,23 +38,15 @@ export function ChangePasswordForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/profile/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        toast.error(result.error ?? '비밀번호 변경에 실패했습니다.');
-        return;
-      }
-
+      await changePassword(data);
       toast.success('비밀번호가 변경되었습니다.');
       reset();
-    } catch {
-      toast.error('서버와 통신할 수 없습니다.');
+    } catch (error) {
+      if (error instanceof FetchError) {
+        toast.error(error.message);
+      } else {
+        toast.error('서버와 통신할 수 없습니다.');
+      }
     } finally {
       setIsLoading(false);
     }

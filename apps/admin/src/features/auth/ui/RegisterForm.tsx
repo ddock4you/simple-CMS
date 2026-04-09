@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
+import { FetchError } from '@/shared/api/fetchClient';
+import { register as registerUser } from '@/features/auth/api/authFetchers';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
@@ -38,23 +40,15 @@ export function RegisterForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        toast.error(result.error ?? '회원가입에 실패했습니다.');
-        return;
-      }
-
-      toast.success(result.data.message);
+      const result = await registerUser(data);
+      toast.success(result.message);
       router.push('/login');
-    } catch {
-      toast.error('서버와 통신할 수 없습니다.');
+    } catch (error) {
+      if (error instanceof FetchError) {
+        toast.error(error.message);
+      } else {
+        toast.error('서버와 통신할 수 없습니다.');
+      }
     } finally {
       setIsLoading(false);
     }

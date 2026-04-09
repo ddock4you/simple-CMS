@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronsUpDown, LogOut, User } from 'lucide-react';
 
+import { logout } from '@/features/auth/api/authFetchers';
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar';
 import {
   DropdownMenu,
@@ -36,7 +37,7 @@ export function UserNavFooter({ user }: UserNavFooterProps) {
   const initials = user.name.slice(0, 2).toUpperCase();
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await logout().catch(() => null);
     router.push('/login');
   };
 

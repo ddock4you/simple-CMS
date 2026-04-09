@@ -2,13 +2,14 @@
 
 import { useRouter } from 'next/navigation';
 
+import { logout } from '@/features/auth/api/authFetchers';
 import { Button } from '@/shared/ui/button';
 
 export function LogoutButton() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await logout().catch(() => null);
     router.push('/login');
   };
 

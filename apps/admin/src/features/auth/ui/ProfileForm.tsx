@@ -7,6 +7,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
+import { FetchError } from '@/shared/api/fetchClient';
+import { updateProfile } from '@/features/auth/api/authFetchers';
+import { userKeys } from '@/features/user-management/api/userQueries';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
@@ -51,24 +54,16 @@ export function ProfileForm({ user }: ProfileFormProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        toast.error(result.error ?? '프로필 변경에 실패했습니다.');
-        return;
-      }
-
+      await updateProfile(data);
       toast.success('프로필이 변경되었습니다.');
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       router.refresh();
-    } catch {
-      toast.error('서버와 통신할 수 없습니다.');
+    } catch (error) {
+      if (error instanceof FetchError) {
+        toast.error(error.message);
+      } else {
+        toast.error('서버와 통신할 수 없습니다.');
+      }
     } finally {
       setIsLoading(false);
     }

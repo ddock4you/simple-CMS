@@ -7,6 +7,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
+import { FetchError } from '@/shared/api/fetchClient';
+import { login } from '@/features/auth/api/authFetchers';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
@@ -46,26 +48,18 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
+      await login(data);
+      router.push(callbackUrl);
+    } catch (error) {
+      if (error instanceof FetchError) {
         const message =
-          ERROR_MESSAGES[result.error] ??
-          result.error ??
+          ERROR_MESSAGES[error.message] ??
+          error.message ??
           '로그인에 실패했습니다.';
         toast.error(message);
-        return;
+      } else {
+        toast.error('서버와 통신할 수 없습니다.');
       }
-
-      router.push(callbackUrl);
-    } catch {
-      toast.error('서버와 통신할 수 없습니다.');
     } finally {
       setIsLoading(false);
     }
