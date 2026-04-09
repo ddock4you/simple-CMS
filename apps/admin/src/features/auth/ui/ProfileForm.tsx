@@ -7,9 +7,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-import { FetchError } from '@/shared/api/fetchClient';
 import { updateProfile } from '@/features/auth/api/authFetchers';
-import { userKeys } from '@/features/user-management/api/userQueries';
+
+import { FetchError } from '@/shared/api/fetchClient';
+import { userKeys } from '@/shared/api/queryKeys';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';

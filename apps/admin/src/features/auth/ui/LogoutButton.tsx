@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 
-import { logout } from '@/features/auth/api/authFetchers';
+import { logout } from '@/shared/api/authHelpers';
 import { Button } from '@/shared/ui/button';
 
 export function LogoutButton() {

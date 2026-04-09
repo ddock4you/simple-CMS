@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronsUpDown, LogOut, User } from 'lucide-react';
 
-import { logout } from '@/features/auth/api/authFetchers';
+import { logout } from '@/shared/api/authHelpers';
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar';
 import {
   DropdownMenu,

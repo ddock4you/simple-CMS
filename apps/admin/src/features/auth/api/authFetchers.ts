@@ -23,10 +23,6 @@ export function register(data: {
   });
 }
 
-export function logout(): Promise<null> {
-  return fetchClient<null>('/api/auth/logout', { method: 'POST' });
-}
-
 export function updateProfile(data: {
   name: string;
   email?: string;

@@ -7,8 +7,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
-import { FetchError } from '@/shared/api/fetchClient';
 import { register as registerUser } from '@/features/auth/api/authFetchers';
+
+import { FetchError } from '@/shared/api/fetchClient';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
