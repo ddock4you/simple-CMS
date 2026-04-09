@@ -55,7 +55,7 @@ src/
   - Session 모델만 사용 (Account, VerificationToken 불필요)
   - 인증 유틸: `getCurrentUser()` — `entities/auth/lib/getCurrentUser.ts`
   - 쿠키 유틸: `setSessionCookie()`, `clearSessionCookie()` — `shared/lib/cookies.ts`
-  - 세션 유효성: middleware에서 요청마다 DB 세션 존재 확인
+  - 세션 유효성: `(authenticated)` route group layout에서 `requireAuth()` 호출로 인증 처리
   - 동시 로그인 정책: `SiteSettings.CONCURRENT_LOGIN_ENABLED`로 제어
 
 ### 인가 (Authorization) — 역할 기반 권한 관리
@@ -188,7 +188,7 @@ src/
 - API Route: `POST /api/auth/register` — bcryptjs 해싱 후 PENDING 상태로 User 생성
 - 가입 성공 후: "가입 신청이 완료되었습니다. 관리자 승인 후 로그인이 가능합니다." 안내
 - 감사 로그: `CREATE`, `USER`, userId는 null (비인증 액션), 비밀번호 해시는 절대 기록하지 않음
-- middleware: `/register`를 public 경로 목록에 추가
+- 라우트 그룹: `/register`는 `(auth)` 그룹에 속하므로 별도 인증 설정 불필요
 
 ### 사용자 관리
 
@@ -300,7 +300,7 @@ src/
 - 로그인 API 핸들러에서 `CONCURRENT_LOGIN_ENABLED` 설정 조회
 - `"false"`이면: `deleteUserSessions(userId)` 호출 후 `createSession(userId)`
 - `"true"`이면: 기존 세션 유지, 새 세션 추가 생성
-- middleware에서 요청마다 세션 존재 여부 확인 (DB 세션이 삭제되었으면 로그아웃 처리)
+- `(authenticated)` layout에서 `requireAuth()` 호출로 세션 존재 여부 확인 (DB 세션이 없으면 `/login`으로 리다이렉트)
 
 #### 2차 확장 후보
 
