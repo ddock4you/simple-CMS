@@ -75,6 +75,14 @@ src/
   - `POST /api/auth/login` — 자격 검증, 상태 확인, 동시 로그인 처리, 세션 생성, 쿠키 설정
   - `POST /api/auth/logout` — 세션 삭제, 쿠키 제거
   - `POST /api/auth/register` — 회원가입 (PENDING 상태로 생성)
+- 사용자 관리 API Routes:
+  - `GET /api/users` — 목록 (상태 필터 + 서버 사이드 페이지네이션)
+  - `POST /api/users/[id]/approve` — 승인 (PENDING→ACTIVE, 기본 역할 배정)
+  - `DELETE /api/users/[id]` — 거절 (PENDING 유저 hard delete)
+  - `POST /api/users/[id]/suspend` — 정지 (ACTIVE→SUSPENDED, 세션 즉시 삭제)
+  - `POST /api/users/[id]/reactivate` — 해제 (SUSPENDED→ACTIVE)
+  - `PATCH /api/users/[id]/role` — 역할 변경
+  - `GET /api/roles` — 역할 목록 (드롭다운용)
 
 ## 라우팅
 

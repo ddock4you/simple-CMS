@@ -209,7 +209,7 @@ workspace/
 | 2a   | Prisma 스키마 전체 + 커스텀 세션 인증 + Seed + **로그인 UI** | 브라우저에서 로그인/로그아웃                      | **완료** |
 | 2b   | 회원가입 API + **회원가입 UI**                               | 가입 → PENDING → "승인 대기" 메시지 확인          | **완료** |
 | 2c   | Admin 레이아웃 (사이드바/헤더) + **대시보드 껍데기**         | 로그인 후 사이드바 있는 관리 화면                 | **완료** |
-| 2d   | 사용자 관리 API + **목록/승인/거절/정지 UI**                 | PENDING 유저 승인 → ACTIVE 전환                   | 대기 |
+| 2d   | 사용자 관리 API + **목록/승인/거절/정지 UI**                 | PENDING 유저 승인 → ACTIVE 전환                   | **완료** |
 | 2e   | 프로필 API + **프로필/비밀번호 변경 UI**                     | 이름·비밀번호 변경 직접 테스트                    | 대기 |
 | 2f   | 역할/권한 관리 API + **권한 매트릭스 UI** + 사이드바 필터링  | 역할 생성 → 권한 설정 → 사이드바 메뉴 필터링 확인 | 대기 |
 
@@ -340,8 +340,9 @@ pnpm db:studio        # Prisma Studio
 
 ```
 shared/api/
-├── fetchClient.ts              # 공통 fetch 래퍼 (에러 처리, 인증 헤더)
-└── queryClient.ts              # getQueryClient() — 앱 전체 공용
+├── fetchClient.ts              # 공통 fetch 래퍼 (에러 처리, 서버/클라이언트 base URL 분기)
+├── queryClient.ts              # getQueryClient() — 서버 prefetch용 싱글턴 (React cache)
+└── QueryProvider.tsx            # QueryClientProvider + ReactQueryDevtools 래퍼 ('use client')
 
 shared/model/
 └── uiStore.ts                  # 전역 UI 상태 (Zustand, 사이드바 등)
