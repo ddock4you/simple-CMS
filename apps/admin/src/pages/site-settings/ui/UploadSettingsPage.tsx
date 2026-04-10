@@ -19,9 +19,15 @@ export default async function UploadSettingsPage() {
         <p className="text-muted-foreground">사이트 전역 설정을 관리합니다.</p>
       </div>
       <SettingsNav />
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <UploadSettingsForm />
-      </HydrationBoundary>
+      <div>
+        <h2 className="text-lg font-semibold">업로드 제한 설정</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          파일 업로드 시 허용되는 확장자, MIME 타입, 최대 파일 크기를 설정합니다. 서버에서 업로드 요청을 검증할 때 이 설정이 적용됩니다.
+        </p>
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <UploadSettingsForm />
+        </HydrationBoundary>
+      </div>
     </div>
   );
 }
