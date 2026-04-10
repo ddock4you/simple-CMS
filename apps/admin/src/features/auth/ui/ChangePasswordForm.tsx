@@ -21,7 +21,7 @@ import {
 import {
   changePasswordSchema,
   type ChangePasswordFormData,
-} from '@/features/auth/schemas/profileSchema';
+} from '@/features/auth/model/profileSchema';
 
 export function ChangePasswordForm() {
   const [isLoading, setIsLoading] = useState(false);

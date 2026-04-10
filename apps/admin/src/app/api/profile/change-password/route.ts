@@ -7,7 +7,7 @@ import type { ApiResponse } from '@simple-cms/types';
 
 import { getCurrentUser } from '@/entities/auth/lib/getCurrentUser';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
-import { changePasswordSchema } from '@/features/auth/schemas/profileSchema';
+import { changePasswordSchema } from '@/features/auth/model/profileSchema';
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {

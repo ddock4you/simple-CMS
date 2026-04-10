@@ -5,7 +5,7 @@ import type { ApiResponse } from '@simple-cms/types';
 
 import { getCurrentUser } from '@/entities/auth/lib/getCurrentUser';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
-import { profileSchema } from '@/features/auth/schemas/profileSchema';
+import { profileSchema } from '@/features/auth/model/profileSchema';
 
 export async function PATCH(request: Request): Promise<NextResponse> {
   try {

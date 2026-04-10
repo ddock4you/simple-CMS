@@ -4,7 +4,7 @@ import { prisma } from '@simple-cms/db';
 import type { ApiResponse, PaginatedResponse } from '@simple-cms/types';
 
 import { getCurrentUser } from '@/entities/auth/lib/getCurrentUser';
-import { userListQuerySchema } from '@/features/user-management/schemas/userSchemas';
+import { userListQuerySchema } from '@/features/user-management/model/userSchemas';
 import type { UserListItem } from '@/features/user-management/model/userFilters';
 
 export async function GET(request: Request): Promise<NextResponse> {

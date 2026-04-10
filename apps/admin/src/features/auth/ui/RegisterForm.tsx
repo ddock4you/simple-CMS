@@ -23,7 +23,7 @@ import {
 import {
   registerSchema,
   type RegisterFormData,
-} from '@/features/auth/schemas/registerSchema';
+} from '@/features/auth/model/registerSchema';
 
 export function RegisterForm() {
   const router = useRouter();

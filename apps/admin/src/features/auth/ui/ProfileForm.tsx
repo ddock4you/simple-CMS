@@ -24,7 +24,7 @@ import {
 import {
   profileSchema,
   type ProfileFormData,
-} from '@/features/auth/schemas/profileSchema';
+} from '@/features/auth/model/profileSchema';
 
 interface ProfileFormProps {
   user: {

@@ -6,7 +6,7 @@ import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { getAuditContext } from '@/shared/lib/auditHelpers';
-import { registerSchema } from '@/features/auth/schemas/registerSchema';
+import { registerSchema } from '@/features/auth/model/registerSchema';
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {

@@ -23,7 +23,7 @@ import {
 import {
   loginSchema,
   type LoginFormData,
-} from '@/features/auth/schemas/loginSchema';
+} from '@/features/auth/model/loginSchema';
 
 const ERROR_MESSAGES: Record<string, string> = {
   PENDING_APPROVAL:

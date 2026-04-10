@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { requirePermission } from '@/shared/lib/requirePermission';
+import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
 
 export async function POST(

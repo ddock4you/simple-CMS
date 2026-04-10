@@ -21,7 +21,7 @@ import {
 import {
   createRoleSchema,
   type CreateRoleData,
-} from '@/features/role-management/schemas/roleSchemas';
+} from '@/features/role-management/model/roleSchemas';
 import { useCreateRole } from '@/features/role-management/api/useRoleMutations';
 
 export function CreateRoleDialog() {

@@ -5,7 +5,7 @@ import type { ApiResponse } from '@simple-cms/types';
 
 import { getCurrentUser } from '@/entities/auth/lib/getCurrentUser';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
-import { roleChangeSchema } from '@/features/user-management/schemas/userSchemas';
+import { roleChangeSchema } from '@/features/user-management/model/userSchemas';
 
 export async function PATCH(
   request: Request,

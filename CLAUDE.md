@@ -358,10 +358,10 @@ features/{domain}/model/
 entities/auth/
 ├── lib/getCurrentUser.ts       # 쿠키 → 세션 검증 → User + Role 반환 (서버 전용)
 ├── lib/checkPermission.ts      # hasPermission(user, resource, action) 권한 체크
+├── lib/requirePermission.ts    # API Route용 인증+인가 래퍼 (401/403 반환)
 └── model/auth.types.ts         # SessionUser 타입 (role + permissions 포함)
 
 shared/lib/
-├── requirePermission.ts        # API Route용 인증+인가 래퍼 (401/403 반환)
 └── sidebarPermissions.ts       # getVisibleMenuItems() 사이드바 권한 필터링
 ```
 

@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server';
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { requirePermission } from '@/shared/lib/requirePermission';
+import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
-import { updateRoleSchema } from '@/features/role-management/schemas/roleSchemas';
+import { updateRoleSchema } from '@/features/role-management/model/roleSchemas';
 
 export async function GET(
   _request: Request,
