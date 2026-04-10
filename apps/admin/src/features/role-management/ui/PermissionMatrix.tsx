@@ -6,6 +6,7 @@ import { RESOURCE_ACTIONS } from '@simple-cms/types';
 import type { ResourceKey, Action } from '@simple-cms/types';
 
 import { Button } from '@/shared/ui/shadcn/button';
+import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import { useUpdatePermissions } from '@/features/role-management/api/useRoleMutations';
 
 interface PermissionMatrixProps {
@@ -89,12 +90,10 @@ export function PermissionMatrix({
 
                     return (
                       <td key={action} className="p-3 text-center">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={checked}
                           disabled={isSystem || !supported}
-                          onChange={() => toggle(resource, action)}
-                          className="size-4 rounded border-gray-300"
+                          onCheckedChange={() => toggle(resource, action)}
                         />
                       </td>
                     );

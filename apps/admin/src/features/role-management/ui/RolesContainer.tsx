@@ -18,7 +18,7 @@ export function RolesContainer() {
       <RoleList selectedId={effectiveId} onSelect={setSelectedId} />
       <div className="rounded-md border p-6">
         {effectiveId ? (
-          <RoleDetail roleId={effectiveId} />
+          <RoleDetail key={effectiveId} roleId={effectiveId} />
         ) : (
           <p className="text-muted-foreground">역할을 선택해주세요.</p>
         )}
