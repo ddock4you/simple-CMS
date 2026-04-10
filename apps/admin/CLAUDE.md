@@ -510,6 +510,21 @@ entities → shared                   ✅
 - 공유가 필요하면 entities 또는 shared 레이어로 내림
 - `/check-fsd` 스킬로 검증 가능
 
+### FSD 세그먼트 규칙
+
+슬라이스 내부 디렉토리는 다음 5개만 사용한다:
+
+| 세그먼트 | 역할 | 예시 |
+|----------|------|------|
+| `ui/` | React 컴포넌트 (Server/Client) | `UserTable.tsx`, `ProfileForm.tsx` |
+| `api/` | fetch 함수, queryOptions, useMutation 훅 | `userFetchers.ts`, `useUserMutations.ts` |
+| `model/` | 타입, Zod 스키마, 상수, 필터 정의 | `userFilters.ts`, `loginSchema.ts` |
+| `config/` | 설정 상수 (navigation 등) | `navigation.ts` |
+| `lib/` | 유틸리티 함수, 헬퍼 | `checkPermission.ts`, `cookies.ts` |
+
+금지: `schemas/`, `hooks/`, `types/`, `utils/` 등 비표준 세그먼트
+예외: `shared/hooks/`는 shadcn/ui 생성 훅으로 허용
+
 ## 유효성 검사 규칙
 
 - 필수값 누락 시 저장 불가
