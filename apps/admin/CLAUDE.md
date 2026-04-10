@@ -277,13 +277,13 @@ src/
 ### 감사 로그 (활동 이력)
 
 - 관리자의 모든 데이터 변경 + 인증 이벤트(LOGIN/LOGOUT) 이력 조회
-- 목록: 날짜, 사용자, 액션, 엔티티 타입, 엔티티 제목, IP
-- 필터: 날짜 범위, 액션 타입, 엔티티 타입, 사용자
-- 상세: changes JSON의 before/after diff 표시
-- 내보내기: CSV(네이티브) / Excel(exceljs), 날짜 범위 필수
-- 내보내기 엔드포인트: API Route (`/api/audit-logs/export`)
-- FSD 위치: `features/audit-log`
 - 읽기 전용 화면 (AuditLog 자체의 생성/수정/삭제 UI 없음)
+- 목록: 날짜, 사용자, 액션(뱃지), 엔티티 타입(뱃지)+제목, IP, 상세 버튼
+- 필터: shadcn DatePicker(월/년 Select 포함) 날짜 범위 + 액션 타입 + 엔티티 타입 + 사용자 드롭다운
+- 상세: Dialog에서 changes JSON의 before(빨간)/after(녹색) diff 표시
+- 내보내기: Excel(exceljs) — 날짜 범위 필수, `GET /api/audit-logs/export`
+- API Routes: `GET /api/audit-logs` (필터+페이지네이션), `GET /api/audit-logs/export` (Excel 다운로드)
+- FSD: `features/audit-log/`, `pages/audit-logs/`
 
 ### 웹 에러 로그 (런타임 에러 조회)
 

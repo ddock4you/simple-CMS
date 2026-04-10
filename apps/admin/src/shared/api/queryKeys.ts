@@ -36,3 +36,9 @@ export const navigationKeys = {
   lists: () => [...navigationKeys.all, 'list'] as const,
   detail: (menuId: string) => [...navigationKeys.all, 'detail', menuId] as const,
 };
+
+export const auditLogKeys = {
+  all: ['auditLogs'] as const,
+  lists: () => [...auditLogKeys.all, 'list'] as const,
+  list: (filters: unknown) => [...auditLogKeys.lists(), filters] as const,
+};
