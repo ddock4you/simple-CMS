@@ -12,6 +12,16 @@ export {
 
 export { logAuditEvent } from './auditLog';
 
+export {
+  getSiteSetting,
+  setSiteSetting,
+  deleteSiteSetting,
+  getSiteSettings,
+} from './siteSettings';
+
+export { getUploadRestrictions, validateFileUpload } from './uploadRestriction';
+export type { UploadRestrictions } from './uploadRestriction';
+
 export type {
   User,
   Role,

@@ -321,9 +321,11 @@ src/
 
 ### 사이트 설정 관리
 
+- **SettingsNav 4탭**: 도메인 | 보안 | 업로드 | 권한 (권한은 Stage 2f에서 구현)
+- DB 헬퍼: `packages/db/src/siteSettings.ts` (getSiteSetting/setSiteSetting), `packages/db/src/uploadRestriction.ts` (getUploadRestrictions/validateFileUpload)
 - 라우트: `/settings/domain`
 - FSD: `features/site-settings/` (api, model, ui)
-- API Routes: `PATCH /api/settings/domain`, `POST /api/settings/domain/check-dns`, `DELETE /api/settings/domain`
+- API Routes: `GET/PATCH /api/settings/domain`, `POST /api/settings/domain/check-dns`, `DELETE /api/settings/domain`
 - 도메인 입력 (베어 호스트네임, 프로토콜/경로/포트 불허)
 - DNS 검증 상태 표시 + DNS 레코드 안내
 - 감사 로그 entityType: `SITE_SETTINGS`
