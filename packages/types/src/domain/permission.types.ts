@@ -1,6 +1,6 @@
 export type ResourceKey =
   | 'dashboard'
-  | 'pages'
+  | 'subpages'
   | 'boards'
   | 'posts'
   | 'navigation'
@@ -20,7 +20,7 @@ export interface ResourceAction {
 
 export const RESOURCE_ACTIONS: Record<ResourceKey, ResourceAction> = {
   dashboard: { name: '대시보드', actions: ['read'] },
-  pages: { name: '페이지', actions: ['create', 'read', 'update', 'delete'] },
+  subpages: { name: '서브 페이지', actions: ['create', 'read', 'update', 'delete'] },
   boards: { name: '게시판', actions: ['create', 'read', 'update', 'delete'] },
   posts: { name: '게시글', actions: ['create', 'read', 'update', 'delete'] },
   navigation: {

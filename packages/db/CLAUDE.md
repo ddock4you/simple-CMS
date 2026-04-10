@@ -29,9 +29,9 @@ packages/db/
 
 ## Prisma 컨벤션
 
-- 모델명: `PascalCase` 단수형 (`User`, `Page`, `Board`, `Post`)
+- 모델명: `PascalCase` 단수형 (`User`, `Subpage`, `Board`, `Post`)
 - 필드명: `camelCase` (`displayOrder`, `publishedAt`, `boardId`)
-- 관계 필드: 참조 대상 모델명 소문자 (`author`, `board`, `page`)
+- 관계 필드: 참조 대상 모델명 소문자 (`author`, `board`, `subpage`)
 - enum: `PascalCase` (`ContentStatus`, `BoardSkin`, `MenuItemType`)
 - 인덱스: 자주 조회하는 필드에 `@@index` 명시
 - 모든 모델에 `createdAt`, `updatedAt` 포함
@@ -69,7 +69,7 @@ pnpm db:studio      # Prisma Studio 실행
 - `description`: 설명, optional
 - `permissions`: `Json` 타입, 메뉴별 CRUD 권한 매트릭스
   - 구조: `{ [resource]: { [action]: boolean } }`
-  - 예: `{ "pages": { "create": true, "read": true, "update": true, "delete": false } }`
+  - 예: `{ "subpages": { "create": true, "read": true, "update": true, "delete": false } }`
   - 미등록 리소스/액션 = 권한 없음
 - `isSystem`: 총괄 관리자 표시 (`true`), 삭제/권한 수정 불가
 - `isDefault`: 가입 승인 시 자동 부여 역할 (`true`), 하나만 가능 (앱 레벨 제약)

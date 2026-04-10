@@ -8,3 +8,10 @@ export const roleKeys = {
   list: () => [...roleKeys.all, 'list'] as const,
   detail: (id: string) => [...roleKeys.all, 'detail', id] as const,
 };
+
+export const subpageKeys = {
+  all: ['subpages'] as const,
+  lists: () => [...subpageKeys.all, 'list'] as const,
+  list: (filters: unknown) => [...subpageKeys.lists(), filters] as const,
+  detail: (id: string) => [...subpageKeys.all, 'detail', id] as const,
+};

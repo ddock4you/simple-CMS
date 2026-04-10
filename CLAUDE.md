@@ -61,7 +61,7 @@ workspace/
 | ---------------------- | ------------------------------------------------------------------------------------- |
 | **User**               | 관리자 계정, username/password 인증, 가입 승인제(PENDING→ACTIVE), Role FK 기반 권한   |
 | **Role**               | 역할(등급) 정의, name·permissions(Json)·isSystem·isDefault, 메뉴별 CRUD 권한 매트릭스 |
-| **Page**               | 서브페이지, Markdown 문서형, 블록 + 커스텀 HTML/CSS 지원                              |
+| **Subpage**            | 서브페이지, Markdown 문서형, 블록 + 커스텀 HTML/CSS 지원                              |
 | **Board**              | 게시판 설정, 스킨(list/gallery), slug, 공개 여부                                      |
 | **Post**               | 게시판 소속 게시글, 목록/상세 렌더링 대상                                             |
 | **HomeSection**        | 메인 페이지 전용 섹션 설정                                                            |
@@ -69,7 +69,7 @@ workspace/
 | **PageBlock**          | 서브페이지 제한형 블록 (blockType + configJson)                                       |
 | **Media**              | 이미지/파일 메타데이터, 1차는 대표 이미지 중심                                        |
 | **NavigationMenu**     | 메뉴 묶음 (Header Main, Footer, Quick Links)                                          |
-| **NavigationMenuItem** | 메뉴 항목 (PAGE/BOARD/EXTERNAL/CUSTOM 연결)                                           |
+| **NavigationMenuItem** | 메뉴 항목 (SUBPAGE/BOARD/EXTERNAL/CUSTOM 연결)                                        |
 | **AuditLog**           | 관리자 활동 이력, append-only, 데이터 변경 + 인증 이벤트 기록                         |
 | **SiteSettings**       | 사이트 전역 설정 (도메인, 사이트명 등), 키-값 구조                                    |
 | **ErrorLog**           | 공개 웹 런타임 에러 로그, 서버/클라이언트 에러 기록, fingerprint 기반 그룹핑          |
@@ -88,13 +88,13 @@ workspace/
 
 - 1차에서 hard delete 허용
 - 다른 엔티티가 참조 중이면 삭제 전 경고/차단
-- 페이지 삭제 시 → 메뉴, 메인 섹션, 블록 연결 검증
+- 서브 페이지 삭제 시 → 메뉴, 메인 섹션, 블록 연결 검증
 - 게시판 삭제 시 → 소속 게시글 존재 여부 확인
 - 삭제 후 같은 그룹 내 `displayOrder` 서버 재정렬
 
 ### slug 정책
 
-- Page, Board, Post 각 도메인별 slug 관리
+- Subpage, Board, Post 각 도메인별 slug 관리
 - 같은 공개 경로 체계 내 slug 중복 불가
 - 제목 기반 자동 생성 + 수동 수정 가능
 - `published` 상태에서 slug 변경 시 경고
@@ -150,6 +150,33 @@ workspace/
   - UI(권한 매트릭스), 사이드바 필터링, Seed 스크립트 모두 이 상수에서 파생
 - 감사 로그: 역할 생성/수정/삭제, 권한 변경, 사용자 역할 배정 모두 기록 (`ROLE` entityType)
 
+### 권한 체크 패턴 (필수 준수)
+
+**admin에 새 기능 추가 시 권한 체크는 API + UI 양쪽 모두 적용이 기본값**이다.
+
+**서버 (API Route)**:
+- 모든 데이터 변경/조회 API Route에서 `requirePermission(resource, action)` 호출
+- 미인증 → 401, 권한 없음 → 403
+
+**클라이언트 (UI)**:
+- `(authenticated)/layout.tsx`에서 `<PermissionProvider>`로 모든 인증 페이지를 감쌈
+- Client Component에서 `usePermission(resource, action): boolean` 훅으로 권한 체크
+- Server Component에서는 `hasPermission(user, resource, action)` 직접 호출
+- 권한 없는 사용자에게는 해당 버튼/링크를 숨김 (생성/편집/삭제 버튼 등)
+- 사이드바: `getVisibleMenuItems()`로 read 권한 없는 메뉴 숨김
+
+**뷰/편집 분리 패턴**:
+- 상세 페이지는 읽기 전용 뷰(`/[id]`)가 기본, 편집(`/[id]/edit`)은 별도 라우트
+- 뷰 페이지에서 update 권한이 있을 때만 "편집" 버튼 표시
+- 목록에서도 read(보기)와 update(편집) 버튼을 권한별로 분리
+
+**체크리스트** (새 기능 개발 시):
+1. API Route: `requirePermission()` 호출 추가
+2. 목록 UI: 생성 버튼에 `create` 권한 체크
+3. 테이블: 편집 버튼에 `update` 권한 체크
+4. 상세 뷰: 편집/삭제 버튼에 `update`/`delete` 권한 체크
+5. 사이드바: navigation.ts에 `resource` 필드 추가
+
 ### 가입 승인 정책
 
 - 회원가입 시 `PENDING` 상태로 생성, 기존 ACTIVE 관리자가 승인해야 `ACTIVE`로 전환
@@ -164,7 +191,7 @@ workspace/
 
 ### admin
 
-`/login`, `/register`, `/dashboard`, `/pages`, `/pages/[id]`, `/boards`, `/posts`,
+`/login`, `/register`, `/dashboard`, `/subpages`, `/subpages/[id]`, `/boards`, `/posts`,
 `/navigation`, `/navigation/[menuId]`, `/home`, `/home/popups`,
 `/users`, `/profile`,
 `/error-logs`, `/error-logs/[id]`,
@@ -182,7 +209,7 @@ workspace/
 | admin도 Next.js                | API/BFF 역할 담당 → 서버 기능 필요                                                                                                                              |
 | Tiptap JSON 저장 + 제한된 블록 | 콘텐츠 표현 충실도 우선 — admin에서 작성한 리치 포맷(색상, 정렬, 하이라이트 등)을 web에서 동일하게 표현. 검색용 plain text는 JSON에서 추출하여 별도 필드에 저장 |
 | PGroonga (외부 검색엔진 X)     | 한글 필수이나 아키텍처 과도 확장 방지                                                                                                                           |
-| 메인 ≠ 일반 페이지             | 랜딩 성격 → 섹션 기반 운영이 적합                                                                                                                               |
+| 메인 ≠ 일반 서브 페이지        | 랜딩 성격 → 섹션 기반 운영이 적합                                                                                                                               |
 
 ## 구현 로드맵
 
@@ -217,7 +244,7 @@ workspace/
 
 | 단계 | 내용                                             | 확인 가능한 것                      | 상태 |
 | ---- | ------------------------------------------------ | ----------------------------------- | ---- |
-| 3a   | 페이지 CRUD API + **목록/편집 UI** (Tiptap)      | 페이지 생성 → Markdown 편집 → 저장  | 대기 |
+| 3a   | 서브 페이지 CRUD API + **목록/뷰/편집 UI** (Tiptap) + 권한 체크 | 서브 페이지 CRUD + 뷰/편집 분리 + 클라이언트 권한 체크 패턴 도입 | **완료** |
 | 3b   | 게시판 CRUD API + **게시판 관리 UI**             | 게시판 생성 → 스킨 설정 → 목록 확인 | 대기 |
 | 3c   | 게시글 CRUD API + **목록/편집 UI**               | 게시글 작성 → 발행 → 목록 확인      | 대기 |
 | 3d   | 메뉴 관리 API + **메뉴 편집 UI** (dnd-kit)       | 메뉴 항목 추가 → 드래그 순서 변경   | 대기 |
@@ -228,7 +255,7 @@ workspace/
 
 | 단계 | 내용                                       | 확인 가능한 것                           | 상태 |
 | ---- | ------------------------------------------ | ---------------------------------------- | ---- |
-| 4a   | Web 메인+서브페이지 렌더링 + KRDS 레이아웃 | admin에서 만든 페이지가 공개 웹에 표시   | 대기 |
+| 4a   | Web 메인+서브페이지 렌더링 + KRDS 레이아웃 | admin에서 만든 서브 페이지가 공개 웹에 표시 | 대기 |
 | 4b   | Web 게시판/게시글 렌더링                   | 발행한 게시글이 공개 웹에 노출           | 대기 |
 | 4c   | Web 메뉴 렌더링 + 도메인 미들웨어          | 헤더/푸터 메뉴, 커스텀 도메인 리다이렉트 | 대기 |
 | 4d   | Web 통합검색 (PGroonga)                    | `/search?q=검색어`로 검색 결과 확인      | 대기 |
@@ -325,7 +352,7 @@ pnpm db:studio        # Prisma Studio
 
 ### TanStack Query 패턴 (Key Factory + queryOptions)
 
-- **Query Key Factory**: 도메인별 계층적 key 관리 (`pageKeys.all`, `.lists()`, `.list(filters)`, `.detail(id)`)
+- **Query Key Factory**: 도메인별 계층적 key 관리 (`subpageKeys.all`, `.lists()`, `.list(filters)`, `.detail(id)`)
 - **queryOptions Factory**: Server prefetch와 Client useQuery에서 동일한 옵션 객체 공유
 - **HydrationBoundary**: Server Component에서 prefetch → dehydrate → Client에서 hydrate
 - **useMutation**: API Route 호출 래핑, 성공 시 `invalidateQueries`로 캐시 무효화
@@ -357,8 +384,9 @@ features/{domain}/model/
 
 entities/auth/
 ├── lib/getCurrentUser.ts       # 쿠키 → 세션 검증 → User + Role 반환 (서버 전용)
-├── lib/checkPermission.ts      # hasPermission(user, resource, action) 권한 체크
+├── lib/checkPermission.ts      # hasPermission(user, resource, action) 권한 체크 (Server/Client 공용)
 ├── lib/requirePermission.ts    # API Route용 인증+인가 래퍼 (401/403 반환)
+├── ui/PermissionProvider.tsx   # 클라이언트 권한 Context + usePermission() 훅
 └── model/auth.types.ts         # SessionUser 타입 (role + permissions 포함)
 
 shared/lib/
@@ -370,7 +398,7 @@ shared/lib/
 - 모든 데이터 변경 API Route 핸들러 + 인증 이벤트(LOGIN/LOGOUT)에서 `logAuditEvent()` 호출
 - append-only 모델 (AuditLog 자체의 UPDATE/DELETE 없음)
 - 기록 항목: action, entityType(?), entityId(?), entityTitle(스냅샷), changes(JSON), userId, IP, User Agent
-- entityType 종류: `PAGE`, `BOARD`, `POST`, `NAVIGATION_MENU`, `NAVIGATION_MENU_ITEM`, `HOME_SECTION`, `HOME_POPUP`, `USER`, `ROLE`, `SITE_SETTINGS`, `ERROR_LOG`, `MEDIA`
+- entityType 종류: `SUBPAGE`, `BOARD`, `POST`, `NAVIGATION_MENU`, `NAVIGATION_MENU_ITEM`, `HOME_SECTION`, `HOME_POPUP`, `USER`, `ROLE`, `SITE_SETTINGS`, `ERROR_LOG`, `MEDIA`
 - LOGIN/LOGOUT: entityType, entityId는 null (대상 엔티티 없음)
 - 로깅 실패가 주 액션을 차단하지 않음 (fire-and-forget)
 - changes JSON 구조: CREATE → `{ after }`, UPDATE → `{ before, after }` (메타데이터 필드만, 본문 제외), DELETE → `{ before }`, LOGIN/LOGOUT → null
@@ -419,11 +447,11 @@ shared/lib/
   - `contentJson`: 렌더링의 진실의 원천 (Tiptap ProseMirror JSON)
   - `content`: Tiptap JSON에서 추출한 순수 텍스트 (PGroonga 검색 인덱싱용)
   - 텍스트 추출: `packages/editor`의 `extractTextFromTiptap()` 유틸리티
-  - 적용 모델: Page, Post, HomePopup(콘텐츠형) 전체 통일
+  - 적용 모델: Subpage, Post, HomePopup(콘텐츠형) 전체 통일
 - **web 렌더링**: `@tiptap/html`의 `generateHTML()` — 서버 사이드 전용, 클라이언트 JS 0
   - `packages/editor`의 공유 확장으로 admin과 동일한 렌더링 보장
   - DOMPurify 새니타이징 (defense-in-depth)
-- **커스텀 코드**: Page 모델에 `customHtml`, `customCss` 필드 추가 (nullable)
+- **커스텀 코드**: Subpage 모델에 `customHtml`, `customCss` 필드 추가 (nullable)
   - 본문 + 블록과 독립적으로 관리
   - admin에서 Monaco Editor로 별도 탭 제공
   - web에서 DOMPurify 새니타이징 후 렌더링
@@ -447,7 +475,7 @@ shared/lib/
 - 타입 전용: `{도메인}.types.ts`
 - 상수: 파일은 `camelCase.ts`, 변수명은 `UPPER_SNAKE_CASE`
 - FSD 슬라이스: barrel export(`index.ts`) 사용하지 않음 — 외부에서 슬라이스 내부 파일을 직접 import
-  - 예: `import { PageForm } from '@/features/page/ui/PageForm'`
+  - 예: `import { SubpageForm } from '@/features/subpage/ui/SubpageForm'`
   - 이유: Next.js App Router에서 Server/Client 경계 명확화, tree-shaking 보장
   - `packages/`의 `index.ts`는 패키지 진입점이므로 유지 (FSD barrel과 다름)
 

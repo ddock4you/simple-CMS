@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/shared/ui/table';
+import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import type { UserListFilters } from '@/features/user-management/model/userFilters';
 import { userListOptions } from '@/features/user-management/api/userQueries';
 import { UserStatusBadge } from '@/features/user-management/ui/UserStatusBadge';
@@ -31,6 +32,7 @@ export function UserTable({
   isCurrentUserSystemAdmin,
 }: UserTableProps) {
   const { data } = useQuery(userListOptions(filters));
+  const canUpdateUsers = usePermission('users', 'update');
 
   if (!data) return null;
 
@@ -61,7 +63,7 @@ export function UserTable({
                   <TableCell className="font-medium">{user.username}</TableCell>
                   <TableCell>{user.name}</TableCell>
                   <TableCell>
-                    {user.status === 'ACTIVE' ? (
+                    {user.status === 'ACTIVE' && canUpdateUsers ? (
                       <UserRoleSelect
                         userId={user.id}
                         currentRoleId={user.role?.id ?? null}

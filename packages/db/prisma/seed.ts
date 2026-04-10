@@ -16,7 +16,7 @@ const prisma = new PrismaClient({ adapter });
 
 const FULL_PERMISSIONS = {
   dashboard: { read: true },
-  pages: { create: true, read: true, update: true, delete: true },
+  subpages: { create: true, read: true, update: true, delete: true },
   boards: { create: true, read: true, update: true, delete: true },
   posts: { create: true, read: true, update: true, delete: true },
   navigation: { create: true, read: true, update: true, delete: true },
@@ -30,7 +30,7 @@ const FULL_PERMISSIONS = {
 
 const DEFAULT_PERMISSIONS = {
   dashboard: { read: true },
-  pages: { read: true },
+  subpages: { read: true },
   boards: { read: true },
   posts: { create: true, read: true, update: true },
 };

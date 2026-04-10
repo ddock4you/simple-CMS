@@ -16,7 +16,7 @@ export type {
   User,
   Role,
   Session,
-  Page,
+  Subpage,
   Board,
   Post,
   HomeSection,

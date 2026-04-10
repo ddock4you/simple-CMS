@@ -17,7 +17,7 @@ packages/types/
 ├── src/
 │   ├── index.ts            # 패키지 진입점 (앱에서 @simple-cms/types로 import)
 │   ├── domain/             # 도메인별 인터페이스
-│   │   ├── page.types.ts
+│   │   ├── subpage.types.ts
 │   │   ├── board.types.ts
 │   │   ├── post.types.ts
 │   │   ├── navigation.types.ts
@@ -29,7 +29,7 @@ packages/types/
 │   │   ├── auditLog.types.ts
 │   │   └── siteSettings.types.ts
 │   ├── dto/                # API 요청/응답 DTO
-│   │   ├── page.dto.ts
+│   │   ├── subpage.dto.ts
 │   │   ├── board.dto.ts
 │   │   ├── user.dto.ts        # RegisterUserDto, UpdateProfileDto, ChangePasswordDto, UserListResponse
 │   │   ├── role.dto.ts           # CreateRoleDto, UpdateRoleDto, UpdatePermissionsDto, RoleListResponse
@@ -43,7 +43,7 @@ packages/types/
 
 - `interface` 우선 (확장 가능성), 단순 union/교차는 `type`
 - DTO 네이밍: `Create{Domain}Dto`, `Update{Domain}Dto`, `{Domain}ListResponse`
-- 도메인 인터페이스 네이밍: `{Domain}` (예: `Page`, `Board`)
+- 도메인 인터페이스 네이밍: `{Domain}` (예: `Subpage`, `Board`)
 - `import type` 사용 (`consistent-type-imports` 규칙)
 
 ## Prisma 타입과의 관계

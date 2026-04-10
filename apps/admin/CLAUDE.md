@@ -63,13 +63,17 @@ src/
 - Role 모델 기반 동적 RBAC
 - 총괄 관리자(`isSystem: true`): 모든 권한 보유, 권한 체크 바이패스
 - 기본 역할(`isDefault: true`): 가입 승인 시 자동 부여
-- 권한 체크 패턴:
+- 권한 체크 패턴 (**API + UI 양쪽 필수**):
   - API Route: `requirePermission(resource, action)` — 401(미인증) 또는 403(권한 없음) 반환
+  - Client Component: `usePermission(resource, action)` 훅 — `PermissionProvider` Context 사용
+  - Server Component: `hasPermission(user, resource, action)` 직접 호출
   - 사이드바: `getVisibleMenuItems(user)` — read 권한 없는 메뉴 숨김
   - 프로필(`/profile`): 권한 체크 없이 모든 인증 사용자 접근 가능
   - 대시보드(`/dashboard`): 모든 역할에 기본 포함 (비토글)
+- `(authenticated)/layout.tsx`에서 `<PermissionProvider>`로 모든 인증 페이지를 감쌈
 - SessionUser에 role 정보 포함 (eager-load via `getSessionUser` include: { role: true })
-- UI 차단 + 서버 검증 함께 적용
+- **새 기능 추가 시 UI 권한 체크 필수**: 생성/편집/삭제 버튼을 `usePermission` 또는 `hasPermission`으로 조건부 렌더링
+- UI 차단 + 서버 검증 함께 적용 (UI는 UX용, 서버가 최종 권한)
 
 - 인증 API Routes:
   - `POST /api/auth/login` — 자격 검증, 상태 확인, 동시 로그인 처리, 세션 생성, 쿠키 설정
@@ -98,8 +102,10 @@ src/
 /login                  # 로그인
 /register               # 회원가입 (비인증, 로그인 페이지에서 이동)
 /dashboard              # 대시보드
-/pages                  # 페이지 목록
-/pages/[id]             # 페이지 편집
+/subpages               # 서브 페이지 목록
+/subpages/[id]          # 서브 페이지 상세 (읽기 전용 뷰)
+/subpages/[id]/edit     # 서브 페이지 편집
+/subpages/new           # 서브 페이지 생성
 /boards                 # 게시판 목록
 /posts                  # 게시글 목록
 /navigation             # 메뉴 관리
@@ -120,22 +126,27 @@ src/
 
 ## 기능별 상세 스펙
 
-### 페이지 CRUD
+### 서브 페이지 CRUD
 
-- 제목, slug, SEO title/description, Markdown 본문
+- 제목, slug, SEO title/description, Tiptap 본문
 - draft / published 상태 관리
 - slug: 제목 기반 자동 생성 + 수동 수정
 - `published` 상태 slug 변경 시 경고
 - 대표 이미지 필드
 - 미리보기 제공
 - 본문 편집: Tiptap WYSIWYG 에디터 (Tiptap JSON 저장, 검색용 plain text 동시 저장 — `@simple-cms/editor` 공유 확장 사용)
+- Tiptap 확장: StarterKit, Underline, TextStyle, Color, TextAlign, Highlight, Link, Image(리사이즈 지원), Table, Subscript, Superscript, TaskList
+- **뷰/편집 분리**: `/subpages/[id]` = 읽기 전용 뷰, `/subpages/[id]/edit` = 편집 폼
+- **권한 기반 UI**: 생성(`subpages:create`), 편집(`subpages:update`), 삭제(`subpages:delete`) 버튼을 권한별 표시/숨김
+- API Routes: `GET/POST /api/subpages`, `GET/PATCH/DELETE /api/subpages/[id]` — 모든 핸들러에 `requirePermission()` 적용
+- FSD: `features/subpage-management/`, `pages/subpage-management/`
 
 ### 커스텀 코드 편집
 
-- Markdown 본문, 블록과 별도로 페이지별 커스텀 HTML/CSS 편집 기능
+- Markdown 본문, 블록과 별도로 서브 페이지별 커스텀 HTML/CSS 편집 기능
 - Monaco Editor로 편집, 별도 탭 UI
-- `customHtml`: 페이지 내 지정 위치에 HTML 삽입 (nullable)
-- `customCss`: 페이지 스코프 스타일 적용 (nullable)
+- `customHtml`: 서브 페이지 내 지정 위치에 HTML 삽입 (nullable)
+- `customCss`: 서브 페이지 스코프 스타일 적용 (nullable)
 - JS는 1차 비허용
 - 빈 값이면 무시 (기존 Markdown + 블록만 렌더링)
 - 미리보기에서 커스텀 코드 적용 결과 확인 가능
@@ -166,7 +177,7 @@ src/
 
 - NavigationMenu (메뉴 묶음): Header Main, Footer, Quick Links
 - NavigationMenuItem (메뉴 항목): label, itemType, 연결 대상, parentId, isVisible, displayOrder, openInNewTab, 노출 기간
-- **항목 타입**: PAGE(pageId), BOARD(boardId), EXTERNAL(url), CUSTOM(경로)
+- **항목 타입**: SUBPAGE(subpageId), BOARD(boardId), EXTERNAL(url), CUSTOM(경로)
 - 최대 2depth
 - 연결은 엔티티 참조 방식 우선 (URL 직접 입력 아님)
 - slug 변경 시 메뉴가 깨지지 않는 구조
@@ -175,7 +186,7 @@ src/
 
 ### 메인 페이지 관리
 
-- 일반 서브페이지와 분리된 **섹션 기반 관리**
+- 일반 서브 페이지와 분리된 **섹션 기반 관리**
 - 레이아웃은 코드에서 통제, 운영자는 섹션 데이터+순서 관리
 - 섹션 목록/노출 여부/순서 조정/데이터 편집
 - 상세 섹션 종류는 디자이너 시안 확정 후 구체화
@@ -403,7 +414,7 @@ src/
 | 리소스 키    | 표시명      | 지원 액션                    |
 | ------------ | ----------- | ---------------------------- |
 | `dashboard`  | 대시보드    | read                         |
-| `pages`      | 페이지      | create, read, update, delete |
+| `subpages`   | 서브 페이지 | create, read, update, delete |
 | `boards`     | 게시판      | create, read, update, delete |
 | `posts`      | 게시글      | create, read, update, delete |
 | `navigation` | 메뉴 관리   | create, read, update, delete |
@@ -535,11 +546,11 @@ entities → shared                   ✅
 
 ### 대표 검증 항목
 
-- 페이지/게시글 제목 필수
-- `published` 페이지/게시글은 slug 필수
+- 서브 페이지/게시글 제목 필수
+- `published` 서브 페이지/게시글은 slug 필수
 - 게시판 slug 중복 불가
 - 이미지형 팝업 alt 필수
-- 메뉴 PAGE 타입 → pageId 필수 / BOARD → boardId / EXTERNAL·CUSTOM → url/경로 필수
+- 메뉴 SUBPAGE 타입 → subpageId 필수 / BOARD → boardId / EXTERNAL·CUSTOM → url/경로 필수
 - 팝업 시작일 ≤ 종료일
 - 메뉴 depth 최대 2단계
 - 비공개/미발행 콘텐츠를 메뉴 연결 시 경고/차단

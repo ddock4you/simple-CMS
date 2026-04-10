@@ -38,7 +38,7 @@ import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { Create{Domain}Dto } from '@simple-cms/types';
 
 import { getAuditContext } from '@/shared/lib/auditHelpers';
-import { requirePermission } from '@/shared/lib/requirePermission';
+import { requirePermission } from '@/entities/auth/lib/requirePermission';
 
 import { {domain}Schema } from '@/features/{domain}/model/{domain}.schema';
 
@@ -200,6 +200,14 @@ src/features/{domain}/model/{domain}.schema.ts
 - `entityTitle`은 대상의 title 또는 name 필드 스냅샷
 - 감사 로그 호출은 `try` 블록 내 DB 처리 성공 후에 위치하며, 헬퍼 내부에서 자체 에러 처리
 - 로깅이 불필요한 경우 의도적으로 생략하고 `// 감사 로그 생략: {사유}` 주석 명시
+
+## UI 권한 체크 연동 (필수)
+
+API Route 생성 후 반드시 UI 측 권한 체크도 함께 적용:
+- **Client Component**: `usePermission(resource, action)` 훅으로 생성/편집/삭제 버튼 조건부 렌더링
+- **Server Component**: `hasPermission(user, resource, action)`으로 버튼 조건부 렌더링
+- **상세 페이지**: 뷰(`/[id]`)와 편집(`/[id]/edit`) 분리 — update 권한 시에만 편집 버튼 표시
+- **목록 페이지**: create 권한 없으면 "새로 만들기" 버튼 숨김
 
 ## 참고
 

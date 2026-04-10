@@ -40,6 +40,11 @@ import { pageSchema } from '@/features/{domain}/model/page.schema';
 - 외부에서는 슬라이스 내부 파일을 직접 경로로 import (barrel export 사용하지 않음)
 - 같은 레이어의 다른 feature를 직접 import하지 않음
 - 새 도메인의 API Route가 권한 체크 대상이면 `packages/types`의 `RESOURCE_ACTIONS`에 리소스 등록 필요
+- **권한 체크 필수 (API + UI 양쪽)**:
+  - API Route: 모든 핸들러에 `requirePermission(resource, action)` 호출
+  - Client Component: `usePermission(resource, action)` 훅으로 생성/편집/삭제 버튼 조건부 렌더링
+  - Server Component: `hasPermission(user, resource, action)`으로 버튼 조건부 렌더링
+  - 상세 페이지는 뷰(`/[id]`)와 편집(`/[id]/edit`) 분리 — update 권한 있을 때만 편집 버튼 표시
 
 ## 앱별 차이
 

@@ -5,10 +5,10 @@ import { prisma } from '@simple-cms/db';
 import { StatCard } from '@/shared/ui/layout/StatCard';
 
 export default async function DashboardPage() {
-  const [pageCount, publishedPageCount, boardCount, postCount, publishedPostCount, pendingUserCount] =
+  const [subpageCount, publishedSubpageCount, boardCount, postCount, publishedPostCount, pendingUserCount] =
     await Promise.all([
-      prisma.page.count(),
-      prisma.page.count({ where: { status: 'PUBLISHED' } }),
+      prisma.subpage.count(),
+      prisma.subpage.count({ where: { status: 'PUBLISHED' } }),
       prisma.board.count(),
       prisma.post.count(),
       prisma.post.count({ where: { status: 'PUBLISHED' } }),
@@ -26,9 +26,9 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="페이지"
-          value={pageCount}
-          description={`발행: ${publishedPageCount}`}
+          title="서브 페이지"
+          value={subpageCount}
+          description={`발행: ${publishedSubpageCount}`}
           icon={FileText}
         />
         <StatCard title="게시판" value={boardCount} icon={SquareKanban} />

@@ -46,7 +46,7 @@ enum PageBlockType {
 }
 
 enum NavigationMenuItemType {
-  PAGE
+  SUBPAGE
   BOARD
   EXTERNAL
   CUSTOM
@@ -61,7 +61,7 @@ enum AuditAction {
 }
 
 enum AuditEntityType {
-  PAGE
+  SUBPAGE
   BOARD
   POST
   NAVIGATION_MENU
@@ -140,7 +140,7 @@ model Session {
   @@index([expires])
 }
 
-model Page {
+model Subpage {
   id              String        @id @default(cuid())
   title           String
   slug            String        @unique
@@ -159,7 +159,7 @@ model Page {
 
   featuredImage       Media?               @relation(fields: [featuredImageId], references: [id], onDelete: SetNull)
   blocks              PageBlock[]
-  navigationMenuItems NavigationMenuItem[] @relation("PageMenuItems")
+  navigationMenuItems NavigationMenuItem[] @relation("SubpageMenuItems")
 }
 
 model Board {
@@ -232,7 +232,7 @@ model HomePopup {
 
 model PageBlock {
   id           String        @id @default(cuid())
-  pageId       String
+  subpageId    String
   blockType    PageBlockType
   configJson   Json
   isVisible    Boolean       @default(true)
@@ -240,9 +240,9 @@ model PageBlock {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  subpage Subpage @relation(fields: [subpageId], references: [id], onDelete: Cascade)
 
-  @@index([pageId])
+  @@index([subpageId])
 }
 
 model Media {
@@ -255,8 +255,8 @@ model Media {
   alt              String?
   createdAt        DateTime @default(now())
 
-  pages Page[]
-  posts Post[]
+  subpages Subpage[]
+  posts    Post[]
 }
 
 model NavigationMenu {
@@ -275,7 +275,7 @@ model NavigationMenuItem {
   parentId     String?
   label        String
   itemType     NavigationMenuItemType
-  pageId       String?
+  subpageId    String?
   boardId      String?
   url          String?
   isVisible    Boolean                @default(true)
@@ -289,7 +289,7 @@ model NavigationMenuItem {
   menu     NavigationMenu      @relation(fields: [menuId], references: [id], onDelete: Cascade)
   parent   NavigationMenuItem? @relation("MenuItemChildren", fields: [parentId], references: [id], onDelete: Cascade)
   children NavigationMenuItem[] @relation("MenuItemChildren")
-  page     Page?               @relation("PageMenuItems", fields: [pageId], references: [id], onDelete: SetNull)
+  subpage  Subpage?            @relation("SubpageMenuItems", fields: [subpageId], references: [id], onDelete: SetNull)
   board    Board?              @relation("BoardMenuItems", fields: [boardId], references: [id], onDelete: SetNull)
 
   @@index([menuId])

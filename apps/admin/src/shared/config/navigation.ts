@@ -34,7 +34,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: '콘텐츠',
     items: [
-      { title: '페이지', url: '/pages', icon: FileText, resource: 'pages' },
+      { title: '서브 페이지', url: '/subpages', icon: FileText, resource: 'subpages' },
       { title: '게시판', url: '/boards', icon: SquareKanban, resource: 'boards' },
       { title: '게시글', url: '/posts', icon: PenSquare, resource: 'posts' },
       { title: '메뉴 관리', url: '/navigation', icon: PanelLeft, resource: 'navigation' },

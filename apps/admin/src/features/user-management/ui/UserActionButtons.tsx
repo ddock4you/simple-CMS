@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { UserStatus } from '@simple-cms/db';
 
 import { Button } from '@/shared/ui/button';
+import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,10 +35,13 @@ export function UserActionButtons({
   isSelf,
 }: UserActionButtonsProps) {
   const [open, setOpen] = useState(false);
+  const canUpdate = usePermission('users', 'update');
   const approve = useApproveUser();
   const reject = useRejectUser();
   const suspend = useSuspendUser();
   const reactivate = useReactivateUser();
+
+  if (!canUpdate) return null;
 
   if (status === 'PENDING') {
     return (

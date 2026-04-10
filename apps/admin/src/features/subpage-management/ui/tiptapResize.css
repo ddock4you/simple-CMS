@@ -1,0 +1,63 @@
+/* Tiptap ResizableNodeView styles */
+[data-resize-container] {
+  display: inline-flex;
+}
+
+[data-resize-wrapper] {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+[data-resize-container][data-resize-state="true"] [data-resize-handle],
+[data-resize-container].ProseMirror-selectednode [data-resize-handle] {
+  opacity: 1;
+}
+
+[data-resize-wrapper] img {
+  display: block;
+  max-width: 100%;
+}
+
+[data-resize-handle] {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: white;
+  border: 2px solid #3b82f6;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+}
+
+[data-resize-handle="top-left"] {
+  top: -5px;
+  left: -5px;
+  cursor: nwse-resize;
+}
+
+[data-resize-handle="top-right"] {
+  top: -5px;
+  right: -5px;
+  cursor: nesw-resize;
+}
+
+[data-resize-handle="bottom-left"] {
+  bottom: -5px;
+  left: -5px;
+  cursor: nesw-resize;
+}
+
+[data-resize-handle="bottom-right"] {
+  bottom: -5px;
+  right: -5px;
+  cursor: nwse-resize;
+}
+
+[data-resize-container][data-resize-state="true"] [data-resize-wrapper],
+[data-resize-container].ProseMirror-selectednode [data-resize-wrapper] {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
