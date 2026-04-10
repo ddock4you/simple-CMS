@@ -3,8 +3,8 @@ import { Geist } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 
 import { QueryProvider } from '@/shared/api/QueryProvider';
-import { TooltipProvider } from '@/shared/ui/tooltip';
-import { Toaster } from '@/shared/ui/sonner';
+import { TooltipProvider } from '@/shared/ui/shadcn/tooltip';
+import { Toaster } from '@/shared/ui/shadcn/sonner';
 import { cn } from '@/shared/lib/utils';
 import './globals.css';
 

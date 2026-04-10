@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { UserStatus } from '@simple-cms/db';
 
-import { Button } from '@/shared/ui/button';
+import { Button } from '@/shared/ui/shadcn/button';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import {
   AlertDialog,
@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/shared/ui/alert-dialog';
+} from '@/shared/ui/shadcn/alert-dialog';
 import {
   useApproveUser,
   useRejectUser,

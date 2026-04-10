@@ -1,4 +1,4 @@
-import { Badge } from '@/shared/ui/badge';
+import { Badge } from '@/shared/ui/shadcn/badge';
 
 interface UserRoleBadgeProps {
   role: { name: string; isSystem: boolean } | null;

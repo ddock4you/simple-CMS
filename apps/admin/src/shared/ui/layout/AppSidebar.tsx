@@ -9,7 +9,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/shared/ui/sidebar';
+} from '@/shared/ui/shadcn/sidebar';
 import {
   SidebarMainNav,
   SidebarNavGroups,

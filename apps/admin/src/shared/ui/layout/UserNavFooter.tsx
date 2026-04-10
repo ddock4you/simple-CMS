@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronsUpDown, LogOut, User } from 'lucide-react';
 
 import { logout } from '@/shared/api/authHelpers';
-import { Avatar, AvatarFallback } from '@/shared/ui/avatar';
+import { Avatar, AvatarFallback } from '@/shared/ui/shadcn/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,13 +14,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/shared/ui/dropdown-menu';
+} from '@/shared/ui/shadcn/dropdown-menu';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/shared/ui/sidebar';
+} from '@/shared/ui/shadcn/sidebar';
 
 interface UserNavFooterProps {
   user: {

@@ -4,8 +4,8 @@ import { useEffect, useRef } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { generateSlug } from '@simple-cms/editor';
 
-import { Input } from '@/shared/ui/input';
-import { Label } from '@/shared/ui/label';
+import { Input } from '@/shared/ui/shadcn/input';
+import { Label } from '@/shared/ui/shadcn/label';
 
 interface SlugFieldProps {
   title: string;

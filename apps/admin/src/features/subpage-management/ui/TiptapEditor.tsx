@@ -37,7 +37,7 @@ import {
   type ChangeEvent,
 } from 'react';
 
-import { Button } from '@/shared/ui/button';
+import { Button } from '@/shared/ui/shadcn/button';
 
 interface TiptapEditorProps {
   content: unknown;

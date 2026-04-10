@@ -1,6 +1,6 @@
 import type { ContentStatus } from '@simple-cms/db';
 
-import { Badge } from '@/shared/ui/badge';
+import { Badge } from '@/shared/ui/shadcn/badge';
 
 const STATUS_CONFIG: Record<
   ContentStatus,

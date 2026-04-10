@@ -1,5 +1,5 @@
-import { SidebarTrigger } from '@/shared/ui/sidebar';
-import { Separator } from '@/shared/ui/separator';
+import { SidebarTrigger } from '@/shared/ui/shadcn/sidebar';
+import { Separator } from '@/shared/ui/shadcn/separator';
 import { UserNav } from '@/shared/ui/layout/UserNav';
 
 interface AdminHeaderProps {

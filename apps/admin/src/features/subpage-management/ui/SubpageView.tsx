@@ -6,13 +6,13 @@ import { format } from 'date-fns';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { generateHTML, getSharedExtensions } from '@simple-cms/editor';
 
-import { Button } from '@/shared/ui/button';
+import { Button } from '@/shared/ui/shadcn/button';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/shared/ui/card';
+} from '@/shared/ui/shadcn/card';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
 import { subpageDetailOptions } from '../api/subpageQueries';

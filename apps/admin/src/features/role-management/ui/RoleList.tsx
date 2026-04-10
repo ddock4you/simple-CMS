@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Trash2, Star } from 'lucide-react';
 
-import { Button } from '@/shared/ui/button';
+import { Button } from '@/shared/ui/shadcn/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/shared/ui/alert-dialog';
+} from '@/shared/ui/shadcn/alert-dialog';
 
 import { roleListFullOptions } from '@/features/role-management/api/roleQueries';
 import {

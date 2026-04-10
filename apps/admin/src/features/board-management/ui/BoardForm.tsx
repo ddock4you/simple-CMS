@@ -6,22 +6,22 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft } from 'lucide-react';
 
-import { Button } from '@/shared/ui/button';
-import { Input } from '@/shared/ui/input';
-import { Label } from '@/shared/ui/label';
-import { Textarea } from '@/shared/ui/textarea';
+import { Button } from '@/shared/ui/shadcn/button';
+import { Input } from '@/shared/ui/shadcn/input';
+import { Label } from '@/shared/ui/shadcn/label';
+import { Textarea } from '@/shared/ui/shadcn/textarea';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/shared/ui/card';
+} from '@/shared/ui/shadcn/card';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/select';
+} from '@/shared/ui/shadcn/select';
 
 import type { BoardDetail } from '../model/boardFilters';
 import {

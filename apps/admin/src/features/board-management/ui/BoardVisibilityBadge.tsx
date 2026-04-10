@@ -1,4 +1,4 @@
-import { Badge } from '@/shared/ui/badge';
+import { Badge } from '@/shared/ui/shadcn/badge';
 
 const VISIBILITY_CONFIG: Record<
   'public' | 'private',

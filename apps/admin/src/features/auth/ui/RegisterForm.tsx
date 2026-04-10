@@ -10,16 +10,16 @@ import { toast } from 'sonner';
 import { register as registerUser } from '@/features/auth/api/authFetchers';
 
 import { FetchError } from '@/shared/api/fetchClient';
-import { Button } from '@/shared/ui/button';
-import { Input } from '@/shared/ui/input';
-import { Label } from '@/shared/ui/label';
+import { Button } from '@/shared/ui/shadcn/button';
+import { Input } from '@/shared/ui/shadcn/input';
+import { Label } from '@/shared/ui/shadcn/label';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/shared/ui/card';
+} from '@/shared/ui/shadcn/card';
 import {
   registerSchema,
   type RegisterFormData,

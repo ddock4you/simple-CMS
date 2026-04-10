@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { LogOut, User } from 'lucide-react';
 
 import { logout } from '@/shared/api/authHelpers';
-import { Avatar, AvatarFallback } from '@/shared/ui/avatar';
-import { Button } from '@/shared/ui/button';
+import { Avatar, AvatarFallback } from '@/shared/ui/shadcn/avatar';
+import { Button } from '@/shared/ui/shadcn/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +15,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/shared/ui/dropdown-menu';
+} from '@/shared/ui/shadcn/dropdown-menu';
 
 interface UserNavProps {
   user: {

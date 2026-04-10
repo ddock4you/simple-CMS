@@ -1,6 +1,6 @@
 import type { BoardSkinType } from '@simple-cms/db';
 
-import { Badge } from '@/shared/ui/badge';
+import { Badge } from '@/shared/ui/shadcn/badge';
 
 const SKIN_TYPE_CONFIG: Record<
   BoardSkinType,

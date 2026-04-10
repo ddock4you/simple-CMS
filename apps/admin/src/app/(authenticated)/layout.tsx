@@ -2,7 +2,7 @@ import type { PermissionMap } from '@simple-cms/types';
 
 import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { PermissionProvider } from '@/entities/auth/ui/PermissionProvider';
-import { SidebarProvider, SidebarInset } from '@/shared/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/shared/ui/shadcn/sidebar';
 import { AppSidebar } from '@/shared/ui/layout/AppSidebar';
 import { AdminHeader } from '@/shared/ui/layout/AdminHeader';
 

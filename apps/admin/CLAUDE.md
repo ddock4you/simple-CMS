@@ -471,6 +471,9 @@ src/
 - **1차: shadcn/ui로 임시 구현** → Figma 시안 확정 후 커스텀 UI로 전환
 - shadcn/ui는 Tailwind CSS + Radix UI 기반이므로 기존 스타일링과 충돌 없음
 - shadcn/ui 내장 패턴 활용: Data Table (TanStack Table), Form (react-hook-form + zod), Toast (sonner), Dialog, etc.
+- **shadcn/ui 컴포넌트는 `shared/ui/shadcn/`에서 별도 관리** — 직접 코드 수정 금지, 향후 커스텀 UI와 분리
+  - `components.json`의 `ui` alias가 `@/shared/ui/shadcn`을 가리킴 → `npx shadcn add` 시 자동으로 해당 폴더에 설치
+  - 커스텀 공통 UI는 `shared/ui/` 루트 또는 `shared/ui/layout/` 등 별도 위치에 배치
 - UI 컴포넌트/폼 패턴은 `apps/admin` 내부 레이어에서 관리
 - 운영 효율 + 데이터 입력 흐름 우선
 - 반복 패턴 충분히 생기면 내부 공용 컴포넌트 정리 → 이후에만 분리 검토

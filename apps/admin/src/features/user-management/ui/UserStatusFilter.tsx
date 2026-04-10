@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { Button } from '@/shared/ui/button';
+import { Button } from '@/shared/ui/shadcn/button';
 import type { UserStatusFilter as StatusFilterType } from '@/features/user-management/model/userFilters';
 
 const FILTER_OPTIONS: { value: StatusFilterType; label: string }[] = [

@@ -10,7 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/shared/ui/table';
+} from '@/shared/ui/shadcn/table';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import type { UserListFilters } from '@/features/user-management/model/userFilters';
 import { userListOptions } from '@/features/user-management/api/userQueries';

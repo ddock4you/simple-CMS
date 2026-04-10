@@ -11,7 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/shared/ui/sidebar';
+} from '@/shared/ui/shadcn/sidebar';
 
 function isActive(pathname: string | null, url: string): boolean {
   if (!pathname) return false;

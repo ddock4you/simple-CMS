@@ -1,4 +1,4 @@
-import { Badge } from '@/shared/ui/badge';
+import { Badge } from '@/shared/ui/shadcn/badge';
 
 export function SystemBadge() {
   return <Badge variant="destructive">시스템</Badge>;
