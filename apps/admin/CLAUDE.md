@@ -194,14 +194,18 @@ src/
 
 ### 메뉴 관리
 
-- NavigationMenu (메뉴 묶음): Header Main, Footer, Quick Links
-- NavigationMenuItem (메뉴 항목): label, itemType, 연결 대상, parentId, isVisible, displayOrder, openInNewTab, 노출 기간
+- NavigationMenu (메뉴 묶음): Header Main, Footer, Quick Links (시드 데이터)
+- NavigationMenuItem (메뉴 항목): label, itemType, 연결 대상, parentId, isVisible, displayOrder, openInNewTab, 노출 기간(startDate/endDate)
 - **항목 타입**: SUBPAGE(subpageId), BOARD(boardId), EXTERNAL(url), CUSTOM(경로)
-- 최대 2depth
-- 연결은 엔티티 참조 방식 우선 (URL 직접 입력 아님)
-- slug 변경 시 메뉴가 깨지지 않는 구조
-- 메뉴명: 연결 시 자동 입력, 이후 수동 수정 가능
-- 미리보기 제공
+- 최대 2depth (parentId 자기참조, 2단계 이상 서버 차단)
+- 연결은 엔티티 참조 방식 우선 (URL 직접 입력 아님), slug 변경 시 메뉴 안 깨짐
+- 메뉴명: 엔티티 연결 시 label 자동 채움, 이후 수동 수정 가능
+- dnd-kit으로 같은 부모 내 드래그&드롭 순서 변경
+- UI: `/navigation` = 카드형 메뉴 세트 목록, `/navigation/[menuId]` = 트리 편집 + 항목 Dialog
+- **권한 기반 UI**: 생성(`navigation:create`), 편집(`navigation:update`), 삭제(`navigation:delete`)
+- API Routes: `GET/POST /api/navigation`, `GET/PATCH/DELETE /api/navigation/[menuId]`, `POST /api/navigation/[menuId]/items`, `PATCH/DELETE /api/navigation/[menuId]/items/[itemId]`, `PATCH /api/navigation/[menuId]/reorder`
+- FSD: `features/navigation-management/`, `pages/navigation-management/`
+- 미리보기: 2차 범위
 
 ### 메인 페이지 관리
 

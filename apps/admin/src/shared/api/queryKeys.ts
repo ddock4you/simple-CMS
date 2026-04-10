@@ -30,3 +30,9 @@ export const postKeys = {
   list: (filters: unknown) => [...postKeys.lists(), filters] as const,
   detail: (id: string) => [...postKeys.all, 'detail', id] as const,
 };
+
+export const navigationKeys = {
+  all: ['navigation'] as const,
+  lists: () => [...navigationKeys.all, 'list'] as const,
+  detail: (menuId: string) => [...navigationKeys.all, 'detail', menuId] as const,
+};

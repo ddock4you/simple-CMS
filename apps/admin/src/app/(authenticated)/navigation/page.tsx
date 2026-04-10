@@ -1,8 +1,3 @@
-export default function NavigationPage() {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">메뉴 관리</h1>
-      <p className="text-muted-foreground">이 기능은 준비 중입니다.</p>
-    </div>
-  );
-}
+import NavigationListPage from '@/pages/navigation-management/ui/NavigationListPage';
+
+export default NavigationListPage;

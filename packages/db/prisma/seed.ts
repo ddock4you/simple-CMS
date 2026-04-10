@@ -100,6 +100,22 @@ async function main() {
   });
   console.log('✓ SiteSettings: CONCURRENT_LOGIN_ENABLED = true');
 
+  // 5. Default NavigationMenu sets
+  const menuSets = [
+    { name: 'Header Main', description: '헤더 메인 네비게이션' },
+    { name: 'Footer', description: '푸터 네비게이션' },
+    { name: 'Quick Links', description: '빠른 링크 모음' },
+  ];
+
+  for (const menu of menuSets) {
+    const created = await prisma.navigationMenu.upsert({
+      where: { name: menu.name },
+      update: {},
+      create: menu,
+    });
+    console.log(`✓ NavigationMenu: ${created.name}`);
+  }
+
   console.log('\nSeed completed successfully.');
 }
 
