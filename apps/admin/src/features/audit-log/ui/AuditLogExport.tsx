@@ -8,9 +8,17 @@ import { Button } from '@/shared/ui/shadcn/button';
 
 import { DatePicker } from './DatePicker';
 
+function getDefaultDateRange() {
+  const to = new Date();
+  const from = new Date();
+  from.setMonth(from.getMonth() - 1);
+  return { from, to };
+}
+
 export function AuditLogExport() {
-  const [from, setFrom] = useState<Date | undefined>();
-  const [to, setTo] = useState<Date | undefined>();
+  const defaults = getDefaultDateRange();
+  const [from, setFrom] = useState<Date | undefined>(defaults.from);
+  const [to, setTo] = useState<Date | undefined>(defaults.to);
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {
