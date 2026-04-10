@@ -111,6 +111,9 @@ src/
 /boards/[id]/edit       # 게시판 편집
 /boards/new             # 게시판 생성
 /posts                  # 게시글 목록
+/posts/[id]             # 게시글 상세 (읽기 전용 뷰)
+/posts/[id]/edit        # 게시글 편집
+/posts/new              # 게시글 생성
 /navigation             # 메뉴 관리
 /navigation/[menuId]    # 메뉴 세트 편집
 /home                   # 메인 페이지 관리
@@ -177,10 +180,17 @@ src/
 
 ### 게시글 CRUD
 
-- 제목, 본문(Tiptap JSON), 대표 이미지, 게시판 소속
-- draft / published 상태
-- 발행일 관리
-- slug: 게시판 단위 unique (`boardSlug + postSlug`)
+- 제목, 본문(Tiptap JSON), 게시판 소속, 작성자(자동 설정)
+- draft / published 상태, 발행일 관리
+- slug: 게시판 단위 unique (`@@unique([boardId, slug])`)
+- 게시판 변경 허용 (편집 시 다른 게시판으로 이동 가능)
+- 목록 필터: 상태(전체/초안/발행) + 게시판(Select 드롭다운)
+- 대표 이미지: Media 관리 구현 후 연동 예정 (1차 생략)
+- **뷰/편집 분리**: `/posts/[id]` = 읽기 전용 뷰, `/posts/[id]/edit` = 편집 폼
+- **권한 기반 UI**: 생성(`posts:create`), 편집(`posts:update`), 삭제(`posts:delete`) 버튼을 권한별 표시/숨김
+- API Routes: `GET/POST /api/posts`, `GET/PATCH/DELETE /api/posts/[id]` — 모든 핸들러에 `requirePermission()` 적용
+- FSD: `features/post-management/`, `pages/post-management/`
+- TiptapEditor: `shared/ui/TiptapEditor.tsx` (subpage와 공유)
 
 ### 메뉴 관리
 

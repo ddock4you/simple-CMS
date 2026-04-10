@@ -1,8 +1,3 @@
-export default function PostsPage() {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">게시글</h1>
-      <p className="text-muted-foreground">이 기능은 준비 중입니다.</p>
-    </div>
-  );
-}
+import PostsListPage from '@/pages/post-management/ui/PostsListPage';
+
+export default PostsListPage;

@@ -4,12 +4,12 @@ import { useCallback } from 'react';
 import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 
 import { Button } from '@/shared/ui/shadcn/button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
-import { Textarea } from '@/shared/ui/shadcn/textarea';
 import {
   Card,
   CardContent,
@@ -22,35 +22,38 @@ import {
   SelectItem,
   SelectTrigger,
 } from '@/shared/ui/shadcn/select';
-
-import type { SubpageDetail } from '../model/subpageFilters';
-import {
-  createSubpageSchema,
-  updateSubpageSchema,
-  type CreateSubpageData,
-  type UpdateSubpageData,
-} from '../model/subpageSchemas';
-import {
-  useCreateSubpage,
-  useUpdateSubpage,
-  useDeleteSubpage,
-} from '../api/useSubpageMutations';
 import { TiptapEditor } from '@/shared/ui/TiptapEditor';
-import { SlugField } from './SlugField';
-import { DeleteSubpageDialog } from './DeleteSubpageDialog';
 
-interface SubpageFormProps {
+import type { PostDetail } from '../model/postFilters';
+import {
+  createPostSchema,
+  updatePostSchema,
+  type CreatePostData,
+  type UpdatePostData,
+} from '../model/postSchemas';
+import {
+  useCreatePost,
+  useUpdatePost,
+  useDeletePost,
+} from '../api/usePostMutations';
+import { boardOptionsQuery } from '../api/postQueries';
+import { SlugField } from './SlugField';
+import { DeletePostDialog } from './DeletePostDialog';
+
+interface PostFormProps {
   mode: 'create' | 'edit';
-  initialData?: SubpageDetail;
+  initialData?: PostDetail;
+  defaultBoardId?: string;
 }
 
-export function SubpageForm({ mode, initialData }: SubpageFormProps) {
-  const createMutation = useCreateSubpage();
-  const updateMutation = useUpdateSubpage(initialData?.id ?? '');
-  const deleteMutation = useDeleteSubpage();
+export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
+  const createMutation = useCreatePost();
+  const updateMutation = useUpdatePost(initialData?.id ?? '');
+  const deleteMutation = useDeletePost();
+  const { data: boards } = useQuery(boardOptionsQuery());
 
   const isCreate = mode === 'create';
-  const schema = isCreate ? createSubpageSchema : updateSubpageSchema;
+  const schema = isCreate ? createPostSchema : updatePostSchema;
 
   const {
     register,
@@ -59,13 +62,12 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
     watch,
     setValue,
     formState: { errors, isDirty },
-  } = useForm<CreateSubpageData | UpdateSubpageData>({
+  } = useForm<CreatePostData | UpdatePostData>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: initialData?.title ?? '',
       slug: initialData?.slug ?? '',
-      seoTitle: initialData?.seoTitle ?? '',
-      seoDescription: initialData?.seoDescription ?? '',
+      boardId: initialData?.boardId ?? defaultBoardId ?? '',
       contentJson: initialData?.contentJson ?? undefined,
       status: initialData?.status ?? 'DRAFT',
     },
@@ -81,11 +83,11 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
     [setValue],
   );
 
-  const onSubmit = (data: CreateSubpageData | UpdateSubpageData) => {
+  const onSubmit = (data: CreatePostData | UpdatePostData) => {
     if (isCreate) {
-      createMutation.mutate(data as CreateSubpageData);
+      createMutation.mutate(data as CreatePostData);
     } else {
-      updateMutation.mutate(data as UpdateSubpageData);
+      updateMutation.mutate(data as UpdatePostData);
     }
   };
 
@@ -99,18 +101,18 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
             variant="ghost"
             size="sm"
             nativeButton={false}
-            render={<Link href="/subpages" />}
+            render={<Link href="/posts" />}
           >
             <ArrowLeft className="size-4" />
             목록으로
           </Button>
           <h1 className="text-2xl font-bold">
-            {isCreate ? '새 서브 페이지' : '서브 페이지 편집'}
+            {isCreate ? '새 게시글' : '게시글 편집'}
           </h1>
         </div>
         <div className="flex items-center gap-2">
           {!isCreate && initialData && (
-            <DeleteSubpageDialog
+            <DeletePostDialog
               title={initialData.title}
               isPending={deleteMutation.isPending}
               onConfirm={() => deleteMutation.mutate(initialData.id)}
@@ -134,7 +136,7 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
                 <Input
                   id="title"
                   {...register('title')}
-                  placeholder="서브 페이지 제목"
+                  placeholder="게시글 제목"
                 />
                 {errors.title && (
                   <p className="text-sm text-destructive">
@@ -155,6 +157,38 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
                   {errors.slug.message}
                 </p>
               )}
+
+              <div className="space-y-2">
+                <Label>게시판</Label>
+                <Controller
+                  name="boardId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger>
+                        <span>
+                          {boards?.find((b) => b.id === field.value)?.name ?? '게시판 선택'}
+                        </span>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {boards?.map((board) => (
+                          <SelectItem key={board.id} value={board.id}>
+                            {board.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.boardId && (
+                  <p className="text-sm text-destructive">
+                    {errors.boardId.message}
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -169,9 +203,7 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
                 render={({ field }) => (
                   <TiptapEditor
                     content={field.value}
-                    onChange={(json) =>
-                      field.onChange(json)
-                    }
+                    onChange={(json) => field.onChange(json)}
                   />
                 )}
               />
@@ -211,30 +243,18 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>SEO</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="seoTitle">SEO 제목</Label>
-                <Input
-                  id="seoTitle"
-                  {...register('seoTitle')}
-                  placeholder="검색 결과에 표시될 제목"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="seoDescription">SEO 설명</Label>
-                <Textarea
-                  id="seoDescription"
-                  {...register('seoDescription')}
-                  placeholder="검색 결과에 표시될 설명"
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          {!isCreate && initialData?.authorName && (
+            <Card>
+              <CardHeader>
+                <CardTitle>작성자</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  {initialData.authorName}
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </form>

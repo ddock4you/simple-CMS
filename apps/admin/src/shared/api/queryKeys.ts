@@ -21,4 +21,12 @@ export const boardKeys = {
   lists: () => [...boardKeys.all, 'list'] as const,
   list: (filters: unknown) => [...boardKeys.lists(), filters] as const,
   detail: (id: string) => [...boardKeys.all, 'detail', id] as const,
+  options: () => [...boardKeys.all, 'options'] as const,
+};
+
+export const postKeys = {
+  all: ['posts'] as const,
+  lists: () => [...postKeys.all, 'list'] as const,
+  list: (filters: unknown) => [...postKeys.lists(), filters] as const,
+  detail: (id: string) => [...postKeys.all, 'detail', id] as const,
 };
