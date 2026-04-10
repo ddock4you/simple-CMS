@@ -15,3 +15,10 @@ export const subpageKeys = {
   list: (filters: unknown) => [...subpageKeys.lists(), filters] as const,
   detail: (id: string) => [...subpageKeys.all, 'detail', id] as const,
 };
+
+export const boardKeys = {
+  all: ['boards'] as const,
+  lists: () => [...boardKeys.all, 'list'] as const,
+  list: (filters: unknown) => [...boardKeys.lists(), filters] as const,
+  detail: (id: string) => [...boardKeys.all, 'detail', id] as const,
+};

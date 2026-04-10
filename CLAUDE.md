@@ -191,7 +191,7 @@ workspace/
 
 ### admin
 
-`/login`, `/register`, `/dashboard`, `/subpages`, `/subpages/[id]`, `/boards`, `/posts`,
+`/login`, `/register`, `/dashboard`, `/subpages`, `/subpages/[id]`, `/boards`, `/boards/[id]`, `/posts`,
 `/navigation`, `/navigation/[menuId]`, `/home`, `/home/popups`,
 `/users`, `/profile`,
 `/error-logs`, `/error-logs/[id]`,
@@ -245,7 +245,7 @@ workspace/
 | 단계 | 내용                                             | 확인 가능한 것                      | 상태 |
 | ---- | ------------------------------------------------ | ----------------------------------- | ---- |
 | 3a   | 서브 페이지 CRUD API + **목록/뷰/편집 UI** (Tiptap) + 권한 체크 | 서브 페이지 CRUD + 뷰/편집 분리 + 클라이언트 권한 체크 패턴 도입 | **완료** |
-| 3b   | 게시판 CRUD API + **게시판 관리 UI**             | 게시판 생성 → 스킨 설정 → 목록 확인 | 대기 |
+| 3b   | 게시판 CRUD API + **게시판 관리 UI**             | 게시판 생성 → 스킨 설정 → 목록 확인 | **완료** |
 | 3c   | 게시글 CRUD API + **목록/편집 UI**               | 게시글 작성 → 발행 → 목록 확인      | 대기 |
 | 3d   | 메뉴 관리 API + **메뉴 편집 UI** (dnd-kit)       | 메뉴 항목 추가 → 드래그 순서 변경   | 대기 |
 | 3e   | 감사 로그 API + **감사 로그 UI** + 내보내기      | 활동 이력 조회 → CSV/Excel 다운로드 | 대기 |

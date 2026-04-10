@@ -107,6 +107,9 @@ src/
 /subpages/[id]/edit     # 서브 페이지 편집
 /subpages/new           # 서브 페이지 생성
 /boards                 # 게시판 목록
+/boards/[id]            # 게시판 상세 (읽기 전용 뷰)
+/boards/[id]/edit       # 게시판 편집
+/boards/new             # 게시판 생성
 /posts                  # 게시글 목록
 /navigation             # 메뉴 관리
 /navigation/[menuId]    # 메뉴 세트 편집
@@ -162,9 +165,15 @@ src/
 
 ### 게시판 CRUD
 
-- 이름, slug, 설명, 스킨 타입(list/gallery), 공개 여부
-- slug 중복 불가
-- 삭제 시 소속 게시글 존재 여부 확인 → 있으면 차단/선행 정리
+- 이름, slug, 설명, 스킨 타입(LIST/GALLERY), 공개 여부
+- slug: 이름 기반 자동 생성 + 수동 수정, 중복 불가
+- 공개 게시판 slug 변경 시 경고
+- 삭제 시 소속 게시글 존재 여부 + 메뉴 참조 확인 → 있으면 차단 (앱 레벨 참조 무결성)
+- 목록 필터: 공개 여부 (전체/공개/비공개)
+- **뷰/편집 분리**: `/boards/[id]` = 읽기 전용 뷰, `/boards/[id]/edit` = 편집 폼
+- **권한 기반 UI**: 생성(`boards:create`), 편집(`boards:update`), 삭제(`boards:delete`) 버튼을 권한별 표시/숨김
+- API Routes: `GET/POST /api/boards`, `GET/PATCH/DELETE /api/boards/[id]` — 모든 핸들러에 `requirePermission()` 적용
+- FSD: `features/board-management/`, `pages/board-management/`
 
 ### 게시글 CRUD
 
