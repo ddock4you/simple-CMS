@@ -21,8 +21,14 @@ Prisma + PostgreSQL, PGroonga 한글 검색, KRDS 기반 공개 웹 UI, 제한�
 ```
 workspace/
 ├── apps/
-│   ├── admin/          # 관리자 CMS (BFF + CRUD + 인증)
-│   └── web/            # 공개 웹 (SSR + SEO + 검색)
+│   ├── admin/
+│   │   ├── app/        # Next.js App Router (루트에 배치)
+│   │   ├── pages/      # Pages Router placeholder (README.md만)
+│   │   └── src/        # FSD 레이어 (pages, features, entities, shared)
+│   └── web/
+│       ├── app/        # Next.js App Router (루트에 배치)
+│       ├── pages/      # Pages Router placeholder (README.md만)
+│       └── src/        # FSD 레이어 (pages, widgets, features, entities, shared)
 ├── packages/
 │   ├── db/             # Prisma schema, client, query helper
 │   ├── editor/         # Tiptap 공유 확장 정의, 콘텐츠 CSS
@@ -274,7 +280,7 @@ apps/{앱}/
 
 | 단계 | 내용                                       | 확인 가능한 것                           | 상태 |
 | ---- | ------------------------------------------ | ---------------------------------------- | ---- |
-| 4a   | Web 메인+서브페이지 렌더링 + KRDS 레이아웃 | admin에서 만든 서브 페이지가 공개 웹에 표시 | 대기 |
+| 4a   | Web 메인+서브페이지 렌더링 + KRDS 레이아웃 | admin에서 만든 서브 페이지가 공개 웹에 표시 | **완료** |
 | 4b   | Web 게시판/게시글 렌더링                   | 발행한 게시글이 공개 웹에 노출           | 대기 |
 | 4c   | Web 메뉴 렌더링 + 도메인 미들웨어          | 헤더/푸터 메뉴, 커스텀 도메인 리다이렉트 | 대기 |
 | 4d   | Web 통합검색 (PGroonga)                    | `/search?q=검색어`로 검색 결과 확인      | 대기 |
@@ -449,7 +455,9 @@ shared/lib/
 | 공유 에디터 설정         | @simple-cms/editor                                 | 전체                | Tiptap 확장 정의, 콘텐츠 CSS, 텍스트 추출 유틸                                                                    |
 | 코드 에디터              | Monaco Editor                                      | admin               | 커스텀 HTML/CSS 편집용 (@monaco-editor/react)                                                                     |
 | CSS (admin)              | Tailwind CSS                                       | admin               | shadcn/ui 기반                                                                                                    |
-| CSS (web)                | KRDS 기반                                          | web                 | 확정                                                                                                              |
+| UI 프레임워크 (web)      | krds-react                                         | web                 | 공식 KRDS React 컴포넌트 (Header, Footer, Masthead, SkipLink 등) + CSS 디자인 토큰                               |
+| HTML 새니타이징          | isomorphic-dompurify                               | web                 | SSR 호환 DOMPurify, Tiptap HTML 새니타이징                                                                        |
+| CSS (web)                | KRDS 기반 (krds-react/dist/index.css)              | web                 | krds-react CSS 토큰 + 커스텀 CSS (Tiptap 콘텐츠 등)                                                              |
 | 날짜 처리                | date-fns                                           | 전체                | tree-shaking 친화적 (함수 단위 import)                                                                            |
 | 아이콘                   | lucide-react                                       | 전체                | shadcn/ui 기본 아이콘, 개별 import 최적화                                                                         |
 | 데이터 페칭 (클라이언트) | TanStack Query                                     | admin               | Key Factory + queryOptions 패턴, @tanstack/eslint-plugin-query 활용                                               |
