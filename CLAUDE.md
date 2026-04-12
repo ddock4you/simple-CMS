@@ -55,6 +55,25 @@ workspace/
 - `widgets`는 필요 시에만 도입
 - 내부 운영도구 특성상 과도한 계층화 피함
 
+### Next.js Pages Router 충돌 방지
+
+Next.js는 `src/pages/`를 Pages Router로 자동 인식하여 FSD pages 레이어와 충돌한다.
+이를 해결하기 위해 각 앱에서 다음 구조를 사용한다:
+
+```
+apps/{앱}/
+├── app/              # Next.js App Router (src/app/ → 루트로 이동)
+├── pages/            # Pages Router placeholder (README.md만)
+│   └── README.md
+├── src/
+│   ├── pages/        # FSD pages 레이어 (원래 이름 유지)
+│   └── ...
+```
+
+- `app/`과 `pages/`를 모두 앱 루트에 배치하여 "same folder" 제약 충족
+- Next.js가 루트 `pages/`를 Pages Router로 인식 → `src/pages/`는 일반 디렉토리
+- 참고: https://feature-sliced.design/kr/docs/guides/tech/with-nextjs
+
 ## 도메인 모델
 
 | 모델                   | 설명                                                                                  |

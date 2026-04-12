@@ -27,9 +27,10 @@ admin의 서버 로직이 BFF를 담당한다 (**admin 자체 UI 전용**, web�
 ## FSD 구조 (경량)
 
 ```
+app/              # Next.js App Router (루트에 배치)
+pages/            # Pages Router placeholder (README.md만)
 src/
-├── app/          # Next.js App Router 라우팅
-├── pages/        # FSD pages 레이어 (화면 단위 운영 UI)
+├── pages/        # FSD pages 레이어
 ├── features/     # 기능 단위 폼/액션
 ├── entities/     # 도메인 엔티티 관련 로직
 └── shared/       # 공용 유틸, UI 기본 컴포넌트
@@ -37,6 +38,11 @@ src/
 
 - `widgets`는 필요 시에만 도입
 - 페이지 단위 운영 화면 + 기능 단위 폼/액션 중심
+
+> **Next.js Pages Router 충돌 방지**:
+> `app/`과 `pages/`를 앱 루트에 배치하여 "same folder" 제약을 충족하고,
+> `src/pages/`를 FSD pages 레이어로 안전하게 사용한다.
+> 참고: https://feature-sliced.design/kr/docs/guides/tech/with-nextjs
 
 ## 인증 / 권한
 

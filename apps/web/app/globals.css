@@ -1,0 +1,389 @@
+/* ==========================================================================
+   1. 기본 리셋 + 폰트
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family:
+    'Pretendard Variable',
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    Roboto,
+    'Helvetica Neue',
+    'Segoe UI',
+    'Apple SD Gothic Neo',
+    'Noto Sans KR',
+    'Malgun Gothic',
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol',
+    sans-serif;
+  line-height: 1.6;
+  color: #333;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   2. 페이지 레이아웃 보조
+   ========================================================================== */
+
+.page-container {
+  max-width: var(--content-max-width, 1200px);
+  margin: 0 auto;
+  padding: 0 var(--screen-margin-desktop, 24px);
+}
+
+@media (max-width: 767px) {
+  .page-container {
+    padding: 0 var(--screen-margin-mobile, 16px);
+  }
+}
+
+/* ==========================================================================
+   3. Tiptap 콘텐츠 (.tiptap-content 스코프)
+   ========================================================================== */
+
+.tiptap-content {
+  line-height: 1.8;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* 제목 */
+.tiptap-content h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 2rem 0 1rem;
+  line-height: 1.3;
+}
+
+.tiptap-content h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+  line-height: 1.35;
+}
+
+.tiptap-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+  line-height: 1.4;
+}
+
+/* 본문 */
+.tiptap-content p {
+  margin: 0.75rem 0;
+}
+
+.tiptap-content p:first-child,
+.tiptap-content h1:first-child,
+.tiptap-content h2:first-child,
+.tiptap-content h3:first-child {
+  margin-top: 0;
+}
+
+/* 링크 */
+.tiptap-content a {
+  color: var(--krds-color-light-primary-50, #0056d6);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tiptap-content a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* 리스트 */
+.tiptap-content ul,
+.tiptap-content ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.tiptap-content li {
+  margin: 0.25rem 0;
+}
+
+.tiptap-content li > ul,
+.tiptap-content li > ol {
+  margin: 0.25rem 0;
+}
+
+/* 인용 */
+.tiptap-content blockquote {
+  border-left: 4px solid var(--krds-color-light-primary-50, #0056d6);
+  padding: 0.5rem 1rem;
+  margin: 1rem 0;
+  color: #555;
+  background: #f8f9fa;
+}
+
+/* 코드 */
+.tiptap-content code {
+  background: #f1f3f5;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+.tiptap-content pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.tiptap-content pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  font-size: 0.875rem;
+}
+
+/* 구분선 */
+.tiptap-content hr {
+  border: none;
+  border-top: 1px solid #dee2e6;
+  margin: 1.5rem 0;
+}
+
+/* 이미지 */
+.tiptap-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* 테이블 */
+.tiptap-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  overflow-x: auto;
+  display: block;
+}
+
+.tiptap-content th,
+.tiptap-content td {
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.tiptap-content th {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+
+/* 하이라이트 */
+.tiptap-content mark {
+  background-color: #fff3bf;
+  padding: 0.1rem 0.2rem;
+  border-radius: 2px;
+}
+
+/* 취소선, 밑줄, 위첨자, 아래첨자 */
+.tiptap-content s {
+  text-decoration: line-through;
+}
+
+.tiptap-content u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* 체크리스트 (Task List) */
+.tiptap-content ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap-content ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.tiptap-content ul[data-type='taskList'] li > label {
+  flex-shrink: 0;
+  margin-top: 0.3rem;
+}
+
+.tiptap-content ul[data-type='taskList'] li > div {
+  flex: 1;
+}
+
+/* 텍스트 정렬 */
+.tiptap-content [style*='text-align: center'] {
+  text-align: center;
+}
+
+.tiptap-content [style*='text-align: right'] {
+  text-align: right;
+}
+
+.tiptap-content [style*='text-align: justify'] {
+  text-align: justify;
+}
+
+/* ==========================================================================
+   4. 홈 페이지
+   ========================================================================== */
+
+.hero-section {
+  padding: var(--gap-10, 64px) 0 var(--gap-8, 40px);
+  text-align: center;
+}
+
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: var(--gap-4, 16px);
+  color: var(--krds-color-light-primary-50, #0056d6);
+}
+
+.hero-description {
+  font-size: 1.125rem;
+  color: #666;
+}
+
+.recent-section {
+  padding: var(--gap-8, 40px) 0;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--gap-6, 24px);
+  padding-bottom: var(--gap-3, 12px);
+  border-bottom: 2px solid var(--krds-color-light-primary-50, #0056d6);
+}
+
+.subpage-list {
+  list-style: none;
+  padding: 0;
+}
+
+.subpage-item {
+  border-bottom: 1px solid #eee;
+}
+
+.subpage-link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-1, 4px);
+  padding: var(--gap-4, 16px) 0;
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.15s;
+}
+
+.subpage-link:hover {
+  background-color: #f8f9fa;
+}
+
+.subpage-item-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.subpage-item-desc {
+  font-size: 0.875rem;
+  color: #888;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subpage-item-date {
+  font-size: 0.8125rem;
+  color: #999;
+}
+
+.empty-message {
+  text-align: center;
+  color: #999;
+  padding: var(--gap-8, 40px) 0;
+}
+
+/* ==========================================================================
+   5. 서브페이지
+   ========================================================================== */
+
+.subpage-article {
+  padding: var(--gap-8, 40px) 0;
+}
+
+.subpage-header {
+  margin-bottom: var(--gap-7, 32px);
+  padding-bottom: var(--gap-5, 20px);
+  border-bottom: 1px solid #eee;
+}
+
+.subpage-title {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: var(--gap-3, 12px);
+}
+
+.subpage-date {
+  font-size: 0.875rem;
+  color: #888;
+}
+
+.empty-content {
+  text-align: center;
+  color: #999;
+  padding: var(--gap-8, 40px) 0;
+}
+
+/* ==========================================================================
+   6. 404 페이지
+   ========================================================================== */
+
+.not-found {
+  text-align: center;
+  padding: var(--gap-10, 64px) 0;
+}
+
+.not-found-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: var(--gap-4, 16px);
+}
+
+.not-found-description {
+  color: #666;
+  margin-bottom: var(--gap-6, 24px);
+}
+
+.not-found-link {
+  display: inline-block;
+  padding: var(--gap-3, 12px) var(--gap-6, 24px);
+  background: var(--krds-color-light-primary-50, #0056d6);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.not-found-link:hover {
+  opacity: 0.9;
+}

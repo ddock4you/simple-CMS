@@ -13,8 +13,9 @@ KRDS 기반 UI를 사용하고, Storybook으로 문서화한다.
 ## FSD 구조 (정석)
 
 ```
+app/              # Next.js App Router (루트에 배치)
+pages/            # Pages Router placeholder (README.md만)
 src/
-├── app/          # FSD app 레이어
 ├── pages/        # FSD pages 레이어
 ├── widgets/      # 조합형 UI 블록
 ├── features/     # 기능 단위 로직
@@ -22,8 +23,13 @@ src/
 └── shared/       # 공용 유틸, UI 기본 컴포넌트
 ```
 
-루트 `app/` 디렉토리는 Next.js App Router 라우팅 전용.
+루트 `app/`은 Next.js App Router 라우팅 전용.
 실제 FSD 레이어는 `src/` 아래 구성.
+
+> **Next.js Pages Router 충돌 방지**:
+> `app/`과 `pages/`를 앱 루트에 배치하여 "same folder" 제약을 충족하고,
+> `src/pages/`를 FSD pages 레이어로 안전하게 사용한다.
+> 참고: https://feature-sliced.design/kr/docs/guides/tech/with-nextjs
 
 ## 라우팅
 
@@ -184,7 +190,7 @@ src/
 ## FSD 레이어 의존성 규칙
 
 ```
-pages → widgets, features, entities, shared  ✅
+pages → widgets, features, entities, shared   ✅
 widgets → features, entities, shared         ✅
 features → entities, shared                  ✅
 entities → shared                            ✅
