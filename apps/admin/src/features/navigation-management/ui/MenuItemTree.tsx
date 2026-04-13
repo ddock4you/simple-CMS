@@ -72,7 +72,7 @@ export function MenuItemTree({ menuId, items }: MenuItemTreeProps) {
 
       const siblings = activeParent === null
         ? items
-        : items.find((i) => i.id === activeParent)?.children ?? [];
+        : findItem(items, activeParent)?.children ?? [];
 
       const oldIndex = siblings.findIndex((i) => i.id === active.id);
       const newIndex = siblings.findIndex((i) => i.id === over.id);
@@ -190,18 +190,42 @@ export function MenuItemTree({ menuId, items }: MenuItemTreeProps) {
                     >
                       <div className="mt-1 space-y-1">
                         {item.children.map((child) => (
-                          <SortableMenuItem
-                            key={child.id}
-                            item={child}
-                            depth={1}
-                            canCreate={false}
-                            canUpdate={canUpdate}
-                            canDelete={canDelete}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            onToggleVisibility={handleToggleVisibility}
-                            onAddChild={() => {}}
-                          />
+                          <div key={child.id}>
+                            <SortableMenuItem
+                              item={child}
+                              depth={1}
+                              canCreate={canCreate}
+                              canUpdate={canUpdate}
+                              canDelete={canDelete}
+                              onEdit={handleEdit}
+                              onDelete={handleDelete}
+                              onToggleVisibility={handleToggleVisibility}
+                              onAddChild={handleAddChild}
+                            />
+                            {child.children.length > 0 && (
+                              <SortableContext
+                                items={child.children.map((gc) => gc.id)}
+                                strategy={verticalListSortingStrategy}
+                              >
+                                <div className="mt-1 space-y-1">
+                                  {child.children.map((grandchild) => (
+                                    <SortableMenuItem
+                                      key={grandchild.id}
+                                      item={grandchild}
+                                      depth={2}
+                                      canCreate={false}
+                                      canUpdate={canUpdate}
+                                      canDelete={canDelete}
+                                      onEdit={handleEdit}
+                                      onDelete={handleDelete}
+                                      onToggleVisibility={handleToggleVisibility}
+                                      onAddChild={() => {}}
+                                    />
+                                  ))}
+                                </div>
+                              </SortableContext>
+                            )}
+                          </div>
                         ))}
                       </div>
                     </SortableContext>

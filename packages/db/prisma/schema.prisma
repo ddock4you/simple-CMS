@@ -45,6 +45,12 @@ enum PageBlockType {
   IFRAME
 }
 
+enum NavigationMenuSlot {
+  HEADER
+  FOOTER
+  SIDEBAR
+}
+
 enum NavigationMenuItemType {
   SUBPAGE
   BOARD
@@ -260,11 +266,12 @@ model Media {
 }
 
 model NavigationMenu {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String               @id @default(cuid())
+  name        String               @unique
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  slots       NavigationMenuSlot[] @default([])
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 
   items NavigationMenuItem[]
 }

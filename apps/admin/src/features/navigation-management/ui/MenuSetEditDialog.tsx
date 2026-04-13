@@ -1,7 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Settings } from 'lucide-react';
 
 import { Button } from '@/shared/ui/shadcn/button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
@@ -17,15 +19,30 @@ import {
   DialogTrigger,
 } from '@/shared/ui/shadcn/dialog';
 
+import type { NavigationMenuSlot } from '@simple-cms/db';
+
 import {
-  createMenuSchema,
-  type CreateMenuData,
+  updateMenuSchema,
+  type UpdateMenuData,
 } from '../model/navigationSchemas';
 import { SLOT_OPTIONS } from './slotLabels';
-import { useCreateMenuSet } from '../api/useNavigationMutations';
+import { useUpdateMenuSet } from '../api/useNavigationMutations';
 
-export function MenuSetDialog() {
-  const createMutation = useCreateMenuSet();
+interface MenuSetEditDialogProps {
+  menuId: string;
+  name: string;
+  description: string | null;
+  slots: NavigationMenuSlot[];
+}
+
+export function MenuSetEditDialog({
+  menuId,
+  name,
+  description,
+  slots,
+}: MenuSetEditDialogProps) {
+  const [open, setOpen] = useState(false);
+  const updateMutation = useUpdateMenuSet(menuId);
 
   const {
     register,
@@ -33,45 +50,49 @@ export function MenuSetDialog() {
     control,
     formState: { errors },
     reset,
-  } = useForm<CreateMenuData>({
-    resolver: zodResolver(createMenuSchema),
-    defaultValues: { name: '', description: '', slots: [] },
+  } = useForm<UpdateMenuData>({
+    resolver: zodResolver(updateMenuSchema),
+    defaultValues: { name, description: description ?? '', slots },
   });
 
-  const onSubmit = (data: CreateMenuData) => {
-    createMutation.mutate(data, {
-      onSuccess: () => reset(),
+  useEffect(() => {
+    if (open) {
+      reset({ name, description: description ?? '', slots });
+    }
+  }, [open, name, description, slots, reset]);
+
+  const onSubmit = (data: UpdateMenuData) => {
+    updateMutation.mutate(data, {
+      onSuccess: () => setOpen(false),
     });
   };
 
   return (
-    <Dialog>
-      <DialogTrigger
-        render={<Button />}
-      >
-        새 메뉴
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={<Button variant="outline" size="sm" />}>
+        <Settings className="size-4" />
+        메뉴 설정
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>새 메뉴 생성</DialogTitle>
+            <DialogTitle>메뉴 설정 수정</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">메뉴 이름</Label>
+              <Label htmlFor="edit-name">메뉴 이름</Label>
               <Input
-                id="name"
+                id="edit-name"
                 {...register('name')}
-                placeholder="Header Main"
               />
               {errors.name && (
                 <p className="text-sm text-destructive">{errors.name.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">설명</Label>
+              <Label htmlFor="edit-description">설명</Label>
               <Textarea
-                id="description"
+                id="edit-description"
                 {...register('description')}
                 placeholder="메뉴 설명 (선택)"
                 rows={2}
@@ -107,8 +128,8 @@ export function MenuSetDialog() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? '생성 중...' : '생성'}
+            <Button type="submit" disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? '저장 중...' : '저장'}
             </Button>
           </DialogFooter>
         </form>

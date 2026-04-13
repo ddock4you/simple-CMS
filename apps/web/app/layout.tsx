@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import 'krds-react/dist/index.css';
 
-import { getMenuByName } from '@/entities/navigation/api/getNavigation';
+import { getMenuBySlot } from '@/entities/navigation/api/getNavigation';
 import { PageLayout } from '@/widgets/layout/ui/PageLayout';
 
 import './globals.css';
@@ -20,11 +20,11 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [headerMenu, footerMenu] = await Promise.all([
-    getMenuByName('Header Main'),
-    getMenuByName('Footer'),
+  const [headerMenu, footerMenu, sidebarMenu] = await Promise.all([
+    getMenuBySlot('HEADER'),
+    getMenuBySlot('FOOTER'),
+    getMenuBySlot('SIDEBAR'),
   ]);
-
   return (
     <html lang="ko">
       <head>
@@ -38,6 +38,7 @@ export default async function RootLayout({
         <PageLayout
           headerMenuItems={headerMenu?.items ?? []}
           footerMenuItems={footerMenu?.items ?? []}
+          sidebarMenuItems={sidebarMenu?.items ?? []}
         >
           {children}
         </PageLayout>

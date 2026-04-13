@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+// Slot enum values
+const SLOT_VALUES = ['HEADER', 'FOOTER', 'SIDEBAR'] as const;
+
 // Menu set schemas
 export const createMenuSchema = z.object({
   name: z
@@ -7,6 +10,7 @@ export const createMenuSchema = z.object({
     .min(1, '메뉴 이름을 입력해주세요.')
     .max(100, '메뉴 이름은 100자 이하여야 합니다.'),
   description: z.string().max(500).optional(),
+  slots: z.array(z.enum(SLOT_VALUES)),
 });
 
 export type CreateMenuData = z.infer<typeof createMenuSchema>;
@@ -18,6 +22,7 @@ export const updateMenuSchema = z.object({
     .max(100, '메뉴 이름은 100자 이하여야 합니다.')
     .optional(),
   description: z.string().max(500).optional().nullable(),
+  slots: z.array(z.enum(SLOT_VALUES)).optional(),
 });
 
 export type UpdateMenuData = z.infer<typeof updateMenuSchema>;

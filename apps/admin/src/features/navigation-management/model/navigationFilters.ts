@@ -1,9 +1,10 @@
-import type { NavigationMenuItemType } from '@simple-cms/db';
+import type { NavigationMenuItemType, NavigationMenuSlot } from '@simple-cms/db';
 
 export interface MenuSetListItem {
   id: string;
   name: string;
   description: string | null;
+  slots: NavigationMenuSlot[];
   itemCount: number;
   updatedAt: string;
 }
@@ -29,6 +30,7 @@ export interface MenuSetDetail {
   id: string;
   name: string;
   description: string | null;
+  slots: NavigationMenuSlot[];
   items: MenuItemNode[];
   createdAt: string;
   updatedAt: string;

@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { ChevronRight, Trash2 } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
+import { Badge } from '@/shared/ui/shadcn/badge';
 import { Button } from '@/shared/ui/shadcn/button';
 import {
   Card,
@@ -14,6 +15,7 @@ import {
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
 import type { MenuSetListItem } from '../model/navigationFilters';
+import { SLOT_LABELS } from './slotLabels';
 import { DeleteMenuSetDialog } from './DeleteMenuSetDialog';
 import { useDeleteMenuSet } from '../api/useNavigationMutations';
 
@@ -29,7 +31,14 @@ export function MenuSetCard({ menu }: MenuSetCardProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg">{menu.name}</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-lg">{menu.name}</CardTitle>
+          {menu.slots.map((s) => (
+            <Badge key={s} variant={s === 'HEADER' ? 'default' : 'secondary'}>
+              {SLOT_LABELS[s]}
+            </Badge>
+          ))}
+        </div>
         <div className="flex items-center gap-1">
           {canDelete && (
             <DeleteMenuSetDialog

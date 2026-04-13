@@ -200,9 +200,11 @@ src/
 
 ### 메뉴 관리
 
-- NavigationMenu (메뉴 묶음): `slot` enum으로 공개 웹 배치 위치 지정 (HEADER/FOOTER/SIDEBAR/NONE)
-  - 각 슬롯에 하나의 메뉴만 배정 가능 (앱 레벨 유일성)
-  - admin UI에서 슬롯 드롭다운으로 선택
+- NavigationMenu (메뉴 묶음): `slots` 배열로 공개 웹 배치 위치 지정 (HEADER/FOOTER/SIDEBAR)
+  - 하나의 메뉴를 여러 슬롯에 동시 배치 가능 (예: 같은 메뉴를 헤더+푸터에 사용)
+  - 각 슬롯에는 하나의 메뉴만 배정 가능 (앱 레벨 유일성, `slots: { has: slot }` 쿼리로 검증)
+  - admin UI에서 체크박스 그룹으로 복수 선택
+  - 메뉴 설정(이름/설명/슬롯) 수정: 메뉴 편집 페이지의 "메뉴 설정" Dialog
 - NavigationMenuItem (메뉴 항목): label, itemType, 연결 대상, parentId, isVisible, displayOrder, openInNewTab, 노출 기간(startDate/endDate)
 - **항목 타입**: SUBPAGE(subpageId), BOARD(boardId), EXTERNAL(url), CUSTOM(경로)
 - 최대 3depth (parentId 자기참조, 3단계 이상 서버 차단)
@@ -588,7 +590,7 @@ entities → shared                   ✅
 - 이미지형 팝업 alt 필수
 - 메뉴 SUBPAGE 타입 → subpageId 필수 / BOARD → boardId / EXTERNAL·CUSTOM → url/경로 필수
 - 팝업 시작일 ≤ 종료일
-- 메뉴 depth 최대 2단계
+- 메뉴 depth 최대 3단계
 - 비공개/미발행 콘텐츠를 메뉴 연결 시 경고/차단
 - 회원가입 아이디: 4~20자, 영문+숫자+밑줄만, 중복 불가
 - 회원가입 이메일: 유효한 이메일 형식, optional

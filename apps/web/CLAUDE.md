@@ -66,10 +66,12 @@ src/
 
 ## 메뉴 렌더링
 
-- 메뉴 배치: NavigationMenu의 `slot` 필드로 결정 (HEADER/FOOTER/SIDEBAR/NONE)
-- 헤더: `slot: HEADER` 메뉴 세트 렌더링
-- 푸터: `slot: FOOTER` 메뉴 세트 렌더링
-- 사이드바: `slot: SIDEBAR` 메뉴 세트 렌더링 (1차 전체 페이지, 2차 페이지별 제어)
+- 메뉴 배치: NavigationMenu의 `slots` 배열로 결정 (HEADER/FOOTER/SIDEBAR)
+  - 하나의 메뉴가 여러 슬롯에 동시 배치 가능 (예: 같은 메뉴를 헤더+푸터에 사용)
+  - 조회: `getMenuBySlot(slot)` → `prisma.findFirst({ where: { slots: { has: slot } } })`
+- 헤더: `slots`에 HEADER 포함된 메뉴 렌더링 (KRDS Header.MainMenu, 3depth 지원)
+- 푸터: `slots`에 FOOTER 포함된 메뉴 렌더링 (KRDS Footer links)
+- 사이드바: `slots`에 SIDEBAR 포함된 메뉴 렌더링 (KRDS SideNavigation, 3depth 지원, 1차 전체 페이지)
 - 메뉴 depth: 최대 3단계
 - 메뉴 레이아웃/반응형은 코드에서 통제
 - 모바일/데스크톱 동일 데이터, 렌더링 방식만 분기

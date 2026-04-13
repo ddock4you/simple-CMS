@@ -93,7 +93,7 @@ apps/{앱}/
 | **HomePopup**          | 메인 페이지 전용 팝업 (콘텐츠형/이미지형)                                             |
 | **PageBlock**          | 서브페이지 제한형 블록 (blockType + configJson)                                       |
 | **Media**              | 이미지/파일 메타데이터, 1차는 대표 이미지 중심                                        |
-| **NavigationMenu**     | 메뉴 묶음, slot(HEADER/FOOTER/SIDEBAR/NONE)으로 공개 웹 배치 위치 지정                |
+| **NavigationMenu**     | 메뉴 묶음, slots 배열(HEADER/FOOTER/SIDEBAR)로 공개 웹 배치 위치 지정, 복수 슬롯 가능 |
 | **NavigationMenuItem** | 메뉴 항목 (SUBPAGE/BOARD/EXTERNAL/CUSTOM 연결)                                        |
 | **AuditLog**           | 관리자 활동 이력, append-only, 데이터 변경 + 인증 이벤트 기록                         |
 | **SiteSettings**       | 사이트 전역 설정 (도메인, 사이트명 등), 키-값 구조                                    |
@@ -280,7 +280,7 @@ apps/{앱}/
 
 | 단계  | 내용                                                         | 확인 가능한 것                                         | 상태 |
 | ----- | ------------------------------------------------------------ | ------------------------------------------------------ | ---- |
-| 3d-2  | 메뉴 슬롯(HEADER/FOOTER/SIDEBAR) 배정 + 3depth 메뉴 + 사이드바 | admin에서 슬롯 배정 → 공개 웹 헤더/푸터/사이드바 반영  | 대기 |
+| 3d-2  | 메뉴 슬롯(HEADER/FOOTER/SIDEBAR) 배정 + 3depth 메뉴 + 사이드바 | admin에서 슬롯 배정 → 공개 웹 헤더/푸터/사이드바 반영  | **완료** |
 
 ### Stage 4 — 공개 웹
 

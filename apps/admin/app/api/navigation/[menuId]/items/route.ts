@@ -35,18 +35,32 @@ export async function POST(
 
     const { parentId, label, itemType, subpageId, boardId, url, isVisible, openInNewTab, startDate, endDate } = parsed.data;
 
-    // Validate parent exists and enforce max 2 depth
+    // Validate parent exists and enforce max 3 depth
     if (parentId) {
-      const parent = await prisma.navigationMenuItem.findUnique({ where: { id: parentId } });
+      const parent = await prisma.navigationMenuItem.findUnique({
+        where: { id: parentId },
+        select: { id: true, menuId: true, parentId: true },
+      });
       if (!parent || parent.menuId !== menuId) {
         return NextResponse.json(
           { success: false, error: '상위 항목을 찾을 수 없습니다.' } satisfies ApiResponse<never>,
           { status: 400 },
         );
       }
-      if (parent.parentId !== null) {
+      // Walk up the parent chain to calculate depth
+      let depth = 1;
+      let currentParentId = parent.parentId;
+      while (currentParentId) {
+        depth++;
+        const ancestor = await prisma.navigationMenuItem.findUnique({
+          where: { id: currentParentId },
+          select: { parentId: true },
+        });
+        currentParentId = ancestor?.parentId ?? null;
+      }
+      if (depth >= 3) {
         return NextResponse.json(
-          { success: false, error: '최대 2단계까지만 허용됩니다.' } satisfies ApiResponse<never>,
+          { success: false, error: '최대 3단계까지만 허용됩니다.' } satisfies ApiResponse<never>,
           { status: 400 },
         );
       }

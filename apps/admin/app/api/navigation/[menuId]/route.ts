@@ -111,6 +111,7 @@ export async function GET(
       id: menu.id,
       name: menu.name,
       description: menu.description,
+      slots: menu.slots,
       items: buildTree(menu.items),
       createdAt: menu.createdAt.toISOString(),
       updatedAt: menu.updatedAt.toISOString(),
@@ -154,7 +155,7 @@ export async function PATCH(
       );
     }
 
-    const { name, description } = parsed.data;
+    const { name, description, slots } = parsed.data;
 
     if (name && name !== menu.name) {
       const existing = await prisma.navigationMenu.findUnique({ where: { name } });
@@ -166,17 +167,36 @@ export async function PATCH(
       }
     }
 
+    // Slot uniqueness check: each slot can only be assigned to one menu
+    if (slots !== undefined) {
+      // Check only newly added slots (not already on this menu)
+      const newSlots = slots.filter((s) => !menu.slots.includes(s));
+      for (const slot of newSlots) {
+        const slotInUse = await prisma.navigationMenu.findFirst({
+          where: { slots: { has: slot }, id: { not: menuId } },
+          select: { id: true, name: true },
+        });
+        if (slotInUse) {
+          return NextResponse.json(
+            { success: false, error: `${slot} 슬롯은 이미 "${slotInUse.name}" 메뉴에 배정되어 있습니다.` } satisfies ApiResponse<never>,
+            { status: 409 },
+          );
+        }
+      }
+    }
+
     const updateData: Record<string, unknown> = {};
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;
+    if (slots !== undefined) updateData.slots = slots;
 
     const updated = await prisma.navigationMenu.update({
       where: { id: menuId },
       data: updateData,
     });
 
-    const before: Record<string, string | null> = {};
-    const after: Record<string, string | null> = {};
+    const before: Record<string, string | string[] | null> = {};
+    const after: Record<string, string | string[] | null> = {};
     if (name !== undefined && name !== menu.name) {
       before.name = menu.name;
       after.name = name;
@@ -184,6 +204,10 @@ export async function PATCH(
     if (description !== undefined && description !== menu.description) {
       before.description = menu.description;
       after.description = description ?? '';
+    }
+    if (slots !== undefined && JSON.stringify(slots) !== JSON.stringify(menu.slots)) {
+      before.slots = menu.slots;
+      after.slots = slots;
     }
 
     if (Object.keys(after).length > 0) {

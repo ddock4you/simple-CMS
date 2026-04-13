@@ -52,7 +52,7 @@ export function SortableMenuItem({
       ref={setNodeRef}
       style={style}
       className={`flex items-center gap-2 rounded-md border bg-background p-3 ${
-        depth > 0 ? 'ml-8' : ''
+        depth === 1 ? 'ml-8' : depth >= 2 ? 'ml-16' : ''
       }`}
     >
       {canUpdate && (
@@ -100,7 +100,7 @@ export function SortableMenuItem({
             )}
           </Button>
         )}
-        {canCreate && depth === 0 && (
+        {canCreate && depth < 2 && (
           <Button
             variant="ghost"
             size="sm"

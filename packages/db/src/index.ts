@@ -49,6 +49,7 @@ export {
   HomePopupType,
   PageBlockType,
   NavigationMenuItemType,
+  NavigationMenuSlot,
   AuditAction,
   AuditEntityType,
   ErrorLevel,

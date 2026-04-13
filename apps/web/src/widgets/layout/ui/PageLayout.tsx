@@ -8,10 +8,13 @@ import type { FooterLink } from 'krds-react';
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import { getMenuItemHref } from '@/entities/navigation/lib/getMenuItemHref';
 
+import { Sidebar } from './Sidebar';
+
 interface PageLayoutProps {
   children: ReactNode;
   headerMenuItems: FilteredMenuItem[];
   footerMenuItems: FilteredMenuItem[];
+  sidebarMenuItems: FilteredMenuItem[];
 }
 
 function buildDesktopMenu(items: FilteredMenuItem[]) {
@@ -25,13 +28,31 @@ function buildDesktopMenu(items: FilteredMenuItem[]) {
           type: 'dropdown' as const,
           id: item.id,
           label: item.label,
-          sections: item.children.map((child) => ({
-            type: 'link' as const,
-            id: child.id,
-            label: child.label,
-            href: getMenuItemHref(child),
-            isExternal: child.itemType === 'EXTERNAL',
-          })),
+          sections: item.children.map((child) => {
+            // 3depth: children이 있으면 DesktopSubMenu 타입 사용
+            if (child.children.length > 0) {
+              return {
+                type: 'menu' as const,
+                id: child.id,
+                label: child.label,
+                href: getMenuItemHref(child),
+                isExternal: child.itemType === 'EXTERNAL',
+                items: child.children.map((grandchild) => ({
+                  id: grandchild.id,
+                  label: grandchild.label,
+                  href: getMenuItemHref(grandchild),
+                  isExternal: grandchild.itemType === 'EXTERNAL',
+                })),
+              };
+            }
+            return {
+              type: 'link' as const,
+              id: child.id,
+              label: child.label,
+              href: getMenuItemHref(child),
+              isExternal: child.itemType === 'EXTERNAL',
+            };
+          }),
         };
       }
 
@@ -55,23 +76,41 @@ function buildMobileMenu(items: FilteredMenuItem[]) {
         panels: [
           {
             label: item.label,
-            items: item.children.length > 0
-              ? item.children.map((child) => ({
-                  type: 'link' as const,
-                  id: child.id,
-                  label: child.label,
-                  href: getMenuItemHref(child),
-                  isExternal: child.itemType === 'EXTERNAL',
-                }))
-              : [
-                  {
-                    type: 'link' as const,
-                    id: `${item.id}-self`,
-                    label: item.label,
-                    href: getMenuItemHref(item),
-                    isExternal: item.itemType === 'EXTERNAL',
-                  },
-                ],
+            items:
+              item.children.length > 0
+                ? item.children.map((child) => {
+                    // 3depth: children이 있으면 MobilePanelDepth3 타입 사용
+                    if (child.children.length > 0) {
+                      return {
+                        type: 'depth3' as const,
+                        id: child.id,
+                        label: child.label,
+                        items: child.children.map((grandchild) => ({
+                          type: 'link' as const,
+                          id: grandchild.id,
+                          label: grandchild.label,
+                          href: getMenuItemHref(grandchild),
+                          isExternal: grandchild.itemType === 'EXTERNAL',
+                        })),
+                      };
+                    }
+                    return {
+                      type: 'link' as const,
+                      id: child.id,
+                      label: child.label,
+                      href: getMenuItemHref(child),
+                      isExternal: child.itemType === 'EXTERNAL',
+                    };
+                  })
+                : [
+                    {
+                      type: 'link' as const,
+                      id: `${item.id}-self`,
+                      label: item.label,
+                      href: getMenuItemHref(item),
+                      isExternal: item.itemType === 'EXTERNAL',
+                    },
+                  ],
           },
         ],
       })),
@@ -87,8 +126,14 @@ function buildFooterLinks(items: FilteredMenuItem[]): FooterLink[] {
   }));
 }
 
-export function PageLayout({ children, headerMenuItems, footerMenuItems }: PageLayoutProps) {
+export function PageLayout({
+  children,
+  headerMenuItems,
+  footerMenuItems,
+  sidebarMenuItems,
+}: PageLayoutProps) {
   const hasHeaderMenu = headerMenuItems.length > 0;
+  const hasSidebar = sidebarMenuItems.length > 0;
 
   return (
     <>
@@ -105,11 +150,22 @@ export function PageLayout({ children, headerMenuItems, footerMenuItems }: PageL
           />
         )}
       </Header>
-      <main id="main-content">
-        {children}
-      </main>
+      {hasSidebar ? (
+        <div className="krds-container" style={{ display: 'flex', gap: '2rem' }}>
+          <Sidebar items={sidebarMenuItems} />
+          <main id="main-content" style={{ flex: 1, minWidth: 0 }}>
+            {children}
+          </main>
+        </div>
+      ) : (
+        <main id="main-content">{children}</main>
+      )}
       <Footer
-        links={footerMenuItems.length > 0 ? buildFooterLinks(footerMenuItems) : undefined}
+        links={
+          footerMenuItems.length > 0
+            ? buildFooterLinks(footerMenuItems)
+            : undefined
+        }
         copyright="© Simple CMS. All rights reserved."
         hideQuickLinks
         hideIdentifier

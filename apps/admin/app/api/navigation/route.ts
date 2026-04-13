@@ -18,6 +18,7 @@ export async function GET(_request: Request): Promise<NextResponse> {
         id: true,
         name: true,
         description: true,
+        slots: true,
         updatedAt: true,
         _count: { select: { items: true } },
       },
@@ -28,6 +29,7 @@ export async function GET(_request: Request): Promise<NextResponse> {
       id: menu.id,
       name: menu.name,
       description: menu.description,
+      slots: menu.slots,
       itemCount: menu._count.items,
       updatedAt: menu.updatedAt.toISOString(),
     }));
@@ -59,7 +61,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const { name, description } = parsed.data;
+    const { name, description, slots } = parsed.data;
 
     const existing = await prisma.navigationMenu.findUnique({ where: { name } });
     if (existing) {
@@ -69,8 +71,24 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
+    // Slot uniqueness check: each slot can only be assigned to one menu
+    if (slots && slots.length > 0) {
+      for (const slot of slots) {
+        const slotInUse = await prisma.navigationMenu.findFirst({
+          where: { slots: { has: slot } },
+          select: { id: true, name: true },
+        });
+        if (slotInUse) {
+          return NextResponse.json(
+            { success: false, error: `${slot} 슬롯은 이미 "${slotInUse.name}" 메뉴에 배정되어 있습니다.` } satisfies ApiResponse<never>,
+            { status: 409 },
+          );
+        }
+      }
+    }
+
     const menu = await prisma.navigationMenu.create({
-      data: { name, description },
+      data: { name, description, slots: slots ?? [] },
     });
 
     const auditContext = getAuditContext(request);
@@ -79,7 +97,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       entityType: 'NAVIGATION_MENU',
       entityId: menu.id,
       entityTitle: name,
-      changes: { after: { name } },
+      changes: { after: { name, slots: slots ?? [] } },
       userId: user!.id,
       ipAddress: auditContext.ipAddress,
       userAgent: auditContext.userAgent,
