@@ -2,6 +2,8 @@
 
 import type { ReactNode } from 'react';
 
+import Link from 'next/link';
+
 import { Footer, Header, Masthead, SkipLink } from 'krds-react';
 import type { FooterLink } from 'krds-react';
 
@@ -141,7 +143,22 @@ export function PageLayout({
       <Masthead text="이 누리집은 대한민국 공식 전자정부 누리집입니다." />
       <Header>
         <Header.Container>
-          <Header.Branding logoHref="/" logoAltText="Simple CMS" />
+          <Header.Branding logoHref="/" logoAltText="Simple CMS">
+            <Link href="/search" className="header-search-link" aria-label="검색">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </Link>
+          </Header.Branding>
         </Header.Container>
         {hasHeaderMenu && (
           <Header.MainMenu

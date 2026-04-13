@@ -12,7 +12,8 @@
     "push": "prisma db push",
     "migrate": "prisma migrate dev",
     "studio": "prisma studio",
-    "seed": "prisma db seed"
+    "seed": "prisma db seed",
+    "pgroonga:setup": "tsx prisma/pgroonga-setup.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

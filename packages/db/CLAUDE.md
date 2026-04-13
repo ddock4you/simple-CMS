@@ -15,15 +15,18 @@ Prisma schema 정의, Client 생성, query helper를 관리하는 공용 데이�
 ```
 packages/db/
 ├── prisma/
-│   ├── schema.prisma       # 스키마 정의
-│   ├── migrations/         # 마이그레이션 히스토리
-│   └── seed.ts             # 시드 데이터 (최초 관리자 계정 생성)
+│   ├── schema.prisma         # 스키마 정의
+│   ├── migrations/           # 마이그레이션 히스토리
+│   ├── seed.ts               # 시드 데이터 (최초 관리자 계정 생성)
+│   ├── pgroonga-setup.sql    # PGroonga 확장 + 검색 인덱스 SQL
+│   └── pgroonga-setup.ts     # PGroonga 설정 실행 스크립트 (tsx)
 ├── src/
-│   ├── index.ts            # 패키지 진입점 (앱에서 @simple-cms/db로 import)
-│   ├── client.ts           # PrismaClient 싱글턴
-│   ├── auditLog.ts         # 감사 로그 기록 헬퍼 (logAuditEvent)
-│   ├── sessionHelper.ts    # 세션 CRUD 헬퍼 (createSession, validateSession 등)
-│   └── repositories/       # 도메인별 query helper (필요 시)
+│   ├── index.ts              # 패키지 진입점 (앱에서 @simple-cms/db로 import)
+│   ├── client.ts             # PrismaClient 싱글턴
+│   ├── auditLog.ts           # 감사 로그 기록 헬퍼 (logAuditEvent)
+│   ├── sessionHelper.ts      # 세션 CRUD 헬퍼 (createSession, validateSession 등)
+│   ├── search.ts             # PGroonga 통합검색 헬퍼 (searchContent)
+│   └── repositories/         # 도메인별 query helper (필요 시)
 └── package.json
 ```
 
@@ -50,9 +53,23 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 ## PGroonga 관련
 
-- PGroonga raw query는 `src/` 내 별도 파일로 분리
-- Prisma의 `$queryRaw` / `$executeRaw` 사용
-- 검색 인덱싱 관련 마이그레이션은 Prisma migration 외 SQL 파일로 관리 가능
+- PGroonga raw query는 `src/search.ts`에 구현
+- Prisma의 `$queryRaw` tagged template literal 사용 (SQL injection 방지)
+- PGroonga 확장 + 인덱스 설정: `prisma/pgroonga-setup.sql` (멱등, 로컬/Supabase 공용)
+- 로컬: `docker/docker-compose.yml`의 `groonga/pgroonga` 이미지에 PGroonga 포함
+- Supabase: Dashboard > Database > Extensions > pgroonga 활성화 후 SQL 실행
+
+### 검색 헬퍼 (`src/search.ts`)
+
+| 함수 | 설명 |
+| --- | --- |
+| `searchContent(query, page?, pageSize?)` | Subpage + Post 통합 검색, PGroonga `&@~` 연산자, 관련도 정렬 |
+
+- 검색 대상: `PUBLISHED` 상태의 Subpage(title + content) + Post(title + content, 공개 게시판만)
+- `UNION ALL`로 통합 쿼리, `pgroonga_score()` 관련도 + `publishedAt DESC` 보조 정렬
+- 반환: `SearchResponse { items: SearchResult[], total, totalPages, page, pageSize }`
+- 빈 쿼리 → 빈 결과, 쿼리 최대 200자 제한
+- 쿼리 실패 시 빈 결과 반환 (에러 로깅만, throw 안 함)
 
 ## 명령어
 
@@ -61,6 +78,7 @@ pnpm db:generate    # Prisma Client 생성
 pnpm db:push        # 스키마를 DB에 직접 반영 (개발용)
 pnpm db:migrate     # 마이그레이션 생성 및 적용
 pnpm db:studio      # Prisma Studio 실행
+pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
 ```
 
 ## Role 모델 컨벤션

@@ -22,6 +22,9 @@ export {
 export { getUploadRestrictions, validateFileUpload } from './uploadRestriction';
 export type { UploadRestrictions } from './uploadRestriction';
 
+export { searchContent } from './search';
+export type { SearchResult, SearchResponse } from './search';
+
 export type {
   User,
   Role,

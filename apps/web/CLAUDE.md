@@ -141,16 +141,28 @@ src/
 ## 통합검색
 
 - **PGroonga 기반 한글 검색**
-- 검색 대상: Page(제목+본문) + Post(제목+본문) — `content` 필드는 Tiptap JSON에서 추출한 plain text
-- `published` 상태만 인덱싱/검색
-- 라우트: `/search?q=...`
-- 결과에 타입 구분 표시 (페이지 / 게시글)
+- 검색 대상: Subpage(제목+본문) + Post(제목+본문) — `content` 필드는 Tiptap JSON에서 추출한 plain text
+- `published` 상태만 인덱싱/검색 (Post는 `board.isPublic = true` 추가 필터)
+- 라우트: `/search?q=...` (`force-dynamic`, SSR)
+- 결과에 타입 구분 뱃지 표시 (페이지 / 게시글)
 - 게시글 결과에 게시판 정보 함께 표시
-- 관련도 중심 정렬 (필요 시 최신순 보조)
+- 관련도 중심 정렬 (`pgroonga_score`) + 최신순 보조 (`publishedAt DESC`)
+
+### 검색 FSD 구조
+
+```
+app/search/page.tsx                           # 라우트 (Server Component, force-dynamic)
+src/entities/search/api/getSearchResults.ts   # React.cache() 래핑 → @simple-cms/db searchContent
+src/features/search/ui/SearchForm.tsx         # Client Component (검색 입력 폼, useRouter)
+src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 + PaginationNav)
+```
+
+- 데이터: `@simple-cms/db`의 `searchContent()` — PGroonga `&@~` 연산자, `$queryRaw` 사용
+- 헤더: `PageLayout.tsx`에 `/search` 링크 아이콘 추가
 
 ### 검색 반영 규칙
 
-- 저장/발행 시점에 검색 데이터 갱신
+- 저장/발행 시점에 검색 데이터 갱신 (content 필드 = Tiptap JSON → plain text)
 - `published → draft` 또는 비공개 전환 시 검색 결과에서 제외
 - `draft` 상태는 검색 인덱싱 대상 제외
 

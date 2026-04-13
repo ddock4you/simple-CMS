@@ -9,8 +9,8 @@ Prisma + PostgreSQL, PGroonga 한글 검색, KRDS 기반 공개 웹 UI, 제한�
 | ------------- | ---------------------------------------- | ------------------------------------------------------------------ |
 | 앱 프레임워크 | Next.js 16 + React 19.2 + TypeScript     | admin, web 모두                                                    |
 | 모노레포      | pnpm workspace + Turborepo               | pnpm@10.33.0, Node 22                                              |
-| 데이터        | PostgreSQL + Prisma ORM                  | 개발: 로컬 PostgreSQL (Docker), 프로덕션: Supabase PostgreSQL 가능 |
-| 검색          | PGroonga                                 | PostgreSQL 확장, 한글 검색 필수, Supabase에서도 지원               |
+| 데이터        | PostgreSQL + Prisma ORM                  | 개발: Docker `groonga/pgroonga` 이미지, 프로덕션: Supabase PostgreSQL 가능 |
+| 검색          | PGroonga                                 | PostgreSQL 확장, 한글 검색 필수, 로컬/Supabase 모두 지원           |
 | 공개 웹 UI    | KRDS + Storybook                         | web 앱 전용                                                        |
 | 관리자 UI     | 디자이너 Figma 시안 기반                 | admin 앱 전용, KRDS 미사용                                         |
 | 콘텐츠        | Tiptap WYSIWYG (JSON 저장)               | 문서형 콘텐츠 + 제한된 블록, 검색용 plain text 동시 저장           |
@@ -34,7 +34,7 @@ workspace/
 │   ├── editor/         # Tiptap 공유 확장 정의, 콘텐츠 CSS
 │   ├── types/          # 공용 DTO, 도메인 인터페이스
 │   └── config/         # tsconfig, eslint 공유 설정
-├── docker/             # Docker Compose 설정
+├── docker/             # Docker Compose (PGroonga PostgreSQL, 로컬 개발)
 └── docs/               # 설계 문서 (8개)
 ```
 
@@ -289,7 +289,7 @@ apps/{앱}/
 | 4a   | Web 메인+서브페이지 렌더링 + KRDS 레이아웃 | admin에서 만든 서브 페이지가 공개 웹에 표시 | **완료** |
 | 4b   | Web 게시판/게시글 렌더링                   | 발행한 게시글이 공개 웹에 노출           | **완료** |
 | 4c   | Web 메뉴 렌더링 + 도메인 프록시            | 헤더/푸터 메뉴, 커스텀 도메인 리다이렉트 | **완료** |
-| 4d   | Web 통합검색 (PGroonga)                    | `/search?q=검색어`로 검색 결과 확인      | 대기 |
+| 4d   | Web 통합검색 (PGroonga)                    | `/search?q=검색어`로 검색 결과 확인      | **완료** |
 | 4e   | Web 에러 캡처 + **Admin 에러 로그 UI**     | web 에러 → admin에서 조회/해결           | 대기 |
 
 ### Stage 5 — 메인 페이지 전용
@@ -321,6 +321,7 @@ pnpm db:generate      # Prisma client 생성
 pnpm db:push          # DB 스키마 push
 pnpm db:migrate       # DB 마이그레이션
 pnpm db:studio        # Prisma Studio
+pnpm db:pgroonga      # PGroonga 확장 + 검색 인덱스 설정
 ```
 
 ## 개발 원칙
