@@ -387,3 +387,135 @@ body {
 .not-found-link:hover {
   opacity: 0.9;
 }
+
+/* ==========================================================================
+   7. 게시판 목록
+   ========================================================================== */
+
+.board-header {
+  padding: var(--gap-8, 40px) 0 var(--gap-6, 24px);
+}
+
+.board-title {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.board-description {
+  margin-top: var(--gap-2, 8px);
+  color: #666;
+  font-size: 1rem;
+}
+
+.post-title-link {
+  color: var(--krds-color-text-primary, #333);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.post-title-link:hover {
+  color: var(--krds-color-light-primary-50, #0056d6);
+  text-decoration: underline;
+}
+
+/* GALLERY 스킨: 카드 그리드 */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--gap-5, 20px);
+}
+
+@media (min-width: 768px) {
+  .gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.gallery-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--krds-color-border-default, #dee2e6);
+  border-radius: var(--krds-radius-md, 8px);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s;
+}
+
+.gallery-card:hover {
+  box-shadow: var(--krds-shadow-md, 0 2px 8px rgba(0, 0, 0, 0.1));
+}
+
+.gallery-card-thumb {
+  aspect-ratio: 16 / 9;
+  background: var(--krds-color-bg-tertiary, #f1f3f5);
+}
+
+.gallery-card-body {
+  padding: var(--gap-4, 16px);
+}
+
+.gallery-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gallery-card-date {
+  display: block;
+  margin-top: var(--gap-2, 8px);
+  font-size: 0.8125rem;
+  color: #999;
+}
+
+/* 페이지네이션 래퍼 */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: var(--gap-8, 40px) 0;
+}
+
+/* ==========================================================================
+   8. 게시글 상세
+   ========================================================================== */
+
+.post-article {
+  padding: var(--gap-6, 24px) 0 var(--gap-8, 40px);
+}
+
+.post-header {
+  margin-bottom: var(--gap-7, 32px);
+  padding-bottom: var(--gap-5, 20px);
+  border-bottom: 1px solid #eee;
+}
+
+.post-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: var(--gap-3, 12px);
+}
+
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3, 12px);
+  font-size: 0.875rem;
+  color: #888;
+}
+
+.post-author {
+  font-weight: 500;
+  color: #555;
+}
+
+.post-meta .post-author::after {
+  content: '·';
+  margin-left: var(--gap-3, 12px);
+}

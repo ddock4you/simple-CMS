@@ -162,6 +162,9 @@ importers:
       krds-react:
         specifier: ^1.1.0
         version: 1.1.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      krds-uiux:
+        specifier: ^1.1.0
+        version: 1.1.0
       next:
         specifier: ^16.1.6
         version: 16.2.3(@babel/core@7.29.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -3390,6 +3393,9 @@ packages:
     peerDependencies:
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
+
+  krds-uiux@1.1.0:
+    resolution: {integrity: sha512-4cjL3cpnlTaDrkivVceDpWhHxUYgV2AhiRRbO74I8ZKlnM17BcutEjPOlMOz9RQGAmdEubTsSYoyKFhvD1/g+A==}
 
   language-subtag-registry@0.3.23:
     resolution: {integrity: sha512-0K65Lea881pHotoGEa5gDlMxt3pctLi2RplBb7Ezh4rRdLEOtgi7n4EwK9lamnUCkKBqaeKRVebTq6BAxSkpXQ==}
@@ -7983,6 +7989,8 @@ snapshots:
     dependencies:
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
+
+  krds-uiux@1.1.0: {}
 
   language-subtag-registry@0.3.23: {}
 
