@@ -200,10 +200,12 @@ src/
 
 ### 메뉴 관리
 
-- NavigationMenu (메뉴 묶음): Header Main, Footer, Quick Links (시드 데이터)
+- NavigationMenu (메뉴 묶음): `slot` enum으로 공개 웹 배치 위치 지정 (HEADER/FOOTER/SIDEBAR/NONE)
+  - 각 슬롯에 하나의 메뉴만 배정 가능 (앱 레벨 유일성)
+  - admin UI에서 슬롯 드롭다운으로 선택
 - NavigationMenuItem (메뉴 항목): label, itemType, 연결 대상, parentId, isVisible, displayOrder, openInNewTab, 노출 기간(startDate/endDate)
 - **항목 타입**: SUBPAGE(subpageId), BOARD(boardId), EXTERNAL(url), CUSTOM(경로)
-- 최대 2depth (parentId 자기참조, 2단계 이상 서버 차단)
+- 최대 3depth (parentId 자기참조, 3단계 이상 서버 차단)
 - 연결은 엔티티 참조 방식 우선 (URL 직접 입력 아님), slug 변경 시 메뉴 안 깨짐
 - 메뉴명: 엔티티 연결 시 label 자동 채움, 이후 수동 수정 가능
 - dnd-kit으로 같은 부모 내 드래그&드롭 순서 변경

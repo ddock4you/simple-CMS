@@ -93,7 +93,7 @@ apps/{앱}/
 | **HomePopup**          | 메인 페이지 전용 팝업 (콘텐츠형/이미지형)                                             |
 | **PageBlock**          | 서브페이지 제한형 블록 (blockType + configJson)                                       |
 | **Media**              | 이미지/파일 메타데이터, 1차는 대표 이미지 중심                                        |
-| **NavigationMenu**     | 메뉴 묶음 (Header Main, Footer, Quick Links)                                          |
+| **NavigationMenu**     | 메뉴 묶음, slot(HEADER/FOOTER/SIDEBAR/NONE)으로 공개 웹 배치 위치 지정                |
 | **NavigationMenuItem** | 메뉴 항목 (SUBPAGE/BOARD/EXTERNAL/CUSTOM 연결)                                        |
 | **AuditLog**           | 관리자 활동 이력, append-only, 데이터 변경 + 인증 이벤트 기록                         |
 | **SiteSettings**       | 사이트 전역 설정 (도메인, 사이트명 등), 키-값 구조                                    |
@@ -275,6 +275,12 @@ apps/{앱}/
 | 3d   | 메뉴 관리 API + **메뉴 편집 UI** (dnd-kit)       | 메뉴 항목 추가 → 드래그 순서 변경   | **완료** |
 | 3e   | 감사 로그 API + **감사 로그 UI** + 내보내기      | 활동 이력 조회 → Excel 다운로드     | **완료** |
 | 3f   | 사이트 설정 API + **도메인/보안/업로드 설정 UI** | 설정 변경 → 저장 → 반영 확인        | **완료** |
+
+### Stage 3d-2 — 메뉴 슬롯 배정 + 3depth 확장
+
+| 단계  | 내용                                                         | 확인 가능한 것                                         | 상태 |
+| ----- | ------------------------------------------------------------ | ------------------------------------------------------ | ---- |
+| 3d-2  | 메뉴 슬롯(HEADER/FOOTER/SIDEBAR) 배정 + 3depth 메뉴 + 사이드바 | admin에서 슬롯 배정 → 공개 웹 헤더/푸터/사이드바 반영  | 대기 |
 
 ### Stage 4 — 공개 웹
 
