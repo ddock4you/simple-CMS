@@ -160,7 +160,7 @@ src/
 
 관리자가 admin에서 설정한 커스텀 도메인을 공개 웹에 반영한다.
 
-- `middleware.ts`: 요청 호스트네임과 설정 도메인 비교, 불일치 시 301 리다이렉트
+- `proxy.ts`: 요청 호스트네임과 설정 도메인 비교, 불일치 시 301 리다이렉트 (Next.js 16: middleware → proxy)
 - `src/shared/lib/domainCache.ts`: DB 도메인 설정을 인메모리 캐시 (TTL: prod 60초 / dev 5초)
 - `src/shared/lib/siteUrl.ts`: `getSiteUrl()` — 도메인 인식 URL 생성 유틸리티
 - SEO 반영: `metadataBase`, canonical URL, sitemap, OG 태그에 설정 도메인 적용
@@ -211,7 +211,7 @@ entities → shared                            ✅
 
 - `app/error.tsx` (루트 에러 바운더리): SSR/Server Component 렌더링 에러 캡처
 - `app/global-error.tsx`: 루트 레이아웃 에러 캡처
-- `middleware.ts` catch 블록: 미들웨어 에러 캡처
+- `proxy.ts` catch 블록: 프록시 에러 캡처
 - 로깅: `@simple-cms/db`의 `logWebError()` 직접 호출 (같은 DB 공유)
 - fire-and-forget: 에러 로깅이 사용자 응답을 차단하지 않음
 

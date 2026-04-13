@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import 'krds-react/dist/index.css';
 
+import { getMenuByName } from '@/entities/navigation/api/getNavigation';
 import { PageLayout } from '@/widgets/layout/ui/PageLayout';
 
 import './globals.css';
@@ -14,11 +15,16 @@ export const metadata: Metadata = {
   description: '공개 웹',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [headerMenu, footerMenu] = await Promise.all([
+    getMenuByName('Header Main'),
+    getMenuByName('Footer'),
+  ]);
+
   return (
     <html lang="ko">
       <head>
@@ -29,7 +35,12 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <PageLayout>{children}</PageLayout>
+        <PageLayout
+          headerMenuItems={headerMenu?.items ?? []}
+          footerMenuItems={footerMenu?.items ?? []}
+        >
+          {children}
+        </PageLayout>
       </body>
     </html>
   );
