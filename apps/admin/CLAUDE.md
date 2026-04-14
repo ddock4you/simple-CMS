@@ -124,6 +124,7 @@ src/
 /navigation/[menuId]    # 메뉴 세트 편집
 /home                   # 메인 페이지 관리
 /home/popups            # 메인 팝업 관리
+/media                  # 미디어 라이브러리 (그리드 + 검색 + 상세 Dialog)
 /users                  # 사용자 관리 (목록, 승인/거절, 정지/해제)
 /profile                # 내 정보 변경 (이름, 비밀번호)
 /audit-logs             # 활동 이력 (감사 로그)
@@ -220,10 +221,40 @@ src/
 
 - 일반 서브 페이지와 분리된 **섹션 기반 관리**
 - 레이아웃은 코드에서 통제, 운영자는 섹션 데이터+순서 관리
-- 섹션 목록/노출 여부/순서 조정/데이터 편집
-- 상세 섹션 종류는 디자이너 시안 확정 후 구체화
-- 예: Hero, 추천 콘텐츠, 바로가기, 최신 게시글, CTA, 공지 영역
-- 미리보기 제공
+- **고정 세트 모델** (Stage 5a): 6개 타입 각 1개씩 seed로 생성, 추가/삭제 UI 없음 — R/U만 지원
+  - 타입: HERO, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
+- 섹션별 `configJson` 스키마 (Zod, `features/home-management/model/homeSchemas.ts`):
+  - **HERO**: slides[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 10개, 1개=단일 배너, 2개 이상=슬라이드) + slideOptions
+  - **RECOMMENDED**: heading, description?, items[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 12개, 자유 갤러리) + slideOptions
+  - **SHORTCUT**: heading, description?, items[]: `{label, description?, url}` (최대 8개)
+  - **LATEST_POSTS**: heading, description?, boardId(nullable), limit(1~10) — 지정 게시판 최신 N개 자동 표시
+  - **CTA**: heading, description?, buttonLabel, buttonUrl
+  - **NOTICE**: heading, description?, items[]: `{label, url?, date?}` (최대 5개)
+- **SlideOptions 공통 스키마** (HERO, RECOMMENDED):
+  - `showPrevNext`, `showPlayPause`, `showDots`: boolean 토글
+  - `autoPlay`, `autoPlayInterval`(ms, 1000~30000): `showPlayPause=true`일 때만 의미
+  - `SlideOptionsPanel` 컴포넌트가 두 섹션 Fields에서 재사용됨
+- 이미지는 **외부 URL 입력 + 파일 업로드** 모두 지원
+  - `ImageUrlInput` 공통 컴포넌트: URL text input + [파일 선택] 버튼 + 미리보기 + 제거 버튼
+  - 업로드 API: `POST /api/media/upload` (multipart/form-data, `file` + `category='home'`)
+  - 스토리지: 루트 CLAUDE.md "파일 업로드 스토리지 정책" 참조 (`STORAGE_PROVIDER=local|supabase`)
+  - Media 테이블에 레코드 생성 + `MEDIA` 감사 로그 기록
+- 링크 URL은 optional — 입력 시 해당 슬라이드/카드 전체가 `<Link>`로 감싸짐
+- URL은 내부 경로(`/about`)와 외부 URL(`https://...`) 모두 허용
+- **Tiptap 미사용** — 모든 섹션을 단순 text 필드로 관리
+- **UI**: `/home` 단일 페이지, 6개 섹션 카드 + dnd-kit 드래그 순서변경 + 노출토글 + 타입별 편집 Dialog
+  - slides/items 순서 조정은 useFieldArray + 위/아래 화살표 버튼 (해당 폼 내부)
+- **권한 기반 UI**: 편집/순서변경/노출토글 버튼을 `usePermission('home', 'update')`로 게이팅
+- API Routes:
+  - `GET /api/home` — 섹션 목록 (`home:read`)
+  - `GET/PATCH /api/home/[id]` — 단건 상세/수정 (`home:read`/`home:update`)
+  - `PATCH /api/home/reorder` — 순서 변경, `length(6)` 검증 + 트랜잭션 루프 (`home:update`)
+  - `GET /api/home/references` — Edit Dialog 드롭다운용 `{subpages, boards, posts}` 묶음 (`home:read`)
+- 감사 로그 entityType: `HOME_SECTION`, action `UPDATE`만 사용
+  - 편집: `{ before, after }` diff 기록 (변경 필드만)
+  - 순서변경: `{ after: { reorderedSections: '6건' } }`
+- FSD: `features/home-management/`, `pages/home-management/`
+- 참고: 시안 확정 후 web의 섹션 컴포넌트를 대체하는 흐름으로 설계됨 (admin UI는 안정)
 
 ### 메인 팝업 관리
 
@@ -231,6 +262,72 @@ src/
 - **이미지형**: 이미지 + alt 텍스트(필수) + 링크(optional)
 - 노출 여부, 순서 조정, 시작일/종료일(optional)
 - 미리보기 제공
+
+### 미디어 라이브러리 관리 (Stage 5a-2)
+
+- 라우트: `/media`
+- FSD: `features/media-management/`, `pages/media-management/`
+- 권한 리소스: `media` (create/read/update/delete)
+
+#### 라이브러리 UI (`/media`)
+
+- 그리드 카드 (썸네일 + 원본 파일명 + 크기 + 업로더 + 등록일)
+- 필터: 검색(파일명/alt) + MIME 타입 (image/jpeg/png/gif/webp/svg)
+- 페이지네이션 (URL `page` 파라미터)
+- 상세 Dialog: 미리보기 + 메타데이터 + alt 편집 + 사용처 표시 + 삭제 버튼
+- 권한 게이팅: 업로드 버튼은 `media:create`, alt 편집은 `media:update`, 삭제는 `media:delete`
+
+#### 중복 방지 + 참조 추적
+
+- 업로드 시 SHA-256 해시 계산 → 동일 바이너리 발견 시 기존 Media 재사용 (`reused: true`)
+- 삭제 전 `findMediaReferences()`로 사용처 스캔 (Subpage/Post FK + HomeSection JSONB + Tiptap contentJson 재귀)
+- 사용 중이면 409 차단 + 사용처 목록 표시 → 강제 삭제 불허
+- 헬퍼 위치: `features/media-management/lib/findMediaReferences.ts`
+
+#### MediaPicker 재사용
+
+- 컴포넌트: `features/media-management/ui/MediaPicker.tsx` (Dialog + Filters + Grid + Pagination + UploadButton)
+- 사용처:
+  1. `/media` 페이지 메인
+  2. `ImageUrlInput` (HERO/RECOMMENDED 슬라이드 편집)
+  3. `TiptapEditor` 본문 툴바 [이미지 → 라이브러리]
+- 업로드 성공 시 자동 onSelect + Picker 닫힘 (UX 최적화)
+
+#### Tiptap 본문 이미지 통합
+
+- `packages/editor`의 `ImageWithMediaId`가 기본 Image 확장을 교체 → `mediaId` attr 보존
+- `ImageUploadExtension`이 paste/drop 이벤트 인터셉트 → `/api/media/upload` 호출 → 자동 노드 삽입
+- 툴바 [이미지] 드롭다운: [파일 업로드] / [라이브러리] / [URL 입력] 3가지 진입점
+- 외부 URL은 mediaId null (의도적 — Media 무관)
+
+#### API Routes
+
+| Method | Route | 권한 | 용도 |
+| ------ | ----- | ---- | ---- |
+| POST | `/api/media/upload` | 인증 (역할 불문) | 업로드 (SHA-256 중복 방지, `reused` 플래그) |
+| GET | `/api/media` | media:read | 목록 + 필터 + 페이지네이션 |
+| GET | `/api/media/[id]` | media:read | 상세 |
+| PATCH | `/api/media/[id]` | media:update | alt 편집 (감사 로그 UPDATE) |
+| DELETE | `/api/media/[id]` | media:delete | 삭제 (참조 시 409, 물리 파일 + DB 삭제) |
+| GET | `/api/media/[id]/references` | media:read | 사용처 목록 |
+| POST | `/api/media/bulk-delete` | media:delete | 일괄 삭제 (참조 있는 건 skip, 응답에 `deleted[]` + `blocked[]` 분리) |
+
+#### 일괄 삭제 정책
+
+- 의도적으로 **트랜잭션 미적용** — 참조 있는 건만 제외하고 나머지는 진행 (부분 성공)
+- 응답: `{ deleted: string[], blocked: Array<{ id, originalFilename, references }> }`
+- UI: `BulkDeleteMediaDialog`가 2단계 플로우 (확인 → 결과) — blocked 있으면 사용처까지 표시
+- zod `max(200)` 상한 — DOS 방어
+- 감사 로그: 성공 삭제 각각에 `DELETE` 이벤트 (skip된 건은 로그 없음)
+
+#### 이미지 URL 경계 정규화 (admin 3001 ↔ web 3000)
+
+admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 해석해 404가 난다. DB에는 상대 경로를 유지하고, admin 표시 경계에서만 절대 URL로 변환한다.
+
+- **썸네일/미리보기(MediaCard, MediaDetailDialog, ImageUrlInput)**: `shared/lib/mediaUrl.ts::resolveMediaPreviewUrl(url)` 호출 — 절대 URL(Supabase/S3)은 그대로 통과, `/uploads/...`만 web 절대 URL로 prefix
+- **Tiptap 편집기(`TiptapEditor`)**: `useEditor({ content })`에 전달 전 `preprocessTiptapForAdmin(contentJson)`으로 `image.attrs.src`를 JSON 단계에서 walk 변환. `onUpdate`에서 `editor.getJSON()` 결과를 `postprocessTiptapForSave`로 역변환 후 `onChange` — DB 저장 포맷은 상대 경로 유지
+- **Tiptap 뷰 렌더러(`shared/lib/renderContent.ts::renderTiptapContentForAdmin`)**: `preprocess → generateHTML` 파이프라인. HTML 문자열 regex 치환은 resize/래퍼 속성 누락 위험으로 **사용 금지**
+- provider 중립: `resolveMediaPreviewUrl`이 절대 URL은 통과시키므로 Supabase Storage/S3 전환 시 해당 렌더링 코드를 고칠 필요 없음
 
 ### 회원가입
 
@@ -473,6 +570,7 @@ src/
 | `posts`      | 게시글      | create, read, update, delete |
 | `navigation` | 메뉴 관리   | create, read, update, delete |
 | `home`       | 메인 페이지 | create, read, update, delete |
+| `media`      | 미디어 라이브러리 | create, read, update, delete |
 | `users`      | 사용자 관리 | create, read, update, delete |
 | `roles`      | 권한 관리   | create, read, update, delete |
 | `auditLogs`  | 감사 로그   | read                         |

@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ArrowLeft, Pencil } from 'lucide-react';
-import { generateHTML, getSharedExtensions } from '@simple-cms/editor';
 
 import { Button } from '@/shared/ui/shadcn/button';
+import { renderTiptapContentForAdmin } from '@/shared/lib/renderContent';
 import {
   Card,
   CardContent,
@@ -32,9 +32,7 @@ export function PostView({ id }: PostViewProps) {
 
   if (!data) return null;
 
-  const contentHtml = data.contentJson
-    ? generateHTML(data.contentJson as Record<string, unknown>, getSharedExtensions())
-    : null;
+  const contentHtml = renderTiptapContentForAdmin(data.contentJson);
 
   return (
     <div className="space-y-6">

@@ -202,6 +202,18 @@ pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
 - `deleteUserSessions()`는 로그인 API 핸들러에서 동시 로그인 비허용 시 호출
 - 만료 세션 정리는 별도 스케줄러 또는 로그인 시점 부수 처리
 
+## Media 모델 컨벤션 (Stage 5a-2)
+
+- **핵심 필드**: `id`, `filename`, `originalFilename`, `mimeType`, `size`, `url`, `alt`, `createdAt`
+- **추가 필드 (Stage 5a-2)**:
+  - `contentHash String? @unique` — SHA-256 hex. 업로드 시 바이너리에서 계산. 동일 바이너리 재업로드 시 기존 레코드 재사용
+  - `uploadedById String?` — 업로더 User FK, `onDelete: SetNull` (사용자 삭제 시 "(삭제된 사용자)" 표시)
+- **관계**:
+  - `uploadedBy User? @relation("MediaUploader", ...)` (역관계: `User.uploadedMedia Media[]`)
+  - `subpages Subpage[]`, `posts Post[]` (featuredImage 역관계)
+- **인덱스**: `@@index([uploadedById])` (필터링용). `contentHash`는 `@unique`가 자동으로 인덱스 생성
+- **삭제 정책**: 참조 추적 후 사용 중이면 차단 — 강제 삭제 불허. 자세한 내용은 루트 CLAUDE.md "미디어 라이브러리 정책" 참조
+
 ## 동시 로그인 관련 SiteSettings 키
 
 | 키                         | 기본값   | 설명                                         |

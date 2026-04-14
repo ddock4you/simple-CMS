@@ -1,7 +1,6 @@
 import type { AnyExtension } from '@tiptap/core';
 import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
-import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import Subscript from '@tiptap/extension-subscript';
@@ -14,8 +13,9 @@ import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import TextAlign from '@tiptap/extension-text-align';
 import { TextStyle } from '@tiptap/extension-text-style';
-import Underline from '@tiptap/extension-underline';
 import StarterKit from '@tiptap/starter-kit';
+
+import { ImageWithMediaId } from './imageWithMediaId';
 
 export function getSharedExtensions(
   placeholder?: string,
@@ -23,8 +23,10 @@ export function getSharedExtensions(
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
+      // StarterKit v3가 기본 포함하는 Link는 아래에서 custom 옵션으로 별도 등록
+      link: false,
+      // Underline은 StarterKit v3 기본 포함 (옵션 없어 추가 설정 불필요)
     }),
-    Underline,
     TextStyle,
     Color,
     TextAlign.configure({
@@ -35,7 +37,7 @@ export function getSharedExtensions(
       openOnClick: false,
       autolink: true,
     }),
-    Image.configure({
+    ImageWithMediaId.configure({
       inline: true,
       allowBase64: true,
       resize: {

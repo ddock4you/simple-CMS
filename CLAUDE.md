@@ -159,6 +159,32 @@ apps/{앱}/
 - 업로드 엔드포인트에서 설정값을 조회하여 서버 사이드 검증 수행
 - 감사 로그: 설정 변경 시 `SITE_SETTINGS` entityType으로 기록
 
+### 파일 업로드 스토리지 정책
+
+- **스토리지 어댑터 추상화**: `apps/admin/src/shared/lib/storage/` — 환경변수로 provider 선택
+  - `STORAGE_PROVIDER=local` (기본): 로컬 파일시스템, `apps/web/public/uploads/{category}/` 에 저장 → web이 `/uploads/...` URL로 자동 서빙
+  - `STORAGE_PROVIDER=supabase`: Supabase Storage API, `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`/`SUPABASE_STORAGE_BUCKET` 필요
+  - 어댑터 인터페이스: `upload(input)`, `delete(storageKey)`, `urlToStorageKey(url)` — 라이브러리 삭제 시 URL → storageKey 역변환
+- 업로드 엔드포인트: `POST /api/media/upload` (multipart/form-data, 필드 `file` + `category`)
+- 업로드 시 `Media` 테이블 레코드 생성 — 파일명, 원본 파일명, MIME, 크기, 공개 URL, **contentHash(SHA-256)**, **uploadedById** 저장
+- 감사 로그: 업로드 시 `MEDIA` entityType, `CREATE` action (재사용 시 skip)
+- 파일명 생성: `{timestamp}-{uuid}{ext}` 형식 — 충돌 방지 + 경로 traversal 방어
+- 이미지 업로드 엔드포인트는 이미지 MIME 타입만 허용 (jpeg/png/gif/webp/svg+xml)
+- Docker 배포 시 `apps/web/public/uploads/`에 볼륨 마운트 필요 (local provider)
+
+### 미디어 라이브러리 정책 (Stage 5a-2)
+
+- **중복 방지**: 업로드 시 SHA-256 해시로 동일 바이너리 검출 → 기존 Media 레코드 재사용 (응답 `reused: true`, 파일 저장 + 새 레코드 생성 모두 skip)
+- **참조 추적**: `findMediaReferences(mediaId)`가 다음 위치를 스캔 — Subpage/Post.featuredImageId, HomeSection.configJson(JSONB), Subpage/Post.contentJson(Tiptap 재귀)
+- **삭제 차단**: 참조가 1건이라도 있으면 409 + 사용처 목록 반환 → 강제 삭제 불허, UI에서 사용처 표시
+- **권한**: 새 `media` 리소스 (`create/read/update/delete`). 일반 관리자 기본은 `read + create`
+- **라이브러리 UI**: `/media` 페이지 — 그리드 + 필터(q, mimeType) + 페이지네이션 + 상세 Dialog (alt 편집 + 사용처 표시 + 삭제) + 체크박스 일괄 선택/삭제
+- **MediaPicker**: 동일 컴포넌트가 `/media`, HERO/RECOMMENDED 편집의 ImageUrlInput, Tiptap 본문 툴바 3곳에서 재사용
+- **Tiptap 통합**: paste/drop 자동 업로드, 툴바 [업로드/라이브러리/URL] 드롭다운, image 노드 `attrs.mediaId` + HTML `data-media-id` 보존
+- **일괄 삭제**: `POST /api/media/bulk-delete` — 트랜잭션 없이 건별로 참조 확인 후 삭제/차단 분리. 응답 `{ deleted, blocked }`로 부분 성공 표현
+- **URL 경계 정규화**: DB에는 상대 경로(`/uploads/...`) 저장, admin 표시 시점에만 `resolveMediaPreviewUrl`로 절대 URL 변환. Tiptap은 JSON 단계 preprocess/postprocess로 initial 404 잔상 방지. provider(local/Supabase/S3) 전환 시 해당 렌더링 코드 수정 불필요
+- **Media 레코드**는 공용 리소스 — Stage 5b 팝업, 향후 게시글 본문 등에서도 동일 패턴으로 재사용
+
 ### 역할/권한 관리 정책
 
 - `Role` 테이블: 역할(등급) 정의, `permissions` JSON으로 메뉴별 CRUD 권한 저장
@@ -296,7 +322,7 @@ apps/{앱}/
 
 | 단계 | 내용                                       | 확인 가능한 것                     | 상태 |
 | ---- | ------------------------------------------ | ---------------------------------- | ---- |
-| 5a   | 메인 섹션 관리 + **Admin UI + Web 렌더링** | 섹션 데이터 편집 → 메인에 반영     | 대기 |
+| 5a   | 메인 섹션 관리 + **Admin UI + Web 렌더링** | 섹션 데이터 편집 → 메인에 반영     | **완료** |
 | 5b   | 메인 팝업 관리 + **Admin UI + Web 모달**   | 팝업 등록 → 메인 방문 시 모달 표시 | 대기 |
 
 ### Stage 6–8 — 확장 / 인프라
@@ -469,6 +495,7 @@ shared/lib/
 | 아이콘                   | lucide-react                                       | 전체                | shadcn/ui 기본 아이콘, 개별 import 최적화                                                                         |
 | 데이터 페칭 (클라이언트) | TanStack Query                                     | admin               | Key Factory + queryOptions 패턴, @tanstack/eslint-plugin-query 활용                                               |
 | 상태 관리 (클라이언트)   | Zustand                                            | admin, web          | UI 상태 전용. 서버 데이터는 TanStack Query가 담당                                                                 |
+| 슬라이드/캐러셀          | Swiper 12                                          | web                 | 메인 히어로 + 추천 콘텐츠 슬라이드, A11y/Keyboard/Autoplay 모듈, 커스텀 prev/next/play/pause 버튼 지원           |
 | CSV 내보내기             | 네이티브 구현                                      | admin               | 외부 라이브러리 없이 문자열 기반 CSV 생성                                                                         |
 | Excel 내보내기           | exceljs                                            | admin               | XLSX 바이너리 형식 생성, 감사 로그 다운로드용                                                                     |
 | 비밀번호 해싱            | bcryptjs                                           | admin (packages/db) | 순수 JS, 네이티브 빌드 불필요. SHA256은 범용 해시라 비밀번호에 부적합 — bcrypt는 의도적으로 느린 해싱 + 내장 salt |
@@ -482,6 +509,11 @@ shared/lib/
   - `content`: Tiptap JSON에서 추출한 순수 텍스트 (PGroonga 검색 인덱싱용)
   - 텍스트 추출: `packages/editor`의 `extractTextFromTiptap()` 유틸리티
   - 적용 모델: Subpage, Post, HomePopup(콘텐츠형) 전체 통일
+- **본문 이미지** (Stage 5a-2): Tiptap의 image 노드에 `mediaId` attr 추가 — Media 라이브러리 참조 추적
+  - `packages/editor`의 `ImageWithMediaId`가 기본 Image 확장을 교체
+  - paste/drop 시 `ImageUploadExtension`이 자동 업로드 + image 노드 삽입 (mediaId 포함)
+  - 외부 URL 직접 입력은 mediaId null (Media 무관, 의도적)
+  - HTML 직렬화: `<img data-media-id="...">` — DOMPurify ALLOWED_ATTR 통과
 - **web 렌더링**: `@tiptap/html`의 `generateHTML()` — 서버 사이드 전용, 클라이언트 JS 0
   - `packages/editor`의 공유 확장으로 admin과 동일한 렌더링 보장
   - DOMPurify 새니타이징 (defense-in-depth)

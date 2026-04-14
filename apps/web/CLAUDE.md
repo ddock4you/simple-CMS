@@ -86,7 +86,62 @@ src/
 - 데이터(텍스트, 이미지, 링크 등)는 운영자가 admin에서 관리
 - 섹션 노출 여부/순서는 admin에서 설정한 대로 반영
 - 디자이너 시안 → 재사용 가능한 섹션 컴포넌트로 분해
-- 예: Hero, 추천 콘텐츠, 바로가기, 최신 게시글, CTA, 공지
+
+### 구현 (Stage 5a)
+
+- **6개 고정 섹션 타입**: HERO, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
+- **SSR Server Component 중심**: 섹션 컴포넌트는 Server, 슬라이드 컨트롤만 Client (`Carousel`)
+- **자체 커스텀 디자인** (시안 확정 전): `apps/web/app/globals.css`의 `.home-*` 클래스로 스코프된 스타일. 시안 확정 시 섹션 컴포넌트 교체 전제, admin 데이터 구조는 안정
+
+### HERO / RECOMMENDED 슬라이드
+
+- **HERO**: 슬라이드 1개면 정적 배너, 2개 이상이면 Carousel (1 per view)
+  - 아이템 스키마: `{ imageUrl, imageAlt, title, description?, url? }`
+  - url 있으면 전체 슬라이드가 `<Link>`로 감싸짐
+  - 배경 이미지 + 그라데이션 오버레이 + 하단 제목/설명
+- **RECOMMENDED**: 자유 갤러리 (subpage/post 참조 아님)
+  - 아이템 개수 ≤ 3: 그리드 (모바일 1, 태블릿 2, 데스크톱 3)
+  - 아이템 개수 > 3: Carousel (디바이스별 slidesPerView: mobile 1, tablet 2, desktop 3)
+- **슬라이드 라이브러리**: [Swiper 12](https://swiperjs.com/) + 커스텀 컨트롤 버튼
+  - `apps/web/src/shared/ui/Carousel.tsx`: Client Component, SlideOptions props
+  - Swiper modules: A11y, Keyboard (기본) + Navigation/Pagination/Autoplay (옵션별 조건부)
+  - 접근성: `aria-roledescription="carousel"`, `aria-live` (swiper 내장), keyboard nav, `pauseOnMouseEnter`, `prefers-reduced-motion` CSS 존중
+
+### FSD 구조
+
+```
+src/entities/home-section/
+├── api/getHomeSections.ts      # React.cache, LATEST_POSTS 참조만 배치 조회
+└── lib/parseConfig.ts          # configJson Zod safeParse 타입 가드 (6개)
+
+src/features/home-section/ui/
+├── HeroSection.tsx             # 단일/슬라이드 분기
+├── RecommendedSection.tsx      # 그리드/슬라이드 분기
+├── ShortcutSection.tsx
+├── LatestPostsSection.tsx
+├── CtaSection.tsx
+└── NoticeSection.tsx
+
+src/widgets/home-sections/ui/HomeSections.tsx   # 섹션 타입별 라우팅 오케스트레이터
+src/pages/home/ui/HomePage.tsx                   # <HomeSections /> 렌더링
+src/shared/ui/Carousel.tsx                       # Swiper 기반 공통 캐러셀 ('use client')
+```
+
+### 데이터 해결 흐름 (`getHomeSections`)
+
+1. `isVisible: true` 섹션을 `displayOrder asc`로 조회
+2. 각 섹션의 `configJson`을 타입별로 Zod safeParse — 실패 시 skip
+3. LATEST_POSTS의 boardId만 배치 조회 (Promise.all, N+1 방지). RECOMMENDED/HERO는 외부 참조 없음
+4. dead reference (삭제된/비공개 게시판 등)는 자동 skip — 에러 없이 나머지 렌더
+
+### 엣지케이스
+
+- **configJson 손상**: Zod 실패 → 해당 섹션 skip
+- **HERO slides 빈 배열**: 섹션 전체 숨김 (seed 기본값이 빈 배열이므로 관리자 편집 전까지 미표시)
+- **RECOMMENDED items 빈 배열**: 섹션 전체 숨김
+- **LATEST_POSTS boardId null 또는 비공개**: 섹션은 표시하되 items 빈 배열 → "게시글이 없습니다" placeholder
+- **이미지 URL 입력만 지원** (Stage 5a): `<img src>`로 직접 로드, lazy loading. 이후 Media 관리 Stage에서 업로드 지원 추가 예정
+- **슬라이드 하나만 있는 HERO**: Carousel을 생략하고 정적 배너 렌더링 (성능 + 불필요 컨트롤 제거)
 
 ## 메인 팝업
 
@@ -115,6 +170,7 @@ src/
 서브페이지 렌더링 순서:
 
 1. **본문**: Tiptap JSON → HTML 변환 (`generateHTML()` from `@tiptap/html`, `@simple-cms/editor` 공유 확장, DOMPurify 새니타이징)
+   - Stage 5a-2: image 노드의 `mediaId` attr → `<img data-media-id="cuid...">` 직렬화. DOMPurify ALLOWED_ATTR에 `data-media-id` 포함 (Media 라이브러리 참조 추적용 메타데이터)
 2. **추가 블록**: 블록 타입별 렌더러 연결 (`isVisible = true`인 블록만)
 3. **커스텀 HTML**: `customHtml` 필드가 있으면 DOMPurify 새니타이징 후 지정 위치에 삽입
 4. **커스텀 CSS**: `customCss` 필드가 있으면 `<style>` 태그로 페이지 스코프 적용

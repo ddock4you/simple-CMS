@@ -6,6 +6,7 @@ import {
   PenSquare,
   PanelLeft,
   Home,
+  Image as ImageIcon,
   Users,
   ClipboardList,
   AlertTriangle,
@@ -39,6 +40,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: '게시글', url: '/posts', icon: PenSquare, resource: 'posts' },
       { title: '메뉴 관리', url: '/navigation', icon: PanelLeft, resource: 'navigation' },
       { title: '메인 페이지', url: '/home', icon: Home, resource: 'home' },
+      { title: '미디어', url: '/media', icon: ImageIcon, resource: 'media' },
     ],
   },
   {

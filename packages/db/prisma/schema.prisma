@@ -122,10 +122,11 @@ model User {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  role      Role?      @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  sessions  Session[]
-  auditLogs AuditLog[]
-  posts     Post[]
+  role           Role?      @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  sessions       Session[]
+  auditLogs      AuditLog[]
+  posts          Post[]
+  uploadedMedia  Media[]    @relation("MediaUploader")
 
   @@index([roleId])
   @@index([status])
@@ -259,10 +260,15 @@ model Media {
   size             Int
   url              String
   alt              String?
+  contentHash      String?  @unique
+  uploadedById     String?
   createdAt        DateTime @default(now())
 
-  subpages Subpage[]
-  posts    Post[]
+  uploadedBy User?     @relation("MediaUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  subpages   Subpage[]
+  posts      Post[]
+
+  @@index([uploadedById])
 }
 
 model NavigationMenu {

@@ -2,7 +2,11 @@
 
 import './tiptapResize.css';
 import { useEditor, EditorContent } from '@tiptap/react';
-import { getSharedExtensions } from '@simple-cms/editor';
+import {
+  getSharedExtensions,
+  ImageUploadExtension,
+  type UploadResult,
+} from '@simple-cms/editor';
 import {
   Bold,
   Italic,
@@ -18,6 +22,9 @@ import {
   Minus,
   Link as LinkIcon,
   ImageIcon,
+  Library,
+  Link2,
+  Upload,
   TableIcon,
   AlignLeft,
   AlignCenter,
@@ -32,12 +39,23 @@ import {
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
 } from 'react';
+import { toast } from 'sonner';
+
+import type { ApiResponse, UploadMediaResponse } from '@simple-cms/types';
 
 import { Button } from '@/shared/ui/shadcn/button';
+import { resolveMediaPreviewUrl } from '@/shared/lib/mediaUrl';
+import {
+  postprocessTiptapForSave,
+  preprocessTiptapForAdmin,
+} from '@/shared/lib/tiptapContentTransform';
+import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { MediaPicker } from '@/features/media-management/ui/MediaPicker';
 
 interface TiptapEditorProps {
   content: unknown;
@@ -56,17 +74,76 @@ const HIGHLIGHT_COLORS = [
   '#F3F0FF', '#E6E1FF', '#E3FAFC', '#C5F6FA', '#F8F0FC', '#EEBEFA',
 ];
 
+/**
+ * 본문 이미지 업로드 — Media 라이브러리 통합.
+ * paste/drop 핸들러와 툴바 [업로드] 버튼이 공유.
+ * 응답에 reused 플래그가 있으면 안내 토스트 분기.
+ *
+ * 반환하는 src는 admin 표시용 절대 URL (editor DOM이 처음부터 404 없이 로드).
+ * 저장 시점에 `postprocessTiptapForSave`가 다시 상대 경로로 복원한다.
+ */
+async function uploadImageToMedia(file: File): Promise<UploadResult> {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('category', 'content');
+  const res = await fetch('/api/media/upload', {
+    method: 'POST',
+    body: fd,
+  });
+  const body = (await res.json()) as ApiResponse<UploadMediaResponse>;
+  if (!res.ok || !body.success) {
+    const message = 'error' in body ? body.error : '업로드에 실패했습니다.';
+    throw new Error(message);
+  }
+  if (body.data.reused) {
+    toast.success('동일한 파일이 라이브러리에 있어 재사용했습니다.');
+  } else {
+    toast.success('이미지가 업로드되었습니다.');
+  }
+  return {
+    src: resolveMediaPreviewUrl(body.data.url),
+    mediaId: body.data.id,
+    alt: body.data.alt ?? file.name,
+  };
+}
+
 export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [openPopup, setOpenPopup] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const canReadMedia = usePermission('media', 'read');
+
+  // extensions를 한 번만 평가하기 위해 useMemo + paste/drop 콜백은 안정 함수
+  const extensions = useMemo(
+    () => [
+      ...getSharedExtensions(),
+      ImageUploadExtension.configure({
+        uploadImage: uploadImageToMedia,
+        onError: (err) => toast.error(err.message),
+      }),
+    ],
+    [],
+  );
+
+  // 초기 content의 이미지 src를 admin 절대 URL로 치환해 에디터 DOM 초기 404 방지.
+  // useEditor는 이 content를 1회만 흡수하므로 빈 deps로 고정.
+  const initialContent = useMemo(
+    () =>
+      content
+        ? (preprocessTiptapForAdmin(content) as Record<string, unknown>)
+        : undefined,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   const editor = useEditor({
-    extensions: getSharedExtensions(),
-    content: (content as Record<string, unknown>) ?? undefined,
+    extensions,
+    content: initialContent,
     onUpdate: ({ editor: e }) => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
-        onChange(e.getJSON());
+        // DB 저장용: 절대 URL을 다시 상대 경로로 복원
+        onChange(postprocessTiptapForSave(e.getJSON()));
       }, 200);
     },
     immediatelyRender: false,
@@ -110,20 +187,46 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageSelect = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
+    async (e: ChangeEvent<HTMLInputElement>) => {
       if (!editor) return;
       const file = e.target.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const src = reader.result as string;
-        editor.chain().focus().setImage({ src }).run();
-      };
-      reader.readAsDataURL(file);
       e.target.value = '';
+      if (!file) return;
+      try {
+        const { src, mediaId, alt } = await uploadImageToMedia(file);
+        editor
+          .chain()
+          .focus()
+          .setImage({ src, alt: alt ?? file.name, mediaId } as Record<
+            string,
+            unknown
+          >)
+          .run();
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : '업로드에 실패했습니다.';
+        toast.error(message);
+      }
     },
     [editor],
   );
+
+  const handleInsertImageUrl = useCallback(() => {
+    if (!editor) return;
+    const url = window.prompt('이미지 URL을 입력하세요', '');
+    if (!url) return;
+    // 입력 URL이 `/uploads/...` 상대 경로면 admin 표시용 절대 URL로,
+    // 외부 절대 URL이면 그대로 통과. 저장 시 postprocess가 복원.
+    editor
+      .chain()
+      .focus()
+      .setImage({
+        src: resolveMediaPreviewUrl(url),
+        alt: '',
+        mediaId: null,
+      } as Record<string, unknown>)
+      .run();
+  }, [editor]);
 
   if (!editor) return null;
 
@@ -280,15 +383,59 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
           icon={<LinkIcon className="size-4" />}
           tooltip="링크"
         />
-        <ToolbarButton
-          onClick={() => fileInputRef.current?.click()}
-          icon={<ImageIcon className="size-4" />}
-          tooltip="이미지"
-        />
+
+        {/* Image dropdown: 업로드 / 라이브러리 / URL */}
+        <div className="relative" data-toolbar-popup>
+          <ToolbarButton
+            onClick={() => togglePopup('image')}
+            active={openPopup === 'image'}
+            icon={<ImageIcon className="size-4" />}
+            tooltip="이미지"
+          />
+          {openPopup === 'image' && (
+            <div className="absolute top-full left-0 z-50 mt-1 flex w-44 flex-col rounded-md border bg-popover p-1 shadow-md">
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-accent"
+                onClick={() => {
+                  setOpenPopup(null);
+                  fileInputRef.current?.click();
+                }}
+              >
+                <Upload className="size-4" />
+                파일 업로드
+              </button>
+              {canReadMedia && (
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-accent"
+                  onClick={() => {
+                    setOpenPopup(null);
+                    setPickerOpen(true);
+                  }}
+                >
+                  <Library className="size-4" />
+                  라이브러리
+                </button>
+              )}
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-accent"
+                onClick={() => {
+                  setOpenPopup(null);
+                  handleInsertImageUrl();
+                }}
+              >
+                <Link2 className="size-4" />
+                URL 입력
+              </button>
+            </div>
+          )}
+        </div>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
           className="hidden"
           onChange={handleImageSelect}
         />
@@ -353,6 +500,26 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
       <EditorContent
         editor={editor}
         className="max-h-[500px] overflow-y-auto p-4 [&_.tiptap]:prose [&_.tiptap]:prose-sm [&_.tiptap]:max-w-none [&_.tiptap]:min-h-[300px] [&_.tiptap]:cursor-text [&_.tiptap]:outline-none [&_.tiptap_table]:border-collapse [&_.tiptap_td]:border [&_.tiptap_td]:border-border [&_.tiptap_td]:p-2 [&_.tiptap_th]:border [&_.tiptap_th]:border-border [&_.tiptap_th]:p-2 [&_.tiptap_th]:bg-muted [&_.tiptap_th]:font-semibold [&_.tiptap_img]:max-w-full [&_.tiptap_img]:rounded-md [&_.tiptap_ul[data-type=taskList]]:list-none [&_.tiptap_ul[data-type=taskList]]:pl-0 [&_.tiptap_ul[data-type=taskList]_li]:flex [&_.tiptap_ul[data-type=taskList]_li]:items-start [&_.tiptap_ul[data-type=taskList]_li]:gap-2"
+      />
+
+      <MediaPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        category="content"
+        title="본문 이미지 선택"
+        description="라이브러리에서 이미지를 선택하거나 새로 업로드하세요."
+        onSelect={(media) => {
+          // editor DOM에는 절대 URL로 삽입. 저장 시 postprocess가 상대 경로로 복원.
+          editor
+            .chain()
+            .focus()
+            .setImage({
+              src: resolveMediaPreviewUrl(media.url),
+              alt: media.alt ?? media.originalFilename,
+              mediaId: media.id,
+            } as Record<string, unknown>)
+            .run();
+        }}
       />
     </div>
   );

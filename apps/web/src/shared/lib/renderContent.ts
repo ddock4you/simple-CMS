@@ -19,6 +19,7 @@ const purifyConfig = {
     'src', 'alt', 'width', 'height',
     'style', 'class',
     'data-type', 'data-checked',
+    'data-media-id', // Stage 5a-2: Tiptap 이미지의 Media 라이브러리 참조 (cuid)
     'type', 'checked', 'disabled', // task list checkbox
     'colspan', 'rowspan', 'colwidth',
   ],

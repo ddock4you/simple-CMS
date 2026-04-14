@@ -1,0 +1,70 @@
+'use client';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+import { Button } from '@/shared/ui/shadcn/button';
+
+interface MediaPaginationProps {
+  page: number;
+  pageSize: number;
+  total: number;
+  basePath?: string;
+  onPageChange?: (page: number) => void;
+}
+
+export function MediaPagination({
+  page,
+  pageSize,
+  total,
+  basePath = '/media',
+  onPageChange,
+}: MediaPaginationProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  if (totalPages <= 1) return null;
+
+  const navigate = (newPage: number) => {
+    if (onPageChange) {
+      onPageChange(newPage);
+      return;
+    }
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
+    params.set('page', String(newPage));
+    router.push(`${basePath}?${params.toString()}`);
+  };
+
+  return (
+    <div className="flex items-center justify-between">
+      <p className="text-sm text-muted-foreground">
+        총 {total}건 중 {(page - 1) * pageSize + 1}~
+        {Math.min(page * pageSize, total)}건
+      </p>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(page - 1)}
+          disabled={page <= 1}
+        >
+          <ChevronLeft className="size-4" />
+          이전
+        </Button>
+        <span className="text-sm text-muted-foreground">
+          {page} / {totalPages}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(page + 1)}
+          disabled={page >= totalPages}
+        >
+          다음
+          <ChevronRight className="size-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}

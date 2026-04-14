@@ -21,6 +21,7 @@ const FULL_PERMISSIONS = {
   posts: { create: true, read: true, update: true, delete: true },
   navigation: { create: true, read: true, update: true, delete: true },
   home: { create: true, read: true, update: true, delete: true },
+  media: { create: true, read: true, update: true, delete: true },
   users: { create: true, read: true, update: true, delete: true },
   roles: { create: true, read: true, update: true, delete: true },
   auditLogs: { read: true },
@@ -33,6 +34,7 @@ const DEFAULT_PERMISSIONS = {
   subpages: { read: true },
   boards: { read: true },
   posts: { create: true, read: true, update: true },
+  media: { read: true, create: true },
 };
 
 async function main() {
@@ -114,6 +116,95 @@ async function main() {
       create: menu,
     });
     console.log(`✓ NavigationMenu: ${created.name} (slots: ${created.slots.join(', ') || 'none'})`);
+  }
+
+  // 6. Initial HomeSections (6 fixed sections, idempotent)
+  // sectionType은 unique 아님 → findFirst + create 패턴 (upsert 금지: 관리자 수정본 덮어쓰기 방지)
+  const DEFAULT_SLIDE_OPTIONS = {
+    showPrevNext: true,
+    showPlayPause: false,
+    showDots: true,
+    autoPlay: false,
+    autoPlayInterval: 5000,
+  };
+
+  const homeSections = [
+    {
+      sectionType: 'HERO' as const,
+      title: '메인 히어로',
+      displayOrder: 0,
+      configJson: {
+        slides: [],
+        slideOptions: DEFAULT_SLIDE_OPTIONS,
+      },
+    },
+    {
+      sectionType: 'RECOMMENDED' as const,
+      title: '추천 콘텐츠',
+      displayOrder: 1,
+      configJson: {
+        heading: '추천 콘텐츠',
+        description: null,
+        items: [],
+        slideOptions: DEFAULT_SLIDE_OPTIONS,
+      },
+    },
+    {
+      sectionType: 'SHORTCUT' as const,
+      title: '바로가기',
+      displayOrder: 2,
+      configJson: { heading: '바로가기', description: null, items: [] },
+    },
+    {
+      sectionType: 'LATEST_POSTS' as const,
+      title: '최신 게시글',
+      displayOrder: 3,
+      configJson: {
+        heading: '최신 게시글',
+        description: null,
+        boardId: null,
+        limit: 5,
+      },
+    },
+    {
+      sectionType: 'CTA' as const,
+      title: 'CTA 섹션',
+      displayOrder: 4,
+      configJson: {
+        heading: '지금 시작하세요',
+        description: null,
+        buttonLabel: '자세히 보기',
+        buttonUrl: '/',
+      },
+    },
+    {
+      sectionType: 'NOTICE' as const,
+      title: '공지사항',
+      displayOrder: 5,
+      configJson: { heading: '공지사항', description: null, items: [] },
+    },
+  ];
+
+  for (const section of homeSections) {
+    const existing = await prisma.homeSection.findFirst({
+      where: { sectionType: section.sectionType },
+    });
+    if (existing) {
+      console.log(
+        `✓ HomeSection: ${section.sectionType} already exists, skipping`,
+      );
+    } else {
+      await prisma.homeSection.create({
+        data: {
+          sectionType: section.sectionType,
+          title: section.title,
+          displayOrder: section.displayOrder,
+          configJson: section.configJson,
+          isVisible: true,
+        },
+      });
+      console.log(`✓ HomeSection: ${section.sectionType} created`);
+    }
   }
 
   console.log('\nSeed completed successfully.');

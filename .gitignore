@@ -44,3 +44,8 @@ docker/data/
 *.tsbuildinfo
 
 docs/
+
+# uploads (local storage adapter — runtime artifacts, .gitkeep만 추적)
+apps/web/public/uploads/**/*
+!apps/web/public/uploads/.gitkeep
+!apps/web/public/uploads/**/.gitkeep

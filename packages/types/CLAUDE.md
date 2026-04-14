@@ -33,6 +33,8 @@ packages/types/
 │   │   ├── board.dto.ts
 │   │   ├── user.dto.ts        # RegisterUserDto, UpdateProfileDto, ChangePasswordDto, UserListResponse
 │   │   ├── role.dto.ts           # CreateRoleDto, UpdateRoleDto, UpdatePermissionsDto, RoleListResponse
+│   │   ├── home.dto.ts        # HomeSectionListItem, HomeSectionDetail, UpdateHomeSectionDto, ReorderHomeSectionsDto, HomeReferencesDto
+│   │   ├── media.dto.ts       # MediaListItem, MediaDetail, MediaListFilters, MediaListResponse, UpdateMediaDto, UploadMediaResponse, MediaReference, MediaReferencesResponse
 │   │   ├── auditLog.dto.ts
 │   │   └── ...
 │   └── common.types.ts     # 공용 유틸리티 타입

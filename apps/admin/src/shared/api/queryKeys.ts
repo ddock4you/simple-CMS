@@ -37,6 +37,13 @@ export const navigationKeys = {
   detail: (menuId: string) => [...navigationKeys.all, 'detail', menuId] as const,
 };
 
+export const homeKeys = {
+  all: ['home'] as const,
+  lists: () => [...homeKeys.all, 'list'] as const,
+  detail: (id: string) => [...homeKeys.all, 'detail', id] as const,
+  references: () => [...homeKeys.all, 'references'] as const,
+};
+
 export const auditLogKeys = {
   all: ['auditLogs'] as const,
   lists: () => [...auditLogKeys.all, 'list'] as const,
@@ -55,4 +62,12 @@ export const settingsKeys = {
   domain: () => [...settingsKeys.all, 'domain'] as const,
   security: () => [...settingsKeys.all, 'security'] as const,
   upload: () => [...settingsKeys.all, 'upload'] as const,
+};
+
+export const mediaKeys = {
+  all: ['media'] as const,
+  lists: () => [...mediaKeys.all, 'list'] as const,
+  list: (filters: unknown) => [...mediaKeys.lists(), filters] as const,
+  detail: (id: string) => [...mediaKeys.all, 'detail', id] as const,
+  references: (id: string) => [...mediaKeys.all, 'references', id] as const,
 };
