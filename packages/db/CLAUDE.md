@@ -26,6 +26,7 @@ packages/db/
 │   ├── auditLog.ts           # 감사 로그 기록 헬퍼 (logAuditEvent)
 │   ├── sessionHelper.ts      # 세션 CRUD 헬퍼 (createSession, validateSession 등)
 │   ├── search.ts             # PGroonga 통합검색 헬퍼 (searchContent)
+│   ├── errorLog.ts           # 웹 에러 로그 헬퍼 (logWebError, cleanupErrorLogs, computeErrorFingerprint)
 │   └── repositories/         # 도메인별 query helper (필요 시)
 └── package.json
 ```
@@ -158,6 +159,19 @@ pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
   - 사용자 응답을 차단하지 않음
 - `cleanupErrorLogs()` 헬퍼: 보존 기간 초과 레코드 삭제 (기본 90일)
 - 인덱스: `[createdAt]`, `[level]`, `[source]`, `[fingerprint]`, `[isResolved, createdAt]`, `[url]`
+
+### 에러 로그 헬퍼 (`src/errorLog.ts`)
+
+| 함수 | 설명 |
+| --- | --- |
+| `logWebError(input)` | 에러 기록 + fingerprint 자동 계산, fire-and-forget (내부 try-catch) |
+| `cleanupErrorLogs(retentionDays?)` | 보존 기간 초과 레코드 삭제 (기본 90일) |
+| `computeErrorFingerprint(source, url, message)` | SHA-256 hex 앞 16자, 유닛 테스트/외부 재사용용 |
+
+- fingerprint 정규화: UUID → `{uuid}`, 숫자 → `{n}`, 문자열 리터럴 → `{str}`, 메시지 200자 제한
+- URL 정규화: URL 파싱 후 pathname만 사용, UUID/숫자 세그먼트 치환
+- 메시지 저장 최대 2000자 (방어적 절단)
+- 해결 상태 업데이트는 app/api/error-logs/[id] PATCH에서 직접 처리 (헬퍼 경유하지 않음)
 
 ## 세션 모델
 

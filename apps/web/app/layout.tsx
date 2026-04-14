@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import 'krds-react/dist/index.css';
 
 import { getMenuBySlot } from '@/entities/navigation/api/getNavigation';
+import { ErrorReporterMount } from '@/shared/ui/ErrorReporterMount';
 import { PageLayout } from '@/widgets/layout/ui/PageLayout';
 
 import './globals.css';
@@ -35,6 +36,7 @@ export default async function RootLayout({
         />
       </head>
       <body>
+        <ErrorReporterMount />
         <PageLayout
           headerMenuItems={headerMenu?.items ?? []}
           footerMenuItems={footerMenu?.items ?? []}

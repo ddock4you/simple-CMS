@@ -25,6 +25,13 @@ export type { UploadRestrictions } from './uploadRestriction';
 export { searchContent } from './search';
 export type { SearchResult, SearchResponse } from './search';
 
+export {
+  logWebError,
+  cleanupErrorLogs,
+  computeErrorFingerprint,
+} from './errorLog';
+export type { LogWebErrorInput } from './errorLog';
+
 export type {
   User,
   Role,

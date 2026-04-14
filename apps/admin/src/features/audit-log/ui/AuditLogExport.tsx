@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import { Button } from '@/shared/ui/shadcn/button';
 
-import { DatePicker } from './DatePicker';
+import { DatePicker } from '@/shared/ui/DatePicker';
 
 function getDefaultDateRange() {
   const to = new Date();

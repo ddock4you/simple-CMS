@@ -388,6 +388,53 @@ body {
   opacity: 0.9;
 }
 
+/* 에러 페이지 */
+.error-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-4, 16px);
+  min-height: 50vh;
+  padding: var(--gap-10, 64px) var(--gap-6, 24px);
+  text-align: center;
+}
+
+.error-page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.error-page-description {
+  color: #666;
+}
+
+.error-page-retry {
+  padding: var(--gap-3, 12px) var(--gap-6, 24px);
+  background: var(--krds-color-light-primary-50, #0056d6);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.error-page-retry:hover {
+  opacity: 0.9;
+}
+
+/* Error Boundary fallback */
+.error-boundary-fallback {
+  padding: var(--gap-4, 16px);
+  background: #fff5f5;
+  border: 1px solid #ffc9c9;
+  border-radius: 4px;
+  color: #c92a2a;
+  font-size: 0.875rem;
+}
+
 /* ==========================================================================
    7. 게시판 목록
    ========================================================================== */

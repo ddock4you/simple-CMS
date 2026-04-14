@@ -43,6 +43,13 @@ export const auditLogKeys = {
   list: (filters: unknown) => [...auditLogKeys.lists(), filters] as const,
 };
 
+export const errorLogKeys = {
+  all: ['errorLogs'] as const,
+  lists: () => [...errorLogKeys.all, 'list'] as const,
+  list: (filters: unknown) => [...errorLogKeys.lists(), filters] as const,
+  detail: (id: string) => [...errorLogKeys.all, 'detail', id] as const,
+};
+
 export const settingsKeys = {
   all: ['settings'] as const,
   domain: () => [...settingsKeys.all, 'domain'] as const,

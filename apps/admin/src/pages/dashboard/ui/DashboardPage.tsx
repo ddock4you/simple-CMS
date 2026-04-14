@@ -2,6 +2,7 @@ import { FileText, SquareKanban, PenSquare, Users } from 'lucide-react';
 
 import { prisma } from '@simple-cms/db';
 
+import { ErrorLogDashboardWidget } from '@/features/error-log/ui/ErrorLogDashboardWidget';
 import { StatCard } from '@/shared/ui/layout/StatCard';
 
 export default async function DashboardPage() {
@@ -45,6 +46,8 @@ export default async function DashboardPage() {
           icon={Users}
         />
       </div>
+
+      <ErrorLogDashboardWidget />
     </div>
   );
 }

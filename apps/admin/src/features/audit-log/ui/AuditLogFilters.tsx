@@ -14,7 +14,7 @@ import {
 import { userOptionsQuery } from '../api/auditLogQueries';
 import { ACTION_LABELS, ENTITY_TYPE_LABELS } from '../model/auditLogFilters';
 import type { AuditActionFilter } from '../model/auditLogFilters';
-import { DatePicker } from './DatePicker';
+import { DatePicker } from '@/shared/ui/DatePicker';
 
 interface AuditLogFiltersProps {
   currentAction: AuditActionFilter;

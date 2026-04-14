@@ -226,19 +226,19 @@ entities → shared                            ✅
 
 ### 서버 사이드 에러 캡처
 
-- `app/error.tsx` (루트 에러 바운더리): SSR/Server Component 렌더링 에러 캡처
-- `app/global-error.tsx`: 루트 레이아웃 에러 캡처
-- `proxy.ts` catch 블록: 프록시 에러 캡처
-- 로깅: `@simple-cms/db`의 `logWebError()` 직접 호출 (같은 DB 공유)
+- `app/error.tsx` (Next.js 세그먼트 에러 바운더리, `'use client'`): Server Component/SSR 에러 수신 — `error.digest` 유무로 `SERVER_SSR` vs `CLIENT_REACT` 분기 후 `/api/error-report`로 리포트
+- `app/global-error.tsx`: 루트 레이아웃 치명적 에러 캡처 (`<html>`, `<body>` 포함 필수)
+- `proxy.ts` catch 블록: 프록시 에러 캡처, `@simple-cms/db`의 `logWebError()`를 서버 사이드에서 직접 호출 (미들웨어는 Node 런타임, fail-open으로 사용자 응답 차단 방지)
 - fire-and-forget: 에러 로깅이 사용자 응답을 차단하지 않음
 
 ### 클라이언트 사이드 에러 캡처
 
-- `src/shared/ui/ErrorBoundary.tsx`: React 에러 바운더리 래퍼 (검색, 팝업 등 인터랙티브 컴포넌트용)
-- `src/shared/lib/errorReporter.ts`: 클라이언트 에러 리포터 (`navigator.sendBeacon` 우선, `fetch` 폴백)
-- 전역 핸들러: `window.addEventListener('error')`, `window.addEventListener('unhandledrejection')`
-- API Route: `app/api/error-report/route.ts` — 클라이언트 에러 수신 엔드포인트
-- Rate limiting: IP당 분당 10건 (in-memory 카운터)
+- `src/shared/ui/ErrorBoundary.tsx`: React class Error Boundary (검색, 팝업 등 인터랙티브 컴포넌트용), `componentDidCatch`에서 `reportError({ source: 'CLIENT_REACT' })`
+- `src/shared/ui/ErrorReporterMount.tsx`: 루트 레이아웃에서 1회 마운트되어 전역 리스너 등록
+- `src/shared/lib/errorReporter.ts`: 클라이언트 에러 리포터 (`navigator.sendBeacon` 우선, `fetch({keepalive:true})` 폴백)
+- 전역 핸들러: `window.addEventListener('error')`(리소스 로드 에러는 제외), `window.addEventListener('unhandledrejection')`
+- API Route: `app/api/error-report/route.ts` — Zod 검증 + 공개 엔드포인트, `requirePermission` 사용 안 함
+- Rate limiting: IP당 분당 10건 (in-memory 카운터), 50요청마다 만료 엔트리 cleanup
 
 ### 캡처 컨텍스트
 

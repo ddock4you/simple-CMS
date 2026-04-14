@@ -127,8 +127,7 @@ src/
 /users                  # 사용자 관리 (목록, 승인/거절, 정지/해제)
 /profile                # 내 정보 변경 (이름, 비밀번호)
 /audit-logs             # 활동 이력 (감사 로그)
-/error-logs             # 웹 에러 로그 (공개 웹 런타임 에러 조회)
-/error-logs/[id]        # 에러 상세 (스택 트레이스, 요청 컨텍스트)
+/error-logs             # 웹 에러 로그 (공개 웹 런타임 에러 조회, 상세는 Dialog)
 /settings               # 사이트 설정 (첫 번째 하위 설정으로 리다이렉트)
 /settings/domain        # 도메인 설정
 /settings/security      # 보안 설정 (동시 로그인 정책)
@@ -299,35 +298,55 @@ src/
 
 - 공개 웹(apps/web)에서 발생한 서버/클라이언트 런타임 에러를 조회하는 운영 도구
 - AuditLog(관리자 활동 이력)와 별도 — ErrorLog는 웹 사용자 경험 에러 추적용
-- FSD 위치: `features/error-log`, `entities/error-log`
+- FSD 위치: `src/features/error-log/{api,model,ui}`, `src/pages/error-logs/ui/ErrorLogsPage.tsx`
+- 권한 리소스: `errorLogs` (`['read', 'update']`)
+
+#### 라우트
+
+- `/error-logs` — 목록 (필터 + 그룹/개별 뷰 토글 + 페이지네이션)
+- 상세는 별도 라우트 없이 목록 내 `ErrorLogDetailDialog`로 표시 (URL 공유 불필요, 감사 로그와 일관성)
+
+#### API Routes
+
+| Method | Route                              | 필요 권한           | 용도                    |
+| ------ | ---------------------------------- | ------------------- | ----------------------- |
+| GET    | `/api/error-logs`                  | errorLogs:read      | 목록 (개별/그룹 뷰)     |
+| GET    | `/api/error-logs/[id]`             | errorLogs:read      | 상세                    |
+| PATCH  | `/api/error-logs/[id]`             | errorLogs:update    | 개별 해결/미해결 토글   |
+| POST   | `/api/error-logs/bulk-resolve`     | errorLogs:update    | fingerprint 일괄 처리   |
 
 #### 목록 (`/error-logs`)
 
-- 컬럼: 시간, 레벨(ERROR/WARN 뱃지), 소스(SSR/API/CLIENT 등 뱃지), 메시지(첫 줄), URL, 해결 상태
-- 필터: 레벨, 소스, 날짜 범위, URL 패턴(부분 일치), 해결 상태(전체/미해결/해결)
-- 기본 정렬: `createdAt DESC`, 기본 필터: 미해결 우선
+- 컬럼 (개별 뷰): 시간, 레벨 뱃지, 소스 뱃지, 메시지(첫 줄), URL, 해결 상태, 상세 버튼
+- 컬럼 (그룹 뷰): 최근 발생 시각, 레벨, 소스, 메시지, URL, 발생 횟수, 일괄 해결, 대표 상세
+- 필터: 레벨, 소스, 해결 상태, 날짜 범위, URL 부분 일치, 메시지 검색, 그룹/개별 뷰 토글
+- 기본 정렬: `createdAt DESC`, 기본 필터: `resolved=unresolved`, 날짜=최근 1개월
 - 서버 사이드 페이지네이션 (기본 20건)
-- 그룹 뷰: `fingerprint` 기준 집계 (같은 에러 N회 발생 표시)
-- 액션: 해결 처리, 일괄 해결, 오래된 로그 삭제(날짜 기준 + 확인 다이얼로그)
+- 그룹 뷰는 Prisma `groupBy` + `_min.isResolved`로 미해결 존재 여부 판정
 
-#### 상세 (`/error-logs/[id]`)
+#### 상세 (Dialog)
 
-- 전체 에러 메시지 + 스택 트레이스 (`<pre>` 블록)
-- 요청 컨텍스트: URL, method, statusCode, userAgent, IP, referer
-- 메타데이터 JSON (포맷팅 표시)
-- 에러 소스/레벨
-- Fingerprint: 같은 fingerprint의 다른 에러 링크
-- 해결 상태 + 해결자 정보
+- `ErrorLogDetailDialog`: `useQuery(errorLogDetailOptions(id))`로 조회
+- 전체 메시지 + 스택 트레이스 (`<pre>`)
+- 요청 컨텍스트 grid: URL, method, statusCode, userAgent, IP, referer
+- 메타데이터 JSON 포맷팅
+- Digest/Fingerprint 표시 — fingerprint 클릭 시 해당 검색 조건 + 그룹 뷰로 이동
+- 해결 처리 버튼은 `usePermission('errorLogs', 'update')`로 게이팅
 
 #### 해결 처리
 
-- 해결 처리는 관리자 데이터 변경이므로 `logAuditEvent()` 호출 (`entityType: 'ERROR_LOG'`, `action: 'UPDATE'`)
-- `isResolved = true`, `resolvedAt = now()`, `resolvedBy = currentUser.id`
+- 개별 토글: `PATCH /api/error-logs/[id]` body `{ isResolved: boolean }`
+- 일괄 처리: `POST /api/error-logs/bulk-resolve` body `{ fingerprint, isResolved }` — `prisma.errorLog.updateMany` 한 번에 갱신
+- 양쪽 모두 `logAuditEvent()` 호출 (`entityType: 'ERROR_LOG'`, `action: 'UPDATE'`, fire-and-forget)
+- 개별: `changes: { before: { isResolved }, after: { isResolved } }`, entityId = 에러 로그 ID
+- 일괄: `changes: { after: { fingerprint, count, isResolved } }`, entityTitle = `fingerprint: <hash>`
 
 #### 대시보드 위젯
 
-- `/dashboard`에 에러 요약 위젯: 최근 24시간/7일 에러 수, 미해결 에러 수, 추이 표시
-- FSD 위치: `features/error-log/ui/ErrorLogDashboardWidget.tsx`
+- 파일: `src/features/error-log/ui/ErrorLogDashboardWidget.tsx` (Server Component)
+- 3개 StatCard: 최근 24시간 / 최근 7일 / 미해결 건수
+- `hasPermission(user, 'errorLogs', 'read')` 체크 → 권한 없으면 `null` 반환 (대시보드에서 아예 미노출)
+- `src/pages/dashboard/ui/DashboardPage.tsx`에서 기본 StatCard 그리드 아래에 렌더링
 
 ### 사이트 설정 관리
 

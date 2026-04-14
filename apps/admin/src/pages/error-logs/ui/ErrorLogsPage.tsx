@@ -1,0 +1,86 @@
+import { Suspense } from 'react';
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+
+import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
+import { getQueryClient } from '@/shared/api/queryClient';
+import { errorLogListOptions } from '@/features/error-log/api/errorLogQueries';
+import type {
+  ErrorLevelFilter,
+  ErrorLogListFilters,
+  ErrorSourceFilter,
+  ResolvedFilter,
+} from '@/features/error-log/model/errorLogFilters';
+import { ErrorLogFilters } from '@/features/error-log/ui/ErrorLogFilters';
+import { ErrorLogTable } from '@/features/error-log/ui/ErrorLogTable';
+
+function getDefaultDateRange() {
+  const to = new Date();
+  const from = new Date();
+  from.setMonth(from.getMonth() - 1);
+  return {
+    from: from.toISOString().slice(0, 10),
+    to: to.toISOString().slice(0, 10),
+  };
+}
+
+function parseFilters(
+  searchParams: Record<string, string | string[] | undefined>,
+): ErrorLogListFilters {
+  const defaults = getDefaultDateRange();
+  return {
+    level: ((searchParams.level as string) || 'ALL') as ErrorLevelFilter,
+    source: ((searchParams.source as string) || 'ALL') as ErrorSourceFilter,
+    resolved: ((searchParams.resolved as string) ||
+      'unresolved') as ResolvedFilter,
+    urlPattern: (searchParams.urlPattern as string) || null,
+    search: (searchParams.search as string) || null,
+    groupByFingerprint: searchParams.groupByFingerprint === 'true',
+    from: (searchParams.from as string) || defaults.from,
+    to: (searchParams.to as string) || defaults.to,
+    page: Number(searchParams.page) || 1,
+    pageSize: Number(searchParams.pageSize) || 20,
+  };
+}
+
+export default async function ErrorLogsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  await requireAuth();
+  const params = await searchParams;
+  const filters = parseFilters(params);
+
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery(errorLogListOptions(filters));
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">에러 로그</h1>
+          <p className="text-muted-foreground">
+            공개 웹에서 발생한 런타임 에러를 조회하고 해결 처리합니다.
+          </p>
+        </div>
+      </div>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <div className="space-y-4">
+          <Suspense>
+            <ErrorLogFilters
+              currentLevel={filters.level}
+              currentSource={filters.source}
+              currentResolved={filters.resolved}
+              currentUrlPattern={filters.urlPattern}
+              currentSearch={filters.search}
+              currentGroupByFingerprint={filters.groupByFingerprint}
+              currentFrom={filters.from}
+              currentTo={filters.to}
+            />
+          </Suspense>
+          <ErrorLogTable filters={filters} />
+        </div>
+      </HydrationBoundary>
+    </div>
+  );
+}
