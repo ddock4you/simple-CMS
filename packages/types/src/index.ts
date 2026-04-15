@@ -37,6 +37,17 @@ export type {
   HomeReferencesDto,
 } from './dto/home.dto';
 
+export type { HomePopupType, PopupLinkKind } from './domain/popup.types';
+
+export type {
+  HomePopupListItem,
+  HomePopupDetail,
+  CreateHomePopupDto,
+  UpdateHomePopupDto,
+  ReorderHomePopupsDto,
+  HomePopupReferencesDto,
+} from './dto/popup.dto';
+
 export type {
   MediaListItem,
   MediaDetail,

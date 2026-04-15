@@ -51,6 +51,8 @@ export function MediaDetailDialog({
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEffect(() => {
+    // 서버 데이터 로드/변경 시 폼 draft 동기화 — 외부 상태 동기화 effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAltDraft(detailQuery.data?.alt ?? '');
   }, [detailQuery.data?.alt]);
 

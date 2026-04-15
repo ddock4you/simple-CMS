@@ -227,6 +227,7 @@ model HomePopup {
   content      String?       @db.Text
   imageUrl     String?
   imageAlt     String?
+  imageMediaId String?
   linkUrl      String?
   buttonLabel  String?
   isVisible    Boolean       @default(true)
@@ -235,6 +236,10 @@ model HomePopup {
   endDate      DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  imageMedia Media? @relation("HomePopupImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
+
+  @@index([imageMediaId])
 }
 
 model PageBlock {
@@ -264,9 +269,10 @@ model Media {
   uploadedById     String?
   createdAt        DateTime @default(now())
 
-  uploadedBy User?     @relation("MediaUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
-  subpages   Subpage[]
-  posts      Post[]
+  uploadedBy      User?       @relation("MediaUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  subpages        Subpage[]
+  posts           Post[]
+  homePopupImages HomePopup[] @relation("HomePopupImage")
 
   @@index([uploadedById])
 }

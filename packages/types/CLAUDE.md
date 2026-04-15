@@ -22,10 +22,11 @@ packages/types/
 │   │   ├── post.types.ts
 │   │   ├── navigation.types.ts
 │   │   ├── home.types.ts
+│   │   ├── popup.types.ts         # HomePopupType, PopupLinkKind (Stage 5b)
 │   │   ├── media.types.ts
 │   │   ├── user.types.ts
 │   │   ├── role.types.ts          # Role 도메인 인터페이스
-│   │   ├── permission.types.ts    # RESOURCE_ACTIONS 상수, Resource, Action, PermissionMap 타입
+│   │   ├── permission.types.ts    # RESOURCE_ACTIONS 상수, Resource, Action, PermissionMap 타입 (home-popups 포함)
 │   │   ├── auditLog.types.ts
 │   │   └── siteSettings.types.ts
 │   ├── dto/                # API 요청/응답 DTO
@@ -34,6 +35,7 @@ packages/types/
 │   │   ├── user.dto.ts        # RegisterUserDto, UpdateProfileDto, ChangePasswordDto, UserListResponse
 │   │   ├── role.dto.ts           # CreateRoleDto, UpdateRoleDto, UpdatePermissionsDto, RoleListResponse
 │   │   ├── home.dto.ts        # HomeSectionListItem, HomeSectionDetail, UpdateHomeSectionDto, ReorderHomeSectionsDto, HomeReferencesDto
+│   │   ├── popup.dto.ts       # HomePopupListItem, HomePopupDetail, CreateHomePopupDto, UpdateHomePopupDto, ReorderHomePopupsDto, HomePopupReferencesDto (Stage 5b)
 │   │   ├── media.dto.ts       # MediaListItem, MediaDetail, MediaListFilters, MediaListResponse, UpdateMediaDto, UploadMediaResponse, MediaReference, MediaReferencesResponse
 │   │   ├── auditLog.dto.ts
 │   │   └── ...

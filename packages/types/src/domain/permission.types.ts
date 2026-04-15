@@ -5,6 +5,7 @@ export type ResourceKey =
   | 'posts'
   | 'navigation'
   | 'home'
+  | 'home-popups'
   | 'media'
   | 'users'
   | 'roles'
@@ -30,6 +31,10 @@ export const RESOURCE_ACTIONS: Record<ResourceKey, ResourceAction> = {
   },
   home: {
     name: '메인 페이지',
+    actions: ['create', 'read', 'update', 'delete'],
+  },
+  'home-popups': {
+    name: '메인 팝업',
     actions: ['create', 'read', 'update', 'delete'],
   },
   media: {

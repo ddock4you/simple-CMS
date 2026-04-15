@@ -21,6 +21,7 @@ const FULL_PERMISSIONS = {
   posts: { create: true, read: true, update: true, delete: true },
   navigation: { create: true, read: true, update: true, delete: true },
   home: { create: true, read: true, update: true, delete: true },
+  'home-popups': { create: true, read: true, update: true, delete: true },
   media: { create: true, read: true, update: true, delete: true },
   users: { create: true, read: true, update: true, delete: true },
   roles: { create: true, read: true, update: true, delete: true },
@@ -38,10 +39,10 @@ const DEFAULT_PERMISSIONS = {
 };
 
 async function main() {
-  // 1. System role (총괄 관리자)
+  // 1. System role (총괄 관리자) — permissions는 항상 FULL로 동기화 (새 리소스 추가 시 반영)
   const systemRole = await prisma.role.upsert({
     where: { name: '총괄 관리자' },
-    update: {},
+    update: { permissions: FULL_PERMISSIONS },
     create: {
       name: '총괄 관리자',
       description: '모든 권한을 보유한 시스템 관리자',

@@ -48,8 +48,9 @@ export type {
   AuditLog,
   SiteSettings,
   ErrorLog,
-  Prisma,
 } from './generated/prisma/client';
+
+export { Prisma } from './generated/prisma/client';
 
 export {
   UserStatus,

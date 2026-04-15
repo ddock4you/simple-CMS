@@ -8,7 +8,7 @@ import { getAuditContext } from '@/shared/lib/auditHelpers';
 import { createRoleSchema } from '@/features/role-management/model/roleSchemas';
 
 export async function GET(): Promise<NextResponse> {
-  const { user, error } = await requirePermission('roles', 'read');
+  const { error } = await requirePermission('roles', 'read');
   if (error) return error;
 
   try {

@@ -1282,3 +1282,170 @@ a.home-notice-link:hover {
   width: 20px;
   height: 20px;
 }
+
+/* ==========================================================================
+   4-2. 메인 팝업 모달 (Home Popup)
+   Stage 5b: 콘텐츠형/이미지형, 1개 단일 또는 2+ Swiper 슬라이드, "오늘 하루 보지 않기" 쿠키
+   ========================================================================== */
+
+.home-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.home-popup-panel {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 640px;
+  width: 100%;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.25);
+  outline: none;
+}
+
+.home-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.home-popup-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #111827;
+}
+
+.home-popup-close {
+  border: none;
+  background: transparent;
+  padding: 4px;
+  cursor: pointer;
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.home-popup-close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.home-popup-body {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 20px;
+}
+
+.home-popup-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  margin: 0 auto;
+  border-radius: 4px;
+}
+
+.home-popup-image-link {
+  display: block;
+  cursor: pointer;
+}
+
+.home-popup-content-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.home-popup-content-body .tiptap-content {
+  color: #111827;
+}
+
+.home-popup-button {
+  align-self: flex-start;
+  display: inline-block;
+  padding: 10px 20px;
+  background: var(--krds-color-primary, #2563eb);
+  color: #fff;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.home-popup-button:hover {
+  opacity: 0.9;
+}
+
+.home-popup-slide {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.home-popup-slide-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #111827;
+}
+
+.home-popup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  font-size: 14px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.home-popup-hide-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.home-popup-close-btn {
+  padding: 6px 16px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #111827;
+}
+
+.home-popup-close-btn:hover {
+  background: #f3f4f6;
+}
+
+@media (max-width: 560px) {
+  .home-popup-panel {
+    border-radius: 8px;
+  }
+  .home-popup-body {
+    padding: 16px;
+  }
+  .home-popup-header,
+  .home-popup-footer {
+    padding: 12px 16px;
+  }
+}

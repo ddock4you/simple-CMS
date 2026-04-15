@@ -69,7 +69,7 @@ export function LatestPostsFields({
             const deadReference = field.value && !selected;
             return (
               <Select
-                value={field.value ?? undefined}
+                value={field.value ?? ''}
                 onValueChange={(v) => field.onChange(v || null)}
               >
                 <SelectTrigger

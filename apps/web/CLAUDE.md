@@ -143,27 +143,48 @@ src/shared/ui/Carousel.tsx                       # Swiper 기반 공통 캐러�
 - **이미지 URL 입력만 지원** (Stage 5a): `<img src>`로 직접 로드, lazy loading. 이후 Media 관리 Stage에서 업로드 지원 추가 예정
 - **슬라이드 하나만 있는 HERO**: Carousel을 생략하고 정적 배너 렌더링 (성능 + 불필요 컨트롤 제거)
 
-## 메인 팝업
+## 메인 팝업 (Stage 5b)
 
 - 메인 페이지에서만 노출
 - 0개 → 표시 안 함
 - **1개 → 단일 모달**
-- **2개 이상 → 슬라이드형 모달**
-- 순서는 admin에서 정한 순서
+- **2개 이상 → Swiper 슬라이드형 모달** (`Carousel` 재사용)
+- 순서는 admin에서 정한 `displayOrder`
 - 노출 기간이 있으면 현재 시점 기준 판정
+
+### FSD 구조
+
+```
+src/entities/home-popup/api/getActiveHomePopups.ts   # React.cache + Prisma 직접 조회
+src/widgets/home-popup/ui/HomePopupModal.tsx         # Client Component (모달 + dnd + 쿠키)
+src/shared/lib/popupCookies.ts                        # "오늘 하루 보지 않기" 쿠키 헬퍼
+```
+
+### 데이터 해결 흐름 (`getActiveHomePopups`)
+
+- 필터: `isVisible=true` + `startDate ≤ now` (null 허용) + `endDate ≥ now` (null 허용)
+- 정렬: `displayOrder asc, createdAt desc`
+- **콘텐츠형의 `contentJson` → HTML**: 서버에서 `renderTiptapContent()`(@tiptap/html `generateHTML` + DOMPurify) 수행 후 `contentHtml` 필드로 클라이언트에 전달 (hydration/CSP 안전)
 
 ### 팝업 타입
 
-- **콘텐츠형**: 제목 + Tiptap JSON 본문 (`generateHTML()` 렌더링) + 버튼(optional)
-- **이미지형**: 이미지 + alt + 링크(optional)
+- **콘텐츠형**: 제목 + 본문 HTML(서버 렌더) + 버튼 라벨/링크(optional)
+- **이미지형**: 이미지 + alt + 링크(optional) — 링크 있으면 `<a>`로 래핑 + 클릭 시 닫기
 
-### 접근성 원칙
+### "오늘 하루 보지 않기"
 
-- 이미지형 팝업 alt 필수
-- 모달 제목 제공
-- 닫기 버튼 명확화
-- 키보드 접근 가능
-- 포커스 이동 / 포커스 트랩 고려
+- 쿠키 키: `hide_popup_{popupId}=1`, 만료: 로컬 자정, `path=/`, `SameSite=Lax`
+- 서버는 쿠키 무관하게 모든 활성 팝업 내려보내고, 클라이언트 하이드레이션 후 필터링 (SSR 캐시 효율 유지)
+- 체크 후 닫기 시 visible 목록의 모든 id를 각 쿠키에 기록
+
+### 접근성
+
+- `role="dialog"` + `aria-modal="true"` + `aria-labelledby="home-popup-title"`
+- 이미지형 alt 필수 (admin 입력 강제)
+- ESC 키 닫기 + backdrop 클릭 닫기
+- 모달 열릴 때 `document.body.style.overflow = 'hidden'` → 닫을 때 복원
+- 이전 포커스 저장 → 모달 열릴 때 `dialogRef`로 이동 → 닫힐 때 복원
+- 슬라이드는 `Carousel`의 a11y 모듈 (keyboard, aria-live)
 
 ## 서브페이지 렌더링
 

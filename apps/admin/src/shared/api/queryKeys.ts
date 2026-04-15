@@ -44,6 +44,13 @@ export const homeKeys = {
   references: () => [...homeKeys.all, 'references'] as const,
 };
 
+export const popupKeys = {
+  all: ['home-popups'] as const,
+  lists: () => [...popupKeys.all, 'list'] as const,
+  detail: (id: string) => [...popupKeys.all, 'detail', id] as const,
+  references: () => [...popupKeys.all, 'references'] as const,
+};
+
 export const auditLogKeys = {
   all: ['auditLogs'] as const,
   lists: () => [...auditLogKeys.all, 'list'] as const,

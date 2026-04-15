@@ -10,7 +10,7 @@ import type { MediaReference } from '@simple-cms/types';
  * 3. HomeSection.configJson (JSONB: HERO slides[i].mediaId, RECOMMENDED items[i].mediaId)
  * 4. Subpage.contentJson (Tiptap JSON: image 노드의 attrs.mediaId)
  * 5. Post.contentJson (동일)
- * 6. HomePopup — TODO: Stage 5b에서 미디어 참조 도입 후 추가
+ * 6. HomePopup.imageMediaId (FK, Stage 5b)
  *
  * Media 삭제 전 차단 판정 + 사용처 안내에 사용한다.
  */
@@ -92,7 +92,6 @@ export async function findMediaReferences(
   };
 
   const subpagesWithContent = await prisma.subpage.findMany({
-    where: { contentJson: { not: null } },
     select: { id: true, title: true, contentJson: true },
   });
   for (const sp of subpagesWithContent) {
@@ -107,7 +106,6 @@ export async function findMediaReferences(
   }
 
   const postsWithContent = await prisma.post.findMany({
-    where: { contentJson: { not: null } },
     select: {
       id: true,
       title: true,
@@ -126,8 +124,19 @@ export async function findMediaReferences(
     }
   }
 
-  // ─── 6. HomePopup — Stage 5b 이후 ────────────────────────────
-  // TODO: HomePopup에 mediaId 필드 도입 후 스캔 추가
+  // ─── 6. HomePopup.imageMediaId (Stage 5b) ────────────────────
+  const popupsByMedia = await prisma.homePopup.findMany({
+    where: { imageMediaId: mediaId },
+    select: { id: true, title: true },
+  });
+  for (const popup of popupsByMedia) {
+    references.push({
+      type: 'HOME_POPUP',
+      entityId: popup.id,
+      label: popup.title,
+      context: '메인 팝업 이미지',
+    });
+  }
 
   return references;
 }

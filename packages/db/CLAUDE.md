@@ -211,8 +211,21 @@ pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
 - **관계**:
   - `uploadedBy User? @relation("MediaUploader", ...)` (역관계: `User.uploadedMedia Media[]`)
   - `subpages Subpage[]`, `posts Post[]` (featuredImage 역관계)
+  - `homePopupImages HomePopup[]` — Stage 5b, `HomePopup.imageMediaId`의 역관계
 - **인덱스**: `@@index([uploadedById])` (필터링용). `contentHash`는 `@unique`가 자동으로 인덱스 생성
 - **삭제 정책**: 참조 추적 후 사용 중이면 차단 — 강제 삭제 불허. 자세한 내용은 루트 CLAUDE.md "미디어 라이브러리 정책" 참조
+
+## HomePopup 모델 컨벤션 (Stage 5b)
+
+- **타입**: `popupType` enum `HomePopupType` (`CONTENT` | `IMAGE`)
+- **콘텐츠형 필드**: `contentJson Json?` (Tiptap ProseMirror JSON) + `content Text?` (PGroonga/요약용 plain text — `extractTextFromTiptap()`로 동시 저장)
+- **이미지형 필드**: `imageUrl`, `imageAlt`, `imageMediaId String?` (Media FK, `onDelete: SetNull`)
+  - `imageMedia Media? @relation("HomePopupImage", ...)` 관계
+  - `@@index([imageMediaId])` 조회 최적화
+- **링크 필드**: `linkUrl String?` — 내부 경로(`/p/...`, `/board/...`)와 외부 URL(`https://...`) 모두 수용. admin UI에서 유형별 탭으로 분기 입력하지만 DB에는 단일 문자열로 저장
+- **표시 제어**: `isVisible`, `displayOrder`, `startDate?`, `endDate?`
+- **감사 로그**: `AuditEntityType.HOME_POPUP` (enum 이미 등록됨), CREATE/UPDATE/DELETE 모두 기록
+- **참조 추적**: `imageMediaId`는 admin의 `findMediaReferences()`가 스캔하여 Media 삭제 차단
 
 ## 동시 로그인 관련 SiteSettings 키
 

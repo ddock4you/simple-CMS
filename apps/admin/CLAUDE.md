@@ -256,12 +256,51 @@ src/
 - FSD: `features/home-management/`, `pages/home-management/`
 - 참고: 시안 확정 후 web의 섹션 컴포넌트를 대체하는 흐름으로 설계됨 (admin UI는 안정)
 
-### 메인 팝업 관리
+### 메인 팝업 관리 (Stage 5b)
 
-- **콘텐츠형**: 제목 + Tiptap JSON 본문 + 버튼 라벨/링크(optional)
-- **이미지형**: 이미지 + alt 텍스트(필수) + 링크(optional)
-- 노출 여부, 순서 조정, 시작일/종료일(optional)
-- 미리보기 제공
+- 라우트: `/home/popups`, `/home/popups/new`, `/home/popups/[id]`, `/home/popups/[id]/edit`
+- FSD: `features/popup-management/{api,model,ui}`, `pages/popup-management/ui`
+- 권한 리소스: `home-popups` (create/read/update/delete) — 섹션 관리와 분리
+
+#### 팝업 타입
+
+- **콘텐츠형(CONTENT)**: 제목 + Tiptap JSON 본문 + 버튼 라벨/링크(optional)
+  - Tiptap JSON 저장 + `content`(plain text) 동시 저장 — `extractTextFromTiptap()` 사용
+- **이미지형(IMAGE)**: 이미지 + alt(필수) + 링크(optional)
+  - `imageMediaId` FK로 Media 라이브러리 참조 추적 — `findMediaReferences()` 확장 대상
+  - `ImageUrlInput` 재사용 (URL 직접 입력 + 업로드 + 라이브러리 선택)
+
+#### 노출 정책
+
+- `isVisible` 토글, `startDate`/`endDate` optional (둘 다 또는 어느 쪽만)
+- `startDate ≤ endDate` 검증 (client + server)
+- `displayOrder`는 생성 시 자동 배정 (max + 1), dnd-kit 드래그로 재정렬
+
+#### 링크 입력 (LinkTargetInput)
+
+- 단일 `linkUrl` 필드로 저장하되 admin UI는 유형별 분기 Select + 입력:
+  - **없음**: linkUrl = ''
+  - **서브페이지**: 발행된 Subpage 드롭다운 → `/p/{slug}` 자동 생성
+  - **게시판**: 공개 Board 드롭다운 → `/board/{slug}` 자동 생성
+  - **외부 URL**: 자유 입력 (`https://...`)
+- 편집 시 저장된 URL을 파싱해 어느 탭이 활성인지 자동 추론 (references 캐시 기반)
+
+#### API Routes
+
+| Method | Route | 필요 권한 | 용도 |
+| ------ | ----- | --------- | ---- |
+| GET    | `/api/home-popups`            | home-popups:read   | 목록 (모든 상태 포함)         |
+| POST   | `/api/home-popups`            | home-popups:create | 생성 + displayOrder 자동 배정 |
+| GET    | `/api/home-popups/[id]`       | home-popups:read   | 상세                          |
+| PATCH  | `/api/home-popups/[id]`       | home-popups:update | 수정 (타입 전환 시 반대 필드 초기화) |
+| DELETE | `/api/home-popups/[id]`       | home-popups:delete | 삭제 + displayOrder 정규화    |
+| PATCH  | `/api/home-popups/reorder`    | home-popups:update | 순서 일괄 변경                |
+| GET    | `/api/home-popups/references` | home-popups:read   | LinkTargetInput 드롭다운용    |
+
+#### 감사 로그
+
+- entityType `HOME_POPUP`, CREATE/UPDATE/DELETE 모두 기록
+- reorder는 요약 로그 (`entityTitle: '메인 팝업 순서 변경'`)
 
 ### 미디어 라이브러리 관리 (Stage 5a-2)
 
@@ -564,13 +603,14 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 | 리소스 키    | 표시명      | 지원 액션                    |
 | ------------ | ----------- | ---------------------------- |
-| `dashboard`  | 대시보드    | read                         |
-| `subpages`   | 서브 페이지 | create, read, update, delete |
-| `boards`     | 게시판      | create, read, update, delete |
-| `posts`      | 게시글      | create, read, update, delete |
-| `navigation` | 메뉴 관리   | create, read, update, delete |
-| `home`       | 메인 페이지 | create, read, update, delete |
-| `media`      | 미디어 라이브러리 | create, read, update, delete |
+| `dashboard`    | 대시보드    | read                         |
+| `subpages`     | 서브 페이지 | create, read, update, delete |
+| `boards`       | 게시판      | create, read, update, delete |
+| `posts`        | 게시글      | create, read, update, delete |
+| `navigation`   | 메뉴 관리   | create, read, update, delete |
+| `home`         | 메인 페이지 | create, read, update, delete |
+| `home-popups`  | 메인 팝업   | create, read, update, delete |
+| `media`        | 미디어 라이브러리 | create, read, update, delete |
 | `users`      | 사용자 관리 | create, read, update, delete |
 | `roles`      | 권한 관리   | create, read, update, delete |
 | `auditLogs`  | 감사 로그   | read                         |

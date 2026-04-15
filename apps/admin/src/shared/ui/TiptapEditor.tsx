@@ -197,10 +197,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         editor
           .chain()
           .focus()
-          .setImage({ src, alt: alt ?? file.name, mediaId } as Record<
-            string,
-            unknown
-          >)
+          .setImage({ src, alt: alt ?? file.name, mediaId } as Record<string, unknown> & { src: string })
           .run();
       } catch (err) {
         const message =
@@ -224,7 +221,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         src: resolveMediaPreviewUrl(url),
         alt: '',
         mediaId: null,
-      } as Record<string, unknown>)
+      } as Record<string, unknown> & { src: string })
       .run();
   }, [editor]);
 
@@ -517,7 +514,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
               src: resolveMediaPreviewUrl(media.url),
               alt: media.alt ?? media.originalFilename,
               mediaId: media.id,
-            } as Record<string, unknown>)
+            } as Record<string, unknown> & { src: string })
             .run();
         }}
       />
