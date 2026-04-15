@@ -14,7 +14,6 @@ export const createSubpageSchema = z.object({
   slug: z.string().max(200).optional(),
   seoTitle: z.string().max(200).optional(),
   seoDescription: z.string().max(500).optional(),
-  contentJson: z.any().optional(),
   status: z.enum(['DRAFT', 'PUBLISHED']).optional().default('DRAFT'),
 });
 
@@ -29,7 +28,6 @@ export const updateSubpageSchema = z.object({
   slug: z.string().max(200).optional(),
   seoTitle: z.string().max(200).optional().nullable(),
   seoDescription: z.string().max(500).optional().nullable(),
-  contentJson: z.any().optional(),
   status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
 });
 

@@ -10,13 +10,13 @@ import { Button } from '@/shared/ui/shadcn/button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
-import { mediaListOptions } from '@/features/media-management/api/mediaQueries';
+import { mediaListOptions } from '@/entities/media/api/mediaQueries';
+import { MediaFilters } from '@/entities/media/ui/MediaFilters';
+import { MediaGrid } from '@/entities/media/ui/MediaGrid';
+import { MediaPagination } from '@/entities/media/ui/MediaPagination';
+import { MediaUploadButton } from '@/entities/media/ui/MediaUploadButton';
 import { BulkDeleteMediaDialog } from '@/features/media-management/ui/BulkDeleteMediaDialog';
 import { MediaDetailDialog } from '@/features/media-management/ui/MediaDetailDialog';
-import { MediaFilters } from '@/features/media-management/ui/MediaFilters';
-import { MediaGrid } from '@/features/media-management/ui/MediaGrid';
-import { MediaPagination } from '@/features/media-management/ui/MediaPagination';
-import { MediaUploadButton } from '@/features/media-management/ui/MediaUploadButton';
 
 interface MediaPageClientProps {
   filters: MediaListFilters & { page: number; pageSize: number };

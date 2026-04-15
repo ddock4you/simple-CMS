@@ -30,7 +30,6 @@ export interface SubpageDetail {
   slug: string;
   seoTitle: string | null;
   seoDescription: string | null;
-  contentJson: unknown;
   status: ContentStatus;
   publishedAt: string | null;
   displayOrder: number;

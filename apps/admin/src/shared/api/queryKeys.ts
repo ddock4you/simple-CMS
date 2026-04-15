@@ -78,3 +78,11 @@ export const mediaKeys = {
   detail: (id: string) => [...mediaKeys.all, 'detail', id] as const,
   references: (id: string) => [...mediaKeys.all, 'references', id] as const,
 };
+
+export const blockKeys = {
+  all: ['blocks'] as const,
+  lists: (subpageId: string) =>
+    [...blockKeys.all, 'list', subpageId] as const,
+  detail: (subpageId: string, blockId: string) =>
+    [...blockKeys.all, 'detail', subpageId, blockId] as const,
+};

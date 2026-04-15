@@ -55,7 +55,7 @@ import {
   preprocessTiptapForAdmin,
 } from '@/shared/lib/tiptapContentTransform';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
-import { MediaPicker } from '@/features/media-management/ui/MediaPicker';
+import { MediaPicker } from '@/entities/media/ui/MediaPicker';
 
 interface TiptapEditorProps {
   content: unknown;

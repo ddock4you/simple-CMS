@@ -14,7 +14,8 @@ import {
   AlertDialogTitle,
 } from '@/shared/ui/shadcn/alert-dialog';
 
-import { mediaReferencesOptions } from '../api/mediaQueries';
+import { mediaReferencesOptions } from '@/entities/media/api/mediaQueries';
+
 import { useDeleteMedia } from '../api/useMediaMutations';
 
 interface DeleteMediaDialogProps {

@@ -57,6 +57,7 @@ export const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   NAVIGATION_MENU_ITEM: '메뉴 항목',
   HOME_SECTION: '메인 섹션',
   HOME_POPUP: '메인 팝업',
+  PAGE_BLOCK: '서브페이지 블록',
   USER: '사용자',
   ROLE: '역할',
   SITE_SETTINGS: '사이트 설정',

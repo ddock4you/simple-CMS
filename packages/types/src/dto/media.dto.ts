@@ -57,9 +57,9 @@ export type MediaReferenceType =
   | 'SUBPAGE_FEATURED'
   | 'POST_FEATURED'
   | 'HOME_SECTION'
-  | 'SUBPAGE_CONTENT'
   | 'POST_CONTENT'
-  | 'HOME_POPUP';
+  | 'HOME_POPUP'
+  | 'PAGE_BLOCK_IMAGE';
 
 export interface MediaReference {
   type: MediaReferenceType;

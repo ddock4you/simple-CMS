@@ -8,10 +8,12 @@ import type { MediaReference } from '@simple-cms/types';
  * 1. Subpage.featuredImageId (FK)
  * 2. Post.featuredImageId (FK)
  * 3. HomeSection.configJson (JSONB: HERO slides[i].mediaId, RECOMMENDED items[i].mediaId)
- * 4. Subpage.contentJson (Tiptap JSON: image 노드의 attrs.mediaId)
- * 5. Post.contentJson (동일)
- * 6. HomePopup.imageMediaId (FK, Stage 5b)
+ * 4. Post.contentJson (Tiptap JSON: image 노드의 attrs.mediaId)
+ * 5. HomePopup.imageMediaId (FK, Stage 5b)
+ * 6. PageBlock IMAGE 블록 configJson.imageMediaId (JSONB containment, Stage 6)
+ * 7. PageBlock RICH_TEXT 블록 configJson.contentJson (Tiptap JSON 재귀, Stage 6 — 통합 블록 모델)
  *
+ * 서브페이지 본문은 RICH_TEXT 블록으로 흡수되어 Subpage.contentJson 경로는 더 이상 존재하지 않는다.
  * Media 삭제 전 차단 판정 + 사용처 안내에 사용한다.
  */
 export async function findMediaReferences(
@@ -74,7 +76,7 @@ export async function findMediaReferences(
     });
   }
 
-  // ─── 4-5. Subpage/Post contentJson (Tiptap JSON 재귀 탐색) ──
+  // ─── 4. Post.contentJson (Tiptap JSON 재귀 탐색) ─────────────
   // 현재 규모(수백 건) 기준으로 인메모리 탐색이 충분.
   // 향후 성능 이슈 시 JSONB GIN 인덱스 + jsonb_path_query 최적화 가능.
   const usedMediaIds = (json: unknown): boolean => {
@@ -90,20 +92,6 @@ export async function findMediaReferences(
     }
     return false;
   };
-
-  const subpagesWithContent = await prisma.subpage.findMany({
-    select: { id: true, title: true, contentJson: true },
-  });
-  for (const sp of subpagesWithContent) {
-    if (usedMediaIds(sp.contentJson)) {
-      references.push({
-        type: 'SUBPAGE_CONTENT',
-        entityId: sp.id,
-        label: sp.title,
-        context: '서브 페이지 본문',
-      });
-    }
-  }
 
   const postsWithContent = await prisma.post.findMany({
     select: {
@@ -124,7 +112,7 @@ export async function findMediaReferences(
     }
   }
 
-  // ─── 6. HomePopup.imageMediaId (Stage 5b) ────────────────────
+  // ─── 5. HomePopup.imageMediaId (Stage 5b) ────────────────────
   const popupsByMedia = await prisma.homePopup.findMany({
     where: { imageMediaId: mediaId },
     select: { id: true, title: true },
@@ -136,6 +124,51 @@ export async function findMediaReferences(
       label: popup.title,
       context: '메인 팝업 이미지',
     });
+  }
+
+  // ─── 6. PageBlock IMAGE 블록 configJson.imageMediaId (Stage 6) ──────────
+  // JSONB containment 연산자로 imageMediaId가 일치하는 IMAGE 블록 스캔.
+  // Subpage를 JOIN하여 사용자에게 "어떤 서브페이지의 블록인지" 표시.
+  type PageBlockRaw = {
+    id: string;
+    subpageTitle: string;
+  };
+  const blockMatches = await prisma.$queryRaw<PageBlockRaw[]>`
+    SELECT pb.id, sp.title AS "subpageTitle"
+    FROM "PageBlock" pb
+    JOIN "Subpage" sp ON sp.id = pb."subpageId"
+    WHERE pb."blockType" = 'IMAGE'
+      AND pb."configJson" @> ${JSON.stringify({ imageMediaId: mediaId })}::jsonb
+  `;
+  for (const b of blockMatches) {
+    references.push({
+      type: 'PAGE_BLOCK_IMAGE',
+      entityId: b.id,
+      label: b.subpageTitle,
+      context: '서브페이지 블록 이미지',
+    });
+  }
+
+  // ─── 7. PageBlock RICH_TEXT 블록 configJson.contentJson Tiptap 재귀 (Stage 6 — 통합 블록 모델) ──
+  // 기존 Subpage.contentJson 재귀 경로를 대체. contentJson은 RICH_TEXT 블록 안에 있음.
+  const richTextBlocks = await prisma.pageBlock.findMany({
+    where: { blockType: 'RICH_TEXT' },
+    select: {
+      id: true,
+      configJson: true,
+      subpage: { select: { title: true } },
+    },
+  });
+  for (const b of richTextBlocks) {
+    const cfg = b.configJson as { contentJson?: unknown } | null;
+    if (cfg?.contentJson && usedMediaIds(cfg.contentJson)) {
+      references.push({
+        type: 'PAGE_BLOCK_IMAGE',
+        entityId: b.id,
+        label: b.subpage.title,
+        context: '서브페이지 본문 블록 (이미지 포함)',
+      });
+    }
   }
 
   return references;

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
-import { extractTextFromTiptap } from '@simple-cms/editor';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
@@ -33,7 +32,6 @@ export async function GET(
       slug: subpage.slug,
       seoTitle: subpage.seoTitle,
       seoDescription: subpage.seoDescription,
-      contentJson: subpage.contentJson,
       status: subpage.status,
       publishedAt: subpage.publishedAt?.toISOString() ?? null,
       displayOrder: subpage.displayOrder,
@@ -81,7 +79,7 @@ export async function PATCH(
       );
     }
 
-    const { title, slug, seoTitle, seoDescription, contentJson, status } = parsed.data;
+    const { title, slug, seoTitle, seoDescription, status } = parsed.data;
 
     if (slug && slug !== subpage.slug) {
       const existing = await prisma.subpage.findUnique({ where: { slug } });
@@ -98,10 +96,6 @@ export async function PATCH(
     if (slug !== undefined) updateData.slug = slug;
     if (seoTitle !== undefined) updateData.seoTitle = seoTitle;
     if (seoDescription !== undefined) updateData.seoDescription = seoDescription;
-    if (contentJson !== undefined) {
-      updateData.contentJson = contentJson;
-      updateData.content = extractTextFromTiptap(contentJson);
-    }
     if (status !== undefined) {
       updateData.status = status;
       if (status === 'PUBLISHED' && subpage.status === 'DRAFT') {

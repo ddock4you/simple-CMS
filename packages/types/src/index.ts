@@ -49,6 +49,24 @@ export type {
 } from './dto/popup.dto';
 
 export type {
+  PageBlockType,
+  RichTextBlockConfig,
+  HtmlBlockConfig,
+  ImageBlockConfig,
+  IframeBlockConfig,
+  PageBlockConfig,
+} from './domain/block.types';
+export { PAGE_BLOCK_MAX_PER_SUBPAGE } from './domain/block.types';
+
+export type {
+  PageBlockListItem,
+  PageBlockDetail,
+  CreatePageBlockDto,
+  UpdatePageBlockDto,
+  ReorderPageBlocksDto,
+} from './dto/block.dto';
+
+export type {
   MediaListItem,
   MediaDetail,
   MediaListFilters,

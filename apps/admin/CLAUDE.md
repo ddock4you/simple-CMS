@@ -149,11 +149,11 @@ src/
 - `published` 상태 slug 변경 시 경고
 - 대표 이미지 필드
 - 미리보기 제공
-- 본문 편집: Tiptap WYSIWYG 에디터 (Tiptap JSON 저장, 검색용 plain text 동시 저장 — `@simple-cms/editor` 공유 확장 사용)
-- Tiptap 확장: StarterKit, Underline, TextStyle, Color, TextAlign, Highlight, Link, Image(리사이즈 지원), Table, Subscript, Superscript, TaskList
-- **뷰/편집 분리**: `/subpages/[id]` = 읽기 전용 뷰, `/subpages/[id]/edit` = 편집 폼
+- 본문 편집: **통합 블록 모델** (Stage 6) — 제목·slug·SEO·상태만 SubpageForm에서 관리하고, 본문과 부가 요소는 모두 PageBlock으로 편집. SubpageForm 내 Tiptap 에디터는 제거됨
+- 편집 화면 구성: SubpageForm(상단) + BlockManager(하단) 세로 배치. 생성 모드(/subpages/new)는 SubpageForm만 노출, 저장 후 상세에서 블록 추가
+- **뷰/편집 분리**: `/subpages/[id]` = 메타데이터 + 블록 구성 목록, `/subpages/[id]/edit` = 폼 + BlockManager
 - **권한 기반 UI**: 생성(`subpages:create`), 편집(`subpages:update`), 삭제(`subpages:delete`) 버튼을 권한별 표시/숨김
-- API Routes: `GET/POST /api/subpages`, `GET/PATCH/DELETE /api/subpages/[id]` — 모든 핸들러에 `requirePermission()` 적용
+- API Routes: `GET/POST /api/subpages`, `GET/PATCH/DELETE /api/subpages/[id]` — 모든 핸들러에 `requirePermission()` 적용. Subpage 본문 필드(`contentJson`)는 DTO에서도 제거
 - FSD: `features/subpage-management/`, `pages/subpage-management/`
 
 ### 커스텀 코드 편집
@@ -166,14 +166,73 @@ src/
 - 빈 값이면 무시 (기존 Markdown + 블록만 렌더링)
 - 미리보기에서 커스텀 코드 적용 결과 확인 가능
 
-### 서브페이지 블록
+### 서브페이지 블록 (Stage 6 — 통합 블록 모델)
 
-- Markdown 본문과 별도로 제한된 블록 추가
+- 서브페이지의 **모든 콘텐츠**는 PageBlock 목록으로 표현 (별도의 본문 필드 없음)
 - 블록 구조: `blockType` + `displayOrder` + `isVisible` + `configJson`
-- 블록 추가/삭제/순서 조정/타입 선택
-- 사용 가능 타입은 개발자가 미리 제공한 것만 허용
-- 자유형 페이지 빌더가 아님
-- 블록 종류는 디자이너 협의 후 확정
+- Admin UI 배치: 서브페이지 편집 페이지에 `SubpageForm` + `BlockManager`를 세로로 배치 (탭 없음). 위/아래 자유 배치로 본문·HTML·이미지·iframe을 섞어 구성
+- FSD: `features/block-management/` + API Route `app/api/subpages/[id]/blocks/`
+- 권한 리소스: 별도 신설 없이 **`subpages:update`**로 블록 CUD 처리 (블록은 서브페이지 구성 요소)
+- 감사 로그 entityType: `PAGE_BLOCK` (CREATE/UPDATE/DELETE + 순서 변경 요약 로그)
+- 서브페이지당 블록 상한: **50개** (`PAGE_BLOCK_MAX_PER_SUBPAGE`, 서버 검증 + UI 차단)
+
+#### 지원 블록 타입
+
+| 블록 타입 | configJson 스키마 | 편집기 | 렌더 |
+| -------- | ----------------- | ------ | ---- |
+| **RICH_TEXT** | `{ contentJson: object }` Tiptap ProseMirror JSON | 기존 `TiptapEditor` 재사용 (검색용 plain text는 블록 CUD 시 `recalculateSubpageContent`가 재집계) | `renderTiptapContent` + `TiptapContent` 공유 컴포넌트 |
+| **HTML**   | `{ html: string }` (max 50,000자) | `@monaco-editor/react` language="html" (SSR 비호환 → `next/dynamic` with `ssr: false`) | 서버 DOMPurify sanitize 후 `dangerouslySetInnerHTML` |
+| **IMAGE**  | `{ imageUrl, imageAlt(필수), imageMediaId?, caption?, linkUrl? }` | `ImageUrlInput`(entities/media) + alt + 캡션 + 링크 | `<figure><img alt><figcaption></figure>`, optional `<a>` 래핑 |
+| **IFRAME** | `{ src, title(필수/접근성), aspectRatio: '16:9'\|'4:3'\|'1:1', allowFullscreen }` | URL + 제목 + 비율 + 전체 화면 | aspect-ratio wrapper + iframe, 허용 호스트 **서버+클라이언트 2중 검증** |
+
+#### 본문 → 블록 변환 (Stage 6 마이그레이션)
+
+- 기존 `Subpage.contentJson` 필드는 제거되고 RICH_TEXT 블록 1개로 변환됨 (`packages/db/migrate-content-to-blocks.ts` 1회 스크립트, 현재 레포에서는 실행 후 삭제됨)
+- 신규 서브페이지는 빈 상태로 시작 — 블록 드롭다운 맨 위의 **본문(RICH_TEXT)** 추가로 작성
+
+#### IFRAME 허용 도메인 + URL 정규화
+
+- 허용 호스트: `www.youtube.com`, `youtube.com`, `www.youtube-nocookie.com`, `player.vimeo.com`
+- `features/block-management/model/blockLabels.ts`
+  - `IFRAME_ALLOWED_HOSTS` 상수 (서버 API와 클라이언트 검증 공용)
+  - `isIframeHostAllowed(src)` — host만 검증
+  - `normalizeIframeEmbedUrl(src)` — 일반 URL → embed URL 변환
+- **정규화 규칙** (저장 시점에 자동 변환):
+  - `youtube.com/watch?v=ID&t=30` → `www.youtube.com/embed/ID?start=30`
+  - `youtu.be/ID` → `www.youtube.com/embed/ID`
+  - `youtube.com/shorts/ID` → `www.youtube.com/embed/ID`
+  - `vimeo.com/123456` (숫자 ID) → `player.vimeo.com/video/123456`
+  - 이미 embed 형식 URL은 통과
+  - playlist/channel 등 임베드 불가 경로는 null 반환 → 422
+- **정규화 필요 이유**: YouTube 일반 시청 URL(`/watch?v=...`)은 `X-Frame-Options: sameorigin` 헤더로 외부 iframe 차단. embed 경로(`/embed/ID`)만 외부 임베드 허용
+- **방어 다층**: `BlockEditDialog.handleSubmit`에서 클라이언트 선변환 + `app/api/subpages/[id]/blocks/` POST/PATCH에서 서버 재변환 → DB에는 embed URL만 저장
+- 하드코딩 운영 — SiteSettings 기반 호스트 관리는 2차 과제
+
+#### API Routes
+
+| Method | Route | 권한 | 용도 |
+| ------ | ----- | ---- | ---- |
+| GET    | `/api/subpages/[id]/blocks`            | subpages:read   | 목록 |
+| POST   | `/api/subpages/[id]/blocks`            | subpages:update | 생성 (50개 상한 검사 + displayOrder 자동 + RICH_TEXT 시 content 재집계) |
+| GET    | `/api/subpages/[id]/blocks/[blockId]`  | subpages:read   | 단건 |
+| PATCH  | `/api/subpages/[id]/blocks/[blockId]`  | subpages:update | 수정 (blockType 불변 — safeParse drop, RICH_TEXT configJson 변경 시 content 재집계) |
+| DELETE | `/api/subpages/[id]/blocks/[blockId]`  | subpages:update | 삭제 + displayOrder 정규화 + RICH_TEXT 시 content 재집계 |
+| PATCH  | `/api/subpages/[id]/blocks/reorder`    | subpages:update | 순서 일괄 변경 (트랜잭션) + content 재집계 |
+
+`recalculateSubpageContent(subpageId)` 헬퍼: `apps/admin/src/shared/lib/blockContentRecalculation.ts` — RICH_TEXT 블록들의 `configJson.contentJson`을 displayOrder 순으로 모아 `extractTextFromTiptap`으로 `Subpage.content` 갱신. PGroonga 검색 인덱스 최신 상태 유지.
+
+#### Media 참조 추적
+
+- IMAGE 블록의 `imageMediaId`: `findMediaReferences()` 경로 6 (JSONB containment)
+- RICH_TEXT 블록 `configJson.contentJson` 내 image 노드의 `mediaId`: 경로 7 (Tiptap 재귀)
+- `MediaReferenceType`: `'PAGE_BLOCK_IMAGE'` (IMAGE/RICH_TEXT 공용)
+- Media 삭제 시 해당 블록이 사용 중이면 409 차단, 사용처 목록에 서브페이지 제목 표시
+
+#### 시안 대응 전략
+
+- **데이터 구조(configJson) 동결** → 디자이너에게 필드 세트 공유하고 시안에서 맞춤
+- **렌더러 교체 지점 1곳**: `apps/web/src/widgets/subpage-content/ui/SubpageBlockRenderer.tsx` 하나만 교체. admin CRUD와 DB는 무변경
+- **새 블록 타입 추가 절차 4곳**: `PageBlockType` enum → `configSchemaByType` 맵 → `features/block-management/ui/fields/` 새 필드 컴포넌트 → `SubpageBlockRenderer` case
 
 ### 게시판 CRUD
 

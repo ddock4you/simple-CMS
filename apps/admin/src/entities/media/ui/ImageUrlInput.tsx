@@ -8,8 +8,8 @@ import { Input } from '@/shared/ui/shadcn/input';
 import { resolveMediaPreviewUrl } from '@/shared/lib/mediaUrl';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
-import { MediaPicker } from '@/features/media-management/ui/MediaPicker';
-import { MediaUploadButton } from '@/features/media-management/ui/MediaUploadButton';
+import { MediaPicker } from './MediaPicker';
+import { MediaUploadButton } from './MediaUploadButton';
 
 interface ImageUrlInputProps {
   /** 현재 이미지 URL */

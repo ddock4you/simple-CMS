@@ -7,7 +7,7 @@ import type { UploadMediaResponse } from '@simple-cms/types';
 
 import { Button } from '@/shared/ui/shadcn/button';
 
-import { useUploadMedia } from '../api/useMediaMutations';
+import { useUploadMedia } from '../api/useUploadMedia';
 
 interface MediaUploadButtonProps {
   category?: string;

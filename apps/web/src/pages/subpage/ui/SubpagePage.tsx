@@ -1,8 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { getPublishedSubpage } from '@/entities/subpage/api/getSubpage';
-import { renderTiptapContent } from '@/shared/lib/renderContent';
-import { TiptapContent } from '@/shared/ui/TiptapContent';
+import { SubpageBlockRenderer } from '@/widgets/subpage-content/ui/SubpageBlockRenderer';
 
 interface SubpagePageProps {
   slug: string;
@@ -15,7 +14,7 @@ export async function SubpagePage({ slug }: SubpagePageProps) {
     notFound();
   }
 
-  const contentHtml = renderTiptapContent(subpage.contentJson);
+  const hasBlocks = subpage.blocks.length > 0;
 
   return (
     <div className="page-container">
@@ -35,8 +34,8 @@ export async function SubpagePage({ slug }: SubpagePageProps) {
             </time>
           )}
         </header>
-        {contentHtml ? (
-          <TiptapContent html={contentHtml} />
+        {hasBlocks ? (
+          <SubpageBlockRenderer blocks={subpage.blocks} />
         ) : (
           <p className="empty-content">콘텐츠가 준비 중입니다.</p>
         )}

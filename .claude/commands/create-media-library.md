@@ -9,10 +9,26 @@
    - 업로드 API 중복 방지 → `apps/admin/app/api/media/upload/route.ts` 내 `crypto.createHash('sha256')`
    - 참조 추적 헬퍼 → `apps/admin/src/features/media-management/lib/findMediaReferences.ts`
    - `/media` 페이지 → `apps/admin/app/(authenticated)/media/page.tsx`
-   - MediaPicker 재사용 → `apps/admin/src/features/media-management/ui/MediaPicker.tsx`
+   - 공용 UI(MediaPicker/ImageUrlInput 등) → `apps/admin/src/entities/media/`
+   - 관리 UI(Detail/Delete/BulkDelete Dialog) → `apps/admin/src/features/media-management/ui/`
    - Tiptap 통합 → `packages/editor/src/imageWithMediaId.ts`, `uploadPlugin.ts`
 2. **다음 Phase 구현**: 미완료된 가장 앞 Phase의 코드를 생성한다.
 3. **컨벤션 검증**: FSD 구조, 감사 로그 연동, import 규칙, 권한 체크, URL 경계 정규화 확인.
+
+## FSD 레이어 분할 원칙 (중요)
+
+미디어는 **여러 슬라이스(home/popup/block 등)에서 공통 재사용**되는 엔티티이므로 `entities/media/` 슬라이스로 분리한다. `features/media-management/`는 `/media` 페이지 전용 관리 기능(상세 편집/삭제/일괄 삭제)만 남긴다.
+
+| 위치 | 담당 |
+| --- | --- |
+| `entities/media/api/` | `mediaFetchers.ts`, `mediaQueries.ts`, `useUploadMedia.ts` (범용 쿼리·업로드 훅) |
+| `entities/media/model/` | `mediaFilters.ts` (parseMediaFilters 등) |
+| `entities/media/lib/` | `formatFileSize.ts` |
+| `entities/media/ui/` | `MediaCard`, `MediaGrid`, `MediaFilters`, `MediaPagination`, `MediaUploadButton`, `MediaPicker`, `ImageUrlInput` (호출 측이 재사용) |
+| `features/media-management/api/` | `useMediaMutations.ts` (update/delete/bulkDelete — `/media` 페이지 전용) |
+| `features/media-management/lib/` | `findMediaReferences.ts` (삭제 검증) |
+| `features/media-management/model/` | `mediaSchemas.ts` (CRUD Zod) |
+| `features/media-management/ui/` | `MediaDetailDialog`, `DeleteMediaDialog`, `BulkDeleteMediaDialog` |
 
 ## 전제 조건
 
@@ -57,26 +73,28 @@
 | ---- | ---- | ---- |
 | Query Keys | `apps/admin/src/shared/api/queryKeys.ts` | `mediaKeys = { all, lists(), list(filters), detail(id), references(id) }` |
 | Schemas | `apps/admin/src/features/media-management/model/mediaSchemas.ts` | zod: `mediaListQuerySchema`, `updateMediaSchema` |
-| Filters | `apps/admin/src/features/media-management/model/mediaFilters.ts` | `parseMediaFilters(searchParams)`, `buildMediaSearchParams(filters)` |
-| Fetchers | `apps/admin/src/features/media-management/api/mediaFetchers.ts` | `getMediaList`, `getMediaDetail`, `getMediaReferences`, `updateMedia`, `deleteMedia`, `bulkDeleteMedia`, `uploadMedia` (FormData 직접 fetch) |
-| Queries | `apps/admin/src/features/media-management/api/mediaQueries.ts` | `mediaListOptions`, `mediaDetailOptions`, `mediaReferencesOptions` (nullable id + enabled) |
-| Mutations | `apps/admin/src/features/media-management/api/useMediaMutations.ts` | `useUpdateMedia`, `useDeleteMedia`, `useBulkDeleteMedia`, `useUploadMedia` (`reused` 토스트 분기) |
+| Filters | `apps/admin/src/entities/media/model/mediaFilters.ts` | `parseMediaFilters(searchParams)`, `buildMediaSearchParams(filters)` |
+| Fetchers | `apps/admin/src/entities/media/api/mediaFetchers.ts` | `getMediaList`, `getMediaDetail`, `getMediaReferences`, `updateMedia`, `deleteMedia`, `bulkDeleteMedia`, `uploadMedia` (FormData 직접 fetch) |
+| Queries | `apps/admin/src/entities/media/api/mediaQueries.ts` | `mediaListOptions`, `mediaDetailOptions`, `mediaReferencesOptions` (nullable id + enabled) |
+| Upload Mutation | `apps/admin/src/entities/media/api/useUploadMedia.ts` | `useUploadMedia` (`reused` 토스트 분기) — entities에 둬야 공용 UI(MediaUploadButton)가 features 의존 없이 사용 |
+| 관리 Mutations | `apps/admin/src/features/media-management/api/useMediaMutations.ts` | `useUpdateMedia`, `useDeleteMedia`, `useBulkDeleteMedia` (`/media` 페이지 전용) |
 
-### Phase D: 라이브러리 UI + MediaPicker
+### Phase D: 공용 UI (entities/media) + 관리 UI (features/media-management)
 
 | 대상 | 파일 | 핵심 |
 | ---- | ---- | ---- |
-| Card | `ui/MediaCard.tsx` | `selectable/checked/onToggleSelect` props 지원, 우측상단 체크박스(hover/선택 시 표시) |
-| Grid | `ui/MediaGrid.tsx` | `selectedIds: Set<string>` 전파 |
-| Filters | `ui/MediaFilters.tsx` | `onChange` 콜백 지원 — `/media`는 URL, Picker는 internal state 분기 |
-| Pagination | `ui/MediaPagination.tsx` | `onPageChange` 콜백 지원 |
-| UploadButton | `ui/MediaUploadButton.tsx` | `onUploaded` 콜백 — Picker에서 업로드 → 자동 선택 |
-| DetailDialog | `ui/MediaDetailDialog.tsx` | useQuery + references + alt 편집 + 삭제 버튼 |
-| DeleteDialog | `ui/DeleteMediaDialog.tsx` | AlertDialog + 사용처 표시 + 차단 |
-| BulkDeleteDialog | `ui/BulkDeleteMediaDialog.tsx` | 2단계(확인 → 결과), blocked 사용처 목록 |
-| MediaPicker | `ui/MediaPicker.tsx` | 위 컴포넌트 조합, internal state + `onSelect` 콜백 |
-| formatFileSize | `lib/formatFileSize.ts` | B/KB/MB/GB 변환 |
-| Pages | `src/pages/media-management/ui/MediaPage.tsx` (Server) + `MediaPageClient.tsx` (Client) | prefetch + HydrationBoundary + 상단 툴바(전체선택 checkbox + 일괄 삭제) |
+| Card | `entities/media/ui/MediaCard.tsx` | `selectable/checked/onToggleSelect` props 지원, 우측상단 체크박스(hover/선택 시 표시) |
+| Grid | `entities/media/ui/MediaGrid.tsx` | `selectedIds: Set<string>` 전파 |
+| Filters | `entities/media/ui/MediaFilters.tsx` | `onChange` 콜백 지원 — `/media`는 URL, Picker는 internal state 분기 |
+| Pagination | `entities/media/ui/MediaPagination.tsx` | `onPageChange` 콜백 지원 |
+| UploadButton | `entities/media/ui/MediaUploadButton.tsx` | `onUploaded` 콜백, `entities/media/api/useUploadMedia` 참조 |
+| MediaPicker | `entities/media/ui/MediaPicker.tsx` | 위 컴포넌트 조합, internal state + `onSelect` 콜백 (공용 — home/popup/block/tiptap에서 재사용) |
+| ImageUrlInput | `entities/media/ui/ImageUrlInput.tsx` | URL 직접 입력 + UploadButton + MediaPicker 통합 복합 입력 (공용) |
+| formatFileSize | `entities/media/lib/formatFileSize.ts` | B/KB/MB/GB 변환 |
+| DetailDialog | `features/media-management/ui/MediaDetailDialog.tsx` | useQuery(`@/entities/media/api/mediaQueries`) + references + alt 편집 + 삭제 버튼 |
+| DeleteDialog | `features/media-management/ui/DeleteMediaDialog.tsx` | AlertDialog + 사용처 표시 + 차단 |
+| BulkDeleteDialog | `features/media-management/ui/BulkDeleteMediaDialog.tsx` | 2단계(확인 → 결과), blocked 사용처 목록 |
+| Pages | `src/pages/media-management/ui/MediaPage.tsx` (Server) + `MediaPageClient.tsx` (Client) | prefetch + HydrationBoundary + 상단 툴바(전체선택 checkbox + 일괄 삭제). 공용 UI는 `@/entities/media/ui/*` 에서, 관리 Dialog는 `@/features/media-management/ui/*` 에서 import |
 | App route | `app/(authenticated)/media/page.tsx` | `export { default } from '@/pages/media-management/ui/MediaPage';` |
 
 ### Phase E: URL 경계 정규화 (admin 표시용)
@@ -86,7 +104,7 @@
 | URL 헬퍼 | `apps/admin/src/shared/lib/mediaUrl.ts` (신규) | `WEB_BASE_URL` export, `resolveMediaPreviewUrl(url)` (상대→절대, 절대 URL은 통과), `toRelativeMediaUrl(url)` (역방향) |
 | Tiptap JSON 변환 | `apps/admin/src/shared/lib/tiptapContentTransform.ts` (신규) | `preprocessTiptapForAdmin(json)`, `postprocessTiptapForSave(json)` — `image.attrs.src` 재귀 walk |
 | 뷰 렌더러 | `apps/admin/src/shared/lib/renderContent.ts` (신규) | `renderTiptapContentForAdmin(json)` — preprocess → generateHTML (HTML regex 치환 금지) |
-| 미디어 이미지 지점 | `MediaCard`, `MediaDetailDialog`, `ImageUrlInput` | `src={resolveMediaPreviewUrl(url)}` 적용 |
+| 미디어 이미지 지점 | `entities/media/ui/MediaCard`, `entities/media/ui/ImageUrlInput`, `features/media-management/ui/MediaDetailDialog` | `src={resolveMediaPreviewUrl(url)}` 적용 |
 | 뷰 페이지 | `SubpageView.tsx`, `PostView.tsx` | `renderTiptapContentForAdmin(data.contentJson)` 사용 |
 
 **Web 쪽 DOMPurify**: `apps/web/src/shared/lib/renderContent.ts`의 ALLOWED_ATTR에 `data-media-id` 추가.
@@ -98,7 +116,7 @@
 | 도메인 타입 | `packages/types/src/domain/home.types.ts` | HeroSlide/RecommendedItem에 `mediaId?: string \| null` 추가 |
 | Zod 스키마 | `apps/admin/src/features/home-management/model/homeSchemas.ts` | heroSlideSchema/recommendedItemSchema에 `mediaId: z.string().max(64).nullable().optional()` |
 | Web 파서 | `apps/web/src/entities/home-section/lib/parseConfig.ts` | mediaId optional 허용 (저장값 보존) |
-| ImageUrlInput | `apps/admin/src/features/home-management/ui/fields/ImageUrlInput.tsx` | `mediaId` / `onMediaIdChange` props, [라이브러리] 버튼 + MediaPicker, `MediaUploadButton` 재사용 |
+| ImageUrlInput | `apps/admin/src/entities/media/ui/ImageUrlInput.tsx` | `mediaId` / `onMediaIdChange` props, [라이브러리] 버튼 + MediaPicker, `MediaUploadButton` 재사용. 호출 측에서 `import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput'` |
 | HeroFields/RecommendedFields | 같은 폴더 | `append()` 기본값에 `mediaId: null`, 서브필드에서 mediaId watch/setValue |
 
 ### Phase G: Tiptap 확장 + 에디터 통합
@@ -234,6 +252,7 @@ return ok({ deleted, blocked });
 - [ ] Picker 내부 필터가 URL이 아닌 internal state인지 (`onChange` 콜백 경로)
 - [ ] 권한 체크: 모든 Media API Route에 `requirePermission('media', ...)`, UI는 `usePermission('media', ...)`
 - [ ] 감사 로그: `MEDIA` entityType, 재사용은 skip, 일괄 삭제는 성공 건별로 기록
+- [ ] **FSD 레이어 분할**: 공용 UI(Picker/ImageUrlInput 등)는 `entities/media/`, `/media` 관리 Dialog는 `features/media-management/`. home/popup/block 등 다른 슬라이스는 `@/entities/media/ui/*`만 import (같은 레이어 간 슬라이스 직접 import 금지)
 
 ## 참고
 

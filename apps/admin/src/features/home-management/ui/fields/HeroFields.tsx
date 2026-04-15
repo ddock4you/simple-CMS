@@ -14,8 +14,9 @@ import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
 
+import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput';
+
 import type { HeroConfigData } from '../../model/homeSchemas';
-import { ImageUrlInput } from './ImageUrlInput';
 import { SlideOptionsPanel } from './SlideOptionsPanel';
 
 interface HeroFieldsProps {

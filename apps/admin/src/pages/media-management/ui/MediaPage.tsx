@@ -4,8 +4,8 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { hasPermission } from '@/entities/auth/lib/checkPermission';
 import { getQueryClient } from '@/shared/api/queryClient';
-import { mediaListOptions } from '@/features/media-management/api/mediaQueries';
-import { parseMediaFilters } from '@/features/media-management/model/mediaFilters';
+import { mediaListOptions } from '@/entities/media/api/mediaQueries';
+import { parseMediaFilters } from '@/entities/media/model/mediaFilters';
 import { MediaPageClient } from './MediaPageClient';
 
 export default async function MediaPage({

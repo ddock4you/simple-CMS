@@ -22,9 +22,10 @@ import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import {
   mediaDetailOptions,
   mediaReferencesOptions,
-} from '../api/mediaQueries';
+} from '@/entities/media/api/mediaQueries';
+import { formatFileSize } from '@/entities/media/lib/formatFileSize';
+
 import { useUpdateMedia } from '../api/useMediaMutations';
-import { formatFileSize } from '../lib/formatFileSize';
 import { DeleteMediaDialog } from './DeleteMediaDialog';
 
 interface MediaDetailDialogProps {

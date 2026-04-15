@@ -134,6 +134,8 @@ pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
 - `entityTitle`은 액션 시점의 스냅샷 (원본 변경/삭제 후에도 이력 유지)
 - `entityType`, `entityId`는 nullable (LOGIN/LOGOUT에는 대상 엔티티 없음)
 - `AuditEntityType` enum에 `ROLE` 포함 (역할 생성/수정/삭제/권한 변경 기록)
+- `AuditEntityType` enum에 `PAGE_BLOCK` 포함 (서브페이지 블록 생성/수정/삭제/순서 변경, Stage 6)
+- `PageBlockType` enum에 `RICH_TEXT` 포함 (Stage 6 통합 블록 모델 — `Subpage.contentJson` 필드는 제거되고 RICH_TEXT 블록으로 흡수됨). `Subpage.content`(검색용 plain text)는 유지
 - `logAuditEvent()`는 fire-and-forget (실패 시 console.error, throw 하지 않음)
 - 주 액션과 같은 트랜잭션에 포함하지 않음
 - `userId`는 nullable: 비인증 액션(회원가입)에서는 null 허용

@@ -188,17 +188,26 @@ src/shared/lib/popupCookies.ts                        # "오늘 하루 보지 �
 
 ## 서브페이지 렌더링
 
-서브페이지 렌더링 순서:
+**통합 블록 모델 (Stage 6)** — 서브페이지의 모든 콘텐츠는 PageBlock 목록이다. 별도의 본문 렌더 단계가 없다.
 
-1. **본문**: Tiptap JSON → HTML 변환 (`generateHTML()` from `@tiptap/html`, `@simple-cms/editor` 공유 확장, DOMPurify 새니타이징)
-   - Stage 5a-2: image 노드의 `mediaId` attr → `<img data-media-id="cuid...">` 직렬화. DOMPurify ALLOWED_ATTR에 `data-media-id` 포함 (Media 라이브러리 참조 추적용 메타데이터)
-2. **추가 블록**: 블록 타입별 렌더러 연결 (`isVisible = true`인 블록만)
-3. **커스텀 HTML**: `customHtml` 필드가 있으면 DOMPurify 새니타이징 후 지정 위치에 삽입
-4. **커스텀 CSS**: `customCss` 필드가 있으면 `<style>` 태그로 페이지 스코프 적용
+렌더링 순서:
+
+1. **블록 목록**: `<SubpageBlockRenderer blocks={...} />` — `isVisible = true`인 블록만, `displayOrder asc`
+   - 위치: `src/widgets/subpage-content/ui/SubpageBlockRenderer.tsx` (Server Component, 클라이언트 JS 0)
+   - **RICH_TEXT 블록**: `renderTiptapContent`로 Tiptap JSON → HTML(DOMPurify sanitize) → `<TiptapContent>` 렌더. 기존의 "본문" 역할
+   - **HTML 블록**: DOMPurify sanitize 후 `dangerouslySetInnerHTML`
+   - **IMAGE 블록**: `<figure><img alt><figcaption></figure>`, optional `<a>` 래핑
+   - **IFRAME 블록**: aspect-ratio wrapper + iframe, 허용 호스트 **서버에서 2중 재검증** (관리자 우회 입력 방어)
+   - image 노드의 `mediaId` attr → `<img data-media-id="cuid...">` 직렬화 (DOMPurify ALLOWED_ATTR에 `data-media-id` 포함, Media 라이브러리 참조 추적)
+   - 데이터: `getPublishedSubpage()` 반환 객체의 `blocks` (Prisma select)
+2. **커스텀 HTML**: `customHtml` 필드가 있으면 DOMPurify 새니타이징 후 지정 위치에 삽입 (Stage 7)
+3. **커스텀 CSS**: `customCss` 필드가 있으면 `<style>` 태그로 페이지 스코프 적용 (Stage 7)
 
 - 블록 순서와 노출 여부는 admin에서 관리한 대로 반영
-- `customHtml`/`customCss`가 비어있으면 3, 4단계 생략
+- 블록이 0개면 "콘텐츠가 준비 중입니다" placeholder 표시
+- `customHtml`/`customCss`가 비어있으면 2·3단계 생략
 - 커스텀 CSS는 해당 페이지에만 적용 (전역 스타일 오염 방지)
+- 블록 스타일: `apps/web/app/globals.css`의 `.subpage-block-*` 클래스 (프로토타입, 시안 확정 시 렌더러와 함께 교체)
 
 ## 게시판 / 게시글 렌더링
 

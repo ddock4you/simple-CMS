@@ -5,7 +5,7 @@ import type { UseFormReturn } from 'react-hook-form';
 
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
-import { ImageUrlInput } from '@/features/home-management/ui/fields/ImageUrlInput';
+import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput';
 
 import type { PopupFormValues } from '../model/popupSchemas';
 

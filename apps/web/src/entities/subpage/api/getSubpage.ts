@@ -10,9 +10,16 @@ type PublishedSubpage = Prisma.SubpageGetPayload<{
     slug: true;
     seoTitle: true;
     seoDescription: true;
-    contentJson: true;
     publishedAt: true;
     updatedAt: true;
+    blocks: {
+      select: {
+        id: true;
+        blockType: true;
+        configJson: true;
+        displayOrder: true;
+      };
+    };
   };
 }>;
 
@@ -29,9 +36,18 @@ export const getPublishedSubpage = cache(
         slug: true,
         seoTitle: true,
         seoDescription: true,
-        contentJson: true,
         publishedAt: true,
         updatedAt: true,
+        blocks: {
+          where: { isVisible: true },
+          orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
+          select: {
+            id: true,
+            blockType: true,
+            configJson: true,
+            displayOrder: true,
+          },
+        },
       },
     });
   },

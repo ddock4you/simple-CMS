@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse, PaginatedResponse } from '@simple-cms/types';
-import { extractTextFromTiptap, generateSlug } from '@simple-cms/editor';
+import { generateSlug } from '@simple-cms/editor';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
@@ -91,7 +91,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const { title, seoTitle, seoDescription, contentJson, status } = parsed.data;
+    const { title, seoTitle, seoDescription, status } = parsed.data;
     const slug = parsed.data.slug?.trim() || generateSlug(title);
 
     if (!slug) {
@@ -114,17 +114,15 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
     const displayOrder = (maxOrder._max.displayOrder ?? -1) + 1;
 
-    const content = contentJson ? extractTextFromTiptap(contentJson) : null;
     const publishedAt = status === 'PUBLISHED' ? new Date() : null;
 
+    // 본문은 RICH_TEXT 블록으로 별도 관리 — 서브페이지 생성 시 content는 null로 시작
     const subpage = await prisma.subpage.create({
       data: {
         title,
         slug,
         seoTitle,
         seoDescription,
-        contentJson: contentJson ?? undefined,
-        content,
         status,
         publishedAt,
         displayOrder,

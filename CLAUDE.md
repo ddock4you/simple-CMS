@@ -86,12 +86,12 @@ apps/{앱}/
 | ---------------------- | ------------------------------------------------------------------------------------- |
 | **User**               | 관리자 계정, username/password 인증, 가입 승인제(PENDING→ACTIVE), Role FK 기반 권한   |
 | **Role**               | 역할(등급) 정의, name·permissions(Json)·isSystem·isDefault, 메뉴별 CRUD 권한 매트릭스 |
-| **Subpage**            | 서브페이지, Markdown 문서형, 블록 + 커스텀 HTML/CSS 지원                              |
+| **Subpage**            | 서브페이지, 콘텐츠는 PageBlock 목록으로 관리 (RICH_TEXT/HTML/IMAGE/IFRAME 자유 순서), 검색용 plain text(`content`) 유지 |
 | **Board**              | 게시판 설정, 스킨(list/gallery), slug, 공개 여부                                      |
 | **Post**               | 게시판 소속 게시글, 목록/상세 렌더링 대상                                             |
 | **HomeSection**        | 메인 페이지 전용 섹션 설정                                                            |
 | **HomePopup**          | 메인 페이지 전용 팝업 (콘텐츠형/이미지형)                                             |
-| **PageBlock**          | 서브페이지 제한형 블록 (blockType + configJson)                                       |
+| **PageBlock**          | 서브페이지 콘텐츠 블록 (blockType: RICH_TEXT/HTML/IMAGE/IFRAME + configJson, displayOrder 기반 자유 순서) |
 | **Media**              | 이미지/파일 메타데이터, 1차는 대표 이미지 중심                                        |
 | **NavigationMenu**     | 메뉴 묶음, slots 배열(HEADER/FOOTER/SIDEBAR)로 공개 웹 배치 위치 지정, 복수 슬롯 가능 |
 | **NavigationMenuItem** | 메뉴 항목 (SUBPAGE/BOARD/EXTERNAL/CUSTOM 연결)                                        |
@@ -335,7 +335,7 @@ apps/{앱}/
 
 | 단계 | 내용                                        | 확인 가능한 것                     | 상태 |
 | ---- | ------------------------------------------- | ---------------------------------- | ---- |
-| 6    | 서브페이지 블록 + **Admin UI + Web 렌더링** | 블록 추가/순서 변경 → 공개 웹 확인 | 대기 |
+| 6    | 서브페이지 블록 + **Admin UI + Web 렌더링** | 블록 추가/순서 변경 → 공개 웹 확인 | **완료** |
 | 7    | 미리보기 + 커스텀 HTML/CSS + 운영 UX        | draft 미리보기, Monaco 편집        | 대기 |
 | 8    | Docker + CI/CD + 문서화                     | `docker compose up`으로 전체 실행  | 대기 |
 
@@ -462,7 +462,7 @@ shared/lib/
 - 모든 데이터 변경 API Route 핸들러 + 인증 이벤트(LOGIN/LOGOUT)에서 `logAuditEvent()` 호출
 - append-only 모델 (AuditLog 자체의 UPDATE/DELETE 없음)
 - 기록 항목: action, entityType(?), entityId(?), entityTitle(스냅샷), changes(JSON), userId, IP, User Agent
-- entityType 종류: `SUBPAGE`, `BOARD`, `POST`, `NAVIGATION_MENU`, `NAVIGATION_MENU_ITEM`, `HOME_SECTION`, `HOME_POPUP`, `USER`, `ROLE`, `SITE_SETTINGS`, `ERROR_LOG`, `MEDIA`
+- entityType 종류: `SUBPAGE`, `BOARD`, `POST`, `NAVIGATION_MENU`, `NAVIGATION_MENU_ITEM`, `HOME_SECTION`, `HOME_POPUP`, `PAGE_BLOCK`, `USER`, `ROLE`, `SITE_SETTINGS`, `ERROR_LOG`, `MEDIA`
 - LOGIN/LOGOUT: entityType, entityId는 null (대상 엔티티 없음)
 - 로깅 실패가 주 액션을 차단하지 않음 (fire-and-forget)
 - changes JSON 구조: CREATE → `{ after }`, UPDATE → `{ before, after }` (메타데이터 필드만, 본문 제외), DELETE → `{ before }`, LOGIN/LOGOUT → null
@@ -510,12 +510,14 @@ shared/lib/
 
 ### 콘텐츠 편집 방향
 
-- **본문**: Tiptap WYSIWYG 에디터 → Tiptap JSON(`contentJson`)으로 저장 + 검색용 plain text(`content`) 동시 저장
-  - `contentJson`: 렌더링의 진실의 원천 (Tiptap ProseMirror JSON)
-  - `content`: Tiptap JSON에서 추출한 순수 텍스트 (PGroonga 검색 인덱싱용)
-  - 텍스트 추출: `packages/editor`의 `extractTextFromTiptap()` 유틸리티
-  - 적용 모델: Subpage, Post, HomePopup(콘텐츠형) 전체 통일
-- **본문 이미지** (Stage 5a-2): Tiptap의 image 노드에 `mediaId` attr 추가 — Media 라이브러리 참조 추적
+- **Subpage 본문 (Stage 6 — 통합 블록 모델)**: 서브페이지의 모든 콘텐츠는 `PageBlock` 목록으로 표현
+  - `Subpage.contentJson` 필드는 **없음** — RICH_TEXT 블록으로 흡수됨
+  - 한 서브페이지에 RICH_TEXT/HTML/IMAGE/IFRAME 블록을 자유 순서로 배치 (displayOrder)
+  - `Subpage.content`(검색용 plain text)는 유지 — 블록 CUD 시 `recalculateSubpageContent`가 모든 RICH_TEXT 블록의 contentJson을 순서대로 모아 재집계
+- **RICH_TEXT 블록**: Tiptap JSON(`configJson.contentJson`)으로 저장, 기존 본문 편집 역할을 이어받음
+  - 텍스트 추출: `packages/editor`의 `extractTextFromTiptap()` 유틸리티 (검색 인덱싱용)
+- **Post / HomePopup(콘텐츠형)**: 여전히 `contentJson` + `content` 단일 본문 구조 (블록화 대상 아님)
+- **본문 이미지**: Tiptap의 image 노드에 `mediaId` attr 추가 — Media 라이브러리 참조 추적
   - `packages/editor`의 `ImageWithMediaId`가 기본 Image 확장을 교체
   - paste/drop 시 `ImageUploadExtension`이 자동 업로드 + image 노드 삽입 (mediaId 포함)
   - 외부 URL 직접 입력은 mediaId null (Media 무관, 의도적)
@@ -523,13 +525,11 @@ shared/lib/
 - **web 렌더링**: `@tiptap/html`의 `generateHTML()` — 서버 사이드 전용, 클라이언트 JS 0
   - `packages/editor`의 공유 확장으로 admin과 동일한 렌더링 보장
   - DOMPurify 새니타이징 (defense-in-depth)
-- **커스텀 코드**: Subpage 모델에 `customHtml`, `customCss` 필드 추가 (nullable)
-  - 본문 + 블록과 독립적으로 관리
-  - admin에서 Monaco Editor로 별도 탭 제공
-  - web에서 DOMPurify 새니타이징 후 렌더링
-  - CSS는 페이지 스코프로 격리
+  - 서브페이지는 `SubpageBlockRenderer`가 블록 타입별로 분기 렌더
+- **커스텀 코드**: Subpage 모델에 `customHtml`, `customCss` 필드 (nullable, Stage 7에서 활용)
+  - 블록과 독립적으로 관리, admin에서 Monaco Editor로 별도 편집
+  - web에서 DOMPurify 새니타이징 후 렌더링, CSS는 페이지 스코프 격리
   - JS는 1차 비허용 (2차에서 제한적 허용 검토)
-- **블록**: 기존 PageBlock 시스템 유지 (blockType + configJson)
 
 ## 테스트 전략
 

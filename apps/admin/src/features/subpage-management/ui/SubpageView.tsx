@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 import { ArrowLeft, Pencil } from 'lucide-react';
 
 import { Button } from '@/shared/ui/shadcn/button';
-import { renderTiptapContentForAdmin } from '@/shared/lib/renderContent';
 import {
   Card,
   CardContent,
@@ -17,6 +16,8 @@ import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
 import { subpageDetailOptions } from '../api/subpageQueries';
 import { useDeleteSubpage } from '../api/useSubpageMutations';
+import { blockListOptions } from '@/features/block-management/api/blockQueries';
+import { BLOCK_TYPE_LABELS } from '@/features/block-management/model/blockLabels';
 import { SubpageStatusBadge } from './SubpageStatusBadge';
 import { DeleteSubpageDialog } from './DeleteSubpageDialog';
 
@@ -26,13 +27,12 @@ interface SubpageViewProps {
 
 export function SubpageView({ id }: SubpageViewProps) {
   const { data } = useQuery(subpageDetailOptions(id));
+  const { data: blocks = [] } = useQuery(blockListOptions(id));
   const deleteMutation = useDeleteSubpage();
   const canUpdate = usePermission('subpages', 'update');
   const canDelete = usePermission('subpages', 'delete');
 
   if (!data) return null;
-
-  const contentHtml = renderTiptapContentForAdmin(data.contentJson);
 
   return (
     <div className="space-y-6">
@@ -74,16 +74,34 @@ export function SubpageView({ id }: SubpageViewProps) {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>콘텐츠</CardTitle>
+              <CardTitle>블록 구성 ({blocks.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              {contentHtml ? (
-                <div
-                  className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: contentHtml }}
-                />
+              {blocks.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  아직 추가된 블록이 없습니다. 편집 화면에서 본문·HTML·이미지·iframe 블록을 자유롭게 섞을 수 있습니다.
+                </p>
               ) : (
-                <p className="text-muted-foreground">콘텐츠가 없습니다.</p>
+                <ol className="space-y-1 text-sm">
+                  {blocks.map((b, i) => (
+                    <li
+                      key={b.id}
+                      className="flex items-center gap-2"
+                    >
+                      <span className="w-6 text-right text-muted-foreground">
+                        {i + 1}.
+                      </span>
+                      <span className="font-medium">
+                        {BLOCK_TYPE_LABELS[b.blockType]}
+                      </span>
+                      {!b.isVisible && (
+                        <span className="text-xs text-muted-foreground">
+                          (숨김)
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
               )}
             </CardContent>
           </Card>

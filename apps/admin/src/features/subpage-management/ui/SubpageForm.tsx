@@ -35,7 +35,6 @@ import {
   useUpdateSubpage,
   useDeleteSubpage,
 } from '../api/useSubpageMutations';
-import { TiptapEditor } from '@/shared/ui/TiptapEditor';
 import { SlugField } from './SlugField';
 import { DeleteSubpageDialog } from './DeleteSubpageDialog';
 
@@ -66,7 +65,6 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
       slug: initialData?.slug ?? '',
       seoTitle: initialData?.seoTitle ?? '',
       seoDescription: initialData?.seoDescription ?? '',
-      contentJson: initialData?.contentJson ?? undefined,
       status: initialData?.status ?? 'DRAFT',
     },
   });
@@ -158,25 +156,6 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>콘텐츠</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Controller
-                name="contentJson"
-                control={control}
-                render={({ field }) => (
-                  <TiptapEditor
-                    content={field.value}
-                    onChange={(json) =>
-                      field.onChange(json)
-                    }
-                  />
-                )}
-              />
-            </CardContent>
-          </Card>
         </div>
 
         <div className="space-y-6">
