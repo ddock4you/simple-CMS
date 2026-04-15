@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma, logAuditEvent, deleteUserSessions } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { getCurrentUser } from '@/entities/auth/lib/getCurrentUser';
+import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
 
 export async function POST(
@@ -11,13 +11,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return NextResponse.json(
-        { success: false, error: '인증이 필요합니다.' } satisfies ApiResponse<never>,
-        { status: 401 },
-      );
-    }
+    const { user: currentUser, error } = await requirePermission('users', 'update');
+    if (error) return error;
 
     const { id } = await params;
 

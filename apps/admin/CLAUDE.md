@@ -123,7 +123,10 @@ src/
 /navigation             # 메뉴 관리
 /navigation/[menuId]    # 메뉴 세트 편집
 /home                   # 메인 페이지 관리
-/home/popups            # 메인 팝업 관리
+/home/popups            # 메인 팝업 관리 (목록)
+/home/popups/new        # 메인 팝업 생성
+/home/popups/[id]       # 메인 팝업 상세 (읽기 전용 뷰)
+/home/popups/[id]/edit  # 메인 팝업 편집
 /media                  # 미디어 라이브러리 (그리드 + 검색 + 상세 Dialog)
 /users                  # 사용자 관리 (목록, 승인/거절, 정지/해제)
 /profile                # 내 정보 변경 (이름, 비밀번호)

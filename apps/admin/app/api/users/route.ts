@@ -3,19 +3,14 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@simple-cms/db';
 import type { ApiResponse, PaginatedResponse } from '@simple-cms/types';
 
-import { getCurrentUser } from '@/entities/auth/lib/getCurrentUser';
+import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { userListQuerySchema } from '@/features/user-management/model/userSchemas';
 import type { UserListItem } from '@/features/user-management/model/userFilters';
 
 export async function GET(request: Request): Promise<NextResponse> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: '인증이 필요합니다.' } satisfies ApiResponse<never>,
-        { status: 401 },
-      );
-    }
+    const { error } = await requirePermission('users', 'read');
+    if (error) return error;
 
     const { searchParams } = new URL(request.url);
     const parsed = userListQuerySchema.safeParse({

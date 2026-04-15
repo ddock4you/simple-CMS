@@ -242,11 +242,17 @@ apps/{앱}/
 
 ### admin
 
-`/login`, `/register`, `/dashboard`, `/subpages`, `/subpages/[id]`, `/boards`, `/boards/[id]`, `/posts`, `/posts/[id]`,
-`/navigation`, `/navigation/[menuId]`, `/home`, `/home/popups`,
-`/users`, `/profile`,
-`/error-logs`, `/error-logs/[id]`,
+`/login`, `/register`, `/dashboard`,
+`/subpages`, `/subpages/new`, `/subpages/[id]`, `/subpages/[id]/edit`,
+`/boards`, `/boards/new`, `/boards/[id]`, `/boards/[id]/edit`,
+`/posts`, `/posts/new`, `/posts/[id]`, `/posts/[id]/edit`,
+`/navigation`, `/navigation/[menuId]`,
+`/home`, `/home/popups`, `/home/popups/new`, `/home/popups/[id]`, `/home/popups/[id]/edit`,
+`/media`, `/users`, `/profile`,
+`/audit-logs`, `/error-logs`,
 `/settings`, `/settings/domain`, `/settings/security`, `/settings/upload`, `/settings/roles`
+
+(에러 로그 상세는 별도 라우트 없이 목록 내 Dialog로 표시)
 
 ### web
 
