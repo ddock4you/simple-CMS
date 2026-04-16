@@ -21,12 +21,24 @@ export const richTextBlockConfigSchema = z.object({
 });
 export type RichTextBlockConfigData = z.infer<typeof richTextBlockConfigSchema>;
 
+/**
+ * HTML 블록 (Stage 7b-Option B): HTML + 페이지 스코프 CSS를 한 블록에 함께 관리.
+ * - html: 본문 자유 HTML (필수). DOMPurify sanitize + iframe 호스트 재검증.
+ * - css: 같은 페이지 전체에 적용되는 스타일 (선택). web에서 #subpage-{id} prefix로 스코프.
+ *
+ * Stage 7a 시점의 페이지 단위 customHtml/customCss는 폐기되고 이 블록으로 흡수됨.
+ */
 export const htmlBlockConfigSchema = z.object({
   html: z
     .string()
     .trim()
     .min(1, 'HTML을 입력해주세요.')
-    .max(50_000, 'HTML은 50,000자 이하여야 합니다.'),
+    .max(100_000, 'HTML은 100,000자 이하여야 합니다.'),
+  css: z
+    .string()
+    .max(100_000, 'CSS는 100,000자 이하여야 합니다.')
+    .nullable()
+    .optional(),
 });
 export type HtmlBlockConfigData = z.infer<typeof htmlBlockConfigSchema>;
 
@@ -86,7 +98,7 @@ const EMPTY_TIPTAP_DOC = {
  */
 export const defaultConfigByType = {
   RICH_TEXT: { contentJson: EMPTY_TIPTAP_DOC } satisfies RichTextBlockConfigData,
-  HTML: { html: '' } satisfies HtmlBlockConfigData,
+  HTML: { html: '', css: null } satisfies HtmlBlockConfigData,
   IMAGE: {
     imageUrl: '',
     imageAlt: '',

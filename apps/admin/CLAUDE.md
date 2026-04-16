@@ -161,19 +161,24 @@ src/
   - 숨김 블록: 컨테이너에 `opacity-60` + 헤더 숨김 Badge 이중 표시
   - 빈 내용: `(비어있음)` 힌트
   - lucide-react 아이콘: RICH_TEXT→Type, HTML→Code2, IMAGE→ImageIcon, IFRAME→MonitorPlay
+- **뷰 페이지 카드 배치 순서**: 좌측 col-span-2에 [블록 구성] → [콘텐츠](BlockContentView) 세로 배치 — 페이지 단위 커스텀 코드 카드는 폐기됨(Stage 7b-Option B)
 - **권한 기반 UI**: 생성(`subpages:create`), 편집(`subpages:update`), 삭제(`subpages:delete`) 버튼을 권한별 표시/숨김
 - API Routes: `GET/POST /api/subpages`, `GET/PATCH/DELETE /api/subpages/[id]` — 모든 핸들러에 `requirePermission()` 적용. Subpage 본문 필드(`contentJson`)는 DTO에서도 제거
 - FSD: `features/subpage-management/`, `pages/subpage-management/`
 
-### 커스텀 코드 편집
+### HTML 블록 — HTML + 페이지 스코프 CSS 편집 (Stage 7b — Option B)
 
-- Markdown 본문, 블록과 별도로 서브 페이지별 커스텀 HTML/CSS 편집 기능
-- Monaco Editor로 편집, 별도 탭 UI
-- `customHtml`: 서브 페이지 내 지정 위치에 HTML 삽입 (nullable)
-- `customCss`: 서브 페이지 스코프 스타일 적용 (nullable)
-- JS는 1차 비허용
-- 빈 값이면 무시 (기존 Markdown + 블록만 렌더링)
-- 미리보기에서 커스텀 코드 적용 결과 확인 가능
+**페이지 단위 `Subpage.customHtml` / `customCss` 필드는 폐기되었음** (2025-04-16, 데이터 폐기 + db drop). HTML 블록이 두 역할을 흡수.
+
+- HTML 블록의 `configJson`이 `{ html: string, css?: string | null }` 구조로 확장 — `htmlBlockConfigSchema` (`features/block-management/model/blockSchemas.ts`), 각 max 100,000자
+- 편집 (`features/block-management/ui/fields/HtmlBlockFields.tsx`): shadcn Tabs(HTML/CSS) + Monaco Editor 2개
+  - `next/dynamic` + `ssr: false`, height 400px, wordWrap on, minimap off
+  - 각 탭에 길이 카운터 + 안내 문구 (HTML은 sanitize/iframe 호스트 안내, CSS는 `#subpage-{id}` 페이지 스코프 안내)
+  - CSS는 빈 문자열이면 `null`로 저장 (호출 측에서 `onChange` 처리)
+- 뷰 (`features/block-management/ui/BlockContentView.tsx`의 `HtmlBlockContent`): 둘 다 있으면 Tabs(글자 수 Badge), 한쪽만 있으면 라벨 Badge + 단일 Monaco readOnly
+- 같은 페이지의 여러 HTML 블록 css는 모두 같은 `#subpage-{id}` prefix를 공유 → 한 블록의 CSS가 페이지 전체에 영향 (페이지 스코프)
+- 공개 웹 렌더는 `apps/web` 의 `SubpageBlockRenderer.HtmlBlock`이 `sanitizeCustomHtml` + `scopeCustomCss` 호출 (자세한 내용은 apps/web/CLAUDE.md)
+- 실물 렌더 확인은 [미리보기] 버튼(Stage 7a) 또는 발행 후 `/p/{slug}` 방문
 
 ### 서브페이지 블록 (Stage 6 — 통합 블록 모델)
 
@@ -190,7 +195,7 @@ src/
 | 블록 타입 | configJson 스키마 | 편집기 | 렌더 |
 | -------- | ----------------- | ------ | ---- |
 | **RICH_TEXT** | `{ contentJson: object }` Tiptap ProseMirror JSON | 기존 `TiptapEditor` 재사용 (검색용 plain text는 블록 CUD 시 `recalculateSubpageContent`가 재집계) | `renderTiptapContent` + `TiptapContent` 공유 컴포넌트 |
-| **HTML**   | `{ html: string }` (max 50,000자) | `@monaco-editor/react` language="html" (SSR 비호환 → `next/dynamic` with `ssr: false`) | 서버 DOMPurify sanitize 후 `dangerouslySetInnerHTML` |
+| **HTML**   | `{ html: string, css?: string \| null }` (각 max 100,000자) — Stage 7b-Option B에서 css 필드 추가 | `@monaco-editor/react` language=html/css (SSR 비호환 → `next/dynamic` with `ssr: false`), shadcn Tabs 2탭 | 서버 DOMPurify sanitize(`sanitizeCustomHtml`, iframe 등 의미론 태그 허용) + iframe src 호스트 재검증 + css는 `scopeCustomCss(css, subpageId)` → `<style>` 페이지 스코프 |
 | **IMAGE**  | `{ imageUrl, imageAlt(필수), imageMediaId?, caption?, linkUrl? }` | `ImageUrlInput`(entities/media) + alt + 캡션 + 링크 | `<figure><img alt><figcaption></figure>`, optional `<a>` 래핑 |
 | **IFRAME** | `{ src, title(필수/접근성), aspectRatio: '16:9'\|'4:3'\|'1:1', allowFullscreen }` | URL + 제목 + 비율 + 전체 화면 | aspect-ratio wrapper + iframe, 허용 호스트 **서버+클라이언트 2중 검증** |
 

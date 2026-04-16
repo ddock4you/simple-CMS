@@ -340,9 +340,14 @@ apps/{앱}/
 | ---- | ------------------------------------------- | ---------------------------------- | ---- |
 | 6    | 서브페이지 블록 + **Admin UI + Web 렌더링** | 블록 추가/순서 변경 → 공개 웹 확인 | **완료** |
 | 7a   | Draft 미리보기 (preview 토큰 + web 쿠키)    | admin → web preview URL 새 창 렌더 | **완료** |
-| 7b   | Subpage 커스텀 HTML/CSS (Monaco 편집)       | 서브페이지별 HTML/CSS 주입         | 대기 |
+| 7b   | HTML 블록 = HTML + 페이지 스코프 CSS (Monaco Tabs) | 한 블록에서 HTML+CSS, 페이지 스코프 적용 | **완료** |
 | 7c   | 운영 UX (Dirty 가드, 사이트 보기, 빠른 전환, 벌크) | 이탈 경고 + 상태 토글 + 일괄 작업 | 대기 |
 | 8    | Docker + CI/CD + 문서화                     | `docker compose up`으로 전체 실행  | 대기 |
+
+#### Stage 7c 추가 검토 안건 (착수 시 사용자에게 다시 확인)
+
+- **메타 미저장 상태에서 발행 충돌 경고**: SubpageForm에서 `formState.isDirty=true`일 때 status를 PUBLISHED로 변경 시도하거나, isDirty 상태로 [저장] 없이 페이지를 떠나려 할 때 경고. Dirty 가드 범위에 포함할지 여부 결정 필요. 배경: Stage 7b-Option B 적용 후 SubpageForm의 [저장]이 [발행] 카드 내부로 이동하면서 "메타 저장 = 발행 적용" 흐름이 한 카드에 묶임. 미저장 변경이 있는 상태에서 status만 바꾸고 의도치 않게 publish 되는 사고 방지 검토.
+- **Dirty 가드 적용 범위**: SubpageForm + PostForm 외에 메뉴 편집 Dialog, 메인 섹션 편집 Dialog 등 폼 기반 UI 전반에 적용할지 결정. 블록 관리(BlockManager)·메뉴 dnd·메인섹션 dnd는 즉시 저장 모델이라 Dirty 개념 없음 — 가드 대상 아님.
 
 ## 명령어
 
@@ -531,10 +536,15 @@ shared/lib/
   - `packages/editor`의 공유 확장으로 admin과 동일한 렌더링 보장
   - DOMPurify 새니타이징 (defense-in-depth)
   - 서브페이지는 `SubpageBlockRenderer`가 블록 타입별로 분기 렌더
-- **커스텀 코드**: Subpage 모델에 `customHtml`, `customCss` 필드 (nullable, Stage 7에서 활용)
-  - 블록과 독립적으로 관리, admin에서 Monaco Editor로 별도 편집
-  - web에서 DOMPurify 새니타이징 후 렌더링, CSS는 페이지 스코프 격리
-  - JS는 1차 비허용 (2차에서 제한적 허용 검토)
+- **HTML 블록 (Stage 7b — HTML + CSS 코드 블록)**: HTML 블록의 `configJson`이 `{ html, css? }` 구조 — 한 블록에서 자유 HTML과 페이지 스코프 CSS를 함께 관리
+  - 페이지 단위 `Subpage.customHtml`/`customCss` 필드는 폐기됨(2025-04-16 Option B 결정 — 데이터 폐기 + db drop)
+  - 블록의 `displayOrder`로 본문 사이 자유 위치 + 페이지 단위 CSS 스코프 모두 충족
+  - 같은 페이지에 여러 HTML 블록이 있어도 모두 같은 `#subpage-{id}` prefix를 공유 → 한 블록의 CSS가 페이지 전체(다른 블록 포함)에 영향
+  - admin: `HtmlBlockFields.tsx`가 shadcn Tabs(HTML/CSS) + Monaco Editor 2개 (각 max 100,000자, 길이 카운터). `BlockContentView`도 Tabs로 readOnly 표시
+  - web `SubpageBlockRenderer`의 `HtmlBlock`이 `sanitizeCustomHtml`(확장 DOMPurify — section/article/iframe 등 의미론 태그 허용 + iframe src `IFRAME_ALLOWED_HOSTS` 서버 재검증) + `scopeCustomCss(css, subpageId)`(`#subpage-{id}` prefix, `html`/`body`/`:root` 치환, `@keyframes`/`@font-face` 등 보존) 호출
+  - 페이지 컴포넌트는 `<article id={`subpage-${subpage.id}`}>` 루트 + `<SubpageBlockRenderer subpageId={subpage.id} ... />`
+  - 알려진 한계: `scopeCustomCss`는 `:is()` / `:where()` / `:has()` / `@container` / CSS nesting 완전 지원 불가 — 필요 시 Stage 8+에서 `postcss-prefix-selector` 도입
+  - JS는 비허용 (`<script>`, on-prefixed 이벤트 핸들러, `javascript:` URL 모두 DOMPurify가 제거)
 
 ## 테스트 전략
 

@@ -224,7 +224,7 @@ admin에서 발급한 토큰을 교환해 **draft 콘텐츠**를 공개 웹 렌�
 
 렌더링 순서:
 
-1. **블록 목록**: `<SubpageBlockRenderer blocks={...} />` — `isVisible = true`인 블록만, `displayOrder asc`
+1. **블록 목록**: `<SubpageBlockRenderer blocks={...} subpageId={subpage.id} />` — `isVisible = true`인 블록만, `displayOrder asc` (subpageId는 HTML 블록 css의 `#subpage-{id}` 스코프 prefix 생성에 필요)
    - 위치: `src/widgets/subpage-content/ui/SubpageBlockRenderer.tsx` (Server Component, 클라이언트 JS 0)
    - **RICH_TEXT 블록**: `renderTiptapContent`로 Tiptap JSON → HTML(DOMPurify sanitize) → `<TiptapContent>` 렌더. 기존의 "본문" 역할
    - **HTML 블록**: DOMPurify sanitize 후 `dangerouslySetInnerHTML`
@@ -232,13 +232,19 @@ admin에서 발급한 토큰을 교환해 **draft 콘텐츠**를 공개 웹 렌�
    - **IFRAME 블록**: aspect-ratio wrapper + iframe, 허용 호스트 **서버에서 2중 재검증** (관리자 우회 입력 방어)
    - image 노드의 `mediaId` attr → `<img data-media-id="cuid...">` 직렬화 (DOMPurify ALLOWED_ATTR에 `data-media-id` 포함, Media 라이브러리 참조 추적)
    - 데이터: `getPublishedSubpage()` 반환 객체의 `blocks` (Prisma select)
-2. **커스텀 HTML**: `customHtml` 필드가 있으면 DOMPurify 새니타이징 후 지정 위치에 삽입 (Stage 7)
-3. **커스텀 CSS**: `customCss` 필드가 있으면 `<style>` 태그로 페이지 스코프 적용 (Stage 7)
+2. **HTML 블록의 CSS/HTML (Stage 7b — Option B)**: HTML 블록의 `configJson`이 `{ html, css? }` 구조 — 페이지 단위 `Subpage.customHtml`/`customCss` 필드는 폐기됨. HTML 블록 내부에서 처리:
+   - 페이지 컴포넌트(`SubpagePage`)가 `<article id="subpage-${subpage.id}">` 루트 + `<SubpageBlockRenderer subpageId={subpage.id} ... />` 호출
+   - `SubpageBlockRenderer.HtmlBlock`이 css가 있으면 `scopeCustomCss(css, subpageId)`(`src/shared/lib/scopeCustomCss.ts`)로 `#subpage-{id}` prefix 주입 + `html`/`body`/`:root` 치환 → `<style dangerouslySetInnerHTML>`을 `<div>` 옆에 삽입
+   - html이 있으면 `sanitizeCustomHtml(raw)`(`src/shared/lib/renderContent.ts`)로 확장 DOMPurify config(iframe / section / article / figure / details / summary / nav / header / footer / main 등 의미론 태그 허용 + iframe src `IFRAME_ALLOWED_HOSTS` 서버 재검증)로 정화 → `<div className="subpage-block subpage-block-html" dangerouslySetInnerHTML>` 렌더
+   - 같은 페이지에 HTML 블록이 N개 있어도 모두 같은 `#subpage-{id}` prefix 공유 → 한 블록의 css가 페이지 전체(다른 블록 포함)에 영향. 운영자가 "이 페이지의 h2 빨강"을 한 블록에서 처리 가능
+   - `<script>`, `on*` 이벤트 핸들러, `javascript:` URL은 DOMPurify가 제거. iframe src는 `www.youtube.com` / `youtube.com` / `www.youtube-nocookie.com` / `player.vimeo.com`만 허용, 그 외는 iframe 전체 제거
+   - `IFRAME_ALLOWED_HOSTS`는 `renderContent.ts`(customHtml용)와 `SubpageBlockRenderer.tsx`(IFRAME 블록용)에 복제됨 — 공유 모듈 추출은 Stage 8+ 과제
+   - 알려진 한계: `scopeCustomCss`는 `:is()` / `:where()` / `:has()` / `@container` / CSS nesting 등 신형 CSS 기능의 내부 복합 셀렉터 완전 지원 불가 — 필요 시 `postcss-prefix-selector` 도입 검토
 
 - 블록 순서와 노출 여부는 admin에서 관리한 대로 반영
 - 블록이 0개면 "콘텐츠가 준비 중입니다" placeholder 표시
-- `customHtml`/`customCss`가 비어있으면 2·3단계 생략
-- 커스텀 CSS는 해당 페이지에만 적용 (전역 스타일 오염 방지)
+- HTML 블록의 css가 비어있으면 `<style>` 태그 미렌더, html이 비어있으면 `<div>` 미렌더 (둘 다 비어있으면 블록 자체 null)
+- HTML 블록의 css는 페이지 단위 스코프 — 같은 서브페이지의 다른 블록에도 영향. 다른 서브페이지에는 영향 없음 (전역 스타일 오염 방지)
 - 블록 스타일: `apps/web/app/globals.css`의 `.subpage-block-*` 클래스 (프로토타입, 시안 확정 시 렌더러와 함께 교체)
 
 ## 게시판 / 게시글 렌더링

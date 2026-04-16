@@ -36,7 +36,7 @@ export function useUpdateSubpage(id: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subpageKeys.lists() });
       queryClient.invalidateQueries({ queryKey: subpageKeys.detail(id) });
-      toast.success('서브 페이지가 수정되었습니다.');
+      toast.success('기본 정보가 저장되었습니다.');
       router.push(`/subpages/${id}`);
     },
     onError: (error: FetchError) => {
@@ -61,3 +61,4 @@ export function useDeleteSubpage() {
     },
   });
 }
+

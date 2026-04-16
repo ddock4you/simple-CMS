@@ -1,15 +1,22 @@
 import { Fragment } from 'react';
-import DOMPurify from 'isomorphic-dompurify';
 
 import type { PageBlockType } from '@simple-cms/types';
 
-import { renderTiptapContent } from '@/shared/lib/renderContent';
+import {
+  renderTiptapContent,
+  sanitizeCustomHtml,
+} from '@/shared/lib/renderContent';
+import { scopeCustomCss } from '@/shared/lib/scopeCustomCss';
 import { TiptapContent } from '@/shared/ui/TiptapContent';
 
 /**
- * 서브페이지 블록 렌더러 (Stage 6)
+ * 서브페이지 블록 렌더러 (Stage 6 + Stage 7b-Option B)
  *
  * Server Component — 블록 타입별 분기 렌더링. 클라이언트 JS 0.
+ *
+ * Stage 7b-Option B: HTML 블록이 `{ html, css? }` 구조로 확장됨.
+ * css는 `scopeCustomCss(css, subpageId)`로 `#subpage-{id}` prefix 처리되어
+ * 같은 페이지 전체에 적용 (페이지 스코프).
  *
  * 시안 확정 전 임시 스타일: `apps/web/app/globals.css`의 `.subpage-block-*` 클래스.
  * 시안 확정 시 이 파일 하나만 교체하면 admin CRUD/DB 구조는 변경 없음.
@@ -39,30 +46,6 @@ function isIframeSrcAllowed(src: string): boolean {
   }
 }
 
-/**
- * HTML 블록은 관리자가 입력한 자유 HTML — DOMPurify로 sanitize.
- * (Tiptap 본문과 동일한 ALLOWED_TAGS/ATTR 재사용은 과하지 않게 블록에 맞게 축소 가능하나
- * 일관성을 위해 렌더러 자체에서 config를 유지. 필요 시 `apps/web/src/shared/lib/renderContent.ts` 설정과 동기화.)
- */
-const HTML_PURIFY_CONFIG = {
-  ALLOWED_TAGS: [
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'p', 'br', 'hr',
-    'strong', 'em', 'u', 's', 'sub', 'sup', 'mark',
-    'a', 'img',
-    'ul', 'ol', 'li',
-    'blockquote', 'pre', 'code',
-    'table', 'thead', 'tbody', 'tr', 'th', 'td',
-    'span', 'div',
-  ],
-  ALLOWED_ATTR: [
-    'href', 'target', 'rel', 'title',
-    'src', 'alt', 'width', 'height',
-    'style', 'class',
-    'colspan', 'rowspan',
-  ],
-};
-
 function RichTextBlock({ config }: { config: unknown }) {
   const cfg = config as { contentJson?: unknown } | null;
   if (!cfg?.contentJson) return null;
@@ -75,16 +58,36 @@ function RichTextBlock({ config }: { config: unknown }) {
   );
 }
 
-function HtmlBlock({ config }: { config: unknown }) {
-  const cfg = config as { html?: string } | null;
-  const raw = cfg?.html ?? '';
-  if (!raw.trim()) return null;
-  const sanitized = DOMPurify.sanitize(raw, HTML_PURIFY_CONFIG);
+function HtmlBlock({
+  config,
+  subpageId,
+}: {
+  config: unknown;
+  subpageId: string;
+}) {
+  const cfg = config as { html?: string; css?: string | null } | null;
+  const rawHtml = cfg?.html ?? '';
+  const rawCss = cfg?.css ?? '';
+  const hasHtml = rawHtml.trim() !== '';
+  const hasCss = rawCss.trim() !== '';
+
+  if (!hasHtml && !hasCss) return null;
+
+  const sanitizedHtml = hasHtml ? sanitizeCustomHtml(rawHtml) : '';
+  const scopedCss = hasCss ? scopeCustomCss(rawCss, subpageId) : '';
+
   return (
-    <div
-      className="subpage-block subpage-block-html"
-      dangerouslySetInnerHTML={{ __html: sanitized }}
-    />
+    <>
+      {scopedCss && (
+        <style dangerouslySetInnerHTML={{ __html: scopedCss }} />
+      )}
+      {sanitizedHtml && (
+        <div
+          className="subpage-block subpage-block-html"
+          dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+        />
+      )}
+    </>
   );
 }
 
@@ -152,6 +155,8 @@ function IframeBlock({ config }: { config: unknown }) {
 
 interface SubpageBlockRendererProps {
   blocks: BlockInput[];
+  /** HTML 블록의 CSS 스코프 prefix(`#subpage-{id}`) 생성에 사용. */
+  subpageId: string;
   /**
    * true이면 isVisible=false 블록도 렌더(숨김 배지 wrapper와 함께). Stage 7a preview 전용.
    * 기본값은 false — 공개 웹 기본 동작(isVisible=true만 렌더).
@@ -159,12 +164,12 @@ interface SubpageBlockRendererProps {
   showHidden?: boolean;
 }
 
-function renderBlock(block: BlockInput) {
+function renderBlock(block: BlockInput, subpageId: string) {
   switch (block.blockType) {
     case 'RICH_TEXT':
       return <RichTextBlock config={block.configJson} />;
     case 'HTML':
-      return <HtmlBlock config={block.configJson} />;
+      return <HtmlBlock config={block.configJson} subpageId={subpageId} />;
     case 'IMAGE':
       return <ImageBlock config={block.configJson} />;
     case 'IFRAME':
@@ -176,6 +181,7 @@ function renderBlock(block: BlockInput) {
 
 export function SubpageBlockRenderer({
   blocks,
+  subpageId,
   showHidden = false,
 }: SubpageBlockRendererProps) {
   const visibleBlocks = showHidden
@@ -187,7 +193,7 @@ export function SubpageBlockRenderer({
   return (
     <div className="subpage-blocks">
       {visibleBlocks.map((block) => {
-        const rendered = renderBlock(block);
+        const rendered = renderBlock(block, subpageId);
         if (!rendered) return null;
 
         if (showHidden && block.isVisible === false) {

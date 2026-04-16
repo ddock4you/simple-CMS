@@ -13,6 +13,8 @@ import { Textarea } from '@/shared/ui/shadcn/textarea';
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/shared/ui/shadcn/card';
@@ -114,19 +116,23 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
               onConfirm={() => deleteMutation.mutate(initialData.id)}
             />
           )}
-          <Button type="submit" disabled={isPending || (!isDirty && !isCreate)}>
-            {isPending ? '저장 중...' : '저장'}
-          </Button>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>기본 정보</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>페이지 정보</CardTitle>
+          <CardDescription>
+            기본 정보, 발행 상태, SEO를 한 번에 저장합니다. 블록은 변경 즉시
+            별도로 저장됩니다.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-6 lg:grid-cols-3">
+            <section className="space-y-4 lg:col-span-2">
+              <h3 className="text-sm font-semibold text-muted-foreground">
+                기본 정보
+              </h3>
               <div className="space-y-2">
                 <Label htmlFor="title">제목</Label>
                 <Input
@@ -153,18 +159,13 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
                   {errors.slug.message}
                 </p>
               )}
-            </CardContent>
-          </Card>
+            </section>
 
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>발행</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
+            <div className="space-y-6">
+              <section className="space-y-2">
+                <h3 className="text-sm font-semibold text-muted-foreground">
+                  발행
+                </h3>
                 <Label>상태</Label>
                 <Controller
                   name="status"
@@ -186,36 +187,42 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
                     </Select>
                   )}
                 />
-              </div>
-            </CardContent>
-          </Card>
+              </section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>SEO</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="seoTitle">SEO 제목</Label>
-                <Input
-                  id="seoTitle"
-                  {...register('seoTitle')}
-                  placeholder="검색 결과에 표시될 제목"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="seoDescription">SEO 설명</Label>
-                <Textarea
-                  id="seoDescription"
-                  {...register('seoDescription')}
-                  placeholder="검색 결과에 표시될 설명"
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+              <section className="space-y-2">
+                <h3 className="text-sm font-semibold text-muted-foreground">
+                  SEO
+                </h3>
+                <div className="space-y-2">
+                  <Label htmlFor="seoTitle">SEO 제목</Label>
+                  <Input
+                    id="seoTitle"
+                    {...register('seoTitle')}
+                    placeholder="검색 결과에 표시될 제목"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="seoDescription">SEO 설명</Label>
+                  <Textarea
+                    id="seoDescription"
+                    {...register('seoDescription')}
+                    placeholder="검색 결과에 표시될 설명"
+                    rows={3}
+                  />
+                </div>
+              </section>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="justify-end gap-2">
+          <Button
+            type="submit"
+            disabled={isPending || (!isDirty && !isCreate)}
+          >
+            {isPending ? '저장 중...' : '저장'}
+          </Button>
+        </CardFooter>
+      </Card>
     </form>
   );
 }

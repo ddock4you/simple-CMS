@@ -108,7 +108,10 @@ export function BlockManager({ subpageId }: { subpageId: string }) {
           <h2 className="text-lg font-semibold">블록</h2>
           <p className="text-sm text-muted-foreground">
             본문 아래에 표시될 블록을 관리합니다. (현재 {data.length} /{' '}
-            {PAGE_BLOCK_MAX_PER_SUBPAGE})
+            {PAGE_BLOCK_MAX_PER_SUBPAGE}) · 블록 추가·편집·삭제·순서 변경은
+            <span className="font-medium text-foreground">
+              {' '}변경 즉시 저장됩니다.
+            </span>
           </p>
         </div>
         {canUpdate && (

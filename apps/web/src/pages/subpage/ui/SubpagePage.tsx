@@ -13,6 +13,7 @@ interface SubpagePageProps {
 }
 
 interface RenderSubpageInput {
+  id: string;
   title: string;
   publishedAt: Date | null;
   blocks: Array<{
@@ -33,7 +34,8 @@ function SubpageArticle({
 }) {
   const hasBlocks = subpage.blocks.length > 0;
   return (
-    <article className="subpage-article">
+    // id="subpage-{id}"는 HTML 블록의 CSS 스코프(`#subpage-{id}` prefix)가 적용될 루트
+    <article id={`subpage-${subpage.id}`} className="subpage-article">
       <header className="subpage-header">
         <h1 className="subpage-title">{subpage.title}</h1>
         {subpage.publishedAt && (
@@ -50,7 +52,11 @@ function SubpageArticle({
         )}
       </header>
       {hasBlocks ? (
-        <SubpageBlockRenderer blocks={subpage.blocks} showHidden={showHidden} />
+        <SubpageBlockRenderer
+          blocks={subpage.blocks}
+          subpageId={subpage.id}
+          showHidden={showHidden}
+        />
       ) : (
         <p className="empty-content">콘텐츠가 준비 중입니다.</p>
       )}

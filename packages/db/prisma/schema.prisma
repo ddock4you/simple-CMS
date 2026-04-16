@@ -179,8 +179,6 @@ model Subpage {
   // 본문은 PageBlock(RICH_TEXT) 블록으로 표현 (Stage 6 — 통합 블록 모델)
   // content는 PGroonga 검색 인덱싱용 plain text — 블록 CUD 시 재집계
   content         String?       @db.Text
-  customHtml      String?       @db.Text
-  customCss       String?       @db.Text
   status          ContentStatus @default(DRAFT)
   publishedAt     DateTime?
   featuredImageId String?

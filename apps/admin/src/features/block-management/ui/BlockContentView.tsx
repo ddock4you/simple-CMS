@@ -15,6 +15,12 @@ import type { PageBlockType, PageBlockListItem } from '@simple-cms/types';
 import { renderTiptapContentForAdmin } from '@/shared/lib/renderContent';
 import { resolveMediaPreviewUrl } from '@/shared/lib/mediaUrl';
 import { Badge } from '@/shared/ui/shadcn/badge';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/shared/ui/shadcn/tabs';
 
 import { BLOCK_TYPE_LABELS } from '../model/blockLabels';
 
@@ -68,30 +74,84 @@ function RichTextBlockContent({ config }: { config: unknown }) {
   );
 }
 
-function HtmlBlockContent({ config }: { config: unknown }) {
-  const cfg = config as { html?: string } | null;
-  const raw = cfg?.html ?? '';
-  if (!raw.trim()) return EMPTY_HINT;
+const READ_ONLY_MONACO_OPTIONS = {
+  readOnly: true,
+  domReadOnly: true,
+  minimap: { enabled: false },
+  wordWrap: 'on',
+  automaticLayout: true,
+  fontSize: 13,
+  tabSize: 2,
+  lineNumbers: 'on',
+  scrollBeyondLastLine: false,
+  renderLineHighlight: 'none',
+  contextmenu: false,
+} as const;
+
+function ReadOnlyMonaco({
+  language,
+  value,
+}: {
+  language: 'html' | 'css';
+  value: string;
+}) {
   return (
     <div className="overflow-hidden rounded-md border">
       <MonacoEditor
         height="220px"
-        defaultLanguage="html"
-        value={raw}
-        options={{
-          readOnly: true,
-          domReadOnly: true,
-          minimap: { enabled: false },
-          wordWrap: 'on',
-          automaticLayout: true,
-          fontSize: 13,
-          tabSize: 2,
-          lineNumbers: 'on',
-          scrollBeyondLastLine: false,
-          renderLineHighlight: 'none',
-          contextmenu: false,
-        }}
+        defaultLanguage={language}
+        value={value}
+        options={READ_ONLY_MONACO_OPTIONS}
       />
+    </div>
+  );
+}
+
+function HtmlBlockContent({ config }: { config: unknown }) {
+  const cfg = config as { html?: string; css?: string | null } | null;
+  const html = cfg?.html?.trim() ? (cfg!.html as string) : '';
+  const css = cfg?.css?.trim() ? (cfg!.css as string) : '';
+
+  if (!html && !css) return EMPTY_HINT;
+
+  // 둘 다 있으면 Tabs
+  if (html && css) {
+    return (
+      <Tabs defaultValue="html">
+        <TabsList>
+          <TabsTrigger value="html">
+            HTML
+            <Badge variant="secondary" className="ml-1.5">
+              {html.length.toLocaleString()}자
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="css">
+            CSS
+            <Badge variant="secondary" className="ml-1.5">
+              {css.length.toLocaleString()}자
+            </Badge>
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="html" className="pt-3">
+          <ReadOnlyMonaco language="html" value={html} />
+        </TabsContent>
+        <TabsContent value="css" className="pt-3">
+          <ReadOnlyMonaco language="css" value={css} />
+        </TabsContent>
+      </Tabs>
+    );
+  }
+
+  // 한쪽만 있는 경우 — 라벨 Badge + 단일 Monaco
+  const language = html ? 'html' : 'css';
+  const value = html || css;
+  const label = html ? 'HTML' : 'CSS';
+  return (
+    <div className="space-y-2">
+      <Badge variant="secondary">
+        {label} {value.length.toLocaleString()}자
+      </Badge>
+      <ReadOnlyMonaco language={language} value={value} />
     </div>
   );
 }
