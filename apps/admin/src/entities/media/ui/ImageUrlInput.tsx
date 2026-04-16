@@ -11,19 +11,34 @@ import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { MediaPicker } from './MediaPicker';
 import { MediaUploadButton } from './MediaUploadButton';
 
+/**
+ * ImageUrlInput의 onChange가 전달하는 값.
+ * url/mediaId/originalName 세 필드를 하나의 콜백으로 묶어 전달하여,
+ * 호출 측이 단일 state 업데이트로 3개 필드를 일괄 반영할 수 있게 한다.
+ *
+ * 과거에는 onChange / onMediaIdChange / onOriginalNameChange 3개의 콜백을 순차 호출했으나,
+ * React 18+ 자동 배칭 환경에서 호출 측이 `setState({ ...value, field })`처럼 direct value를
+ * 사용하면 두 번째 호출이 첫 번째 호출의 변경을 closure 경합으로 덮어쓰는 버그가 있었다.
+ * 단일 콜백 + 한 번의 state 업데이트로 근본 해결.
+ */
+export interface ImageUrlInputValue {
+  url: string;
+  mediaId: string | null;
+  originalName: string | null;
+}
+
 interface ImageUrlInputProps {
   /** 현재 이미지 URL */
   value: string;
-  /** URL 변경 콜백 */
-  onChange: (url: string) => void;
   /** 현재 원본 파일명 (업로드 시 보존된 이름) */
   originalName?: string | null;
-  /** 원본 파일명 변경 콜백 (업로드/URL 변경/제거 시 호출) */
-  onOriginalNameChange?: (name: string | null) => void;
   /** Media 라이브러리 참조 ID (Stage 5a-2). 라이브러리/업로드로 선택하면 채워지고 URL 수기 입력 시 null */
   mediaId?: string | null;
-  /** mediaId 변경 콜백 */
-  onMediaIdChange?: (mediaId: string | null) => void;
+  /**
+   * 값 변경 콜백 — url/mediaId/originalName 3필드를 한 번에 전달.
+   * 호출 측은 단일 state 업데이트로 3필드를 일괄 반영할 것.
+   */
+  onChange: (next: ImageUrlInputValue) => void;
   /** 업로드 카테고리 (서브 디렉토리) — 기본 'home' */
   category?: string;
   /** Input의 placeholder */
@@ -69,9 +84,7 @@ export function ImageUrlInput({
   value,
   onChange,
   originalName = null,
-  onOriginalNameChange,
   mediaId = null,
-  onMediaIdChange,
   category = 'home',
   placeholder = 'https://... 또는 /uploads/...',
   id,
@@ -83,16 +96,16 @@ export function ImageUrlInput({
 
   const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextUrl = event.target.value;
-    onChange(nextUrl);
-    onOriginalNameChange?.(extractFilenameFromUrl(nextUrl));
-    onMediaIdChange?.(null); // URL 수기 입력은 라이브러리 무관
+    onChange({
+      url: nextUrl,
+      mediaId: null, // URL 수기 입력은 라이브러리 무관
+      originalName: extractFilenameFromUrl(nextUrl),
+    });
     setPreviewError(false);
   };
 
   const handleClear = () => {
-    onChange('');
-    onOriginalNameChange?.(null);
-    onMediaIdChange?.(null);
+    onChange({ url: '', mediaId: null, originalName: null });
     setPreviewError(false);
   };
 
@@ -114,9 +127,11 @@ export function ImageUrlInput({
           variant="outline"
           label="업로드"
           onUploaded={(uploaded) => {
-            onChange(uploaded.url);
-            onOriginalNameChange?.(uploaded.originalFilename ?? null);
-            onMediaIdChange?.(uploaded.id);
+            onChange({
+              url: uploaded.url,
+              mediaId: uploaded.id,
+              originalName: uploaded.originalFilename ?? null,
+            });
             setPreviewError(false);
           }}
         />
@@ -149,9 +164,11 @@ export function ImageUrlInput({
         onOpenChange={setPickerOpen}
         category={category}
         onSelect={(media) => {
-          onChange(media.url);
-          onOriginalNameChange?.(media.originalFilename);
-          onMediaIdChange?.(media.id);
+          onChange({
+            url: media.url,
+            mediaId: media.id,
+            originalName: media.originalFilename,
+          });
           setPreviewError(false);
         }}
       />

@@ -385,14 +385,39 @@ src/
 - 사용 중이면 409 차단 + 사용처 목록 표시 → 강제 삭제 불허
 - 헬퍼 위치: `features/media-management/lib/findMediaReferences.ts`
 
-#### MediaPicker 재사용
+#### MediaPicker + ImageUrlInput 재사용
 
-- 컴포넌트: `features/media-management/ui/MediaPicker.tsx` (Dialog + Filters + Grid + Pagination + UploadButton)
+- 위치: `entities/media/ui/MediaPicker.tsx`, `entities/media/ui/ImageUrlInput.tsx` (Task 0에서 공용 UI를 entities로 하강)
+- MediaPicker 구성: Dialog + Filters + Grid + Pagination + UploadButton
 - 사용처:
-  1. `/media` 페이지 메인
-  2. `ImageUrlInput` (HERO/RECOMMENDED 슬라이드 편집)
+  1. `/media` 페이지 메인 (페이지 prefetch + internal Dialog)
+  2. `ImageUrlInput` 내부 자동 연동 (URL 입력 + 업로드 + 라이브러리 선택 3방식)
   3. `TiptapEditor` 본문 툴바 [이미지 → 라이브러리]
+  4. Stage 6 이후 `ImageBlockFields` (서브페이지 이미지 블록 편집)
 - 업로드 성공 시 자동 onSelect + Picker 닫힘 (UX 최적화)
+
+##### ImageUrlInput 단일 onChange 패턴 (React 18 배칭 주의)
+
+`ImageUrlInput`은 url/mediaId/originalName 3필드를 **하나의 `onChange`** 콜백으로 묶어 전달한다 (`onChange(next: ImageUrlInputValue)`). 각 필드별 개별 콜백(`onChange`, `onMediaIdChange`, `onOriginalNameChange`)을 순차 호출하던 초기 설계는 React 18+ 자동 배칭 환경에서 **closure value 덮어쓰기 버그**를 일으켰다 — 단일 useState 객체로 관리하는 호출 측에서 뒤의 setState가 앞의 setState를 덮어써 업로드 후 imageUrl이 빈값이 되는 증상. 지금은 단일 콜백으로 일괄 업데이트하여 해결.
+
+- 호출 측이 **useState 객체**로 상태 관리(block-management): 한 번의 setter로 3필드를 함께 병합
+  ```tsx
+  <ImageUrlInput
+    value={value.imageUrl}
+    mediaId={value.imageMediaId ?? null}
+    onChange={(next) => onChange({ ...value, imageUrl: next.url, imageMediaId: next.mediaId })}
+  />
+  ```
+- **react-hook-form**으로 필드별 관리(home-management, popup-management): setValue를 필드별로 호출 (RHF 내부 상태가 필드별 독립이라 순차 호출 안전)
+  ```tsx
+  onChange={(next) => {
+    setValue('imageUrl', next.url, { shouldDirty: true });
+    setValue('imageMediaId', next.mediaId, { shouldDirty: true });
+    setValue('imageOriginalName', next.originalName, { shouldDirty: true });
+  }}
+  ```
+
+일반 원칙: **연관된 여러 필드를 동시에 업데이트할 때는 하나의 setState payload로 처리**. 순차 direct-value setState는 React 18 배칭에서 덮어쓰기 버그 유발.
 
 #### Tiptap 본문 이미지 통합
 

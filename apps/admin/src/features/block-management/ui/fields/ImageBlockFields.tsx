@@ -26,10 +26,13 @@ export function ImageBlockFields({
         <ImageUrlInput
           id="block-image-url"
           value={value.imageUrl}
-          onChange={(url) => onChange({ ...value, imageUrl: url })}
           mediaId={value.imageMediaId ?? null}
-          onMediaIdChange={(mediaId) =>
-            onChange({ ...value, imageMediaId: mediaId })
+          onChange={(next) =>
+            onChange({
+              ...value,
+              imageUrl: next.url,
+              imageMediaId: next.mediaId,
+            })
           }
           category="blocks"
           placeholder="https://... 또는 /uploads/..."

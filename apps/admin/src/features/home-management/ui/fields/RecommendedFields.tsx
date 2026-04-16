@@ -240,19 +240,19 @@ function RecommendedImageField({
       render={({ field }) => (
         <ImageUrlInput
           value={field.value ?? ''}
-          onChange={field.onChange}
           originalName={originalName ?? null}
-          onOriginalNameChange={(name) =>
-            setValue(`items.${index}.imageOriginalName`, name, {
-              shouldDirty: true,
-            })
-          }
           mediaId={mediaId ?? null}
-          onMediaIdChange={(id) =>
-            setValue(`items.${index}.mediaId`, id, {
+          onChange={(next) => {
+            setValue(`items.${index}.imageUrl`, next.url, {
               shouldDirty: true,
-            })
-          }
+            });
+            setValue(`items.${index}.imageOriginalName`, next.originalName, {
+              shouldDirty: true,
+            });
+            setValue(`items.${index}.mediaId`, next.mediaId, {
+              shouldDirty: true,
+            });
+          }}
           category="home"
           placeholder="URL 입력 또는 [업로드/라이브러리]로 선택"
         />

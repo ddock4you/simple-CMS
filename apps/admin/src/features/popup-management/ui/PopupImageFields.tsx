@@ -36,11 +36,11 @@ export function PopupImageFields({
           render={({ field }) => (
             <ImageUrlInput
               value={field.value ?? ''}
-              onChange={field.onChange}
               mediaId={mediaId}
-              onMediaIdChange={(id) =>
-                setValue('imageMediaId', id, { shouldDirty: true })
-              }
+              onChange={(next) => {
+                setValue('imageUrl', next.url, { shouldDirty: true });
+                setValue('imageMediaId', next.mediaId, { shouldDirty: true });
+              }}
               category="popup"
               placeholder="URL 입력 또는 [업로드/라이브러리] 선택"
             />

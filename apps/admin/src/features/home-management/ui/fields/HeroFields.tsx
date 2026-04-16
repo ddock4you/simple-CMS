@@ -219,19 +219,19 @@ function HeroImageField({
       render={({ field }) => (
         <ImageUrlInput
           value={field.value ?? ''}
-          onChange={field.onChange}
           originalName={originalName ?? null}
-          onOriginalNameChange={(name) =>
-            setValue(`slides.${index}.imageOriginalName`, name, {
-              shouldDirty: true,
-            })
-          }
           mediaId={mediaId ?? null}
-          onMediaIdChange={(id) =>
-            setValue(`slides.${index}.mediaId`, id, {
+          onChange={(next) => {
+            setValue(`slides.${index}.imageUrl`, next.url, {
               shouldDirty: true,
-            })
-          }
+            });
+            setValue(`slides.${index}.imageOriginalName`, next.originalName, {
+              shouldDirty: true,
+            });
+            setValue(`slides.${index}.mediaId`, next.mediaId, {
+              shouldDirty: true,
+            });
+          }}
           category="home"
           placeholder="URL 입력 또는 [업로드/라이브러리]로 선택"
         />

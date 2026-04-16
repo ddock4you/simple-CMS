@@ -89,7 +89,7 @@
 | Pagination | `entities/media/ui/MediaPagination.tsx` | `onPageChange` 콜백 지원 |
 | UploadButton | `entities/media/ui/MediaUploadButton.tsx` | `onUploaded` 콜백, `entities/media/api/useUploadMedia` 참조 |
 | MediaPicker | `entities/media/ui/MediaPicker.tsx` | 위 컴포넌트 조합, internal state + `onSelect` 콜백 (공용 — home/popup/block/tiptap에서 재사용) |
-| ImageUrlInput | `entities/media/ui/ImageUrlInput.tsx` | URL 직접 입력 + UploadButton + MediaPicker 통합 복합 입력 (공용) |
+| ImageUrlInput | `entities/media/ui/ImageUrlInput.tsx` | URL 직접 입력 + UploadButton + MediaPicker 통합 복합 입력 (공용). **단일 `onChange(next: { url, mediaId, originalName })`** API — §"ImageUrlInput 단일 onChange 패턴" 참조 |
 | formatFileSize | `entities/media/lib/formatFileSize.ts` | B/KB/MB/GB 변환 |
 | DetailDialog | `features/media-management/ui/MediaDetailDialog.tsx` | useQuery(`@/entities/media/api/mediaQueries`) + references + alt 편집 + 삭제 버튼 |
 | DeleteDialog | `features/media-management/ui/DeleteMediaDialog.tsx` | AlertDialog + 사용처 표시 + 차단 |
@@ -116,7 +116,7 @@
 | 도메인 타입 | `packages/types/src/domain/home.types.ts` | HeroSlide/RecommendedItem에 `mediaId?: string \| null` 추가 |
 | Zod 스키마 | `apps/admin/src/features/home-management/model/homeSchemas.ts` | heroSlideSchema/recommendedItemSchema에 `mediaId: z.string().max(64).nullable().optional()` |
 | Web 파서 | `apps/web/src/entities/home-section/lib/parseConfig.ts` | mediaId optional 허용 (저장값 보존) |
-| ImageUrlInput | `apps/admin/src/entities/media/ui/ImageUrlInput.tsx` | `mediaId` / `onMediaIdChange` props, [라이브러리] 버튼 + MediaPicker, `MediaUploadButton` 재사용. 호출 측에서 `import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput'` |
+| ImageUrlInput | `apps/admin/src/entities/media/ui/ImageUrlInput.tsx` | `value`/`mediaId`/`originalName` props + 단일 `onChange(next: ImageUrlInputValue)`, [라이브러리] 버튼 + MediaPicker, `MediaUploadButton` 재사용. 호출 측에서 `import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput'` |
 | HeroFields/RecommendedFields | 같은 폴더 | `append()` 기본값에 `mediaId: null`, 서브필드에서 mediaId watch/setValue |
 
 ### Phase G: Tiptap 확장 + 에디터 통합
@@ -130,6 +130,69 @@
 | TiptapEditor | `apps/admin/src/shared/ui/TiptapEditor.tsx` | (1) extensions에 `ImageUploadExtension.configure({ uploadImage, onError })` (2) initial content preprocess (useMemo) (3) onUpdate postprocess (4) setImage 호출 시 src를 `resolveMediaPreviewUrl` 적용 (5) 툴바 [이미지] 드롭다운: 업로드/라이브러리/URL 3옵션 |
 
 ## 핵심 패턴 참조
+
+### ImageUrlInput 단일 onChange 패턴 (React 18 배칭 경합 방지)
+
+과거에는 `ImageUrlInput`이 `onChange(url)`, `onMediaIdChange(id)`, `onOriginalNameChange(name)` 3개의 콜백을 선택/업로드 완료 시 순차 호출했다. 호출 측이 **단일 useState 객체**를 쓰고 `setConfig({ ...value, imageUrl: url })` / `setConfig({ ...value, imageMediaId: id })` 처럼 direct value로 연속 setState하면:
+
+- React 18+ 자동 배칭으로 두 호출이 같은 렌더 사이클에서 처리
+- 두 payload 모두 closure의 `value`(초기값)를 참조 → 뒷 호출이 앞 호출을 **덮어씀**
+- 결과: 업로드 후 `imageUrl`이 빈값, `imageMediaId`만 저장되는 버그
+
+해결: 단일 `onChange` 콜백으로 3필드를 묶어 전달 → 호출 측이 **한 번의 state 업데이트**로 3필드를 일괄 반영.
+
+```ts
+// entities/media/ui/ImageUrlInput.tsx
+export interface ImageUrlInputValue {
+  url: string;
+  mediaId: string | null;
+  originalName: string | null;
+}
+
+interface ImageUrlInputProps {
+  value: string;
+  mediaId?: string | null;
+  originalName?: string | null;
+  onChange: (next: ImageUrlInputValue) => void;
+  category?: string;
+  ...
+}
+
+// 내부 — URL 직접 입력/업로드/선택/제거 모두 단일 onChange 호출
+const handleUploaded = (uploaded) => {
+  onChange({
+    url: uploaded.url,
+    mediaId: uploaded.id,
+    originalName: uploaded.originalFilename ?? null,
+  });
+};
+```
+
+**호출 측 두 가지 패턴**:
+
+1. **useState 객체 관리 (block-management 등)**: 단일 setConfig로 일괄 반영
+   ```tsx
+   <ImageUrlInput
+     value={value.imageUrl}
+     mediaId={value.imageMediaId ?? null}
+     onChange={(next) => onChange({
+       ...value,
+       imageUrl: next.url,
+       imageMediaId: next.mediaId,
+     })}
+   />
+   ```
+
+2. **react-hook-form 필드별 관리 (home-management 등)**: setValue 3회 (RHF는 필드별 독립이라 순차 호출 안전)
+   ```tsx
+   onChange={(next) => {
+     setValue(`slides.${index}.imageUrl`, next.url, { shouldDirty: true });
+     setValue(`slides.${index}.imageOriginalName`, next.originalName, { shouldDirty: true });
+     setValue(`slides.${index}.mediaId`, next.mediaId, { shouldDirty: true });
+   }}
+   ```
+
+**원칙**: React useState 객체를 여러 필드로 쪼개 순차 업데이트하는 패턴은 피할 것. 다중 필드가 연관된 state는 항상 하나의 update payload로 처리.
 
 ### SHA-256 중복 방지 (업로드 API)
 
