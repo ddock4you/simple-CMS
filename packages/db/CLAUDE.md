@@ -188,6 +188,20 @@ pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
 - 세션 레코드는 `packages/db/src/sessionHelper.ts`의 커스텀 코드가 관리
 - 동시 로그인 제어를 위한 세션 삭제/생성/조회 헬퍼 제공
 
+## PreviewToken 모델 컨벤션 (Stage 7a)
+
+- **용도**: admin이 발급한 단기 토큰을 web이 교환하여 draft 콘텐츠 미리보기 세션을 수립
+- **핵심 필드**:
+  - `token String @unique` — `crypto.randomUUID()` 값
+  - `entityType PreviewEntityType` — `SUBPAGE` | `POST` (enum)
+  - `entityId String` — 대상 엔티티 id
+  - `issuedById String` — 발급 관리자, `User` FK, `onDelete: Cascade`
+  - `expires DateTime` — 기본 TTL 10분
+- **인덱스**: `@@index([expires])` (만료 정리용), `@@index([issuedById])`
+- **정리 정책**: lazy — 만료된 토큰은 다음 요청 시 검증 실패로 자연 배제. 별도 cron cleanup은 2차
+- **재사용**: 교환 후 삭제하지 않음 — TTL 내 동일 URL 새 탭 재방문 허용. 쿠키(10분 TTL)가 실질적 게이트
+- **감사 로그 없음**: 미리보기는 읽기 액션이므로 `AuditLog`에 기록하지 않음 (CLAUDE.md "생략 사유 명시" 원칙에 따라 API Route 주석으로 표기)
+
 ### 세션 헬퍼
 
 `packages/db/src/sessionHelper.ts`:

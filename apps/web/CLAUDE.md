@@ -186,6 +186,38 @@ src/shared/lib/popupCookies.ts                        # "오늘 하루 보지 �
 - 이전 포커스 저장 → 모달 열릴 때 `dialogRef`로 이동 → 닫힐 때 복원
 - 슬라이드는 `Carousel`의 a11y 모듈 (keyboard, aria-live)
 
+## 미리보기 모드 (Stage 7a)
+
+admin에서 발급한 토큰을 교환해 **draft 콘텐츠**를 공개 웹 렌더러로 그대로 확인한다. admin(3001)과 web(3000)의 origin 분리로 admin 세션 쿠키를 web이 읽을 수 없으므로 **preview 토큰 교환 → web 도메인 전용 쿠키 세팅** 패턴을 쓴다.
+
+### 흐름
+
+1. web `GET /api/preview?token=...&type=subpage|post&id=...`:
+   - `prisma.previewToken.findUnique(token)` → 만료·entityType·entityId 검증
+   - 대상 slug 조회 후 `preview_session` httpOnly 쿠키(Max-Age 600초, SameSite=Lax) 세팅
+   - `/p/{slug}?preview=1` 또는 `/board/{boardSlug}/{postSlug}?preview=1`로 302
+   - 어떤 검증 실패든 `/`로 폴백 리다이렉트 (에러 표시 없이)
+2. Server Component가 `getPreviewSession()` 호출 → `cookies().get('preview_session')` + DB 재검증 (`React.cache`로 1요청 1쿼리)
+3. 세션 `entityType/entityId`와 URL의 slug가 가리키는 엔티티 id가 **일치할 때만** preview 모드로 분기
+
+### 공용 유틸
+
+- `src/shared/lib/previewCookies.ts` — `PREVIEW_COOKIE_NAME`, `setPreviewCookie()`, `clearPreviewCookie()` (Route Handler용, `NextResponse.cookies` 사용)
+- `src/shared/lib/previewSession.ts` — `getPreviewSession()` (cache), `isPreviewingEntity(session, type, id)`
+- Route Handler: `app/api/preview/route.ts` (GET — 토큰 교환 + 쿠키 세팅), `app/api/preview/exit/route.ts` (POST — 쿠키 삭제)
+- UI: `src/features/preview/ui/PreviewBanner.tsx` (Client, 종료 버튼 → `/api/preview/exit` POST → `router.refresh()`)
+
+### 데이터 조회 분기
+
+- `src/entities/subpage/api/getSubpage.ts`의 `getSubpageForPreview(slug)` — status 필터 + block isVisible 필터 모두 제거 (draft + 숨김 블록 포함)
+- `src/entities/post/api/getPost.ts`의 `getPostForPreview(boardSlug, postSlug)` — `board.isPublic` 필터 없음
+- preview 세션 없이 위 함수가 반환한 draft를 렌더하지 않도록 **페이지 컴포넌트가** `isPreviewingEntity`로 gate
+
+### 렌더러 확장
+
+- `SubpageBlockRenderer`에 `showHidden?: boolean` prop — `true`면 `isVisible=false` 블록도 렌더 (`.subpage-block-hidden-preview` wrapper로 opacity + "숨김" 배지)
+- preview 모드에서만 `showHidden={true}` 전달
+
 ## 서브페이지 렌더링
 
 **통합 블록 모델 (Stage 6)** — 서브페이지의 모든 콘텐츠는 PageBlock 목록이다. 별도의 본문 렌더 단계가 없다.

@@ -99,6 +99,7 @@ apps/{앱}/
 | **SiteSettings**       | 사이트 전역 설정 (도메인, 사이트명 등), 키-값 구조                                    |
 | **ErrorLog**           | 공개 웹 런타임 에러 로그, 서버/클라이언트 에러 기록, fingerprint 기반 그룹핑          |
 | **Session**            | 커스텀 DB 세션, crypto.randomUUID 기반 토큰, httpOnly 쿠키, 동시 로그인 제어 대상     |
+| **PreviewToken**       | draft 미리보기 토큰 (Stage 7a), TTL 10분, admin→web 교환 후 web 도메인 쿠키로 치환   |
 
 ## 운영 정책
 
@@ -107,7 +108,9 @@ apps/{앱}/
 - 1차: `draft` / `published` (2차: `archived` 확장 가능)
 - 공개 웹 노출, 검색, 메뉴 연결 대상은 `published`만 허용
 - `published` 전환 시 `publishedAt` 기록
-- `draft`는 관리자 내부 + 미리보기에서만 확인
+- `draft`는 관리자 내부 + 미리보기(Stage 7a)에서만 확인
+  - admin이 발급한 `PreviewToken`을 교환해 web 도메인에 `preview_session` httpOnly 쿠키(TTL 10분) 세팅 → web Server Component가 draft/숨김 블록 포함 렌더링
+  - admin(3001)과 web(3000)의 크로스 오리진 세션 쿠키 공유 문제를 토큰 교환으로 해결
 
 ### 삭제 정책
 
@@ -336,7 +339,9 @@ apps/{앱}/
 | 단계 | 내용                                        | 확인 가능한 것                     | 상태 |
 | ---- | ------------------------------------------- | ---------------------------------- | ---- |
 | 6    | 서브페이지 블록 + **Admin UI + Web 렌더링** | 블록 추가/순서 변경 → 공개 웹 확인 | **완료** |
-| 7    | 미리보기 + 커스텀 HTML/CSS + 운영 UX        | draft 미리보기, Monaco 편집        | 대기 |
+| 7a   | Draft 미리보기 (preview 토큰 + web 쿠키)    | admin → web preview URL 새 창 렌더 | **완료** |
+| 7b   | Subpage 커스텀 HTML/CSS (Monaco 편집)       | 서브페이지별 HTML/CSS 주입         | 대기 |
+| 7c   | 운영 UX (Dirty 가드, 사이트 보기, 빠른 전환, 벌크) | 이탈 경고 + 상태 토글 + 일괄 작업 | 대기 |
 | 8    | Docker + CI/CD + 문서화                     | `docker compose up`으로 전체 실행  | 대기 |
 
 ## 명령어

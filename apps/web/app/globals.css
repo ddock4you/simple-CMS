@@ -1531,3 +1531,69 @@ a.home-notice-link:hover {
   height: 100%;
   border: 0;
 }
+
+/* ==========================================================================
+   Preview 모드 (Stage 7a)
+   ========================================================================== */
+
+.preview-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #f59e0b;
+  color: #1f2937;
+  border-bottom: 1px solid #d97706;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.preview-banner-inner {
+  max-width: var(--content-max-width, 1200px);
+  margin: 0 auto;
+  padding: 8px var(--screen-margin-desktop, 24px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.preview-banner-exit {
+  background: #1f2937;
+  color: #fff;
+  border: 0;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.preview-banner-exit:hover:not(:disabled) {
+  background: #111827;
+}
+.preview-banner-exit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.subpage-block-hidden-preview {
+  position: relative;
+  opacity: 0.55;
+  outline: 2px dashed #d97706;
+  outline-offset: 2px;
+}
+.subpage-block-hidden-preview::before {
+  content: '숨김';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: #d97706;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 3px;
+  z-index: 1;
+}
+@media (max-width: 767px) {
+  .preview-banner-inner {
+    padding: 6px var(--screen-margin-mobile, 16px);
+    font-size: 0.8125rem;
+  }
+}

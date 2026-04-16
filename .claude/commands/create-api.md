@@ -200,6 +200,7 @@ src/features/{domain}/model/{domain}.schema.ts
 - `entityTitle`은 대상의 title 또는 name 필드 스냅샷
 - 감사 로그 호출은 `try` 블록 내 DB 처리 성공 후에 위치하며, 헬퍼 내부에서 자체 에러 처리
 - 로깅이 불필요한 경우 의도적으로 생략하고 `// 감사 로그 생략: {사유}` 주석 명시
+- **읽기 전용 / 토큰 발급 API 예시** — preview 토큰 발급(`POST /api/preview/token`)처럼 데이터 변경이 없거나 단기 일회성 토큰만 생성하는 API는 감사 로그를 생략하고 `// 감사 로그 생략 — read-only preview token issuance` 주석 명시
 
 ## UI 권한 체크 연동 (필수)
 

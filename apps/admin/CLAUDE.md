@@ -151,7 +151,16 @@ src/
 - 미리보기 제공
 - 본문 편집: **통합 블록 모델** (Stage 6) — 제목·slug·SEO·상태만 SubpageForm에서 관리하고, 본문과 부가 요소는 모두 PageBlock으로 편집. SubpageForm 내 Tiptap 에디터는 제거됨
 - 편집 화면 구성: SubpageForm(상단) + BlockManager(하단) 세로 배치. 생성 모드(/subpages/new)는 SubpageForm만 노출, 저장 후 상세에서 블록 추가
-- **뷰/편집 분리**: `/subpages/[id]` = 메타데이터 + 블록 구성 목록, `/subpages/[id]/edit` = 폼 + BlockManager
+- **뷰/편집 분리**: `/subpages/[id]` = 메타데이터 + 블록 구성 목록 + **콘텐츠 카드**(각 블록 입력값 표시), `/subpages/[id]/edit` = 폼 + BlockManager
+- **뷰 페이지 콘텐츠 카드** (`features/block-management/ui/BlockContentView.tsx`): 블록 순서대로 각 블록의 입력값을 표시 — 공개 웹과 동일한 실물 렌더는 상단 [미리보기] 버튼이 담당
+  - RICH_TEXT: `renderTiptapContentForAdmin` → `<div className="prose prose-sm">` 렌더 (게시글 뷰 패턴 동일)
+  - HTML: Monaco Editor `readOnly: true` + `domReadOnly: true` (편집 페이지의 HtmlBlockFields 패턴 재사용, height 220px)
+  - IMAGE: 작은 썸네일(`resolveMediaPreviewUrl`) + 필드 목록(URL, Alt, 캡션, 링크)
+  - IFRAME: 필드 목록(URL, 제목, 비율, 전체화면 허용 여부) — 실제 iframe 임베드 없음 (관리자 검증만 목적)
+  - 블록 컨테이너: `rounded-lg border bg-card shadow-sm` + 헤더(`border-b bg-muted/40`) + 번호 배지(primary 원형) + 블록 타입 Badge(shadcn, 아이콘 포함) + 숨김 Badge(outline)
+  - 숨김 블록: 컨테이너에 `opacity-60` + 헤더 숨김 Badge 이중 표시
+  - 빈 내용: `(비어있음)` 힌트
+  - lucide-react 아이콘: RICH_TEXT→Type, HTML→Code2, IMAGE→ImageIcon, IFRAME→MonitorPlay
 - **권한 기반 UI**: 생성(`subpages:create`), 편집(`subpages:update`), 삭제(`subpages:delete`) 버튼을 권한별 표시/숨김
 - API Routes: `GET/POST /api/subpages`, `GET/PATCH/DELETE /api/subpages/[id]` — 모든 핸들러에 `requirePermission()` 적용. Subpage 본문 필드(`contentJson`)는 DTO에서도 제거
 - FSD: `features/subpage-management/`, `pages/subpage-management/`
@@ -727,12 +736,29 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 | 기본 역할 설정      | UPDATE | ROLE       |
 | 사용자 역할 배정    | UPDATE | USER       |
 
-### 미리보기
+### 미리보기 (Stage 7a)
 
-- 대상: 서브페이지, 메인 페이지, 메인 팝업, 메뉴
-- 공개 웹과 유사한 렌더링 결과 확인 용도
-- `draft` 상태도 preview token으로 확인 가능
-- 실제 발행과 분리된 읽기 전용 흐름
+- 대상: Subpage, Post (1차 범위). 메인 팝업/메뉴는 2차
+- 공개 웹과 동일한 렌더러 사용 — 쿠키 교환으로 크로스 오리진 회피
+- `draft` 상태와 `isVisible=false` 블록도 렌더
+- 실제 발행과 분리된 읽기 전용 흐름 (감사 로그 기록 없음)
+
+#### 흐름
+
+1. SubpageView/PostView의 `<PreviewButton entityType entityId />` 클릭
+2. `POST /api/preview/token` — 권한(`subpages:read`/`posts:read`) 확인 후 `PreviewToken` 레코드 생성(TTL 10분), `{ token, webPreviewUrl, expiresAt }` 반환
+3. 클라이언트가 `window.open(webPreviewUrl, '_blank')` — web의 `/api/preview?token=...&type=subpage&id=...`로 이동
+4. web이 토큰 DB 검증 후 `preview_session` 쿠키(httpOnly, SameSite=Lax, Max-Age 600) 세팅 + 대상 slug로 302
+5. web Server Component가 쿠키를 `validatePreviewSession()`으로 재검증 → draft 포함 조회 + PreviewBanner 렌더
+
+#### FSD 위치
+
+- `entities/preview/{api/previewFetchers.ts, api/usePreviewMutations.ts, ui/PreviewButton.tsx}` — Subpage/Post 양쪽 features에서 공유
+- API Route: `app/api/preview/token/route.ts`
+
+#### 환경 변수
+
+- `WEB_BASE_URL` (optional) — admin에서 web URL을 조합할 때 사용. 미설정 시 `NEXT_PUBLIC_SITE_URL` → `http://localhost:3000` 폴백
 
 ## UI 전략
 

@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import DOMPurify from 'isomorphic-dompurify';
 
 import type { PageBlockType } from '@simple-cms/types';
@@ -19,6 +20,7 @@ interface BlockInput {
   blockType: PageBlockType;
   configJson: unknown;
   displayOrder: number;
+  isVisible?: boolean;
 }
 
 /** IFRAME 서버 측 재검증용 허용 호스트 (클라이언트 admin과 동일 목록). */
@@ -148,24 +150,58 @@ function IframeBlock({ config }: { config: unknown }) {
   );
 }
 
-export function SubpageBlockRenderer({ blocks }: { blocks: BlockInput[] }) {
-  if (blocks.length === 0) return null;
+interface SubpageBlockRendererProps {
+  blocks: BlockInput[];
+  /**
+   * true이면 isVisible=false 블록도 렌더(숨김 배지 wrapper와 함께). Stage 7a preview 전용.
+   * 기본값은 false — 공개 웹 기본 동작(isVisible=true만 렌더).
+   */
+  showHidden?: boolean;
+}
+
+function renderBlock(block: BlockInput) {
+  switch (block.blockType) {
+    case 'RICH_TEXT':
+      return <RichTextBlock config={block.configJson} />;
+    case 'HTML':
+      return <HtmlBlock config={block.configJson} />;
+    case 'IMAGE':
+      return <ImageBlock config={block.configJson} />;
+    case 'IFRAME':
+      return <IframeBlock config={block.configJson} />;
+    default:
+      return null;
+  }
+}
+
+export function SubpageBlockRenderer({
+  blocks,
+  showHidden = false,
+}: SubpageBlockRendererProps) {
+  const visibleBlocks = showHidden
+    ? blocks
+    : blocks.filter((b) => b.isVisible !== false);
+
+  if (visibleBlocks.length === 0) return null;
 
   return (
     <div className="subpage-blocks">
-      {blocks.map((block) => {
-        switch (block.blockType) {
-          case 'RICH_TEXT':
-            return <RichTextBlock key={block.id} config={block.configJson} />;
-          case 'HTML':
-            return <HtmlBlock key={block.id} config={block.configJson} />;
-          case 'IMAGE':
-            return <ImageBlock key={block.id} config={block.configJson} />;
-          case 'IFRAME':
-            return <IframeBlock key={block.id} config={block.configJson} />;
-          default:
-            return null;
+      {visibleBlocks.map((block) => {
+        const rendered = renderBlock(block);
+        if (!rendered) return null;
+
+        if (showHidden && block.isVisible === false) {
+          return (
+            <div
+              key={block.id}
+              className="subpage-block-hidden-preview"
+            >
+              {rendered}
+            </div>
+          );
         }
+
+        return <Fragment key={block.id}>{rendered}</Fragment>;
       })}
     </div>
   );

@@ -14,8 +14,11 @@ import {
 } from '@/shared/ui/shadcn/card';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
+import { PreviewButton } from '@/entities/preview/ui/PreviewButton';
+
 import { subpageDetailOptions } from '../api/subpageQueries';
 import { useDeleteSubpage } from '../api/useSubpageMutations';
+import { BlockContentView } from '@/features/block-management/ui/BlockContentView';
 import { blockListOptions } from '@/features/block-management/api/blockQueries';
 import { BLOCK_TYPE_LABELS } from '@/features/block-management/model/blockLabels';
 import { SubpageStatusBadge } from './SubpageStatusBadge';
@@ -51,6 +54,7 @@ export function SubpageView({ id }: SubpageViewProps) {
           <SubpageStatusBadge status={data.status} />
         </div>
         <div className="flex items-center gap-2">
+          <PreviewButton entityType="SUBPAGE" entityId={id} />
           {canDelete && (
             <DeleteSubpageDialog
               title={data.title}
@@ -71,7 +75,7 @@ export function SubpageView({ id }: SubpageViewProps) {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle>블록 구성 ({blocks.length})</CardTitle>
@@ -105,6 +109,17 @@ export function SubpageView({ id }: SubpageViewProps) {
               )}
             </CardContent>
           </Card>
+
+          {blocks.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>콘텐츠</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BlockContentView blocks={blocks} />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="space-y-6">

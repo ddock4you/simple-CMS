@@ -15,6 +15,8 @@ import {
 } from '@/shared/ui/shadcn/card';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
+import { PreviewButton } from '@/entities/preview/ui/PreviewButton';
+
 import { postDetailOptions } from '../api/postQueries';
 import { useDeletePost } from '../api/usePostMutations';
 import { PostStatusBadge } from './PostStatusBadge';
@@ -51,6 +53,7 @@ export function PostView({ id }: PostViewProps) {
           <PostStatusBadge status={data.status} />
         </div>
         <div className="flex items-center gap-2">
+          <PreviewButton entityType="POST" entityId={id} />
           {canDelete && (
             <DeletePostDialog
               title={data.title}

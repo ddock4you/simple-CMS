@@ -2,8 +2,13 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { getPublishedBoard } from '@/entities/board/api/getBoard';
-import { getPublishedPost } from '@/entities/post/api/getPost';
+import {
+  getPublishedPost,
+  getPostForPreview,
+} from '@/entities/post/api/getPost';
+import { PreviewBanner } from '@/features/preview/ui/PreviewBanner';
 import { renderTiptapContent } from '@/shared/lib/renderContent';
+import { getPreviewSession } from '@/shared/lib/previewSession';
 import { PostPage } from '@/pages/post/ui/PostPage';
 
 interface PageProps {
@@ -31,6 +36,28 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function Page({ params }: PageProps) {
   const { boardSlug, postSlug } = await params;
+  const session = await getPreviewSession();
+
+  if (session?.entityType === 'POST') {
+    const previewPost = await getPostForPreview(boardSlug, postSlug);
+    if (previewPost && session.entityId === previewPost.id) {
+      const contentHtml = renderTiptapContent(previewPost.contentJson);
+      return (
+        <>
+          <PreviewBanner label="게시글 미리보기" />
+          <PostPage
+            post={{
+              title: previewPost.title,
+              contentHtml,
+              publishedAt: previewPost.publishedAt,
+              author: previewPost.author,
+              board: previewPost.board,
+            }}
+          />
+        </>
+      );
+    }
+  }
 
   const board = await getPublishedBoard(boardSlug);
   if (!board) notFound();

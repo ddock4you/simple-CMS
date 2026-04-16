@@ -78,3 +78,9 @@ export type {
   MediaReferencesResponse,
   BulkDeleteMediaResponse,
 } from './dto/media.dto';
+
+export type {
+  PreviewEntityType,
+  IssuePreviewTokenDto,
+  PreviewTokenResponse,
+} from './dto/preview.dto';
