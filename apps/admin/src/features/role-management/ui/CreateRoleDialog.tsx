@@ -50,7 +50,7 @@ export function CreateRoleDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={setOpen} disablePointerDismissal>
       <DialogTrigger render={<Button size="sm" />}>
         <Plus className="mr-1 size-4" />
         새 역할

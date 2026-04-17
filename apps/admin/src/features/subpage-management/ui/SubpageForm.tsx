@@ -10,6 +10,7 @@ import { Button } from '@/shared/ui/shadcn/button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
+import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import {
   Card,
   CardContent,
@@ -26,6 +27,7 @@ import {
 } from '@/shared/ui/shadcn/select';
 import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
+import { CCL_TYPE_LABELS, type CclType } from '@simple-cms/types';
 
 import type { SubpageDetail } from '../model/subpageFilters';
 import {
@@ -70,11 +72,14 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
       seoTitle: initialData?.seoTitle ?? '',
       seoDescription: initialData?.seoDescription ?? '',
       status: initialData?.status ?? 'DRAFT',
+      cclType: initialData?.cclType ?? null,
+      cclAi: initialData?.cclAi ?? false,
     },
   });
 
   const title = watch('title') ?? '';
   const slug = watch('slug') ?? '';
+  const cclType = watch('cclType') ?? null;
   const initialStatus = initialData?.status ?? 'DRAFT';
 
   const handleSlugChange = useCallback(
@@ -237,6 +242,67 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
                   />
                 </div>
               </section>
+
+              <section className="space-y-2">
+                <h3 className="text-sm font-semibold text-muted-foreground">
+                  라이선스 (공공누리)
+                </h3>
+                <Controller
+                  name="cclType"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="space-y-1.5">
+                      <RadioOption
+                        name={field.name}
+                        value={null}
+                        checked={(field.value ?? null) === null}
+                        onChange={() => {
+                          field.onChange(null);
+                          setValue('cclAi', false, { shouldDirty: true });
+                        }}
+                        label="표시 없음"
+                      />
+                      {(
+                        ['TYPE_0', 'TYPE_1', 'TYPE_2', 'TYPE_3', 'TYPE_4'] as CclType[]
+                      ).map((type) => (
+                        <RadioOption
+                          key={type}
+                          name={field.name}
+                          value={type}
+                          checked={field.value === type}
+                          onChange={() => field.onChange(type)}
+                          label={CCL_TYPE_LABELS[type]}
+                        />
+                      ))}
+                    </div>
+                  )}
+                />
+                <Controller
+                  name="cclAi"
+                  control={control}
+                  render={({ field }) => {
+                    const disabled = cclType === null;
+                    const checked = disabled ? false : !!field.value;
+                    return (
+                      <label className="flex items-center gap-2 pt-1 text-sm">
+                        <Checkbox
+                          checked={checked}
+                          disabled={disabled}
+                          onCheckedChange={(next) => field.onChange(next === true)}
+                        />
+                        <span className={disabled ? 'text-muted-foreground' : ''}>
+                          AI 학습·활용 가능 표시
+                        </span>
+                      </label>
+                    );
+                  }}
+                />
+                {errors.cclAi && (
+                  <p className="text-sm text-destructive">
+                    {errors.cclAi.message as string}
+                  </p>
+                )}
+              </section>
             </div>
           </div>
         </CardContent>
@@ -265,5 +331,30 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
         cancelLabel="취소"
       />
     </form>
+  );
+}
+
+interface RadioOptionProps {
+  name: string;
+  value: CclType | null;
+  checked: boolean;
+  onChange: () => void;
+  label: string;
+}
+
+function RadioOption({ name, value, checked, onChange, label }: RadioOptionProps) {
+  const id = `${name}-${value ?? 'none'}`;
+  return (
+    <label htmlFor={id} className="flex items-center gap-2 text-sm">
+      <input
+        id={id}
+        type="radio"
+        name={name}
+        checked={checked}
+        onChange={onChange}
+        className="size-4 accent-primary"
+      />
+      <span>{label}</span>
+    </label>
   );
 }

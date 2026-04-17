@@ -815,6 +815,39 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 - onError: 이전 데이터 롤백 + toast. onSettled: 서버 데이터 재동기화
 - Navigation: 트리 구조 재귀 정렬 (`applyReorderToTree`)
 
+### 운영 UX (Stage 7d)
+
+#### 공공누리(KOGL) 라이선스
+
+- `Subpage.cclType`(enum `TYPE_0`~`TYPE_4`, nullable) + `cclAi: Boolean`. null = "표시 없음"
+- 라벨/에셋 경로 상수: `packages/types`의 `CCL_TYPE_LABELS`, `CCL_TYPE_ASSET`, `CCL_AI_ASSET` (admin/web 공용)
+- SubpageForm 우측 "라이선스(공공누리)" 섹션: 6개 라디오(표시 없음 + 제0~4유형) + AI 체크박스. `cclType === null`이면 AI 체크박스 `disabled + checked=false` 강제. superRefine로 "cclType null + cclAi true" 조합 차단
+- SubpageView 메타 카드에 "라이선스" 행 추가
+- API `POST /api/subpages`, `PATCH /api/subpages/[id]`, `GET /api/subpages/[id]`가 cclType/cclAi 파싱·저장·반환, 감사 로그에 포함
+- 공개 웹 렌더: web의 `widgets/subpage-content/ui/KoglFooter.tsx`가 `<article>` 하단 우측에 마크 이미지. preview용 `getSubpageForPreview` select에도 cclType/cclAi 포함 필수
+- 에셋 파일: `apps/web/public/assets/kogl/kogl-type-0.png` ~ `kogl-type-4.png`, `kogl-ai.png` (운영이 공공누리 공식 사이트에서 다운로드 후 배치)
+
+#### 입력 Dialog 표준 규약
+
+새 입력 Dialog(폼/필드를 담은 shadcn Dialog)를 추가할 때 다음 세 규칙을 기본값으로 따른다.
+
+1. **외부 클릭 닫기 차단**: 공용 `<Dialog>` 래퍼는 Base-UI `DialogRoot.Props`를 그대로 spread 전달하므로 호출자가 `<Dialog open onOpenChange disablePointerDismissal>`로 opt-in. 대상: MenuItemDialog, MenuSetEditDialog, BlockEditDialog, MediaDetailDialog, SectionEditDialog, CreateRoleDialog. **AlertDialog는 불필요** — Base-UI v1.3.0 `AlertDialogRoot`가 내부에서 `disablePointerDismissal: true` 강제 + 타입에서 prop Omit으로 이미 차단됨. ESC 닫기는 모든 Dialog에서 유지
+2. **Dirty 가드**: react-hook-form `isDirty`를 `useDialogDirtyGuard(isDirty, onOpenChange)`에 넘겨 `safeOnOpenChange` + `confirmDialogProps` 획득 후 `<Dialog onOpenChange={safeOnOpenChange}>` + 하단에 `<ConfirmLeaveDialog {...confirmDialogProps} />`. 입력 중 ESC/취소 시 이탈 확인 모달 표시
+3. **오픈 시 폼 초기화**: 성공 저장 후 닫힌 Dialog를 다시 열 때 이전 입력값이 남지 않도록 아래 중 하나를 반드시 적용.
+   - (A) `useEffect(() => { if (!open) return; reset(initial); }, [open, editItem, /* 필요한 deps */, reset])` — Dialog가 `open=true`가 될 때마다 초기화. 같은 `editItem`/`parentId`로 연속 오픈해도 reset 재실행됨을 보장하려면 `open`이 의존성 배열에 **반드시 포함**되어야 함
+   - (B) mutation `onSuccess` 내에서 `reset()` + `setOpen(false)` 순서로 호출 (예: CreateRoleDialog)
+   - (C) 부모에서 `<Dialog key={...} />`로 매번 새 인스턴스 마운트 (예: BlockManager가 `BlockEditDialog`에 `key={editingBlock ? `edit-${id}` : `create-${type}`}` 부여)
+
+#### 중첩 Dialog 시각 계층 (배경 흐림)
+
+- 중첩 시 부모 Popup에 Base-UI가 자동 부착하는 `data-nested-dialog-open` 속성을 공용 `shared/ui/shadcn/dialog.tsx` + `alert-dialog.tsx`의 `Popup` className에서 활용
+- 적용 클래스: `transition-[opacity,filter,transform] duration-200 data-[nested-dialog-open]:opacity-60 data-[nested-dialog-open]:blur-[1.5px] data-[nested-dialog-open]:scale-[0.98] data-[nested-dialog-open]:pointer-events-none`
+- 효과: 예) MenuItemDialog 편집 중 이탈 경고 `ConfirmLeaveDialog`가 위에 열리면 뒤쪽 Dialog가 부드럽게 뒤로 물러나 보이고 포커스/클릭도 앞 Dialog로만. 개별 Dialog에 추가 설정 불필요
+
+#### 네비게이션 슬롯 라벨
+
+- `features/navigation-management/ui/slotLabels.ts`의 `SIDEBAR` 라벨은 "우측 사이드바". enum 값/DB 값 `SIDEBAR`는 유지 — 공개 웹에서 SIDEBAR 슬롯 메뉴는 우측 `InPageNavigation` 스타일로 렌더
+
 ## UI 전략
 
 - KRDS 미사용

@@ -91,7 +91,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const { title, seoTitle, seoDescription, status } = parsed.data;
+    const { title, seoTitle, seoDescription, status, cclType, cclAi } = parsed.data;
     const slug = parsed.data.slug?.trim() || generateSlug(title);
 
     if (!slug) {
@@ -125,6 +125,8 @@ export async function POST(request: Request): Promise<NextResponse> {
         seoDescription,
         status,
         publishedAt,
+        cclType: cclType ?? null,
+        cclAi: cclType ? cclAi : false,
         displayOrder,
       },
     });
@@ -135,7 +137,15 @@ export async function POST(request: Request): Promise<NextResponse> {
       entityType: 'SUBPAGE',
       entityId: subpage.id,
       entityTitle: title,
-      changes: { after: { title, slug, status } },
+      changes: {
+        after: {
+          title,
+          slug,
+          status,
+          cclType: subpage.cclType,
+          cclAi: subpage.cclAi,
+        },
+      },
       userId: user!.id,
       ipAddress: auditContext.ipAddress,
       userAgent: auditContext.userAgent,

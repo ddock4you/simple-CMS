@@ -1,4 +1,5 @@
 import type { ContentStatus } from '@simple-cms/db';
+import type { CclType } from '@simple-cms/types';
 
 export type SubpageStatusFilter = ContentStatus | 'ALL';
 
@@ -32,6 +33,8 @@ export interface SubpageDetail {
   seoDescription: string | null;
   status: ContentStatus;
   publishedAt: string | null;
+  cclType: CclType | null;
+  cclAi: boolean;
   displayOrder: number;
   createdAt: string;
   updatedAt: string;

@@ -14,6 +14,7 @@ import {
 } from '@/shared/ui/shadcn/card';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { getSubpagePublicUrl } from '@/shared/lib/siteUrl';
+import { CCL_TYPE_LABELS } from '@simple-cms/types';
 
 import { PreviewButton } from '@/entities/preview/ui/PreviewButton';
 import { ViewLiveButton } from '@/entities/preview/ui/ViewLiveButton';
@@ -154,6 +155,19 @@ export function SubpageView({ id }: SubpageViewProps) {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">수정일</span>
                 <span>{format(new Date(data.updatedAt), 'yyyy-MM-dd HH:mm')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">라이선스</span>
+                <span>
+                  {data.cclType ? (
+                    <>
+                      공공누리 {CCL_TYPE_LABELS[data.cclType]}
+                      {data.cclAi && ' · AI 학습·활용 가능'}
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">표시 없음</span>
+                  )}
+                </span>
               </div>
             </CardContent>
           </Card>

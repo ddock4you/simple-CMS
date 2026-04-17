@@ -40,7 +40,11 @@ export default async function RootLayout({
         <PageLayout
           headerMenuItems={headerMenu?.items ?? []}
           footerMenuItems={footerMenu?.items ?? []}
-          sidebarMenuItems={sidebarMenu?.items ?? []}
+          rightSidebar={
+            sidebarMenu
+              ? { name: sidebarMenu.name, items: sidebarMenu.items }
+              : null
+          }
         >
           {children}
         </PageLayout>

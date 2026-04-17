@@ -71,7 +71,18 @@ src/
   - 조회: `getMenuBySlot(slot)` → `prisma.findFirst({ where: { slots: { has: slot } } })`
 - 헤더: `slots`에 HEADER 포함된 메뉴 렌더링 (KRDS Header.MainMenu, 3depth 지원)
 - 푸터: `slots`에 FOOTER 포함된 메뉴 렌더링 (KRDS Footer links)
-- 사이드바: `slots`에 SIDEBAR 포함된 메뉴 렌더링 (KRDS SideNavigation, 3depth 지원, 1차 전체 페이지)
+- **우측 사이드바 (Stage 7d)**: `slots`에 SIDEBAR 포함된 메뉴가 있을 때만 전체 페이지 우측에 KRDS `InPageNavigation` **스타일**로 렌더
+  - KRDS 원본 `InPageNavigation` 컴포넌트는 items의 href를 `document.querySelector(href)`로 소비하는 페이지 내 앵커 전용(외부/경로 URL을 넣으면 SyntaxError). 페이지 링크 네비게이션에는 부적합
+  - `widgets/layout/ui/RightSidebar.tsx` — KRDS 원본 컴포넌트 대신 동일 DOM 구조(`.krds-in-page-navigation-type`/`-area`/`.in-page-navigation-header`/`.in-page-navigation-list`)와 CSS 클래스를 차용한 커스텀 JSX로 렌더, `<Link>`/`<a>`로 실제 라우팅
+  - 1뎁스 flat 구조(leaf-only DFS 평탄화). 현재 `pathname`과 매칭되는 항목은 `active` 클래스 + `aria-current="page"`
+  - 외부 링크는 `<a>` + `target/rel`, 내부 링크는 `<Link>`(Next 클라이언트 라우팅)
+  - `title = NavigationMenu.name`, `caption = `${name} 네비게이션``
+  - `slots`에 SIDEBAR를 포함한 메뉴가 없으면 우측 사이드바 자체가 렌더되지 않음
+- **좌측 서브페이지 사이드바 (Stage 7d)**: `/p/[slug]`에서만 자동 렌더
+  - `entities/navigation/lib/findHeaderBranchForPath.ts`가 HEADER 메뉴에서 현재 경로가 속한 1뎁스 루트를 찾음
+  - 매칭 시 `widgets/subpage-sidebar/ui/SubpageSideNavigation.tsx`에 그 루트의 2/3뎁스 트리를 KRDS `SideNavigation`으로 렌더
+  - 메뉴 어디에도 없는 서브페이지는 서브페이지 제목만 `SideNavigation.Title`로 표시(하위 없음)
+  - 슬롯 기반 수동 배정이 아닌 HEADER 메뉴에서 자동 파생
 - 메뉴 depth: 최대 3단계
 - 메뉴 레이아웃/반응형은 코드에서 통제
 - 모바일/데스크톱 동일 데이터, 렌더링 방식만 분기

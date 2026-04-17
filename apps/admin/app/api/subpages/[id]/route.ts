@@ -34,6 +34,8 @@ export async function GET(
       seoDescription: subpage.seoDescription,
       status: subpage.status,
       publishedAt: subpage.publishedAt?.toISOString() ?? null,
+      cclType: subpage.cclType,
+      cclAi: subpage.cclAi,
       displayOrder: subpage.displayOrder,
       createdAt: subpage.createdAt.toISOString(),
       updatedAt: subpage.updatedAt.toISOString(),
@@ -79,7 +81,8 @@ export async function PATCH(
       );
     }
 
-    const { title, slug, seoTitle, seoDescription, status } = parsed.data;
+    const { title, slug, seoTitle, seoDescription, status, cclType, cclAi } =
+      parsed.data;
 
     if (slug && slug !== subpage.slug) {
       const existing = await prisma.subpage.findUnique({ where: { slug } });
@@ -102,14 +105,22 @@ export async function PATCH(
         updateData.publishedAt = new Date();
       }
     }
+    if (cclType !== undefined) {
+      updateData.cclType = cclType;
+      if (cclType === null) updateData.cclAi = false;
+    }
+    if (cclAi !== undefined) {
+      const nextType = cclType !== undefined ? cclType : subpage.cclType;
+      updateData.cclAi = nextType ? cclAi : false;
+    }
 
     const updated = await prisma.subpage.update({
       where: { id },
       data: updateData,
     });
 
-    const before: Record<string, string | null> = {};
-    const after: Record<string, string | null> = {};
+    const before: Record<string, string | boolean | null> = {};
+    const after: Record<string, string | boolean | null> = {};
     if (title !== undefined && title !== subpage.title) {
       before.title = subpage.title;
       after.title = title;
@@ -121,6 +132,14 @@ export async function PATCH(
     if (status !== undefined && status !== subpage.status) {
       before.status = subpage.status;
       after.status = status;
+    }
+    if (updated.cclType !== subpage.cclType) {
+      before.cclType = subpage.cclType;
+      after.cclType = updated.cclType;
+    }
+    if (updated.cclAi !== subpage.cclAi) {
+      before.cclAi = subpage.cclAi;
+      after.cclAi = updated.cclAi;
     }
 
     if (Object.keys(after).length > 0) {

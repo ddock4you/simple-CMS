@@ -65,4 +65,5 @@ export {
   AuditEntityType,
   ErrorLevel,
   ErrorSource,
+  CclType,
 } from './generated/prisma/client';

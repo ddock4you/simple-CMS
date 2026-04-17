@@ -42,6 +42,18 @@
 - [ ] **인증+인가 검사**: 데이터 변경 API Route 핸들러에 `requirePermission()` 호출 포함 (프로필 등 예외는 `getCurrentUser()`만 사용)
 - [ ] **리소스 등록**: 새 도메인 추가 시 `packages/types`의 `RESOURCE_ACTIONS`에 리소스 등록 여부
 
+### 입력 Dialog (admin)
+
+폼/필드를 담은 Dialog 추가/수정 시:
+
+- [ ] **외부 클릭 닫기 차단**: `<Dialog ... disablePointerDismissal>` opt-in 여부 (AlertDialog는 Base-UI가 강제하므로 불필요)
+- [ ] **Dirty 가드**: `useDialogDirtyGuard(isDirty, onOpenChange)` + `<ConfirmLeaveDialog {...confirmDialogProps} />` 연결 — 입력 중 ESC/취소 시 이탈 확인
+- [ ] **오픈 시 폼 초기화**: 다음 중 하나가 반드시 구현되어 저장 성공 후 재오픈 시 이전 입력값이 남지 않음
+  - (A) `useEffect(() => { if (!open) return; reset(...); }, [open, ...deps, reset])` — `open`이 의존성에 포함될 것
+  - (B) mutation `onSuccess`에서 `reset()` 호출
+  - (C) 부모에서 `<Dialog key={...} />`로 매번 새 마운트
+- [ ] **중첩 흐림 자동 적용 확인**: 공용 `shared/ui/shadcn/dialog.tsx`/`alert-dialog.tsx`를 그대로 사용했는지 (개별 className 오버라이드로 `data-[nested-dialog-open]:*` 룰을 지우지 말 것)
+
 ### 테스트
 
 - [ ] **테스트 파일 존재**: 새로 작성한 유틸/로직에 대응하는 테스트 파일 존재 여부

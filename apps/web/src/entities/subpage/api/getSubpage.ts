@@ -12,6 +12,8 @@ type PublishedSubpage = Prisma.SubpageGetPayload<{
     seoDescription: true;
     publishedAt: true;
     updatedAt: true;
+    cclType: true;
+    cclAi: true;
     blocks: {
       select: {
         id: true;
@@ -33,6 +35,8 @@ type PreviewSubpage = Prisma.SubpageGetPayload<{
     status: true;
     publishedAt: true;
     updatedAt: true;
+    cclType: true;
+    cclAi: true;
     blocks: {
       select: {
         id: true;
@@ -60,6 +64,8 @@ export const getPublishedSubpage = cache(
         seoDescription: true,
         publishedAt: true,
         updatedAt: true,
+        cclType: true,
+        cclAi: true,
         blocks: {
           where: { isVisible: true },
           orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
@@ -95,6 +101,8 @@ export const getSubpageForPreview = cache(
         status: true,
         publishedAt: true,
         updatedAt: true,
+        cclType: true,
+        cclAi: true,
         blocks: {
           orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
           select: {

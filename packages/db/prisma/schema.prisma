@@ -46,6 +46,14 @@ enum PageBlockType {
   IFRAME
 }
 
+enum CclType {
+  TYPE_0
+  TYPE_1
+  TYPE_2
+  TYPE_3
+  TYPE_4
+}
+
 enum NavigationMenuSlot {
   HEADER
   FOOTER
@@ -182,6 +190,8 @@ model Subpage {
   status          ContentStatus @default(DRAFT)
   publishedAt     DateTime?
   featuredImageId String?
+  cclType         CclType?
+  cclAi           Boolean       @default(false)
   displayOrder    Int           @default(0)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt

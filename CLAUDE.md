@@ -342,6 +342,7 @@ apps/{앱}/
 | 7a   | Draft 미리보기 (preview 토큰 + web 쿠키)    | admin → web preview URL 새 창 렌더 | **완료** |
 | 7b   | HTML 블록 = HTML + 페이지 스코프 CSS (Monaco Tabs) | 한 블록에서 HTML+CSS, 페이지 스코프 적용 | **완료** |
 | 7c   | 운영 UX (Dirty 가드, 사이트 보기, 빠른 상태 토글, 벌크, cmd+k) | 이탈 경고 + 상태 토글 + 일괄 작업 + 빠른 전환 | **완료** |
+| 7d   | 공개 웹 좌·우 사이드바 + 공공누리 마크 + 입력 Dialog 외부 클릭 차단 | HEADER 기반 좌측 트리 + SIDEBAR 슬롯 우측 InPageNavigation + KOGL 마크 + Dialog 오클릭 방지 | **완료** |
 | 8    | Docker + CI/CD + 문서화                     | `docker compose up`으로 전체 실행  | 대기 |
 
 #### Stage 7c 결과 요약
@@ -352,6 +353,16 @@ apps/{앱}/
 - **빠른 상태 토글**: 4개 신규 엔드포인트 (`/subpages/[id]/status`, `/posts/[id]/status`, `/home-popups/[id]/visibility`, `/boards/[id]/visibility`) + 4개 mutation 훅(optimistic + rollback) + `<InlineStatusToggle>` `<InlineBooleanToggle>` 공용. 감사 로그 entityTitle에 "(상태 변경)" / "(공개 변경)" suffix
 - **벌크 작업 (Subpage + Post)**: 5개 신규 엔드포인트 (subpages/posts × bulk-delete/bulk-status + posts/bulk-move). 응답 구조 `{ deleted, blocked }` / `{ updated, failed }` — 미디어 패턴 그대로. `<BulkActionBar>` 공용 + 5개 Dialog. selectedIds는 `Set<string>`로 페이지 간 유지
 - **cmd+k 빠른 전환**: shadcn `command` 설치 + `useKeyboardShortcut` 훅 + 통합 `/api/quick-search` 엔드포인트 (단순 `contains` + 도메인별 read 권한 필터) + `features/quick-switcher/` 슬라이스 (`CommandPalette`, `CommandPaletteTrigger`). `(authenticated)/layout.tsx` 항상 마운트 + AdminHeader에 [검색 ⌘K] 보조 버튼
+
+#### Stage 7d 결과 요약
+
+- **우측 사이드바 (SIDEBAR 슬롯 의미 재해석)**: 기존 좌측에 렌더되던 `SIDEBAR` 슬롯 메뉴를 **모든 페이지 우측**의 KRDS `InPageNavigation` **스타일**로 전환. KRDS 원본 컴포넌트는 items의 href를 `document.querySelector`로 소비하는 페이지 내 앵커 전용이라 일반 페이지 링크에 사용 불가 → `widgets/layout/ui/RightSidebar.tsx`가 동일 DOM 구조(`.krds-in-page-navigation-type`/`-area`/`.in-page-navigation-header`/`.in-page-navigation-list`)와 CSS 클래스를 차용한 커스텀 JSX로 렌더, `<Link>`/`<a>`로 실제 라우팅. leaf-only DFS 평탄화, `active`는 `pathname` 매칭. `title = menu.name`, `caption = `${name} 네비게이션``. `PageLayout`의 `rightSidebar: { name, items } | null` prop이 없으면 렌더되지 않음
+- **좌측 서브페이지 사이드바 (HEADER 메뉴 자동 파생)**: `/p/[slug]`에서만 자동 렌더. `entities/navigation/lib/findHeaderBranchForPath`가 HEADER 메뉴에서 현재 경로의 루트를 DFS 탐색 → 매칭되면 그 루트의 2/3뎁스 트리를 `widgets/subpage-sidebar/ui/SubpageSideNavigation.tsx`(KRDS `SideNavigation`)로 렌더, 미매칭 시 서브페이지 제목만 `Title`로 표시. 기존 `widgets/layout/ui/Sidebar.tsx`는 폐기
+- **슬롯 라벨 변경**: admin `features/navigation-management/ui/slotLabels.ts`의 `SIDEBAR` 표시 라벨만 "사이드바" → "우측 사이드바"로 교체. enum 값/DB 값은 무변경(마이그레이션 0)
+- **공공누리 마크**: `Subpage` 모델에 `CclType?`(enum `TYPE_0`~`TYPE_4`) + `cclAi: Boolean` 두 필드 추가. `packages/types/domain/subpage.types.ts`에 `CclType` union + `CCL_TYPE_LABELS`/`CCL_TYPE_ASSET`/`CCL_AI_ASSET` 상수 공용화. admin `SubpageForm` 우측 "라이선스" 섹션에 6개 라디오(`표시 없음` + 제0~4유형) + AI 체크박스(cclType null이면 disabled + superRefine 강제). web `widgets/subpage-content/ui/KoglFooter.tsx`가 `<article>` 내부 하단 우측에 마크 이미지 렌더(published + preview 경로 모두). 에셋은 `apps/web/public/assets/kogl/kogl-type-0.png` ~ `kogl-type-4.png`, `kogl-ai.png` — 실제 이미지 파일은 공공누리 공식 사이트에서 운영이 내려받아 배치
+- **입력 Dialog 외부 클릭 차단**: shadcn 공용 `Dialog` 래퍼는 이미 Base-UI `DialogRoot.Props`를 spread 전달하므로 별도 prop 신설 없이 호출자가 `<Dialog disablePointerDismissal>` opt-in. 대상 Dialog(MenuItem/MenuSetEdit/BlockEdit/MediaDetail/SectionEdit/CreateRole) 6곳에 적용. AlertDialog는 Base-UI v1.3.0 `AlertDialogRoot`가 내부에서 `disablePointerDismissal: true` 강제 + 타입에서 prop Omit → 코드 변경 없이 이미 배경 클릭 닫기 차단됨 (`node_modules/@base-ui/react/alert-dialog/root/AlertDialogRoot.js` line 42). ESC 닫기는 모든 Dialog에서 유지
+- **중첩 Dialog 흐림 처리**: 첫 번째 Dialog 위에 두 번째 Dialog(예: 편집 중 이탈 경고 `ConfirmLeaveDialog`)가 열릴 때 뒤쪽 Popup을 "배경처럼" 물러나 보이게 처리. Base-UI가 부모 `Popup`에 자동 부착하는 `data-nested-dialog-open` 속성을 Tailwind 선택자로 활용: `data-[nested-dialog-open]:opacity-60 blur-[1.5px] scale-[0.98] pointer-events-none` + `transition-[opacity,filter,transform] duration-200`. `shared/ui/shadcn/{dialog,alert-dialog}.tsx`의 `Popup` 공용 className에 추가 — 모든 중첩 Dialog/AlertDialog가 자동 적용
+- **입력 Dialog 성공 후 값 초기화 패턴 정비**: 재사용 표준 — 다음 중 하나를 반드시 적용해야 다음 오픈 시 빈 상태로 시작. (A) `useEffect(() => { if (!open) return; reset(defaults); }, [open, ...deps, reset])`(예: MenuItemDialog, MenuSetEditDialog), (B) mutation `onSuccess`에서 `reset()`(예: CreateRoleDialog), (C) 부모에서 `<Dialog key=.../>`로 매번 새 인스턴스 마운트(예: BlockEditDialog는 `BlockManager`가 `key={editingBlock ? `edit-${id}` : `create-${type}`}` 부여). **MenuItemDialog 회귀 수정**: 기존 useEffect 의존성이 `[editItem, parentId, reset]`만이라 같은 parentId로 새 항목을 연속 추가할 때 이전 값이 남던 버그 → `open`을 의존성에 포함하고 early return으로 정정
 
 ## 명령어
 

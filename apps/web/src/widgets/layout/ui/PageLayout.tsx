@@ -10,13 +10,13 @@ import type { FooterLink } from 'krds-react';
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import { getMenuItemHref } from '@/entities/navigation/lib/getMenuItemHref';
 
-import { Sidebar } from './Sidebar';
+import { RightSidebar } from './RightSidebar';
 
 interface PageLayoutProps {
   children: ReactNode;
   headerMenuItems: FilteredMenuItem[];
   footerMenuItems: FilteredMenuItem[];
-  sidebarMenuItems: FilteredMenuItem[];
+  rightSidebar: { name: string; items: FilteredMenuItem[] } | null;
 }
 
 function buildDesktopMenu(items: FilteredMenuItem[]) {
@@ -132,10 +132,10 @@ export function PageLayout({
   children,
   headerMenuItems,
   footerMenuItems,
-  sidebarMenuItems,
+  rightSidebar,
 }: PageLayoutProps) {
   const hasHeaderMenu = headerMenuItems.length > 0;
-  const hasSidebar = sidebarMenuItems.length > 0;
+  const hasRightSidebar = !!rightSidebar && rightSidebar.items.length > 0;
 
   return (
     <>
@@ -167,12 +167,15 @@ export function PageLayout({
           />
         )}
       </Header>
-      {hasSidebar ? (
-        <div className="krds-container" style={{ display: 'flex', gap: '2rem' }}>
-          <Sidebar items={sidebarMenuItems} />
-          <main id="main-content" style={{ flex: 1, minWidth: 0 }}>
+      {hasRightSidebar ? (
+        <div className="krds-container page-with-right-sidebar">
+          <main id="main-content" className="page-main">
             {children}
           </main>
+          <RightSidebar
+            menuName={rightSidebar.name}
+            items={rightSidebar.items}
+          />
         </div>
       ) : (
         <main id="main-content">{children}</main>

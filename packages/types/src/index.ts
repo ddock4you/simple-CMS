@@ -84,3 +84,10 @@ export type {
   IssuePreviewTokenDto,
   PreviewTokenResponse,
 } from './dto/preview.dto';
+
+export type { CclType, SubpageCclInfo } from './domain/subpage.types';
+export {
+  CCL_TYPE_LABELS,
+  CCL_TYPE_ASSET,
+  CCL_AI_ASSET,
+} from './domain/subpage.types';

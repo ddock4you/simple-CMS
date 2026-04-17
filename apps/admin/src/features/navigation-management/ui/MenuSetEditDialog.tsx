@@ -75,7 +75,7 @@ export function MenuSetEditDialog({
   );
 
   return (
-    <Dialog open={open} onOpenChange={safeOnOpenChange}>
+    <Dialog open={open} onOpenChange={safeOnOpenChange} disablePointerDismissal>
       <DialogTrigger render={<Button variant="outline" size="sm" />}>
         <Settings className="size-4" />
         메뉴 설정

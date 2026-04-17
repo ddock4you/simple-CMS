@@ -4,9 +4,16 @@ import {
   getPublishedSubpage,
   getSubpageForPreview,
 } from '@/entities/subpage/api/getSubpage';
+import { getMenuBySlot } from '@/entities/navigation/api/getNavigation';
+import { findHeaderBranchForPath } from '@/entities/navigation/lib/findHeaderBranchForPath';
+import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import { PreviewBanner } from '@/features/preview/ui/PreviewBanner';
 import { getPreviewSession } from '@/shared/lib/previewSession';
 import { SubpageBlockRenderer } from '@/widgets/subpage-content/ui/SubpageBlockRenderer';
+import { KoglFooter } from '@/widgets/subpage-content/ui/KoglFooter';
+import { SubpageSideNavigation } from '@/widgets/subpage-sidebar/ui/SubpageSideNavigation';
+
+import type { CclType } from '@simple-cms/types';
 
 interface SubpagePageProps {
   slug: string;
@@ -16,6 +23,8 @@ interface RenderSubpageInput {
   id: string;
   title: string;
   publishedAt: Date | null;
+  cclType: CclType | null;
+  cclAi: boolean;
   blocks: Array<{
     id: string;
     blockType: 'RICH_TEXT' | 'HTML' | 'IMAGE' | 'IFRAME';
@@ -23,6 +32,11 @@ interface RenderSubpageInput {
     displayOrder: number;
     isVisible?: boolean;
   }>;
+}
+
+interface SideBranch {
+  rootLabel: string;
+  items: FilteredMenuItem[];
 }
 
 function SubpageArticle({
@@ -60,8 +74,37 @@ function SubpageArticle({
       ) : (
         <p className="empty-content">콘텐츠가 준비 중입니다.</p>
       )}
+      <KoglFooter cclType={subpage.cclType} cclAi={subpage.cclAi} />
     </article>
   );
+}
+
+function SubpageLayout({
+  branch,
+  children,
+}: {
+  branch: SideBranch;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="page-container subpage-layout">
+      <SubpageSideNavigation rootLabel={branch.rootLabel} items={branch.items} />
+      <div className="subpage-content">{children}</div>
+    </div>
+  );
+}
+
+async function resolveSideBranch(
+  slug: string,
+  fallbackTitle: string,
+): Promise<SideBranch> {
+  const headerMenu = await getMenuBySlot('HEADER');
+  const headerItems = headerMenu?.items ?? [];
+  const branch = findHeaderBranchForPath(headerItems, `/p/${slug}`);
+  if (branch) {
+    return { rootLabel: branch.label, items: branch.children };
+  }
+  return { rootLabel: fallbackTitle, items: [] };
 }
 
 export async function SubpagePage({ slug }: SubpagePageProps) {
@@ -70,12 +113,13 @@ export async function SubpagePage({ slug }: SubpagePageProps) {
   if (session?.entityType === 'SUBPAGE') {
     const previewSubpage = await getSubpageForPreview(slug);
     if (previewSubpage && session.entityId === previewSubpage.id) {
+      const branch = await resolveSideBranch(slug, previewSubpage.title);
       return (
         <>
           <PreviewBanner label="서브 페이지 미리보기" />
-          <div className="page-container">
+          <SubpageLayout branch={branch}>
             <SubpageArticle subpage={previewSubpage} showHidden />
-          </div>
+          </SubpageLayout>
         </>
       );
     }
@@ -86,9 +130,10 @@ export async function SubpagePage({ slug }: SubpagePageProps) {
     notFound();
   }
 
+  const branch = await resolveSideBranch(slug, subpage.title);
   return (
-    <div className="page-container">
+    <SubpageLayout branch={branch}>
       <SubpageArticle subpage={subpage} showHidden={false} />
-    </div>
+    </SubpageLayout>
   );
 }

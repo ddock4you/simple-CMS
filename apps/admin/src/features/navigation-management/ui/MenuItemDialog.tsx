@@ -76,6 +76,7 @@ export function MenuItemDialog({
   });
 
   useEffect(() => {
+    if (!open) return;
     if (editItem) {
       reset({
         label: editItem.label,
@@ -102,7 +103,7 @@ export function MenuItemDialog({
         endDate: null,
       });
     }
-  }, [editItem, parentId, reset]);
+  }, [open, editItem, parentId, reset]);
 
   const itemType = watch('itemType');
 
@@ -133,7 +134,7 @@ export function MenuItemDialog({
   );
 
   return (
-    <Dialog open={open} onOpenChange={safeOnOpenChange}>
+    <Dialog open={open} onOpenChange={safeOnOpenChange} disablePointerDismissal>
       <DialogContent>
         <form onSubmit={handleSubmit(handleFormSubmit)}>
           <DialogHeader>

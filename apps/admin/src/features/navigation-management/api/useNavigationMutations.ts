@@ -124,10 +124,16 @@ export function useDeleteMenuItem(menuId: string) {
   });
 }
 
-function applyReorderToTree(
-  nodes: Array<{ id: string; displayOrder: number; children: Array<{ id: string; displayOrder: number; children: any[] }> }>,
+interface ReorderTreeNode {
+  id: string;
+  displayOrder: number;
+  children: ReorderTreeNode[];
+}
+
+function applyReorderToTree<T extends ReorderTreeNode>(
+  nodes: T[],
   orderMap: Map<string, number>,
-): typeof nodes {
+): T[] {
   return nodes
     .map((node) => ({
       ...node,
