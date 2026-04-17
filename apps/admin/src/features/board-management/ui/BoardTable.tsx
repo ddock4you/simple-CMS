@@ -14,10 +14,12 @@ import {
   TableRow,
 } from '@/shared/ui/shadcn/table';
 import { Button } from '@/shared/ui/shadcn/button';
+import { InlineBooleanToggle } from '@/shared/ui/InlineBooleanToggle';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
 import type { BoardListFilters } from '../model/boardFilters';
 import { boardListOptions } from '../api/boardQueries';
+import { useToggleBoardVisibility } from '../api/useBoardMutations';
 import { BoardSkinTypeBadge } from './BoardSkinTypeBadge';
 import { BoardVisibilityBadge } from './BoardVisibilityBadge';
 import { BoardPagination } from './BoardPagination';
@@ -29,6 +31,7 @@ interface BoardTableProps {
 export function BoardTable({ filters }: BoardTableProps) {
   const { data } = useQuery(boardListOptions(filters));
   const canUpdate = usePermission('boards', 'update');
+  const toggleVisibility = useToggleBoardVisibility();
 
   if (!data) return null;
 
@@ -72,7 +75,20 @@ export function BoardTable({ filters }: BoardTableProps) {
                     <BoardSkinTypeBadge skinType={board.skinType} />
                   </TableCell>
                   <TableCell>
-                    <BoardVisibilityBadge isPublic={board.isPublic} />
+                    {canUpdate ? (
+                      <InlineBooleanToggle
+                        value={board.isPublic}
+                        onChange={(isPublic) =>
+                          toggleVisibility.mutate({ id: board.id, isPublic })
+                        }
+                        isPending={
+                          toggleVisibility.isPending &&
+                          toggleVisibility.variables?.id === board.id
+                        }
+                      />
+                    ) : (
+                      <BoardVisibilityBadge isPublic={board.isPublic} />
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {board.postCount}건

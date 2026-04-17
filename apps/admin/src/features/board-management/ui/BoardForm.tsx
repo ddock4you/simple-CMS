@@ -22,6 +22,8 @@ import {
   SelectItem,
   SelectTrigger,
 } from '@/shared/ui/shadcn/select';
+import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
+import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 
 import type { BoardDetail } from '../model/boardFilters';
 import {
@@ -88,6 +90,8 @@ export function BoardForm({ mode, initialData }: BoardFormProps) {
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const { confirmDialogProps: leaveDialogProps } = useDirtyGuard(isDirty);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -222,6 +226,8 @@ export function BoardForm({ mode, initialData }: BoardFormProps) {
           </Card>
         </div>
       </div>
+
+      <ConfirmLeaveDialog {...leaveDialogProps} />
     </form>
   );
 }

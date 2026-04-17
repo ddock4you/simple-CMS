@@ -50,3 +50,13 @@ export function reorderHomePopups(data: ReorderHomePopupsDto): Promise<null> {
 export function getHomePopupReferences(): Promise<HomePopupReferencesDto> {
   return fetchClient<HomePopupReferencesDto>('/api/home-popups/references');
 }
+
+export function toggleHomePopupVisibility(
+  id: string,
+  isVisible: boolean,
+): Promise<null> {
+  return fetchClient<null>(`/api/home-popups/${id}/visibility`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isVisible }),
+  });
+}

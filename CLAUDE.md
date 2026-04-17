@@ -341,13 +341,17 @@ apps/{앱}/
 | 6    | 서브페이지 블록 + **Admin UI + Web 렌더링** | 블록 추가/순서 변경 → 공개 웹 확인 | **완료** |
 | 7a   | Draft 미리보기 (preview 토큰 + web 쿠키)    | admin → web preview URL 새 창 렌더 | **완료** |
 | 7b   | HTML 블록 = HTML + 페이지 스코프 CSS (Monaco Tabs) | 한 블록에서 HTML+CSS, 페이지 스코프 적용 | **완료** |
-| 7c   | 운영 UX (Dirty 가드, 사이트 보기, 빠른 전환, 벌크) | 이탈 경고 + 상태 토글 + 일괄 작업 | 대기 |
+| 7c   | 운영 UX (Dirty 가드, 사이트 보기, 빠른 상태 토글, 벌크, cmd+k) | 이탈 경고 + 상태 토글 + 일괄 작업 + 빠른 전환 | **완료** |
 | 8    | Docker + CI/CD + 문서화                     | `docker compose up`으로 전체 실행  | 대기 |
 
-#### Stage 7c 추가 검토 안건 (착수 시 사용자에게 다시 확인)
+#### Stage 7c 결과 요약
 
-- **메타 미저장 상태에서 발행 충돌 경고**: SubpageForm에서 `formState.isDirty=true`일 때 status를 PUBLISHED로 변경 시도하거나, isDirty 상태로 [저장] 없이 페이지를 떠나려 할 때 경고. Dirty 가드 범위에 포함할지 여부 결정 필요. 배경: Stage 7b-Option B 적용 후 SubpageForm의 [저장]이 [발행] 카드 내부로 이동하면서 "메타 저장 = 발행 적용" 흐름이 한 카드에 묶임. 미저장 변경이 있는 상태에서 status만 바꾸고 의도치 않게 publish 되는 사고 방지 검토.
-- **Dirty 가드 적용 범위**: SubpageForm + PostForm 외에 메뉴 편집 Dialog, 메인 섹션 편집 Dialog 등 폼 기반 UI 전반에 적용할지 결정. 블록 관리(BlockManager)·메뉴 dnd·메인섹션 dnd는 즉시 저장 모델이라 Dirty 개념 없음 — 가드 대상 아님.
+- **Dirty 가드**: `useDirtyGuard`(페이지 폼) + `useDialogDirtyGuard`(Dialog 폼) + `ConfirmLeaveDialog` — `<a href>` 클릭 capture + `beforeunload` 가로채기. 적용: SubpageForm/PostForm/PopupForm/BoardForm + MenuItemDialog/MenuSetEditDialog/SectionEditDialog (총 7개)
+- **메타+status 충돌 경고**: SubpageForm/PostForm에서 `isDirty && DRAFT→PUBLISHED` 시 사전 안내 모달
+- **사이트 보기**: `getWebBaseUrl/getSubpagePublicUrl/getPostPublicUrl/getBoardPublicUrl` 헬퍼 + `<ViewLiveButton>` — Subpage/Post/Board View(published만), AdminHeader([사이트 메인])에 노출. preview/token 라우트는 inline 헬퍼 → `siteUrl.ts` import로 정리
+- **빠른 상태 토글**: 4개 신규 엔드포인트 (`/subpages/[id]/status`, `/posts/[id]/status`, `/home-popups/[id]/visibility`, `/boards/[id]/visibility`) + 4개 mutation 훅(optimistic + rollback) + `<InlineStatusToggle>` `<InlineBooleanToggle>` 공용. 감사 로그 entityTitle에 "(상태 변경)" / "(공개 변경)" suffix
+- **벌크 작업 (Subpage + Post)**: 5개 신규 엔드포인트 (subpages/posts × bulk-delete/bulk-status + posts/bulk-move). 응답 구조 `{ deleted, blocked }` / `{ updated, failed }` — 미디어 패턴 그대로. `<BulkActionBar>` 공용 + 5개 Dialog. selectedIds는 `Set<string>`로 페이지 간 유지
+- **cmd+k 빠른 전환**: shadcn `command` 설치 + `useKeyboardShortcut` 훅 + 통합 `/api/quick-search` 엔드포인트 (단순 `contains` + 도메인별 read 권한 필터) + `features/quick-switcher/` 슬라이스 (`CommandPalette`, `CommandPaletteTrigger`). `(authenticated)/layout.tsx` 항상 마운트 + AdminHeader에 [검색 ⌘K] 보조 버튼
 
 ## 명령어
 

@@ -13,6 +13,9 @@ import {
   CardTitle,
 } from '@/shared/ui/shadcn/card';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { getBoardPublicUrl } from '@/shared/lib/siteUrl';
+
+import { ViewLiveButton } from '@/entities/preview/ui/ViewLiveButton';
 
 import { boardDetailOptions } from '../api/boardQueries';
 import { useDeleteBoard } from '../api/useBoardMutations';
@@ -49,6 +52,9 @@ export function BoardView({ id }: BoardViewProps) {
           <BoardVisibilityBadge isPublic={data.isPublic} />
         </div>
         <div className="flex items-center gap-2">
+          {data.isPublic && (
+            <ViewLiveButton url={getBoardPublicUrl(data.slug)} />
+          )}
           {canDelete && (
             <DeleteBoardDialog
               name={data.name}

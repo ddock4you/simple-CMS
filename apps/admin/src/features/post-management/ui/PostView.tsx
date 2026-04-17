@@ -14,8 +14,10 @@ import {
   CardTitle,
 } from '@/shared/ui/shadcn/card';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { getPostPublicUrl } from '@/shared/lib/siteUrl';
 
 import { PreviewButton } from '@/entities/preview/ui/PreviewButton';
+import { ViewLiveButton } from '@/entities/preview/ui/ViewLiveButton';
 
 import { postDetailOptions } from '../api/postQueries';
 import { useDeletePost } from '../api/usePostMutations';
@@ -54,6 +56,9 @@ export function PostView({ id }: PostViewProps) {
         </div>
         <div className="flex items-center gap-2">
           <PreviewButton entityType="POST" entityId={id} />
+          {data.status === 'PUBLISHED' && (
+            <ViewLiveButton url={getPostPublicUrl(data.boardSlug, data.slug)} />
+          )}
           {canDelete && (
             <DeletePostDialog
               title={data.title}

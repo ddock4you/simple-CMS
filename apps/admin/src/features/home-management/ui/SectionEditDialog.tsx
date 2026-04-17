@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import {
   Dialog,
   DialogContent,
@@ -7,6 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
+import { useDialogDirtyGuard } from '@/shared/lib/useDialogDirtyGuard';
+import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 
 import {
   SECTION_TYPE_DESCRIPTIONS,
@@ -31,8 +35,15 @@ export function SectionEditDialog({
   open,
   onOpenChange,
 }: SectionEditDialogProps) {
+  const [dirty, setDirty] = useState(false);
+
+  const { safeOnOpenChange, confirmDialogProps } = useDialogDirtyGuard(
+    dirty,
+    onOpenChange,
+  );
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={safeOnOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         {section && (
           <>
@@ -48,10 +59,12 @@ export function SectionEditDialog({
               key={section.id}
               section={section}
               onClose={() => onOpenChange(false)}
+              onDirtyChange={setDirty}
             />
           </>
         )}
       </DialogContent>
+      <ConfirmLeaveDialog {...confirmDialogProps} />
     </Dialog>
   );
 }
@@ -59,22 +72,60 @@ export function SectionEditDialog({
 function SectionFormSwitch({
   section,
   onClose,
+  onDirtyChange,
 }: {
   section: HomeSectionListItem;
   onClose: () => void;
+  onDirtyChange: (dirty: boolean) => void;
 }) {
   switch (section.sectionType) {
     case 'HERO':
-      return <HeroSectionForm section={section} onClose={onClose} />;
+      return (
+        <HeroSectionForm
+          section={section}
+          onClose={onClose}
+          onDirtyChange={onDirtyChange}
+        />
+      );
     case 'RECOMMENDED':
-      return <RecommendedSectionForm section={section} onClose={onClose} />;
+      return (
+        <RecommendedSectionForm
+          section={section}
+          onClose={onClose}
+          onDirtyChange={onDirtyChange}
+        />
+      );
     case 'SHORTCUT':
-      return <ShortcutSectionForm section={section} onClose={onClose} />;
+      return (
+        <ShortcutSectionForm
+          section={section}
+          onClose={onClose}
+          onDirtyChange={onDirtyChange}
+        />
+      );
     case 'LATEST_POSTS':
-      return <LatestPostsSectionForm section={section} onClose={onClose} />;
+      return (
+        <LatestPostsSectionForm
+          section={section}
+          onClose={onClose}
+          onDirtyChange={onDirtyChange}
+        />
+      );
     case 'CTA':
-      return <CtaSectionForm section={section} onClose={onClose} />;
+      return (
+        <CtaSectionForm
+          section={section}
+          onClose={onClose}
+          onDirtyChange={onDirtyChange}
+        />
+      );
     case 'NOTICE':
-      return <NoticeSectionForm section={section} onClose={onClose} />;
+      return (
+        <NoticeSectionForm
+          section={section}
+          onClose={onClose}
+          onDirtyChange={onDirtyChange}
+        />
+      );
   }
 }

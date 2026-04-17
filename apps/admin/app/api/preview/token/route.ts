@@ -10,6 +10,7 @@ import type {
 } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { getWebBaseUrl } from '@/shared/lib/siteUrl';
 
 const issueTokenSchema = z.object({
   entityType: z.enum(['SUBPAGE', 'POST']),
@@ -17,14 +18,6 @@ const issueTokenSchema = z.object({
 });
 
 const TTL_MS = 10 * 60 * 1000;
-
-function getWebBaseUrl(): string {
-  return (
-    process.env.WEB_BASE_URL ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    'http://localhost:3000'
-  );
-}
 
 export async function POST(request: Request): Promise<NextResponse> {
   let body: unknown;

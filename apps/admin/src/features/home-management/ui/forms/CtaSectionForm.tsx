@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useUpdateHomeSection } from '../../api/useHomeMutations';
+import { useSectionFormDirty } from '../../lib/useSectionFormDirty';
 import {
   ctaConfigSchema,
   defaultConfigByType,
@@ -17,9 +18,14 @@ import { SectionFormShell } from './SectionFormShell';
 interface CtaSectionFormProps {
   section: HomeSectionListItem;
   onClose: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-export function CtaSectionForm({ section, onClose }: CtaSectionFormProps) {
+export function CtaSectionForm({
+  section,
+  onClose,
+  onDirtyChange,
+}: CtaSectionFormProps) {
   const mutation = useUpdateHomeSection(section.id);
   const [title, setTitle] = useState(section.title);
   const [isVisible, setIsVisible] = useState(section.isVisible);
@@ -32,6 +38,16 @@ export function CtaSectionForm({ section, onClose }: CtaSectionFormProps) {
   const form = useForm<CtaConfigData>({
     resolver: zodResolver(ctaConfigSchema),
     defaultValues: initialConfig,
+  });
+
+  useSectionFormDirty({
+    form,
+    title,
+    isVisible,
+    section,
+    mutationPending: mutation.isPending,
+    mutationSuccess: mutation.isSuccess,
+    onDirtyChange,
   });
 
   const onSubmit = form.handleSubmit((config) => {

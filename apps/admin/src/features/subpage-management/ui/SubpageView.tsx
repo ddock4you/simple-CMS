@@ -13,8 +13,10 @@ import {
   CardTitle,
 } from '@/shared/ui/shadcn/card';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { getSubpagePublicUrl } from '@/shared/lib/siteUrl';
 
 import { PreviewButton } from '@/entities/preview/ui/PreviewButton';
+import { ViewLiveButton } from '@/entities/preview/ui/ViewLiveButton';
 
 import { subpageDetailOptions } from '../api/subpageQueries';
 import { useDeleteSubpage } from '../api/useSubpageMutations';
@@ -55,6 +57,9 @@ export function SubpageView({ id }: SubpageViewProps) {
         </div>
         <div className="flex items-center gap-2">
           <PreviewButton entityType="SUBPAGE" entityId={id} />
+          {data.status === 'PUBLISHED' && (
+            <ViewLiveButton url={getSubpagePublicUrl(data.slug)} />
+          )}
           {canDelete && (
             <DeleteSubpageDialog
               title={data.title}

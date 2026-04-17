@@ -34,6 +34,7 @@ export interface PostDetail {
   slug: string;
   boardId: string;
   boardName: string;
+  boardSlug: string;
   contentJson: unknown;
   status: ContentStatus;
   authorId: string | null;

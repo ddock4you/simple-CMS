@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useUpdateHomeSection } from '../../api/useHomeMutations';
+import { useSectionFormDirty } from '../../lib/useSectionFormDirty';
 import {
   defaultConfigByType,
   latestPostsConfigSchema,
@@ -17,11 +18,13 @@ import { SectionFormShell } from './SectionFormShell';
 interface LatestPostsSectionFormProps {
   section: HomeSectionListItem;
   onClose: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 export function LatestPostsSectionForm({
   section,
   onClose,
+  onDirtyChange,
 }: LatestPostsSectionFormProps) {
   const mutation = useUpdateHomeSection(section.id);
   const [title, setTitle] = useState(section.title);
@@ -35,6 +38,16 @@ export function LatestPostsSectionForm({
   const form = useForm<LatestPostsConfigData>({
     resolver: zodResolver(latestPostsConfigSchema),
     defaultValues: initialConfig,
+  });
+
+  useSectionFormDirty({
+    form,
+    title,
+    isVisible,
+    section,
+    mutationPending: mutation.isPending,
+    mutationSuccess: mutation.isSuccess,
+    onDirtyChange,
   });
 
   const onSubmit = form.handleSubmit((config) => {

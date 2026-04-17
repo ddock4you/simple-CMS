@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { format } from 'date-fns';
-import { GripVertical, Eye, EyeOff, Pencil } from 'lucide-react';
+import { GripVertical, Pencil } from 'lucide-react';
 
 import type { HomePopupListItem } from '@simple-cms/types';
 
 import { Button } from '@/shared/ui/shadcn/button';
+import { InlineBooleanToggle } from '@/shared/ui/InlineBooleanToggle';
 
+import { useToggleHomePopupVisibility } from '../api/usePopupMutations';
 import { PopupTypeBadge } from './PopupTypeBadge';
 
 interface Props {
@@ -18,6 +20,7 @@ interface Props {
 }
 
 export function SortablePopupCard({ popup, canUpdate }: Props) {
+  const toggleVisibility = useToggleHomePopupVisibility();
   const {
     attributes,
     listeners,
@@ -77,17 +80,23 @@ export function SortablePopupCard({ popup, canUpdate }: Props) {
         </p>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
-        <span
-          title={popup.isVisible ? '노출 중' : '숨김'}
-          className="inline-flex size-8 items-center justify-center"
-        >
-          {popup.isVisible ? (
-            <Eye className="size-4 text-muted-foreground" />
-          ) : (
-            <EyeOff className="size-4 text-muted-foreground" />
-          )}
-        </span>
+      <div
+        className="flex shrink-0 items-center gap-2"
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <InlineBooleanToggle
+          value={popup.isVisible}
+          onChange={(isVisible) =>
+            toggleVisibility.mutate({ id: popup.id, isVisible })
+          }
+          disabled={!canUpdate}
+          isPending={
+            toggleVisibility.isPending &&
+            toggleVisibility.variables?.id === popup.id
+          }
+          labelOn="노출"
+          labelOff="숨김"
+        />
         {canUpdate && (
           <Button
             variant="ghost"

@@ -8,6 +8,7 @@ import type {
   CreateHomePopupDto,
   UpdateHomePopupDto,
   ReorderHomePopupsDto,
+  HomePopupListItem,
 } from '@simple-cms/types';
 
 import type { FetchError } from '@/shared/api/fetchClient';
@@ -18,6 +19,7 @@ import {
   updateHomePopup,
   deleteHomePopup,
   reorderHomePopups,
+  toggleHomePopupVisibility,
 } from './popupFetchers';
 
 export function useCreateHomePopup() {
@@ -73,14 +75,76 @@ export function useDeleteHomePopup() {
 
 export function useReorderHomePopups() {
   const queryClient = useQueryClient();
+  const queryKey = popupKeys.lists();
 
   return useMutation({
     mutationFn: (data: ReorderHomePopupsDto) => reorderHomePopups(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: popupKeys.lists() });
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousData =
+        queryClient.getQueryData<HomePopupListItem[]>(queryKey);
+      if (previousData) {
+        const orderMap = new Map(
+          variables.popups.map(({ id, displayOrder }) => [id, displayOrder]),
+        );
+        const sorted = [...previousData]
+          .map((item) => ({
+            ...item,
+            displayOrder: orderMap.get(item.id) ?? item.displayOrder,
+          }))
+          .sort((a, b) => a.displayOrder - b.displayOrder);
+        queryClient.setQueryData(queryKey, sorted);
+      }
+      return { previousData };
     },
-    onError: (error: FetchError) => {
+    onError: (error: FetchError, _vars, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(queryKey, context.previousData);
+      }
       toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+}
+
+export function useToggleHomePopupVisibility() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, isVisible }: { id: string; isVisible: boolean }) =>
+      toggleHomePopupVisibility(id, isVisible),
+    onMutate: async ({ id, isVisible }) => {
+      await queryClient.cancelQueries({ queryKey: popupKeys.lists() });
+      const previousLists = queryClient.getQueriesData<HomePopupListItem[]>({
+        queryKey: popupKeys.lists(),
+      });
+      queryClient.setQueriesData<HomePopupListItem[]>(
+        { queryKey: popupKeys.lists() },
+        (old) =>
+          old
+            ? old.map((item) =>
+                item.id === id ? { ...item, isVisible } : item,
+              )
+            : old,
+      );
+      return { previousLists };
+    },
+    onError: (error: FetchError, _vars, context) => {
+      if (context?.previousLists) {
+        for (const [queryKey, data] of context.previousLists) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+      toast.error(error.message);
+    },
+    onSuccess: (_data, { isVisible }) => {
+      toast.success(isVisible ? '노출되었습니다.' : '숨김으로 변경되었습니다.');
+    },
+    onSettled: (_data, _error, { id }) => {
+      queryClient.invalidateQueries({ queryKey: popupKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: popupKeys.detail(id) });
     },
   });
 }

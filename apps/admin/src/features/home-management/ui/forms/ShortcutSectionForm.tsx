@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useUpdateHomeSection } from '../../api/useHomeMutations';
+import { useSectionFormDirty } from '../../lib/useSectionFormDirty';
 import {
   defaultConfigByType,
   shortcutConfigSchema,
@@ -17,11 +18,13 @@ import { SectionFormShell } from './SectionFormShell';
 interface ShortcutSectionFormProps {
   section: HomeSectionListItem;
   onClose: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 export function ShortcutSectionForm({
   section,
   onClose,
+  onDirtyChange,
 }: ShortcutSectionFormProps) {
   const mutation = useUpdateHomeSection(section.id);
   const [title, setTitle] = useState(section.title);
@@ -35,6 +38,16 @@ export function ShortcutSectionForm({
   const form = useForm<ShortcutConfigData>({
     resolver: zodResolver(shortcutConfigSchema),
     defaultValues: initialConfig,
+  });
+
+  useSectionFormDirty({
+    form,
+    title,
+    isVisible,
+    section,
+    mutationPending: mutation.isPending,
+    mutationSuccess: mutation.isSuccess,
+    onDirtyChange,
   });
 
   const onSubmit = form.handleSubmit((config) => {

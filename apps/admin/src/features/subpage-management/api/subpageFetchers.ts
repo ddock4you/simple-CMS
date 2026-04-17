@@ -1,4 +1,5 @@
 import type { PaginatedResponse } from '@simple-cms/types';
+import type { ContentStatus } from '@simple-cms/db';
 
 import { fetchClient } from '@/shared/api/fetchClient';
 
@@ -45,4 +46,43 @@ export function updateSubpage(
 
 export function deleteSubpage(id: string): Promise<null> {
   return fetchClient<null>(`/api/subpages/${id}`, { method: 'DELETE' });
+}
+
+export function toggleSubpageStatus(
+  id: string,
+  status: ContentStatus,
+): Promise<null> {
+  return fetchClient<null>(`/api/subpages/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}
+
+export interface BulkDeleteSubpageResponse {
+  deleted: string[];
+  blocked: Array<{ id: string; title: string; reason: string }>;
+}
+
+export interface BulkStatusSubpageResponse {
+  updated: string[];
+  failed: Array<{ id: string; reason: string }>;
+}
+
+export function bulkDeleteSubpages(
+  ids: string[],
+): Promise<BulkDeleteSubpageResponse> {
+  return fetchClient<BulkDeleteSubpageResponse>('/api/subpages/bulk-delete', {
+    method: 'POST',
+    body: JSON.stringify({ ids }),
+  });
+}
+
+export function bulkUpdateSubpageStatus(
+  ids: string[],
+  status: ContentStatus,
+): Promise<BulkStatusSubpageResponse> {
+  return fetchClient<BulkStatusSubpageResponse>('/api/subpages/bulk-status', {
+    method: 'POST',
+    body: JSON.stringify({ ids, status }),
+  });
 }

@@ -28,6 +28,8 @@ import {
   SelectTrigger,
 } from '@/shared/ui/shadcn/select';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
+import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 
 import {
   popupFormSchema,
@@ -116,6 +118,8 @@ export function PopupForm({ mode, initialData }: PopupFormProps) {
 
   const popupType = watch('popupType');
   const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const { confirmDialogProps: leaveDialogProps } = useDirtyGuard(isDirty);
 
   const onSubmit = (data: PopupFormValues) => {
     const startIso = data.startDate ? new Date(data.startDate).toISOString() : null;
@@ -312,6 +316,8 @@ export function PopupForm({ mode, initialData }: PopupFormProps) {
           </Card>
         </div>
       </div>
+
+      <ConfirmLeaveDialog {...leaveDialogProps} />
     </form>
   );
 }

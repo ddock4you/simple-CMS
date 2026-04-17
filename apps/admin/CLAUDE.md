@@ -765,6 +765,56 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 - `WEB_BASE_URL` (optional) — admin에서 web URL을 조합할 때 사용. 미설정 시 `NEXT_PUBLIC_SITE_URL` → `http://localhost:3000` 폴백
 
+### 운영 UX (Stage 7c)
+
+#### Dirty 가드 (이탈 경고)
+
+- 페이지 폼: `useDirtyGuard(isDirty)` — Link 클릭 capture + `beforeunload` → `ConfirmLeaveDialog` 표시
+- Dialog 폼: `useDialogDirtyGuard(isDirty, onOpenChange)` — ESC/배경클릭 시 isDirty 체크
+- 적용: SubpageForm/PostForm/PopupForm/BoardForm + MenuItemDialog/MenuSetEditDialog/SectionEditDialog
+- Section Dialog: 6개 타입별 Form이 `useSectionFormDirty` 훅으로 isDirty를 부모에 전파
+- Subpage/Post: `isDirty && DRAFT→PUBLISHED` 변경 시 사전 안내 모달 (실수 발행 방지)
+- 위치: `shared/lib/useDirtyGuard.ts`, `shared/lib/useDialogDirtyGuard.ts`, `shared/ui/ConfirmLeaveDialog.tsx`
+
+#### 사이트 보기
+
+- `<ViewLiveButton>` — published 콘텐츠를 공개 URL로 새 창에 여는 버튼
+- SubpageView/PostView: `status === 'PUBLISHED'`일 때 노출. BoardView: `isPublic`일 때 노출
+- AdminHeader: [사이트 메인] 글로벌 버튼
+- URL 헬퍼: `shared/lib/siteUrl.ts` — `getWebBaseUrl`, `getSubpagePublicUrl`, `getPostPublicUrl`, `getBoardPublicUrl`
+
+#### 빠른 상태 토글
+
+- 목록에서 상세 진입 없이 status/visibility 인라인 변경
+- 신규 API: `PATCH /api/subpages/[id]/status`, `/api/posts/[id]/status`, `/api/home-popups/[id]/visibility`, `/api/boards/[id]/visibility`
+- 감사 로그: entityTitle에 "(상태 변경)" / "(공개 변경)" suffix로 메타 PATCH와 구분
+- Mutation: optimistic update + onError rollback 패턴
+- UI: `<InlineStatusToggle>` (Select), `<InlineBooleanToggle>` (Switch) 공용 컴포넌트
+- 권한 없으면 기존 Badge로 fallback
+
+#### 벌크 작업 (Subpage + Post)
+
+- 목록에서 체크박스 선택 → `<BulkActionBar>` 상단 bar로 일괄 삭제/상태변경/게시판이동
+- 신규 API (5개): `POST /api/subpages/bulk-delete`, `bulk-status`, `POST /api/posts/bulk-delete`, `bulk-status`, `bulk-move`
+- 응답 구조: `{ deleted, blocked }` / `{ updated, failed }` — 미디어 bulk-delete 패턴 그대로
+- Zod max(200), 트랜잭션 미사용 (부분 성공 허용), 건별 감사 로그
+- selectedIds: `Set<string>` useState, 페이지 간 유지, [전체 해제] 버튼
+
+#### cmd+k 빠른 전환
+
+- `Cmd+K`/`Ctrl+K` → Command Palette 모달 (shadcn `command` + `cmdk`)
+- 통합 검색: `GET /api/quick-search?q=&types=subpage,post,board,menu` — 단순 `contains` 매칭, 도메인별 read 권한 필터
+- FSD: `features/quick-switcher/` — `CommandPalette.tsx`, `CommandPaletteTrigger.tsx`, `quickSearchQueries.ts`
+- 마운트: `(authenticated)/layout.tsx`에 항상 렌더. AdminHeader: [검색 ⌘K] 보조 버튼
+
+#### dnd-kit 낙관적 업데이트
+
+- 드래그&드롭 순서 변경 4곳 모두 optimistic update 적용
+- `useReorderHomePopups`, `useReorderHomeSections`, `useReorderBlocks`, `useReorderItems`
+- onMutate: 캐시에서 displayOrder 즉시 갱신 → UI 즉시 반영 (깜빡임 제거)
+- onError: 이전 데이터 롤백 + toast. onSettled: 서버 데이터 재동기화
+- Navigation: 트리 구조 재귀 정렬 (`applyReorderToTree`)
+
 ## UI 전략
 
 - KRDS 미사용

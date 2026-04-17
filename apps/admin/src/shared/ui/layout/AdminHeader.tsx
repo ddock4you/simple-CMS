@@ -1,6 +1,9 @@
 import { SidebarTrigger } from '@/shared/ui/shadcn/sidebar';
 import { Separator } from '@/shared/ui/shadcn/separator';
 import { UserNav } from '@/shared/ui/layout/UserNav';
+import { ViewLiveButton } from '@/entities/preview/ui/ViewLiveButton';
+import { CommandPaletteTrigger } from '@/features/quick-switcher/ui/CommandPaletteTrigger';
+import { getWebBaseUrl } from '@/shared/lib/siteUrl';
 
 interface AdminHeaderProps {
   user: {
@@ -16,6 +19,13 @@ export function AdminHeader({ user }: AdminHeaderProps) {
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-2 !h-4" />
       <div className="flex-1" />
+      <CommandPaletteTrigger />
+      <ViewLiveButton
+        url={getWebBaseUrl()}
+        label="사이트 메인"
+        variant="ghost"
+        size="sm"
+      />
       <UserNav user={user} />
     </header>
   );

@@ -18,6 +18,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/shared/ui/shadcn/dialog';
+import { useDialogDirtyGuard } from '@/shared/lib/useDialogDirtyGuard';
+import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 
 import type { NavigationMenuSlot } from '@simple-cms/db';
 
@@ -48,7 +50,7 @@ export function MenuSetEditDialog({
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    formState: { errors, isDirty },
     reset,
   } = useForm<UpdateMenuData>({
     resolver: zodResolver(updateMenuSchema),
@@ -67,8 +69,13 @@ export function MenuSetEditDialog({
     });
   };
 
+  const { safeOnOpenChange, confirmDialogProps } = useDialogDirtyGuard(
+    isDirty,
+    setOpen,
+  );
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={safeOnOpenChange}>
       <DialogTrigger render={<Button variant="outline" size="sm" />}>
         <Settings className="size-4" />
         메뉴 설정
@@ -134,6 +141,7 @@ export function MenuSetEditDialog({
           </DialogFooter>
         </form>
       </DialogContent>
+      <ConfirmLeaveDialog {...confirmDialogProps} />
     </Dialog>
   );
 }

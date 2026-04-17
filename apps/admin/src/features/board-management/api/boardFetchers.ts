@@ -42,3 +42,13 @@ export function updateBoard(id: string, data: UpdateBoardData): Promise<null> {
 export function deleteBoard(id: string): Promise<null> {
   return fetchClient<null>(`/api/boards/${id}`, { method: 'DELETE' });
 }
+
+export function toggleBoardVisibility(
+  id: string,
+  isPublic: boolean,
+): Promise<null> {
+  return fetchClient<null>(`/api/boards/${id}/visibility`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isPublic }),
+  });
+}

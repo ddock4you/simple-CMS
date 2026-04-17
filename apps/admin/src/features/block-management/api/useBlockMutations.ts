@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 import type {
   CreatePageBlockDto,
+  PageBlockListItem,
   ReorderPageBlocksDto,
   UpdatePageBlockDto,
 } from '@simple-cms/types';
@@ -70,15 +71,37 @@ export function useDeleteBlock(subpageId: string) {
 
 export function useReorderBlocks(subpageId: string) {
   const queryClient = useQueryClient();
+  const queryKey = blockKeys.lists(subpageId);
 
   return useMutation({
     mutationFn: (data: ReorderPageBlocksDto) =>
       reorderBlocks(subpageId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: blockKeys.lists(subpageId) });
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousData =
+        queryClient.getQueryData<PageBlockListItem[]>(queryKey);
+      if (previousData) {
+        const orderMap = new Map(
+          variables.blocks.map(({ id, displayOrder }) => [id, displayOrder]),
+        );
+        const sorted = [...previousData]
+          .map((item) => ({
+            ...item,
+            displayOrder: orderMap.get(item.id) ?? item.displayOrder,
+          }))
+          .sort((a, b) => a.displayOrder - b.displayOrder);
+        queryClient.setQueryData(queryKey, sorted);
+      }
+      return { previousData };
     },
-    onError: (error: FetchError) => {
+    onError: (error: FetchError, _vars, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(queryKey, context.previousData);
+      }
       toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 }

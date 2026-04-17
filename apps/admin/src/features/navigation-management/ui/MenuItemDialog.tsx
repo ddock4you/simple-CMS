@@ -21,6 +21,8 @@ import {
   SelectItem,
   SelectTrigger,
 } from '@/shared/ui/shadcn/select';
+import { useDialogDirtyGuard } from '@/shared/lib/useDialogDirtyGuard';
+import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 
 import type { MenuItemNode } from '../model/navigationFilters';
 import {
@@ -56,7 +58,7 @@ export function MenuItemDialog({
     watch,
     setValue,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<CreateMenuItemData>({
     resolver: zodResolver(createMenuItemSchema),
     defaultValues: {
@@ -125,8 +127,13 @@ export function MenuItemDialog({
     onSubmit(data);
   };
 
+  const { safeOnOpenChange, confirmDialogProps } = useDialogDirtyGuard(
+    isDirty,
+    onOpenChange,
+  );
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={safeOnOpenChange}>
       <DialogContent>
         <form onSubmit={handleSubmit(handleFormSubmit)}>
           <DialogHeader>
@@ -313,6 +320,7 @@ export function MenuItemDialog({
           </DialogFooter>
         </form>
       </DialogContent>
+      <ConfirmLeaveDialog {...confirmDialogProps} />
     </Dialog>
   );
 }

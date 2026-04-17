@@ -1,4 +1,5 @@
 import type { PaginatedResponse } from '@simple-cms/types';
+import type { ContentStatus } from '@simple-cms/db';
 
 import { fetchClient } from '@/shared/api/fetchClient';
 import type {
@@ -50,4 +51,56 @@ export async function getBoardOptions(): Promise<BoardOption[]> {
     '/api/boards?pageSize=100',
   );
   return data.items.map((b) => ({ id: b.id, name: b.name }));
+}
+
+export function togglePostStatus(
+  id: string,
+  status: ContentStatus,
+): Promise<null> {
+  return fetchClient<null>(`/api/posts/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}
+
+export interface BulkDeletePostResponse {
+  deleted: string[];
+  blocked: Array<{ id: string; title: string; reason: string }>;
+}
+
+export interface BulkStatusPostResponse {
+  updated: string[];
+  failed: Array<{ id: string; reason: string }>;
+}
+
+export interface BulkMovePostResponse {
+  updated: string[];
+  failed: Array<{ id: string; title: string; reason: string }>;
+}
+
+export function bulkDeletePosts(ids: string[]): Promise<BulkDeletePostResponse> {
+  return fetchClient<BulkDeletePostResponse>('/api/posts/bulk-delete', {
+    method: 'POST',
+    body: JSON.stringify({ ids }),
+  });
+}
+
+export function bulkUpdatePostStatus(
+  ids: string[],
+  status: ContentStatus,
+): Promise<BulkStatusPostResponse> {
+  return fetchClient<BulkStatusPostResponse>('/api/posts/bulk-status', {
+    method: 'POST',
+    body: JSON.stringify({ ids, status }),
+  });
+}
+
+export function bulkMovePosts(
+  ids: string[],
+  boardId: string,
+): Promise<BulkMovePostResponse> {
+  return fetchClient<BulkMovePostResponse>('/api/posts/bulk-move', {
+    method: 'POST',
+    body: JSON.stringify({ ids, boardId }),
+  });
 }

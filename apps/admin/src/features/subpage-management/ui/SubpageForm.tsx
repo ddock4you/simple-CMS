@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,6 +24,8 @@ import {
   SelectItem,
   SelectTrigger,
 } from '@/shared/ui/shadcn/select';
+import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
+import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 
 import type { SubpageDetail } from '../model/subpageFilters';
 import {
@@ -73,6 +75,7 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
 
   const title = watch('title') ?? '';
   const slug = watch('slug') ?? '';
+  const initialStatus = initialData?.status ?? 'DRAFT';
 
   const handleSlugChange = useCallback(
     (newSlug: string) => {
@@ -90,6 +93,19 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const { confirmDialogProps: leaveDialogProps } = useDirtyGuard(isDirty);
+
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+
+  const confirmPublish = useCallback(() => {
+    setPublishConfirmOpen(false);
+    setValue('status', 'PUBLISHED', { shouldDirty: true });
+  }, [setValue]);
+
+  const cancelPublish = useCallback(() => {
+    setPublishConfirmOpen(false);
+  }, []);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -173,7 +189,17 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
                   render={({ field }) => (
                     <Select
                       value={field.value}
-                      onValueChange={field.onChange}
+                      onValueChange={(next) => {
+                        if (
+                          isDirty &&
+                          next === 'PUBLISHED' &&
+                          field.value === 'DRAFT'
+                        ) {
+                          setPublishConfirmOpen(true);
+                          return;
+                        }
+                        field.onChange(next);
+                      }}
                     >
                       <SelectTrigger>
                         <span>
@@ -223,6 +249,21 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
           </Button>
         </CardFooter>
       </Card>
+
+      <ConfirmLeaveDialog {...leaveDialogProps} />
+      <ConfirmLeaveDialog
+        open={publishConfirmOpen}
+        onConfirm={confirmPublish}
+        onCancel={cancelPublish}
+        title="저장하지 않은 변경사항도 함께 발행됩니다"
+        description={
+          initialStatus === 'DRAFT'
+            ? '편집 중인 제목·SEO 등 메타데이터가 발행 상태로 저장됩니다. 계속하시겠습니까?'
+            : '편집 중인 메타데이터가 발행 상태로 저장됩니다. 계속하시겠습니까?'
+        }
+        confirmLabel="발행으로 변경"
+        cancelLabel="취소"
+      />
     </form>
   );
 }

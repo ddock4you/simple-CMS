@@ -21,7 +21,7 @@ export async function GET(
     const post = await prisma.post.findUnique({
       where: { id },
       include: {
-        board: { select: { id: true, name: true } },
+        board: { select: { id: true, name: true, slug: true } },
         author: { select: { id: true, name: true } },
       },
     });
@@ -39,6 +39,7 @@ export async function GET(
       slug: post.slug,
       boardId: post.board.id,
       boardName: post.board.name,
+      boardSlug: post.board.slug,
       contentJson: post.contentJson,
       status: post.status,
       authorId: post.author?.id ?? null,

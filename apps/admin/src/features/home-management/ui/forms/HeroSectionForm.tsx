@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useUpdateHomeSection } from '../../api/useHomeMutations';
+import { useSectionFormDirty } from '../../lib/useSectionFormDirty';
 import {
   defaultConfigByType,
   heroConfigSchema,
@@ -17,9 +18,14 @@ import { SectionFormShell } from './SectionFormShell';
 interface HeroSectionFormProps {
   section: HomeSectionListItem;
   onClose: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-export function HeroSectionForm({ section, onClose }: HeroSectionFormProps) {
+export function HeroSectionForm({
+  section,
+  onClose,
+  onDirtyChange,
+}: HeroSectionFormProps) {
   const mutation = useUpdateHomeSection(section.id);
   const [title, setTitle] = useState(section.title);
   const [isVisible, setIsVisible] = useState(section.isVisible);
@@ -33,6 +39,16 @@ export function HeroSectionForm({ section, onClose }: HeroSectionFormProps) {
   const form = useForm<HeroConfigData>({
     resolver: zodResolver(heroConfigSchema),
     defaultValues: initialConfig,
+  });
+
+  useSectionFormDirty({
+    form,
+    title,
+    isVisible,
+    section,
+    mutationPending: mutation.isPending,
+    mutationSuccess: mutation.isSuccess,
+    onDirtyChange,
   });
 
   const onSubmit = form.handleSubmit((config) => {
