@@ -5,16 +5,16 @@ Prisma + PostgreSQL, PGroonga 한글 검색, KRDS 기반 공개 웹 UI, 제한�
 
 ## 기술 스택
 
-| 영역          | 도구                                     | 비고                                                               |
-| ------------- | ---------------------------------------- | ------------------------------------------------------------------ |
-| 앱 프레임워크 | Next.js 16 + React 19.2 + TypeScript     | admin, web 모두                                                    |
-| 모노레포      | pnpm workspace + Turborepo               | pnpm@10.33.0, Node 22                                              |
+| 영역          | 도구                                     | 비고                                                                       |
+| ------------- | ---------------------------------------- | -------------------------------------------------------------------------- |
+| 앱 프레임워크 | Next.js 16 + React 19.2 + TypeScript     | admin, web 모두                                                            |
+| 모노레포      | pnpm workspace + Turborepo               | pnpm@10.33.0, Node 22                                                      |
 | 데이터        | PostgreSQL + Prisma ORM                  | 개발: Docker `groonga/pgroonga` 이미지, 프로덕션: Supabase PostgreSQL 가능 |
-| 검색          | PGroonga                                 | PostgreSQL 확장, 한글 검색 필수, 로컬/Supabase 모두 지원           |
-| 공개 웹 UI    | KRDS + Storybook                         | web 앱 전용                                                        |
-| 관리자 UI     | 디자이너 Figma 시안 기반                 | admin 앱 전용, KRDS 미사용                                         |
-| 콘텐츠        | Tiptap WYSIWYG (JSON 저장)               | 문서형 콘텐츠 + 제한된 블록, 검색용 plain text 동시 저장           |
-| 배포          | Docker + Docker Compose + GitHub Actions | 앱별 별도 이미지                                                   |
+| 검색          | PGroonga                                 | PostgreSQL 확장, 한글 검색 필수, 로컬/Supabase 모두 지원                   |
+| 공개 웹 UI    | KRDS + Storybook                         | web 앱 전용                                                                |
+| 관리자 UI     | 디자이너 Figma 시안 기반                 | admin 앱 전용, KRDS 미사용                                                 |
+| 콘텐츠        | Tiptap WYSIWYG (JSON 저장)               | 문서형 콘텐츠 + 제한된 블록, 검색용 plain text 동시 저장                   |
+| 배포          | Docker + Docker Compose + GitHub Actions | 앱별 별도 이미지                                                           |
 
 ## 모노레포 구조
 
@@ -82,24 +82,24 @@ apps/{앱}/
 
 ## 도메인 모델
 
-| 모델                   | 설명                                                                                  |
-| ---------------------- | ------------------------------------------------------------------------------------- |
-| **User**               | 관리자 계정, username/password 인증, 가입 승인제(PENDING→ACTIVE), Role FK 기반 권한   |
-| **Role**               | 역할(등급) 정의, name·permissions(Json)·isSystem·isDefault, 메뉴별 CRUD 권한 매트릭스 |
+| 모델                   | 설명                                                                                                                    |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **User**               | 관리자 계정, username/password 인증, 가입 승인제(PENDING→ACTIVE), Role FK 기반 권한                                     |
+| **Role**               | 역할(등급) 정의, name·permissions(Json)·isSystem·isDefault, 메뉴별 CRUD 권한 매트릭스                                   |
 | **Subpage**            | 서브페이지, 콘텐츠는 PageBlock 목록으로 관리 (RICH_TEXT/HTML/IMAGE/IFRAME 자유 순서), 검색용 plain text(`content`) 유지 |
-| **Board**              | 게시판 설정, 스킨(list/gallery), slug, 공개 여부                                      |
-| **Post**               | 게시판 소속 게시글, 목록/상세 렌더링 대상                                             |
-| **HomeSection**        | 메인 페이지 전용 섹션 설정                                                            |
-| **HomePopup**          | 메인 페이지 전용 팝업 (콘텐츠형/이미지형)                                             |
-| **PageBlock**          | 서브페이지 콘텐츠 블록 (blockType: RICH_TEXT/HTML/IMAGE/IFRAME + configJson, displayOrder 기반 자유 순서) |
-| **Media**              | 이미지/파일 메타데이터, 1차는 대표 이미지 중심                                        |
-| **NavigationMenu**     | 메뉴 묶음, slots 배열(HEADER/FOOTER/SIDEBAR)로 공개 웹 배치 위치 지정, 복수 슬롯 가능 |
-| **NavigationMenuItem** | 메뉴 항목 (SUBPAGE/BOARD/EXTERNAL/CUSTOM 연결)                                        |
-| **AuditLog**           | 관리자 활동 이력, append-only, 데이터 변경 + 인증 이벤트 기록                         |
-| **SiteSettings**       | 사이트 전역 설정 (도메인, 사이트명 등), 키-값 구조                                    |
-| **ErrorLog**           | 공개 웹 런타임 에러 로그, 서버/클라이언트 에러 기록, fingerprint 기반 그룹핑          |
-| **Session**            | 커스텀 DB 세션, crypto.randomUUID 기반 토큰, httpOnly 쿠키, 동시 로그인 제어 대상     |
-| **PreviewToken**       | draft 미리보기 토큰 (Stage 7a), TTL 10분, admin→web 교환 후 web 도메인 쿠키로 치환   |
+| **Board**              | 게시판 설정, 스킨(list/gallery), slug, 공개 여부                                                                        |
+| **Post**               | 게시판 소속 게시글, 목록/상세 렌더링 대상                                                                               |
+| **HomeSection**        | 메인 페이지 전용 섹션 설정                                                                                              |
+| **HomePopup**          | 메인 페이지 전용 팝업 (콘텐츠형/이미지형)                                                                               |
+| **PageBlock**          | 서브페이지 콘텐츠 블록 (blockType: RICH_TEXT/HTML/IMAGE/IFRAME + configJson, displayOrder 기반 자유 순서)               |
+| **Media**              | 이미지/파일 메타데이터, 1차는 대표 이미지 중심                                                                          |
+| **NavigationMenu**     | 메뉴 묶음, slots 배열(HEADER/FOOTER/SIDEBAR)로 공개 웹 배치 위치 지정, 복수 슬롯 가능                                   |
+| **NavigationMenuItem** | 메뉴 항목 (SUBPAGE/BOARD/EXTERNAL/CUSTOM 연결)                                                                          |
+| **AuditLog**           | 관리자 활동 이력, append-only, 데이터 변경 + 인증 이벤트 기록                                                           |
+| **SiteSettings**       | 사이트 전역 설정 (도메인, 사이트명 등), 키-값 구조                                                                      |
+| **ErrorLog**           | 공개 웹 런타임 에러 로그, 서버/클라이언트 에러 기록, fingerprint 기반 그룹핑                                            |
+| **Session**            | 커스텀 DB 세션, crypto.randomUUID 기반 토큰, httpOnly 쿠키, 동시 로그인 제어 대상                                       |
+| **PreviewToken**       | draft 미리보기 토큰 (Stage 7a), TTL 10분, admin→web 교환 후 web 도메인 쿠키로 치환                                      |
 
 ## 운영 정책
 
@@ -209,10 +209,12 @@ apps/{앱}/
 **admin에 새 기능 추가 시 권한 체크는 API + UI 양쪽 모두 적용이 기본값**이다.
 
 **서버 (API Route)**:
+
 - 모든 데이터 변경/조회 API Route에서 `requirePermission(resource, action)` 호출
 - 미인증 → 401, 권한 없음 → 403
 
 **클라이언트 (UI)**:
+
 - `(authenticated)/layout.tsx`에서 `<PermissionProvider>`로 모든 인증 페이지를 감쌈
 - Client Component에서 `usePermission(resource, action): boolean` 훅으로 권한 체크
 - Server Component에서는 `hasPermission(user, resource, action)` 직접 호출
@@ -220,11 +222,13 @@ apps/{앱}/
 - 사이드바: `getVisibleMenuItems()`로 read 권한 없는 메뉴 숨김
 
 **뷰/편집 분리 패턴**:
+
 - 상세 페이지는 읽기 전용 뷰(`/[id]`)가 기본, 편집(`/[id]/edit`)은 별도 라우트
 - 뷰 페이지에서 update 권한이 있을 때만 "편집" 버튼 표시
 - 목록에서도 read(보기)와 update(편집) 버튼을 권한별로 분리
 
 **체크리스트** (새 기능 개발 시):
+
 1. API Route: `requirePermission()` 호출 추가
 2. 목록 UI: 생성 버튼에 `create` 권한 체크
 3. 테이블: 편집 버튼에 `update` 권한 체크
@@ -285,14 +289,14 @@ apps/{앱}/
 
 ### Stage 1 — 기초 환경
 
-| 단계 | 내용                           | 확인 가능한 것                    | 상태        |
-| ---- | ------------------------------ | --------------------------------- | ----------- |
+| 단계 | 내용                           | 확인 가능한 것                    | 상태     |
+| ---- | ------------------------------ | --------------------------------- | -------- |
 | 1    | 모노레포, 앱 초기화, 공유 설정 | `pnpm dev`로 양쪽 앱 빈 화면 실행 | **완료** |
 
 ### Stage 2 — DB / 인증 / 사용자
 
-| 단계 | 내용                                                         | 확인 가능한 것                                    | 상태 |
-| ---- | ------------------------------------------------------------ | ------------------------------------------------- | ---- |
+| 단계 | 내용                                                         | 확인 가능한 것                                    | 상태     |
+| ---- | ------------------------------------------------------------ | ------------------------------------------------- | -------- |
 | 2a   | Prisma 스키마 전체 + 커스텀 세션 인증 + Seed + **로그인 UI** | 브라우저에서 로그인/로그아웃                      | **완료** |
 | 2b   | 회원가입 API + **회원가입 UI**                               | 가입 → PENDING → "승인 대기" 메시지 확인          | **완료** |
 | 2c   | Admin 레이아웃 (사이드바/헤더) + **대시보드 껍데기**         | 로그인 후 사이드바 있는 관리 화면                 | **완료** |
@@ -302,48 +306,50 @@ apps/{앱}/
 
 ### Stage 3 — Admin CMS 기능
 
-| 단계 | 내용                                             | 확인 가능한 것                      | 상태 |
-| ---- | ------------------------------------------------ | ----------------------------------- | ---- |
+| 단계 | 내용                                                            | 확인 가능한 것                                                   | 상태     |
+| ---- | --------------------------------------------------------------- | ---------------------------------------------------------------- | -------- |
 | 3a   | 서브 페이지 CRUD API + **목록/뷰/편집 UI** (Tiptap) + 권한 체크 | 서브 페이지 CRUD + 뷰/편집 분리 + 클라이언트 권한 체크 패턴 도입 | **완료** |
-| 3b   | 게시판 CRUD API + **게시판 관리 UI**             | 게시판 생성 → 스킨 설정 → 목록 확인 | **완료** |
-| 3c   | 게시글 CRUD API + **목록/편집 UI**               | 게시글 작성 → 발행 → 목록 확인      | **완료** |
-| 3d   | 메뉴 관리 API + **메뉴 편집 UI** (dnd-kit)       | 메뉴 항목 추가 → 드래그 순서 변경   | **완료** |
-| 3e   | 감사 로그 API + **감사 로그 UI** + 내보내기      | 활동 이력 조회 → Excel 다운로드     | **완료** |
-| 3f   | 사이트 설정 API + **도메인/보안/업로드 설정 UI** | 설정 변경 → 저장 → 반영 확인        | **완료** |
+| 3b   | 게시판 CRUD API + **게시판 관리 UI**                            | 게시판 생성 → 스킨 설정 → 목록 확인                              | **완료** |
+| 3c   | 게시글 CRUD API + **목록/편집 UI**                              | 게시글 작성 → 발행 → 목록 확인                                   | **완료** |
+| 3d   | 메뉴 관리 API + **메뉴 편집 UI** (dnd-kit)                      | 메뉴 항목 추가 → 드래그 순서 변경                                | **완료** |
+| 3e   | 감사 로그 API + **감사 로그 UI** + 내보내기                     | 활동 이력 조회 → Excel 다운로드                                  | **완료** |
+| 3f   | 사이트 설정 API + **도메인/보안/업로드 설정 UI**                | 설정 변경 → 저장 → 반영 확인                                     | **완료** |
 
 ### Stage 3d-2 — 메뉴 슬롯 배정 + 3depth 확장
 
-| 단계  | 내용                                                         | 확인 가능한 것                                         | 상태 |
-| ----- | ------------------------------------------------------------ | ------------------------------------------------------ | ---- |
-| 3d-2  | 메뉴 슬롯(HEADER/FOOTER/SIDEBAR) 배정 + 3depth 메뉴 + 사이드바 | admin에서 슬롯 배정 → 공개 웹 헤더/푸터/사이드바 반영  | **완료** |
+| 단계 | 내용                                                           | 확인 가능한 것                                        | 상태     |
+| ---- | -------------------------------------------------------------- | ----------------------------------------------------- | -------- |
+| 3d-2 | 메뉴 슬롯(HEADER/FOOTER/SIDEBAR) 배정 + 3depth 메뉴 + 사이드바 | admin에서 슬롯 배정 → 공개 웹 헤더/푸터/사이드바 반영 | **완료** |
 
 ### Stage 4 — 공개 웹
 
-| 단계 | 내용                                       | 확인 가능한 것                           | 상태 |
-| ---- | ------------------------------------------ | ---------------------------------------- | ---- |
+| 단계 | 내용                                       | 확인 가능한 것                              | 상태     |
+| ---- | ------------------------------------------ | ------------------------------------------- | -------- |
 | 4a   | Web 메인+서브페이지 렌더링 + KRDS 레이아웃 | admin에서 만든 서브 페이지가 공개 웹에 표시 | **완료** |
-| 4b   | Web 게시판/게시글 렌더링                   | 발행한 게시글이 공개 웹에 노출           | **완료** |
-| 4c   | Web 메뉴 렌더링 + 도메인 프록시            | 헤더/푸터 메뉴, 커스텀 도메인 리다이렉트 | **완료** |
-| 4d   | Web 통합검색 (PGroonga)                    | `/search?q=검색어`로 검색 결과 확인      | **완료** |
-| 4e   | Web 에러 캡처 + **Admin 에러 로그 UI**     | web 에러 → admin에서 조회/해결           | **완료** |
+| 4b   | Web 게시판/게시글 렌더링                   | 발행한 게시글이 공개 웹에 노출              | **완료** |
+| 4c   | Web 메뉴 렌더링 + 도메인 프록시            | 헤더/푸터 메뉴, 커스텀 도메인 리다이렉트    | **완료** |
+| 4d   | Web 통합검색 (PGroonga)                    | `/search?q=검색어`로 검색 결과 확인         | **완료** |
+| 4e   | Web 에러 캡처 + **Admin 에러 로그 UI**     | web 에러 → admin에서 조회/해결              | **완료** |
 
 ### Stage 5 — 메인 페이지 전용
 
-| 단계 | 내용                                       | 확인 가능한 것                     | 상태 |
-| ---- | ------------------------------------------ | ---------------------------------- | ---- |
+| 단계 | 내용                                       | 확인 가능한 것                     | 상태     |
+| ---- | ------------------------------------------ | ---------------------------------- | -------- |
 | 5a   | 메인 섹션 관리 + **Admin UI + Web 렌더링** | 섹션 데이터 편집 → 메인에 반영     | **완료** |
 | 5b   | 메인 팝업 관리 + **Admin UI + Web 모달**   | 팝업 등록 → 메인 방문 시 모달 표시 | **완료** |
 
 ### Stage 6–8 — 확장 / 인프라
 
-| 단계 | 내용                                        | 확인 가능한 것                     | 상태 |
-| ---- | ------------------------------------------- | ---------------------------------- | ---- |
-| 6    | 서브페이지 블록 + **Admin UI + Web 렌더링** | 블록 추가/순서 변경 → 공개 웹 확인 | **완료** |
-| 7a   | Draft 미리보기 (preview 토큰 + web 쿠키)    | admin → web preview URL 새 창 렌더 | **완료** |
-| 7b   | HTML 블록 = HTML + 페이지 스코프 CSS (Monaco Tabs) | 한 블록에서 HTML+CSS, 페이지 스코프 적용 | **완료** |
-| 7c   | 운영 UX (Dirty 가드, 사이트 보기, 빠른 상태 토글, 벌크, cmd+k) | 이탈 경고 + 상태 토글 + 일괄 작업 + 빠른 전환 | **완료** |
+| 단계 | 내용                                                                | 확인 가능한 것                                                                              | 상태     |
+| ---- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------- |
+| 6    | 서브페이지 블록 + **Admin UI + Web 렌더링**                         | 블록 추가/순서 변경 → 공개 웹 확인                                                          | **완료** |
+| 7a   | Draft 미리보기 (preview 토큰 + web 쿠키)                            | admin → web preview URL 새 창 렌더                                                          | **완료** |
+| 7b   | HTML 블록 = HTML + 페이지 스코프 CSS (Monaco Tabs)                  | 한 블록에서 HTML+CSS, 페이지 스코프 적용                                                    | **완료** |
+| 7c   | 운영 UX (Dirty 가드, 사이트 보기, 빠른 상태 토글, 벌크, cmd+k)      | 이탈 경고 + 상태 토글 + 일괄 작업 + 빠른 전환                                               | **완료** |
 | 7d   | 공개 웹 좌·우 사이드바 + 공공누리 마크 + 입력 Dialog 외부 클릭 차단 | HEADER 기반 좌측 트리 + SIDEBAR 슬롯 우측 InPageNavigation + KOGL 마크 + Dialog 오클릭 방지 | **완료** |
-| 8    | Docker + CI/CD + 문서화                     | `docker compose up`으로 전체 실행  | 대기 |
+| 7e   | 공개 웹 KRDS Tailwind 도입 + Hero utility 마이그레이션 + 캐러셀 width 회귀 방어 | KRDS utility class(`bg-primary-50`/`text-display-s`/`tablet:`/`desktop:`) 사용 + Hero/Recommended 모든 viewport 정상 | **완료** |
+| 7f   | Storybook + Vitest 2-track 테스트 인프라 (admin/web 동시)           | `pnpm test` 한 번에 unit(jsdom) + storybook(Playwright) 실행, KRDS 사용 현황 `Web/KRDS/*` 카테고리 문서화 | 대기     |
+| 8    | Docker + CI/CD + 문서화                                             | `docker compose up`으로 전체 실행                                                           | 대기     |
 
 #### Stage 7c 결과 요약
 
@@ -363,6 +369,41 @@ apps/{앱}/
 - **입력 Dialog 외부 클릭 차단**: shadcn 공용 `Dialog` 래퍼는 이미 Base-UI `DialogRoot.Props`를 spread 전달하므로 별도 prop 신설 없이 호출자가 `<Dialog disablePointerDismissal>` opt-in. 대상 Dialog(MenuItem/MenuSetEdit/BlockEdit/MediaDetail/SectionEdit/CreateRole) 6곳에 적용. AlertDialog는 Base-UI v1.3.0 `AlertDialogRoot`가 내부에서 `disablePointerDismissal: true` 강제 + 타입에서 prop Omit → 코드 변경 없이 이미 배경 클릭 닫기 차단됨 (`node_modules/@base-ui/react/alert-dialog/root/AlertDialogRoot.js` line 42). ESC 닫기는 모든 Dialog에서 유지
 - **중첩 Dialog 흐림 처리**: 첫 번째 Dialog 위에 두 번째 Dialog(예: 편집 중 이탈 경고 `ConfirmLeaveDialog`)가 열릴 때 뒤쪽 Popup을 "배경처럼" 물러나 보이게 처리. Base-UI가 부모 `Popup`에 자동 부착하는 `data-nested-dialog-open` 속성을 Tailwind 선택자로 활용: `data-[nested-dialog-open]:opacity-60 blur-[1.5px] scale-[0.98] pointer-events-none` + `transition-[opacity,filter,transform] duration-200`. `shared/ui/shadcn/{dialog,alert-dialog}.tsx`의 `Popup` 공용 className에 추가 — 모든 중첩 Dialog/AlertDialog가 자동 적용
 - **입력 Dialog 성공 후 값 초기화 패턴 정비**: 재사용 표준 — 다음 중 하나를 반드시 적용해야 다음 오픈 시 빈 상태로 시작. (A) `useEffect(() => { if (!open) return; reset(defaults); }, [open, ...deps, reset])`(예: MenuItemDialog, MenuSetEditDialog), (B) mutation `onSuccess`에서 `reset()`(예: CreateRoleDialog), (C) 부모에서 `<Dialog key=.../>`로 매번 새 인스턴스 마운트(예: BlockEditDialog는 `BlockManager`가 `key={editingBlock ? `edit-${id}` : `create-${type}`}` 부여). **MenuItemDialog 회귀 수정**: 기존 useEffect 의존성이 `[editItem, parentId, reset]`만이라 같은 parentId로 새 항목을 연속 추가할 때 이전 값이 남던 버그 → `open`을 의존성에 포함하고 early return으로 정정
+
+#### Stage 7e 결과 요약
+
+- **공개 웹 Tailwind v4 도입 (preflight 제외 모드)**: `apps/web`에 `tailwindcss@^4`/`@tailwindcss/postcss@^4`/`postcss@^8.5` + `@krds-ui/tailwindcss-plugin@^0.6` 신규 설치. 기존 KRDS CSS + `globals.css` 1670줄과 공존하기 위해 preflight를 제외한 Tailwind 로드 방식 사용:
+  - `apps/web/postcss.config.mjs` 신규 (`@tailwindcss/postcss`만 등록)
+  - `apps/web/app/globals.css` 최상단: `@layer theme, krds-base, components, utilities;` + `@import 'tailwindcss/theme.css' layer(theme);` + `@import 'tailwindcss/utilities.css' layer(utilities);` + `@theme { --breakpoint-mobile: 360px; --breakpoint-tablet: 601px; --breakpoint-desktop: 1025px; }` + `@plugin "@krds-ui/tailwindcss-plugin";`
+  - layout.tsx의 import 순서: `krds-react/dist/index.css` → `globals.css` 유지 (utility가 KRDS 스타일 위에 올라가도록)
+  - admin은 변경 없음 — 이전부터 Tailwind v4 + shadcn/ui 사용 중
+- **KRDS Tailwind plugin 성격**: plugin 함수 본문은 빈 함수이고 두 번째 인자의 `theme.screens` + `theme.extend.{colors,fontSize,fontWeight,spacing,borderRadius}` 토큰만 등록. v4 `@plugin` 호환 디렉티브로 `bg-primary-50`/`text-display-s`/`rounded-5`/`p-7`/`mobile:`/`tablet:`/`desktop:` utility가 자동 생성
+- **Hero 섹션 utility 마이그레이션**: `apps/web/src/features/home-section/ui/HeroSection.tsx`를 KRDS Tailwind utility로 변환하며 globals.css의 `.home-hero*` 블록 91줄 삭제. 색상은 plugin 토큰(`bg-primary-50`/`text-gray-90` 등), spacing/radius는 KRDS scale(`p-8`=32px, `rounded-5`=12px), 브레이크포인트는 KRDS(`tablet:601px`/`desktop:1025px`), fontSize는 디자인 강조 사이즈는 arbitrary(`text-[28px]` 등) + 정확 매핑은 토큰. `.home-hero-link:hover .home-hero-title` → `group` + `group-hover:underline`
+- **Swiper 캐러셀 width 회귀 방어 (Carousel.tsx 공용)**: 첫 방문 시 Pretendard CDN 폰트/KRDS Header mount 등 async layout shift로 swiper의 부모 width 측정이 실패하여 `slide.style.width`가 비정상 큰 값(예: 22369600px)으로 박히는 회귀 발생. `apps/web/src/shared/ui/Carousel.tsx`의 `useEffect`에 다층 트리거로 `swiper.update()` 호출:
+  - (1) `requestAnimationFrame` 2회 — 첫 paint 직후 안정화된 layout 측정
+  - (2) `window 'load'` 이벤트 — 모든 리소스(폰트/이미지) 로드 완료 시점
+  - (3) `ResizeObserver` — 부모 element width 변화마다 재측정
+  - swiper의 `observer`/`observeParents` 옵션은 사용 안 함 (내부 observer + update가 race 시 22M로 갱신되는 케이스 회피). `watchOverflow`만 유지
+- **Hero 전용 CSS width guard**: Hero는 `slidesPerView=1` 고정이므로 `<section data-hero-carousel>` + globals.css의 `[data-hero-carousel] .swiper-slide { width: 100% !important; flex-shrink: 0; }` 이중 안전망
+- **Recommended 섹션 breakpoint별 width guard**: `slidesPerView` 가변(mobile 1 / tablet 2 / desktop 3)이라 `.home-recommended .swiper-slide`에 viewport별 `calc()` width 강제 (`768px+: calc((100% - 16px) / 2)`, `1024px+: calc((100% - 40px) / 3)`). RecommendedSection.tsx의 `breakpoints` prop + `spaceBetween`과 1:1 동기화 필요 — 변경 시 globals.css도 함께 수정
+- **진단 경험**: 변환 전엔 정상이었던 이유가 legacy CSS가 있어서가 아니라 swiper의 mount 측정이 우연히 안정된 layout에 걸렸던 것. 재방문(client-side nav) 시에는 layout이 이미 안정화돼 있어 mount 측정이 항상 성공 — 이 패턴이 "첫 방문 vs 재방문" 증상 차이의 원인 ([계획 문서](../../../Users/ddock/.claude/plans/krds-encapsulated-wind.md) 참조)
+
+#### Stage 7f 도입 계획 요약 (대기)
+
+테스트/문서화 기반 신설. 최근 7e의 swiper width 회귀처럼 특정 viewport에서만 깨지는 회귀가 반복되므로 Stage 8(Docker/CI) 선행 기반으로 위치.
+
+- **Storybook**: v9 + `@storybook/nextjs-vite` (admin/web 독립 설치, shadcn vs KRDS UI 시스템 분리)
+- **Vitest 2-track**: `projects: [unit(jsdom), storybook(Playwright Chromium)]` — `*.test.ts`는 jsdom 빠름, `*.stories.tsx`의 play function은 real browser
+- **공용 config**: `packages/config/vitest/{base,browser}.ts` + 루트 `vitest.workspace.ts`
+- **web의 KRDS 원본 문서화**: `apps/web/src/shared/ui/krds-showcase/`에 Header/Footer/SideNavigation/Pagination/Breadcrumb/Masthead 6개 story + `README.mdx`. Storybook sidebar에 `Web/KRDS/*` 전용 카테고리 분리 (옵션 C). "우리가 쓰는 variant만" 등록
+- **카테고리 트리**: `Web/{Shared,Widgets,Features,KRDS}` + `Admin/{Shadcn,Shared,Features}`
+- **테스트 작성 가이드 (2-track 분기)**:
+  - 순수 함수/zod/Prisma builder/훅 pure logic → `*.test.ts` (jsdom)
+  - 컴포넌트 렌더·폼 validation·hover/focus·scroll·ResizeObserver·swiper 관련 → `*.stories.tsx` play function (browser)
+  - 한 컴포넌트에 stories.tsx와 test.tsx 동시 작성 금지 원칙
+- **CI**: GitHub Actions matrix(admin/web 병렬) + Turborepo 캐싱, Playwright Chromium 설치 포함
+- **의존성**: `storybook@^9`, `@storybook/addon-vitest`, `@storybook/test`, `vitest@^3`, `@vitest/coverage-v8`, `@vitest/browser-playwright`, `jsdom`, `@testing-library/react`, `msw`(web)
+- 상세 단계는 `C:/Users/ddock/.claude/plans/krds-encapsulated-wind.md` 참조
 
 ## 명령어
 
@@ -385,6 +426,7 @@ pnpm db:pgroonga      # PGroonga 확장 + 검색 인덱스 설정
 
 1. **운영 기준 + 책임 분리 우선**: 코드 경계를 명확히 나누고, 장애 추적·모니터링이 용이한 구조를 선택한다
 2. **코드 재사용성 + 단일 소스 원칙**: 동일 로직의 중복을 피하고, 하나의 정의가 하나의 진실을 담당한다
+3. **외부 라이브러리 문서 우선 조회**: 라이브러리/API 문서, 설정, 코드 생성이 필요할 때는 Context7 MCP를 먼저 사용한다
 
 ## 코딩 컨벤션
 
@@ -519,14 +561,14 @@ shared/lib/
 | 공유 에디터 설정         | @simple-cms/editor                                 | 전체                | Tiptap 확장 정의, 콘텐츠 CSS, 텍스트 추출 유틸                                                                    |
 | 코드 에디터              | Monaco Editor                                      | admin               | 커스텀 HTML/CSS 편집용 (@monaco-editor/react)                                                                     |
 | CSS (admin)              | Tailwind CSS                                       | admin               | shadcn/ui 기반                                                                                                    |
-| UI 프레임워크 (web)      | krds-react + krds-uiux                             | web                 | krds-react: React 컴포넌트 + CSS 토큰. krds-uiux: HTML 컴포넌트 소스 참조용 (Table 등 미export 컴포넌트 구현 시) |
+| UI 프레임워크 (web)      | krds-react + krds-uiux                             | web                 | krds-react: React 컴포넌트 + CSS 토큰. krds-uiux: HTML 컴포넌트 소스 참조용 (Table 등 미export 컴포넌트 구현 시)  |
 | HTML 새니타이징          | isomorphic-dompurify                               | web                 | SSR 호환 DOMPurify, Tiptap HTML 새니타이징                                                                        |
-| CSS (web)                | KRDS 기반 (krds-react/dist/index.css)              | web                 | krds-react CSS 토큰 + 커스텀 CSS (Tiptap 콘텐츠 등)                                                              |
+| CSS (web)                | KRDS 기반 (krds-react/dist/index.css)              | web                 | krds-react CSS 토큰 + 커스텀 CSS (Tiptap 콘텐츠 등)                                                               |
 | 날짜 처리                | date-fns                                           | 전체                | tree-shaking 친화적 (함수 단위 import)                                                                            |
 | 아이콘                   | lucide-react                                       | 전체                | shadcn/ui 기본 아이콘, 개별 import 최적화                                                                         |
 | 데이터 페칭 (클라이언트) | TanStack Query                                     | admin               | Key Factory + queryOptions 패턴, @tanstack/eslint-plugin-query 활용                                               |
 | 상태 관리 (클라이언트)   | Zustand                                            | admin, web          | UI 상태 전용. 서버 데이터는 TanStack Query가 담당                                                                 |
-| 슬라이드/캐러셀          | Swiper 12                                          | web                 | 메인 히어로 + 추천 콘텐츠 슬라이드, A11y/Keyboard/Autoplay 모듈, 커스텀 prev/next/play/pause 버튼 지원           |
+| 슬라이드/캐러셀          | Swiper 12                                          | web                 | 메인 히어로 + 추천 콘텐츠 슬라이드, A11y/Keyboard/Autoplay 모듈, 커스텀 prev/next/play/pause 버튼 지원            |
 | CSV 내보내기             | 네이티브 구현                                      | admin               | 외부 라이브러리 없이 문자열 기반 CSV 생성                                                                         |
 | Excel 내보내기           | exceljs                                            | admin               | XLSX 바이너리 형식 생성, 감사 로그 다운로드용                                                                     |
 | 비밀번호 해싱            | bcryptjs                                           | admin (packages/db) | 순수 JS, 네이티브 빌드 불필요. SHA256은 범용 해시라 비밀번호에 부적합 — bcrypt는 의도적으로 느린 해싱 + 내장 salt |

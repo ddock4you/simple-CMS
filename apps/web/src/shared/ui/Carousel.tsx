@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Swiper as SwiperInstance } from 'swiper';
 import { A11y, Autoplay, Keyboard, Navigation, Pagination } from 'swiper/modules';
@@ -54,9 +54,58 @@ export function Carousel({
   ariaLabel,
 }: CarouselProps) {
   const swiperRef = useRef<SwiperInstance | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(
     options.showPlayPause && options.autoPlay,
   );
+
+  // 첫 방문 시 Pretendard 폰트/이미지/KRDS Header 등의 async layout shift로
+  // swiper가 mount 시점 부모 너비 측정에 실패하여 slide.style.width가 비정상 큰 값
+  // (예: 22369600px)으로 박히는 회귀를 방어. 다층 트리거로 robustness 확보:
+  //   1) ResizeObserver: 부모 element width 변화 시마다 재측정 (가장 신뢰)
+  //   2) window 'load' 이벤트: 모든 리소스(폰트/이미지) 로드 완료 시점
+  //   3) RAF 2회: 첫 paint 직후 안정화된 layout 측정
+  // swiper.update()는 idempotent라 중복 호출 안전. swiper의 observer 옵션은
+  // 사용하지 않음 — 내부 observer + update가 race 시 22M로 갱신되는 케이스 회피.
+  useEffect(() => {
+    const safeUpdate = () => {
+      const swiper = swiperRef.current;
+      if (swiper && !swiper.destroyed) swiper.update();
+    };
+
+    // 1) RAF 2회 — 첫 paint 직후 안정화된 layout 측정
+    let raf1 = 0;
+    let raf2 = 0;
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(safeUpdate);
+    });
+
+    // 2) window 'load' — 모든 리소스(폰트/이미지) 로드 완료 시점
+    let onLoad: (() => void) | null = null;
+    let loadTimeout = 0;
+    if (document.readyState === 'complete') {
+      loadTimeout = window.setTimeout(safeUpdate, 0);
+    } else {
+      onLoad = safeUpdate;
+      window.addEventListener('load', onLoad);
+    }
+
+    // 3) ResizeObserver — 부모 element width 변화 시마다 재측정 (가장 신뢰)
+    let ro: ResizeObserver | null = null;
+    const el = containerRef.current;
+    if (el && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(safeUpdate);
+      ro.observe(el);
+    }
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      if (loadTimeout) clearTimeout(loadTimeout);
+      if (onLoad) window.removeEventListener('load', onLoad);
+      if (ro) ro.disconnect();
+    };
+  }, []);
 
   const modules = [A11y, Keyboard];
   if (options.showPrevNext) modules.push(Navigation);
@@ -94,6 +143,7 @@ export function Carousel({
 
   return (
     <div
+      ref={containerRef}
       className={['krds-carousel', className].filter(Boolean).join(' ')}
       role="region"
       aria-roledescription="carousel"
@@ -107,6 +157,7 @@ export function Carousel({
         slidesPerView={slidesPerView}
         spaceBetween={spaceBetween}
         loop={loop && slides.length > 1}
+        watchOverflow
         keyboard={{ enabled: true, onlyInViewport: true }}
         a11y={{
           enabled: true,

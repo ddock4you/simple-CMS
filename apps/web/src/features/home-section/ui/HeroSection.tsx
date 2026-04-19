@@ -20,7 +20,10 @@ export function HeroSection({ section }: HeroSectionProps) {
   // 단일 슬라이드 → 슬라이더 생략, 정적 렌더
   if (slides.length === 1) {
     return (
-      <section className="home-hero" aria-label="메인 히어로">
+      <section
+        className="block w-full overflow-hidden rounded-5"
+        aria-label="메인 히어로"
+      >
         {renderSlide(slides[0])}
       </section>
     );
@@ -28,10 +31,16 @@ export function HeroSection({ section }: HeroSectionProps) {
 
   // 다중 슬라이드 → Carousel (한 번에 1개)
   return (
-    <section className="home-hero home-hero-carousel" aria-label="메인 히어로">
+    <section
+      data-hero-carousel
+      className="block w-full min-w-0 overflow-hidden rounded-5"
+      aria-label="메인 히어로"
+    >
       <Carousel
         slides={slides.map((slide, index) => (
-          <div key={index}>{renderSlide(slide)}</div>
+          <div key={index} className="w-full">
+            {renderSlide(slide)}
+          </div>
         ))}
         options={slideOptions}
         ariaLabel="메인 히어로 슬라이드"
@@ -43,18 +52,25 @@ export function HeroSection({ section }: HeroSectionProps) {
 function renderSlide(slide: HeroSlide): ReactNode {
   const content = (
     <div
-      className="home-hero-slide"
+      className="relative flex w-full min-h-[280px] items-end overflow-hidden rounded-5 bg-[#1a2b4a] bg-cover bg-center bg-no-repeat text-white tablet:min-h-[360px] desktop:min-h-[440px]"
       style={
         slide.imageUrl
           ? { backgroundImage: `url(${escapeUrl(slide.imageUrl)})` }
           : undefined
       }
     >
-      <div className="home-hero-overlay" aria-hidden="true" />
-      <div className="home-hero-inner">
-        <h2 className="home-hero-title">{slide.title}</h2>
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-black/10"
+        aria-hidden="true"
+      />
+      <div className="relative z-10 max-w-[720px] px-8 pt-8 pb-9 tablet:px-9 tablet:pt-9 tablet:pb-10">
+        <h2 className="mb-4 text-[28px] leading-[1.2] font-extrabold tracking-[-0.02em] [text-shadow:0_2px_12px_rgba(0,0,0,0.35)] tablet:text-[36px] desktop:text-[44px] group-hover:underline group-hover:underline-offset-4">
+          {slide.title}
+        </h2>
         {slide.description && (
-          <p className="home-hero-description">{slide.description}</p>
+          <p className="text-[15px] leading-[1.6] opacity-95 [text-shadow:0_1px_8px_rgba(0,0,0,0.3)] tablet:text-[17px]">
+            {slide.description}
+          </p>
         )}
       </div>
       {/* SR 전용 alt: 배경 이미지는 presentation이므로 별도 알림 */}
@@ -64,7 +80,10 @@ function renderSlide(slide: HeroSlide): ReactNode {
 
   if (slide.url) {
     return (
-      <Link href={slide.url} className="home-hero-link">
+      <Link
+        href={slide.url}
+        className="group block text-inherit no-underline"
+      >
         {content}
       </Link>
     );

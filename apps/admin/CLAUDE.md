@@ -862,6 +862,20 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 - 운영 효율 + 데이터 입력 흐름 우선
 - 반복 패턴 충분히 생기면 내부 공용 컴포넌트 정리 → 이후에만 분리 검토
 
+### Storybook + Vitest (Stage 7f 도입 예정)
+
+admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인프라 도입. 상세는 루트 CLAUDE.md의 "Stage 7f 도입 계획 요약" 참조.
+
+- **Framework**: `@storybook/nextjs-vite` (Vite 기반 — Vitest addon 호환). 프로덕션 빌드는 Turbopack 그대로
+- **Sidebar 카테고리**: `Admin/{Shadcn,Shared,Features}` — shadcn/ui 25개 래퍼 + `AdminHeader`/`LoginForm`/`CreateRoleDialog` 등 초기 10개
+- **Provider decorator**: `.storybook/preview.tsx`에 `QueryProvider → ThemeProvider → TooltipProvider → PermissionProvider` 체인 재현. 각 story가 `parameters.permissions`로 mock 권한 주입
+- **테스트 분기 룰**:
+  - 순수 함수/zod/훅 pure logic → `{name}.test.ts` (jsdom 프로젝트)
+  - React 컴포넌트 + 폼 validation/dirty guard/권한별 UI 토글 → `{name}.stories.tsx`의 play function (browser 프로젝트)
+  - 한 컴포넌트에 stories.tsx와 test.tsx 동시 작성 금지
+- **MSW**: API mock용. 폼 mutation → 낙관적 업데이트 → rollback 시나리오 테스트
+- **권한 관련 스토리**: decorator의 `PermissionProvider` mock으로 생성/편집/삭제 버튼의 표시/숨김 대조
+
 ## 데이터 처리 패턴
 
 ### API Route + TanStack Query (Server Actions 미사용)

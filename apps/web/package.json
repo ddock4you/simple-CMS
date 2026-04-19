@@ -11,6 +11,7 @@
     "clean": "rm -rf .next .turbo"
   },
   "dependencies": {
+    "@krds-ui/tailwindcss-plugin": "^0.6.0",
     "@simple-cms/db": "workspace:*",
     "@simple-cms/editor": "workspace:*",
     "@simple-cms/types": "workspace:*",
@@ -27,11 +28,14 @@
   },
   "devDependencies": {
     "@simple-cms/config": "workspace:*",
+    "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^25.5.2",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "dotenv": "^17.4.1",
     "eslint": "^9.28.0",
+    "postcss": "^8.5.0",
+    "tailwindcss": "^4.1.0",
     "typescript": "^5.8.3"
   }
 }

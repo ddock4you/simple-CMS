@@ -54,7 +54,77 @@ src/
 - KRDS는 공개 웹 전용 UI 기반
 - KRDS 원본을 직접 사용하는 것이 아닌 **래퍼/조합 컴포넌트**로 관리
 - 래퍼 컴포넌트는 `apps/web` 내부 레이어에서 관리 (공용 패키지 X)
-- Storybook은 1차에서 공개 웹 UI 중심으로 문서화
+- Storybook은 1차에서 공개 웹 UI 중심으로 문서화 (상세는 Stage 7f 참조)
+
+## KRDS Tailwind 스타일링 (Stage 7e)
+
+공개 웹은 기존 `globals.css`(1670줄, `.home-*`/`.subpage-*` 등 BEM-스러운 네이밍)와 함께 Tailwind v4 + KRDS 공식 plugin을 병행. 새 컴포넌트는 utility 우선, 기존 클래스는 점진 마이그레이션.
+
+### 설정 구조
+
+- `apps/web/postcss.config.mjs` — `@tailwindcss/postcss`만 등록
+- `apps/web/app/globals.css` 상단 9줄:
+  ```css
+  @layer theme, krds-base, components, utilities;
+  @import 'tailwindcss/theme.css' layer(theme);
+  @import 'tailwindcss/utilities.css' layer(utilities);
+  @theme {
+    --breakpoint-mobile: 360px;
+    --breakpoint-tablet: 601px;
+    --breakpoint-desktop: 1025px;
+  }
+  @plugin "@krds-ui/tailwindcss-plugin";
+  ```
+- **Preflight 제외** 방식 (`tailwindcss/preflight.css` import 안 함) — KRDS 컴포넌트의 `<button>`/`<input>` 기본 스타일과 충돌 방지
+- layout.tsx의 import 순서: `import 'krds-react/dist/index.css';` → `import './globals.css';` — utility가 KRDS CSS 위에 올라가 overrides 가능
+
+### KRDS plugin이 제공하는 토큰
+
+plugin 함수 본문은 빈 함수이고 `theme.extend.{colors,fontSize,fontWeight,spacing,borderRadius}` + `theme.screens` 토큰만 등록. v4 `@plugin` 호환 모드가 이를 utility로 변환.
+
+| 카테고리 | 예시 utility | 값 |
+|----------|-------------|-----|
+| 색상 (31개 팔레트 × ~11단계) | `bg-primary-50`, `text-gray-90`, `border-point-50` | primary-50 = `#246BEB`, point-50 = `#E71825` |
+| 타이포 (~50개) | `text-display-s`, `text-heading-m`, `text-title-s`, `text-body-s` | display-s = `40px / line-height 150% / letter-spacing 1px` |
+| spacing (0~10) | `p-3` = 8px, `p-7` = 24px, `p-10` = 48px | KRDS 그리드 단위, default Tailwind spacing override |
+| borderRadius (0~9) | `rounded-4` = 8px, `rounded-5` = 12px | |
+| fontWeight | `font-regular`(400), `font-bold`(700) + default Tailwind 유지 | |
+| 브레이크포인트 | `mobile:`(360+), `tablet:`(601+), `desktop:`(1025+) | `@theme`로 v4 변수도 등록 — plugin 호환 모드만으로 modifier가 누락되는 케이스 방어 |
+
+### 마이그레이션 룰 (Hero 섹션 선행)
+
+globals.css의 기존 클래스를 utility로 옮길 때 적용하는 매핑:
+
+- **색상**: `var(--krds-color-*)` 및 hex → KRDS plugin 토큰. `#fff` → `text-white`. 정확 매핑 없는 hex는 가까운 `gray-*`
+- **spacing**: `var(--gap-N, Xpx)` → KRDS scale `p-N`. 64px 이상은 arbitrary `p-[64px]`
+- **radius**: `var(--krds-radius-md, 8px)` → `rounded-4`, `var(--krds-radius-lg, 12px)` → `rounded-5`
+- **브레이크포인트**: globals.css의 `768px` 기준 → `tablet:`(601+) 매핑 (일부 구간에서 시각 변화 허용)
+- **fontSize**: 정확 매핑(15/17/19px 등)은 KRDS 토큰, 디자인 강조(28/36/44 등)는 arbitrary로 line-height/tracking 보존 (KRDS 토큰은 line-height 150% + letter-spacing 1px가 동반됨)
+- **`.parent:hover .child`**: `group` + `group-hover:` 패턴 (Link wrapper에 `group`, 자식에 `group-hover:`)
+
+### Swiper 캐러셀 width 측정 회귀 방어
+
+`apps/web/src/shared/ui/Carousel.tsx`의 `useEffect` 다층 트리거로 swiper width 폭주 방어. 첫 방문 시 async layout shift(Pretendard CDN 폰트, KRDS Header mount 등)로 swiper의 mount 측정이 실패하면 `slide.style.width`에 22369600px 같은 비정상 값이 박히고 observer 없이는 재측정도 안 됨:
+
+- (1) `requestAnimationFrame` 2회 — 첫 paint 직후 재측정
+- (2) `window 'load'` 이벤트 — 모든 리소스(폰트/이미지) 로드 완료 시점
+- (3) `ResizeObserver` — 부모 element width 변화마다 재측정
+- 위 3개 트리거 모두 `swiper.update()` 호출 (idempotent). swiper의 `observer`/`observeParents` 옵션은 사용 안 함 — 내부 observer + update가 race 시 오히려 22M로 갱신되는 역효과
+- 추가 CSS guard:
+  - **Hero(slidesPerView=1)**: `<section data-hero-carousel>` + `[data-hero-carousel] .swiper-slide { width: 100% !important; }`
+  - **Recommended(slidesPerView 가변)**: `.home-recommended .swiper-slide`에 breakpoint별 `calc()` width 강제. swiper formula `(container - spaceBetween*(n-1))/n`에 맞춰:
+    - mobile 기본: `100%` (1 per view)
+    - `@media (min-width: 768px)`: `calc((100% - 16px) / 2)` (2 per view, spaceBetween 16)
+    - `@media (min-width: 1024px)`: `calc((100% - 40px) / 3)` (3 per view, spaceBetween 20)
+  - `RecommendedSection.tsx`의 `breakpoints` prop + `spaceBetween`과 globals.css의 guard는 **1:1 동기화 필요** (변경 시 양쪽 수정)
+
+### 향후 마이그레이션 (Stage 7e+)
+
+Hero 외 나머지 globals.css 블록(`.subpage-*`/`.gallery-*`/`.board-*`/`.search-*`/`.home-popup-*`/`.preview-*` 등 ~1200줄)은 점진 마이그레이션. 적용 불가 블록:
+
+- **`.tiptap-content *` (~200줄)**: 사용자 입력 HTML(p/h1/ul 등)에 적용되므로 utility 불가 — 그대로 유지
+- **`.subpage-block-html *` 자식**: 동일 사유
+- **`*` reset + body 폰트**: preflight 비활성화했으므로 직접 유지
 
 ## 콘텐츠 표시 규칙
 
@@ -117,6 +187,7 @@ src/
   - `apps/web/src/shared/ui/Carousel.tsx`: Client Component, SlideOptions props
   - Swiper modules: A11y, Keyboard (기본) + Navigation/Pagination/Autoplay (옵션별 조건부)
   - 접근성: `aria-roledescription="carousel"`, `aria-live` (swiper 내장), keyboard nav, `pauseOnMouseEnter`, `prefers-reduced-motion` CSS 존중
+  - **width 측정 회귀 방어 (Stage 7e)**: `useEffect`에서 RAF 2회 + `window 'load'` + `ResizeObserver` 3단계 트리거로 `swiper.update()` 호출. swiper `observer`/`observeParents`는 사용 안 함 (race 위험). Hero는 `data-hero-carousel` CSS guard, Recommended는 breakpoint별 `calc()` width guard 추가 — "KRDS Tailwind 스타일링" 섹션 참조
 
 ### FSD 구조
 

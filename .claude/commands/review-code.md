@@ -58,6 +58,22 @@
 
 - [ ] **테스트 파일 존재**: 새로 작성한 유틸/로직에 대응하는 테스트 파일 존재 여부
 - [ ] **테스트 파일 위치**: 대상 코드와 같은 디렉토리에 위치
+- [ ] **트랙 분리 (Stage 7f 도입 후)**: 순수 함수/zod/훅 pure logic은 `*.test.ts`(jsdom), React 컴포넌트·폼 validation·hover/scroll·ResizeObserver·swiper 관련은 `*.stories.tsx`의 play function(browser). 한 컴포넌트에 `*.test.tsx` + `*.stories.tsx` 동시 작성 지양
+
+### 공개 웹 스타일링 (Stage 7e — apps/web 한정)
+
+- [ ] **KRDS Tailwind utility 우선**: 새 컴포넌트의 스타일은 globals.css 신규 클래스 추가 대신 KRDS plugin utility 우선 검토 (`bg-primary-50`/`text-display-s`/`rounded-5`/`p-7` 등)
+- [ ] **KRDS 브레이크포인트만 사용**: `mobile:`(360+)/`tablet:`(601+)/`desktop:`(1025+)만 사용. `md:`/`lg:`/`xl:`/`sm:` 같은 default Tailwind 브레이크포인트는 KRDS plugin이 `theme.screens`를 override해서 **컴파일되지 않음** — 사용 시 런타임 무반응 버그
+- [ ] **색상 매핑**: `var(--krds-color-*)` 또는 hex를 새로 쓰지 말고 plugin 토큰 사용. 정확 매핑이 없는 hex는 가까운 `gray-*`/`point-*`로. arbitrary `bg-[#XXX]`는 최후 수단
+- [ ] **spacing scale 혼동 금지**: KRDS spacing은 `p-3`=8px, `p-7`=24px 등 **default Tailwind와 값이 다름** (admin은 default, web은 KRDS). 앱 간 코드 이동 시 spacing 숫자 재매핑
+- [ ] **Tiptap/HTML 블록 자식 스타일 불가**: `.tiptap-content *` 및 `.subpage-block-html *`는 사용자 입력 HTML이므로 utility 적용 불가 — globals.css에서 유지
+
+### Swiper 캐러셀 사용 (Stage 7e — apps/web 한정)
+
+- [ ] **Carousel 공용 컴포넌트 경유**: 새 슬라이드/캐러셀 UI는 반드시 `apps/web/src/shared/ui/Carousel.tsx`를 사용. 직접 `import { Swiper } from 'swiper/react'` 사용 금지 (width 측정 race 방어 미적용 상태가 됨)
+- [ ] **slidesPerView 가변 시 CSS guard 필수**: `Carousel`에 `breakpoints` prop으로 viewport별 `slidesPerView`를 넘기는 경우 globals.css에 해당 섹션 전용 `.{섹션}-class .swiper-slide`의 breakpoint별 `calc()` width `!important` guard 추가. swiper formula `(container - spaceBetween*(n-1))/n`와 **1:1 동기화**
+- [ ] **slidesPerView=1 단일 케이스**: `<section data-{hero|etc}-carousel>` 속성 + `[data-{hero|etc}-carousel] .swiper-slide { width: 100% !important }` guard 권장 (Hero 패턴 참조)
+- [ ] **swiper observer 옵션 금지**: `observer`/`observeParents`/`observeSlideChildren` 활성화 금지 — 내부 observer + update race로 22M 회귀 재발. `watchOverflow`만 허용
 
 ## 출력 형태
 
@@ -90,4 +106,5 @@
 ## 참고
 
 - 세부 검사가 필요하면 `/check-fsd`, `/check-imports`, `/check-permissions` 개별 실행
-- UI 컴포넌트의 시각적 확인은 이 스킬 범위 밖 (Storybook 또는 브라우저에서 확인)
+- UI 컴포넌트의 시각적 확인은 이 스킬 범위 밖 (Stage 7f 도입 후 Storybook `pnpm --filter @simple-cms/{admin|web} storybook` 또는 브라우저 `pnpm dev`)
+- play function 상호작용 테스트는 `pnpm test`로 실행 (Stage 7f — Vitest browser project)
