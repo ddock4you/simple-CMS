@@ -348,7 +348,8 @@ apps/{앱}/
 | 7c   | 운영 UX (Dirty 가드, 사이트 보기, 빠른 상태 토글, 벌크, cmd+k)      | 이탈 경고 + 상태 토글 + 일괄 작업 + 빠른 전환                                               | **완료** |
 | 7d   | 공개 웹 좌·우 사이드바 + 공공누리 마크 + 입력 Dialog 외부 클릭 차단 | HEADER 기반 좌측 트리 + SIDEBAR 슬롯 우측 InPageNavigation + KOGL 마크 + Dialog 오클릭 방지 | **완료** |
 | 7e   | 공개 웹 KRDS Tailwind 도입 + Hero utility 마이그레이션 + 캐러셀 width 회귀 방어 | KRDS utility class(`bg-primary-50`/`text-display-s`/`tablet:`/`desktop:`) 사용 + Hero/Recommended 모든 viewport 정상 | **완료** |
-| 7f   | Storybook + Vitest 2-track 테스트 인프라 (admin/web 동시)           | `pnpm test` 한 번에 unit(jsdom) + storybook(Playwright) 실행, KRDS 사용 현황 `Web/KRDS/*` 카테고리 문서화 | 대기     |
+| 7f   | Storybook + Vitest 2-track 테스트 인프라 shell (admin/web 동시)      | 샘플 story 3개(Button/LoginForm/Carousel) smoke, 2-track Vitest(unit + storybook) 기반, Provider 2계층 decorator | **완료** |
+| 7g   | Storybook story 확장 + play function + KRDS showcase + CI + MSW     | 초기 story 21개(admin 10 + web 5 + KRDS 7 — SkipLink 포함), play function 상호작용 테스트, GitHub Actions matrix, swiper 22M 회귀 자동 감지 | 대기     |
 | 8    | Docker + CI/CD + 문서화                                             | `docker compose up`으로 전체 실행                                                           | 대기     |
 
 #### Stage 7c 결과 요약
@@ -388,22 +389,26 @@ apps/{앱}/
 - **Recommended 섹션 breakpoint별 width guard**: `slidesPerView` 가변(mobile 1 / tablet 2 / desktop 3)이라 `.home-recommended .swiper-slide`에 viewport별 `calc()` width 강제 (`768px+: calc((100% - 16px) / 2)`, `1024px+: calc((100% - 40px) / 3)`). RecommendedSection.tsx의 `breakpoints` prop + `spaceBetween`과 1:1 동기화 필요 — 변경 시 globals.css도 함께 수정
 - **진단 경험**: 변환 전엔 정상이었던 이유가 legacy CSS가 있어서가 아니라 swiper의 mount 측정이 우연히 안정된 layout에 걸렸던 것. 재방문(client-side nav) 시에는 layout이 이미 안정화돼 있어 mount 측정이 항상 성공 — 이 패턴이 "첫 방문 vs 재방문" 증상 차이의 원인 ([계획 문서](../../../Users/ddock/.claude/plans/krds-encapsulated-wind.md) 참조)
 
-#### Stage 7f 도입 계획 요약 (대기)
+#### Stage 7f 결과 요약
 
-테스트/문서화 기반 신설. 최근 7e의 swiper width 회귀처럼 특정 viewport에서만 깨지는 회귀가 반복되므로 Stage 8(Docker/CI) 선행 기반으로 위치.
+Stage 8(Docker/CI) 선행 기반으로 Storybook + Vitest 2-track 테스트 인프라 도입. 이번 Stage는 **shell 단계**만 담당 — 초기 story 확장·play function·CI matrix·KRDS showcase·MSW는 Stage 7g로 분리 (이전 Stage(7a~7e) 평균 규모 유지 + 점진적 접근).
 
-- **Storybook**: v9 + `@storybook/nextjs-vite` (admin/web 독립 설치, shadcn vs KRDS UI 시스템 분리)
-- **Vitest 2-track**: `projects: [unit(jsdom), storybook(Playwright Chromium)]` — `*.test.ts`는 jsdom 빠름, `*.stories.tsx`의 play function은 real browser
-- **공용 config**: `packages/config/vitest/{base,browser}.ts` + 루트 `vitest.workspace.ts`
-- **web의 KRDS 원본 문서화**: `apps/web/src/shared/ui/krds-showcase/`에 Header/Footer/SideNavigation/Pagination/Breadcrumb/Masthead 6개 story + `README.mdx`. Storybook sidebar에 `Web/KRDS/*` 전용 카테고리 분리 (옵션 C). "우리가 쓰는 variant만" 등록
-- **카테고리 트리**: `Web/{Shared,Widgets,Features,KRDS}` + `Admin/{Shadcn,Shared,Features}`
-- **테스트 작성 가이드 (2-track 분기)**:
-  - 순수 함수/zod/Prisma builder/훅 pure logic → `*.test.ts` (jsdom)
-  - 컴포넌트 렌더·폼 validation·hover/focus·scroll·ResizeObserver·swiper 관련 → `*.stories.tsx` play function (browser)
-  - 한 컴포넌트에 stories.tsx와 test.tsx 동시 작성 금지 원칙
-- **CI**: GitHub Actions matrix(admin/web 병렬) + Turborepo 캐싱, Playwright Chromium 설치 포함
-- **의존성**: `storybook@^9`, `@storybook/addon-vitest`, `@storybook/test`, `vitest@^3`, `@vitest/coverage-v8`, `@vitest/browser-playwright`, `jsdom`, `@testing-library/react`, `msw`(web)
-- 상세 단계는 `C:/Users/ddock/.claude/plans/krds-encapsulated-wind.md` 참조
+- **버전 선택**: Storybook v10 + Vitest v4. `@storybook/nextjs-vite`가 v9부터 stable 승격(이전 `@storybook/experimental-nextjs-vite` 폐기). Vitest v4는 `playwright()` factory function API (문자열 `'playwright'` deprecated)
+- **루트 의존성 정합성 복구**: `vitest@^3.2.4` → `^4`로 승격 (기존 `@vitest/coverage-v8@^4.1.4`와 메이저 정렬). `@vitest/browser-playwright`, `playwright@^1.50` 신규. 기존 테스트 파일 0개라 마이그레이션 리스크 없음
+- **공유 config**: `packages/config/vitest/{base.js,browser.js}` — `unitProjectDefaults`(jsdom/globals/include/exclude), `browserDefaults`(chromium/headless/instances), `coverageDefaults`(v8/include/exclude). 각 앱의 `vitest.config.ts`에서 spread로 사용. **왜 `.js`?** 최초 `.ts`로 작성했으나 vitest config loader가 workspace 경로의 `.ts` 파일을 ESM transform 없이 로드 시도하여 `SyntaxError: Unexpected identifier 'as'`로 실패. 순수 값 export만이라 `.js`로 전환해도 타입 손실 미미
+- **각 앱 독립 `.storybook/`**: admin(shadcn) vs web(KRDS) UI 시스템이 달라 `.storybook/`를 공유하지 않음. `@storybook/nextjs-vite` framework로 Vite 기반 빌드 (프로덕션은 Turbopack 그대로)
+- **admin Provider 2계층 decorator** (`apps/admin/.storybook/preview.tsx`): 실제 layout 구조 재현
+  - **Root decorator (모든 story 기본)**: `ThemeProvider → QueryClient(스토리 스코프 · retry:false) → TooltipProvider + Toaster` — `app/layout.tsx` 재현
+  - **Authenticated decorator (opt-in)**: `parameters.authenticated === true` 일 때만 `PermissionProvider + SidebarProvider(defaultOpen)` 래핑. `parameters.permissions`(PermissionMap override), `parameters.isSystem`(총괄 관리자 모드) 지원. 기본값은 `RESOURCE_ACTIONS` 기반 full-access permissions 자동 생성
+  - LoginForm/RegisterForm 같은 비인증 컴포넌트는 root-only, 운영 화면은 `parameters.authenticated: true` 선언
+- **web preview (`apps/web/.storybook/preview.tsx`)**: 전역 Provider 없음(Server Component 중심). CSS import 순서 엄수 — `krds-react/dist/index.css` → `../app/globals.css` (layout.tsx 재현, `@layer krds-base` override 순서 유지)
+- **Pretendard CDN**: web의 `.storybook/preview-head.html`에 `<link rel="stylesheet">` 삽입 (layout.tsx 동일 포맷). 다음 Stage의 swiper 22M 회귀 테스트가 "Pretendard async load race" 조건을 재현해야 하므로 필수
+- **Vitest 2-track projects**: `unit`(jsdom, `src/**/*.test.{ts,tsx}`) + `storybook`(Playwright Chromium browser mode, `*.stories.tsx`의 play function). `mergeConfig(viteConfig, ...)` 패턴으로 `vite.config.ts`의 alias/plugin 재사용. `storybookTest({ configDir })` plugin으로 Storybook 연결
+- **샘플 story 3개 smoke**: `Admin/Shadcn/Button`(5 variants) + `Admin/Features/Auth/LoginForm`(smoke) + `Web/Shared/Carousel`(3 slides, dots + prev/next + autoplay 변형). play function 없음 — Stage 7g에서 validation/interaction/회귀 테스트 추가
+- **turbo.json**: `storybook`(persistent/cache false) + `build-storybook`(outputs `storybook-static/**`) 태스크 신규. `test` 태스크의 `dependsOn: ["^build"]`는 이번 Stage 그대로 유지 — Stage 7g CI 도입 시 정리
+- **Stage 7g 범위**: 초기 story 21개 확장(admin shadcn 외 + LoginForm/SubpageForm/CreateRoleDialog/BlockEditDialog/ConfirmLeaveDialog/BulkActionBar/PostForm/ImageUrlInput/AdminHeader + web SubpageBlockRenderer/HomePopupModal/RightSidebar/KoglFooter + KRDS 7개 — Header/Footer/SideNavigation/Pagination/Breadcrumb/Masthead/SkipLink), play function 6건(폼 validation, dirty guard, 권한별 UI 토글, BlockEditDialog 타입 전환), MSW mutation 시나리오, swiper 22M 회귀 테스트(readyState='loading' 시뮬레이션 + Carousel 테스트 프로브), GitHub Actions matrix(admin/web 병렬), `turbo test` dependsOn 재정리
+- **Authenticated decorator 검증 미완**: 이번 Stage의 샘플 story 2개(Button/LoginForm)는 모두 root-only라 `parameters.authenticated=true` 경로는 컴파일만 됐을 뿐 실제 실행은 안 됨. Stage 7g의 첫 작업은 CreateRoleDialog 같은 authenticated story를 작성하여 `PermissionProvider + SidebarProvider` 래핑 실동작 검증
+- 상세 계획: [`C:/Users/ddock/.claude/plans/stage-7f-peppy-garden.md`](../../../Users/ddock/.claude/plans/stage-7f-peppy-garden.md)
 
 ## 명령어
 
@@ -605,11 +610,28 @@ shared/lib/
 
 ## 테스트 전략
 
-- 단위/모듈 테스트: Vitest
-- 테스트 파일 위치: 테스트 대상 코드와 같은 디렉토리 (`*.test.ts` / `*.test.tsx`)
-- 네이밍: `{파일명}.test.ts`
-- Turborepo `test` 태스크로 통합 실행 (`pnpm test`)
-- E2E: Playwright (2차 범위, 8단계 이후)
+### 2-track Vitest (Stage 7f 도입)
+
+| 트랙 | 환경 | 대상 | 파일명 |
+| ---- | ---- | ---- | ---- |
+| **unit** | jsdom | 순수 함수, Zod schema, Prisma builder, 훅 pure logic, 서버 유틸 | `{파일명}.test.{ts,tsx}` |
+| **storybook** | Playwright Chromium (real browser) | React 컴포넌트 렌더, 폼 validation, hover/focus, scroll, ResizeObserver, swiper, 권한별 UI | `{컴포넌트}.stories.tsx`의 play function |
+
+- **한 컴포넌트에 `*.stories.tsx`와 `*.test.tsx`를 동시에 두지 않음** (겹치는 테스트 회피). 무거운 props combination 테스트는 unit으로 빼되 DOM 검증 없이 pure render만
+- 공유 설정: `packages/config/vitest/{base,browser}.js` — `unitProjectDefaults`, `browserDefaults`, `coverageDefaults`
+
+### 판단 기준 (단위 vs 컴포넌트)
+
+- **unit (jsdom)**: DOM 불필요한 pure logic, 훅의 상태 계산만 (`renderHook`), 빠른 반복
+- **storybook (browser)**: 훅의 DOM 부착 동작(`beforeunload` 등록), 폼 validation → error 표시, hover/focus/scroll, 권한별 UI(`usePermission` → 버튼 토글), Swiper/ResizeObserver/IntersectionObserver — jsdom 재현 불가
+
+### 테스트 파일 위치 / 실행
+
+- 테스트 대상 코드와 같은 디렉토리
+- 각 앱: `pnpm --filter @simple-cms/admin test` / `pnpm --filter @simple-cms/web test` — unit/storybook project 자동 병행 실행
+- Turborepo: `pnpm test` — 양쪽 앱 병렬
+- Storybook dev: `pnpm --filter @simple-cms/admin storybook` (port 6006) / `pnpm --filter @simple-cms/web storybook` (port 6007)
+- E2E: Playwright (2차 범위, Stage 8 이후)
 
 ## 파일 네이밍 컨벤션
 

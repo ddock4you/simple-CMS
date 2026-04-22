@@ -19,6 +19,13 @@
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
     },
+    "storybook": {
+      "cache": false,
+      "persistent": true
+    },
+    "build-storybook": {
+      "outputs": ["storybook-static/**"]
+    },
     "clean": {
       "cache": false
     }

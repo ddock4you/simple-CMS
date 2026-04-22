@@ -10,7 +10,9 @@
     "./tsconfig/base": "./tsconfig/base.json",
     "./tsconfig/base.json": "./tsconfig/base.json",
     "./tsconfig/next": "./tsconfig/next.json",
-    "./tsconfig/next.json": "./tsconfig/next.json"
+    "./tsconfig/next.json": "./tsconfig/next.json",
+    "./vitest/base": "./vitest/base.js",
+    "./vitest/browser": "./vitest/browser.js"
   },
   "dependencies": {
     "@eslint/js": "^9.28.0",

@@ -36,6 +36,10 @@ coverage/
 # storybook
 storybook-static/
 
+# vitest browser / playwright
+test-results/
+playwright-report/
+
 # docker
 docker/data/
 

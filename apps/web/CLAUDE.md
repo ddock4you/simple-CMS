@@ -54,7 +54,7 @@ src/
 - KRDS는 공개 웹 전용 UI 기반
 - KRDS 원본을 직접 사용하는 것이 아닌 **래퍼/조합 컴포넌트**로 관리
 - 래퍼 컴포넌트는 `apps/web` 내부 레이어에서 관리 (공용 패키지 X)
-- Storybook은 1차에서 공개 웹 UI 중심으로 문서화 (상세는 Stage 7f 참조)
+- Storybook은 Stage 7f에서 shell 단계로 도입됨 (아래 "Storybook + Vitest" 섹션 참조)
 
 ## KRDS Tailwind 스타일링 (Stage 7e)
 
@@ -125,6 +125,22 @@ Hero 외 나머지 globals.css 블록(`.subpage-*`/`.gallery-*`/`.board-*`/`.sea
 - **`.tiptap-content *` (~200줄)**: 사용자 입력 HTML(p/h1/ul 등)에 적용되므로 utility 불가 — 그대로 유지
 - **`.subpage-block-html *` 자식**: 동일 사유
 - **`*` reset + body 폰트**: preflight 비활성화했으므로 직접 유지
+
+## Storybook + Vitest (Stage 7f — shell)
+
+web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator도 비어있다. 상세 2-track 룰은 루트 CLAUDE.md "테스트 전략" 참조.
+
+- **Framework**: `@storybook/nextjs-vite` (v10 stable) — admin과 독립 설치 (shadcn vs KRDS UI 시스템 달라 `.storybook/` 공유 불가)
+- **파일 구성**:
+  - `.storybook/main.ts` — framework + stories glob + `@storybook/addon-vitest`
+  - `.storybook/preview.tsx` — **CSS import 순서 엄수**: `import 'krds-react/dist/index.css'; import '../app/globals.css';` (layout.tsx 재현). 순서가 바뀌면 `@layer krds-base` override 순서가 깨져 Tailwind utility가 KRDS 위에 올라가지 못함
+  - `.storybook/preview-head.html` — Pretendard CDN `<link rel="stylesheet">` 삽입 (layout.tsx와 동일 포맷). 다음 Stage의 swiper 22M 회귀 테스트가 "Pretendard async load race" 조건을 재현하려면 필수
+  - `.storybook/vitest.setup.ts` — `setProjectAnnotations` 기반 preview 연결
+  - `vite.config.ts` — React plugin + `@/*` → `./src/*` alias
+  - `vitest.config.ts` — `mergeConfig(viteConfig, ...)` + `projects: [unit(jsdom), storybook(Playwright Chromium)]`
+- **Sidebar 카테고리**: `Web/{Shared,Widgets,Features,KRDS}` (7f 시점 샘플 1개: `Web/Shared/Carousel` 3 slides + dots/prev-next + autoplay variant). 초기 story 5개 + KRDS showcase 7개(Header/Footer/SideNavigation/Pagination/Breadcrumb/Masthead/SkipLink)는 Stage 7g
+- **명령**: `pnpm --filter @simple-cms/web storybook` (port 6007), `pnpm --filter @simple-cms/web test`, `pnpm --filter @simple-cms/web build-storybook`
+- **Stage 7g 예고**: Carousel에 테스트 프로브 추가 + `readyState='loading'` 시뮬레이션 + 360/768/1024 viewport별 slide width assert(22M 회귀 자동 감지), SubpageBlockRenderer/HomePopupModal/RightSidebar/KoglFooter 4개 story, KRDS showcase 7개(실제 사용하는 variant만), MSW 기반 검색/팝업 시나리오
 
 ## 콘텐츠 표시 규칙
 

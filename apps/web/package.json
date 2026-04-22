@@ -8,7 +8,11 @@
     "start": "next start --port 3000",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf .next .turbo"
+    "clean": "rm -rf .next .turbo",
+    "storybook": "storybook dev -p 6007",
+    "build-storybook": "storybook build",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@krds-ui/tailwindcss-plugin": "^0.6.0",
@@ -28,13 +32,18 @@
   },
   "devDependencies": {
     "@simple-cms/config": "workspace:*",
+    "@storybook/addon-vitest": "^10",
+    "@storybook/nextjs-vite": "^10",
+    "@storybook/react": "^10",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^25.5.2",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.2.0",
     "dotenv": "^17.4.1",
     "eslint": "^9.28.0",
     "postcss": "^8.5.0",
+    "storybook": "^10",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.8.3"
   }
