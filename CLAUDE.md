@@ -350,8 +350,9 @@ apps/{앱}/
 | 7e   | 공개 웹 KRDS Tailwind 도입 + Hero utility 마이그레이션 + 캐러셀 width 회귀 방어 | KRDS utility class(`bg-primary-50`/`text-display-s`/`tablet:`/`desktop:`) 사용 + Hero/Recommended 모든 viewport 정상 | **완료** |
 | 7f   | Storybook + Vitest 2-track 테스트 인프라 shell (admin/web 동시)      | 샘플 story 3개(Button/LoginForm/Carousel) smoke, 2-track Vitest(unit + storybook) 기반, Provider 2계층 decorator | **완료** |
 | 7g   | Storybook story 확장 (admin + web + KRDS showcase 19개 smoke)       | admin 8개(CreateRoleDialog/SubpageForm/PostForm/BlockEditDialog×4/ConfirmLeaveDialog/BulkActionBar/ImageUrlInput/AdminHeader) + web 4개(SubpageBlockRenderer/HomePopupModal/RightSidebar/KoglFooter) + KRDS showcase 7개. CreateRoleDialog로 authenticated decorator 실행 검증 | **완료** |
-| 7h   | play function 상호작용 + MSW + swiper 22M 회귀 + admin 커스텀 래퍼 showcase | 6건(폼 validation/권한 토글/dirty guard/BlockEditDialog type별/CreateRoleDialog submit) + `msw-storybook-addon` + Carousel 테스트 프로브 + 프로젝트 커스텀 래퍼 showcase(Dialog/AlertDialog 중첩 규약, InlineStatusToggle/InlineBooleanToggle, LinkTargetInput) | 대기     |
-| 7i   | CI matrix + turbo `dependsOn` 정리 + Storybook UI 30초 timeout 해소 | GitHub Actions admin/web 병렬, `test.dependsOn: ['^build']` 제거 (test outputs는 7g 후속에서 `test:coverage` 분리로 먼저 처리됨), `optimizeDeps.include` pre-warm + `storybookScript` 명시 | 대기     |
+| 7h   | play function 5건 (MSW 무의존 범위) + hook 검증 probe 패턴 정립 | LoginForm validation / PermissionProvider 권한 토글 / DirtyGuardProbe / SubpageForm CCL+AI / BlockEditDialog IFRAME rejection. MSW 통합은 msw-storybook-addon + addon-vitest browser mode 호환성 이슈로 이관 | **완료** |
+| 7i   | Swiper 22M 회귀 자동 감지 + 프로젝트 커스텀 래퍼 showcase 4개 | Carousel 테스트 프로브 + viewport resize + `slide.style.width` assert (쉬운 버전만) + `Admin/Shared/{Dialog, AlertDialog, InlineStatusToggle, InlineBooleanToggle, LinkTargetInput}` 규약 시연 | 대기     |
+| 7j   | CI matrix + turbo `dependsOn` 정리 + Storybook UI 30초 timeout 해소 + MSW 재도입 재조사 | GitHub Actions admin/web 병렬, `test.dependsOn: ['^build']` 제거 (test outputs는 7g 후속에서 `test:coverage` 분리로 먼저 처리됨), `optimizeDeps.include` pre-warm + `storybookScript` 명시, msw-storybook-addon v2.1+/dual setupServer 방식 재조사 후 MSW 기반 play function(CreateRoleDialog submit, reorder rollback) 추가 | 대기     |
 | 8    | Docker + CI/CD + 문서화                                             | `docker compose up`으로 전체 실행                                                           | 대기     |
 
 #### Stage 7c 결과 요약
@@ -448,6 +449,32 @@ Stage 7f shell(샘플 story 3개)을 19개 추가한 **볼륨 확장 단계**. �
   - `Admin/Shared/LinkTargetInput` — Stage 5b 공용 (subpage/board/external URL 분기 입력, popup/section 양쪽 재사용)
 - **왜 full shadcn showcase가 아닌 커스텀 래퍼만인가**: shadcn은 `shared/ui/shadcn/`에 **복사된 프로젝트 코드**라 외부 라이브러리가 아님. ui.shadcn.com 공식 docs가 모든 variant의 예제를 매우 상세히 제공 → 전체 포팅은 정보 중복 + 관리 부담. 반면 프로젝트 고유 커스텀(중첩 Dialog 블러, inline 권한 fallback 등)은 외부 문서에 없는 자체 규약이라 showcase 가치 명확
 - **KRDS showcase(web)와 성격 차이**: KRDS는 "외부 라이브러리 variant를 프로젝트가 쓰는 조합만으로 재구성" ↔ admin 커스텀 래퍼는 "프로젝트 자체 UX 규약 문서화". 용도 분리되어 sidebar 카테고리 `Admin/Shared/*`로 자연 배치
+
+(위 커스텀 래퍼 showcase는 Stage 7h 작업 중 7i로 재이관 — 아래 "Stage 7h 결과 요약" 참조)
+
+#### Stage 7h 결과 요약
+
+Stage 7g smoke 표면 위에 **상호작용(play function) 검증 레이어**를 얹는 단계. 원 계획(play function 6건 + MSW 3 handler + swiper 22M 회귀 + admin 커스텀 래퍼 showcase 4개)은 MSW 호환성 실패로 **5건 play function + hook 검증 probe 패턴**으로 축소.
+
+- **MSW 통합 실패 → Stage 후보 이관**: 3번 시도 모두 실패.
+  - (1) 전역 `initialize()` + `mswLoader` + per-story handlers → `Test Files 0 passed` 169초+ stuck
+  - (2) MSW story에 `tags: ['!test']` 추가 → 여전히 stuck (preview.tsx `initialize()`가 모든 story 로드에 영향)
+  - (3) `navigator.webdriver === true` 런타임 분기로 `initialize()` skip → `Failed to connect to the browser session` 131초 + 실패 (module transform에서 `msw-storybook-addon` import 자체가 Playwright Chromium 세션 확립 block)
+  - 결론: `msw-storybook-addon` v2.0.7 + `@storybook/addon-vitest` v10 browser mode(Playwright) 조합 자체가 현재 호환 불가. 단순 devDep 존재만으로도 addon-vitest backend가 block되는 것까지 확인. msw+msw-storybook-addon devDep, `public/mockServiceWorker.js`, `apps/admin/src/mocks/handlers.ts` 모두 **완전 제거** 후 Stage 7g 상태로 복원. Stage 7j에서 msw-storybook-addon v2.1+/Node용 setupServer 이중 세팅 방식 재조사 후 재도입 계획
+- **play function 5건 (위험도 순 · advisor 권고 반영)** — `storybook/test` v10 core의 `expect`/`userEvent`/`within`/`fn` 활용:
+  1. **LoginForm `ValidationEmpty`**: 빈 submit → `'아이디를 입력해주세요.'` / `'비밀번호를 입력해주세요.'` 두 Zod 에러 메시지 `findByText` assert
+  2. **PermissionProvider `FullAccess` / `ReadOnly` / `SystemAdmin`**: 신규 `PermissionProvider.stories.tsx` + inline `PermissionProbe` 컴포넌트 — `usePermission('subpages', 'read|delete')` + `usePermission('roles', 'create')` 3 probe를 `data-testid` 노출 → `parameters.permissions` override + `parameters.isSystem` 조합에 따른 ALLOWED/DENIED 매트릭스 검증. `isSystem: true`가 permissions 비어있어도 모두 true 반환하는 bypass 회귀 방어
+  3. **DirtyGuardProbe `DirtyTriggersDialog`**: 신규 `apps/admin/src/shared/lib/DirtyGuardProbe.stories.tsx` + 전용 probe (form field + `<a href="/dashboard">` 내부 origin 링크) — `isDirty=true` 상태에서 링크 click → ConfirmLeaveDialog의 `'저장하지 않은 변경사항이 있습니다'` 타이틀 + `'머무르기'` / `'나가기'` 버튼이 body portal에 렌더되는지 `findByText` + `findByRole` assert
+  4. **SubpageForm `Empty` play 추가**: cclType=null → AI 체크박스 `toBeDisabled()` → `'제1유형'` 라디오 click → `not.toBeDisabled()` 전환 검증. Zod `superRefine`의 "null + true 조합 차단" 전제가 UI에서 먼저 강제되는지 회귀 방어
+  5. **BlockEditDialog `CreateIframeInvalidUrl`**: 신규 variant + play — 비허용 호스트(`https://example.com/video/xyz`) 입력 → 저장 → `normalizeIframeEmbedUrl` null 반환 → `'임베드 가능한 URL이 아닙니다'` sonner toast assert. mutation은 early return으로 호출되지 않아 `useCreateBlock`의 fetch 경로와 무관하게 안전
+- **Hook 검증 probe 컴포넌트 패턴 정립**: `PermissionProbe` / `DirtyGuardProbe` 두 케이스로 규약 확정 — 훅이 단독으로 검증 대상일 때 전용 probe 컴포넌트를 story 파일 내부(또는 동일 디렉토리 `*Probe.stories.tsx`)에 inline 정의해 hook 반환값을 `data-testid` 또는 Dialog 등으로 DOM 노출. Meta의 `component`는 probe로 설정하되 title은 원본 훅/Provider의 위치(`Admin/Entities/Auth/PermissionProvider`, `Admin/Shared/DirtyGuardProbe`)로 두어 sidebar 탐색 용이
+- **Canvas iframe 환경 주의점 정착**: Dialog/toast는 body portal에 렌더되므로 `within(canvasElement)` 범위로는 탐색 불가 → `within(document.body)` 사용 관례. 또한 `useDirtyGuard`의 same-path 필터 조건(`url.pathname === window.location.pathname` early return) 때문에 probe 링크는 **실제 다른 pathname**(`/dashboard`)을 써야 가드 트리거 가능 — `href="#target"` fragment-only는 같은 pathname이라 skip됨을 구현 중 발견. 추후 유사 probe 작성 시 참고
+- **검증**: admin 12 files / **35 tests passed** (28 → +7). 신규 story 파일 2개(PermissionProvider.stories.tsx / DirtyGuardProbe.stories.tsx) + 기존 3개 story 수정(LoginForm/SubpageForm/BlockEditDialog)
+- **Stage 7h에서 이관된 것**:
+  - Swiper 22M 회귀 자동 감지(Carousel 테스트 프로브 + viewport resize) → 7i
+  - 프로젝트 커스텀 래퍼 showcase 4개(Dialog/AlertDialog/InlineStatusToggle/InlineBooleanToggle/LinkTargetInput) → 7i
+  - CreateRoleDialog submit 성공/실패 분기 + reorder rollback(MSW 필수) → 7j의 MSW 재조사 후 추가
+  - GitHub Actions CI matrix / turbo `test.dependsOn: ['^build']` 제거 / addon-vitest 30초 timeout 해소 → 7j
 
 ## 명령어
 

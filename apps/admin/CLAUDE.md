@@ -878,20 +878,30 @@ admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인�
   - **Authenticated decorator (opt-in)**: `parameters.authenticated === true` 일 때만 `PermissionProvider + SidebarProvider(defaultOpen)` 래핑 — `app/(authenticated)/layout.tsx` 재현
   - `parameters.permissions`로 `PermissionMap` override, `parameters.isSystem`으로 총괄 관리자 모드 토글. 기본값은 `RESOURCE_ACTIONS` 순회 full-access
   - LoginForm/RegisterForm 같은 비인증 컴포넌트는 root-only, 운영 화면은 `parameters.authenticated: true` 선언
-- **Sidebar 카테고리 (Stage 7g 완료 시점 10 story 파일 · 총 28 tests)**:
+- **Sidebar 카테고리 (Stage 7h 완료 시점 12 story 파일 · 총 35 tests — 7g의 28 + 7h play function 7건 추가)**:
   - `Admin/Shadcn/Button` (5 variants — Stage 7f)
-  - `Admin/Features/Auth/LoginForm` (Stage 7f)
+  - `Admin/Features/Auth/LoginForm` (Default + **ValidationEmpty** — 7h: 빈 submit → Zod 에러 메시지 assert)
   - `Admin/Features/Role/CreateRoleDialog` — **authenticated decorator 실행 검증 story** (7f 미완 leg 해소)
-  - `Admin/Features/Subpage/SubpageForm` (Empty / WithCCLType1)
+  - `Admin/Features/Subpage/SubpageForm` (Empty + WithCCLType1 — 7h: Empty에 play 추가, cclType=null → AI 체크박스 disabled → TYPE_1 선택 → enabled 전환 검증)
   - `Admin/Features/Post/PostForm` (Empty / Draft / Published)
-  - `Admin/Features/Block/BlockEditDialog` (CreateRichText / CreateHtml / CreateImage / CreateIframe — `key` 리마운트 패턴으로 type별 분리)
+  - `Admin/Features/Block/BlockEditDialog` (CreateRichText / CreateHtml / CreateImage / CreateIframe + **CreateIframeInvalidUrl** — 7h: 비허용 호스트 URL → "임베드 가능한 URL이 아닙니다" toast assert)
   - `Admin/Shared/ConfirmLeaveDialog` (Open / Closed / CustomLabels)
   - `Admin/Shared/BulkActionBar` (NoSelection / OneSelected / ManySelected / AllSelected)
   - `Admin/Shared/Layout/AdminHeader` (Default / WithoutRole)
+  - `Admin/Shared/DirtyGuardProbe` (Clean / DirtyTriggersDialog — **7h 신규**: dirty 상태 + 내부 origin 링크 click → ConfirmLeaveDialog 렌더 assert)
+  - `Admin/Entities/Auth/PermissionProvider` (FullAccess / ReadOnly / SystemAdmin — **7h 신규**: inline `PermissionProbe` + `data-testid`로 `usePermission` 훅의 ALLOWED/DENIED 매트릭스 검증. `isSystem: true` bypass 경로 포함)
   - `Admin/Entities/Media/ImageUrlInput` (UrlOnly / WithExternalUrl / WithLibraryMedia)
 - **명령**: `pnpm --filter @simple-cms/admin storybook` (port 6006), `pnpm --filter @simple-cms/admin test` (unit + storybook project 자동 병행), `pnpm --filter @simple-cms/admin build-storybook`
-- **Stage 7h 예고**: play function 상호작용 테스트(LoginForm validation / CreateRoleDialog submit / SubpageForm slug+CCL / useDirtyGuard / 권한별 UI 토글 / BlockEditDialog type별), `msw-storybook-addon` + handler 3~4개, swiper 22M 회귀 테스트, **프로젝트 커스텀 래퍼 showcase**(`Admin/Shared/Dialog + AlertDialog` 중첩 블러 규약 시연, `Admin/Shared/InlineStatusToggle` + `InlineBooleanToggle` 권한별 Badge fallback, `Admin/Shared/LinkTargetInput` subpage/board/external 분기 — full shadcn showcase는 공식 docs와 정보 중복으로 권장 안 함, 프로젝트 고유 UX 규약만 선별)
+- **Stage 7h에서 정립된 play function 패턴** (`storybook/test` v10 core):
+  - `expect` / `userEvent` / `within` / `fn`을 `storybook/test`에서 import (core 패키지, `@storybook/test` 별도 설치 금지)
+  - Dialog/toast는 body portal 렌더 → `within(canvasElement)` 아닌 `within(document.body)` 범위에서 탐색
+  - 비동기 state 변화에는 `findByText` / `findByRole` (내장 retry/wait) 사용
+  - 훅 단독 검증이 필요할 때 **probe 컴포넌트 패턴** — 전용 `*Probe.stories.tsx` 파일에 inline probe 컴포넌트 + `data-testid`/Dialog로 훅 반환값 DOM 노출. `PermissionProbe`/`DirtyGuardProbe` 사례
+  - Canvas iframe 환경 주의: `useDirtyGuard` 같은 same-path 필터가 있는 훅 probe는 `href="/dashboard"`처럼 iframe pathname과 다른 경로를 써야 가드가 트리거됨 (`href="#fragment"`는 same-path라 skip)
+- **Stage 7h에서 보류된 것 (Stage 7j의 MSW 재조사 이후)**: `msw-storybook-addon@^2.0.7` + `@storybook/addon-vitest@^10` browser mode(Playwright Chromium) 조합 호환성 이슈로 MSW 통합 전면 보류. CreateRoleDialog submit 성공/실패 + reorder rollback은 MSW 무의존 경로로 대체 불가하여 이관. `msw-storybook-addon` v2.1+ 또는 dual `setupServer` 세팅 방식 조사 후 재도입
+- **Stage 7i 예고**: Swiper 22M 회귀 자동 감지 (Carousel 테스트 프로브 + viewport 360/768/1024 resize + `slide.style.width < threshold` assert) + 프로젝트 커스텀 래퍼 showcase 4개 (`Admin/Shared/Dialog + AlertDialog` 중첩 블러 규약, `InlineStatusToggle`/`InlineBooleanToggle` 권한별 Badge fallback, `LinkTargetInput` subpage/board/external 분기)
 - **Stage 7g에서 만난 이슈 — Storybook addon-vitest dep cache**: story 대량 추가 후 첫 vitest run에서 `TypeError: Failed to fetch dynamically imported module: .../sb-vitest/deps/@storybook_react-dom-shim.js?v=...` 발생. 해결: `rm -rf node_modules/.cache/storybook node_modules/.vite` 후 재실행. 향후 의존성 업데이트나 story 대량 추가 시 cleanup 절차로 참고
+- **Stage 7h에서 만난 이슈 — msw-storybook-addon + addon-vitest 호환성**: `initialize()` + `mswLoader` 전역 등록 시 `Test Files 0 passed (10)` 무한 대기 및 `Failed to connect to the browser session` 타임아웃 발생. `tags: ['!test']` story 제외나 `navigator.webdriver` 런타임 분기로도 해결 안 됨 — MSW 패키지 devDep 존재만으로도 addon-vitest backend가 block됨을 확인. 최종 조치: `git restore` + `rm -rf apps/admin/public apps/admin/node_modules/.cache/storybook apps/admin/node_modules/.vite` + `pnpm install`로 Stage 7g 커밋 상태 완전 복원 → 28 tests 정상 통과 확인. 재도입은 Stage 7j에서 `msw-storybook-addon` v2.1+/Node setupServer 이중 세팅 재조사 후
 
 ## 데이터 처리 패턴
 
