@@ -54,7 +54,7 @@ src/
 - KRDS는 공개 웹 전용 UI 기반
 - KRDS 원본을 직접 사용하는 것이 아닌 **래퍼/조합 컴포넌트**로 관리
 - 래퍼 컴포넌트는 `apps/web` 내부 레이어에서 관리 (공용 패키지 X)
-- Storybook은 Stage 7f에서 shell 단계로 도입됨 (아래 "Storybook + Vitest" 섹션 참조)
+- Storybook은 Stage 7f에서 shell로 도입되고 Stage 7g에서 widgets/features/KRDS showcase story로 확장됨 (아래 "Storybook + Vitest" 섹션 참조)
 
 ## KRDS Tailwind 스타일링 (Stage 7e)
 
@@ -126,9 +126,9 @@ Hero 외 나머지 globals.css 블록(`.subpage-*`/`.gallery-*`/`.board-*`/`.sea
 - **`.subpage-block-html *` 자식**: 동일 사유
 - **`*` reset + body 폰트**: preflight 비활성화했으므로 직접 유지
 
-## Storybook + Vitest (Stage 7f — shell)
+## Storybook + Vitest (Stage 7f shell → 7g widgets + KRDS showcase)
 
-web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator도 비어있다. 상세 2-track 룰은 루트 CLAUDE.md "테스트 전략" 참조.
+web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator는 비어있고, `nextjs.appDirectory: true` 전역 parameter만 제공 (RightSidebar의 `usePathname()` 등 Client Component mock용). 상세 2-track 룰은 루트 CLAUDE.md "테스트 전략" 참조.
 
 - **Framework**: `@storybook/nextjs-vite` (v10 stable) — admin과 독립 설치 (shadcn vs KRDS UI 시스템 달라 `.storybook/` 공유 불가)
 - **파일 구성**:
@@ -138,9 +138,17 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
   - `.storybook/vitest.setup.ts` — `setProjectAnnotations` 기반 preview 연결
   - `vite.config.ts` — React plugin + `@/*` → `./src/*` alias
   - `vitest.config.ts` — `mergeConfig(viteConfig, ...)` + `projects: [unit(jsdom), storybook(Playwright Chromium)]`
-- **Sidebar 카테고리**: `Web/{Shared,Widgets,Features,KRDS}` (7f 시점 샘플 1개: `Web/Shared/Carousel` 3 slides + dots/prev-next + autoplay variant). 초기 story 5개 + KRDS showcase 7개(Header/Footer/SideNavigation/Pagination/Breadcrumb/Masthead/SkipLink)는 Stage 7g
+- **Sidebar 카테고리 (Stage 7g 완료 시점 12 story 파일 · 총 32 tests — 7g 후속에서 KoglFooter Type2/Type3 보완으로 +2)**:
+  - `Web/Shared/Carousel` (Default / WithAutoplay — Stage 7f)
+  - `Web/Widgets/SubpageBlockRenderer` (Mixed / RichTextOnly / HtmlOnly / Empty — 블록 타입별 렌더 검증. **meta decorator로 실사용처 wrapper(`<article id="subpage-{id}">` + max-width 820px + dashed border + min-height 160px)를 story 레벨에서 재현** — 단독 variant에서 텍스트 블록이 Canvas 좌상단에 묻히는 현상 방지 + 렌더 실패 시 wrapper만 보여 원인 구분 쉬움)
+  - `Web/Widgets/HomePopupModal` (ContentSingle / ImageSingle / SwiperMultiple / NoPopups)
+  - `Web/Widgets/RightSidebar` (ThreeItems / FiveItems / Empty)
+  - `Web/Widgets/KoglFooter` (Type0 / Type1 / **Type2** / **Type3** / Type4 / WithAI / Hidden — 7g 후속에서 Type2/Type3 누락 보완. `CclType` 전체 5단계 모두 커버)
+  - `Web/KRDS/{Header, Footer, SideNavigation, Pagination, Breadcrumb, Masthead, SkipLink}` — `apps/web/src/shared/ui/krds-showcase/`에 **런타임 import 없는 story 전용** 디렉토리. 실제 사용하는 variant만 등록(advisor 지적: SkipLink 추가, RightSidebar는 커스텀 JSX라 KRDS 아닌 Widgets로 분류)
 - **명령**: `pnpm --filter @simple-cms/web storybook` (port 6007), `pnpm --filter @simple-cms/web test`, `pnpm --filter @simple-cms/web build-storybook`
-- **Stage 7g 예고**: Carousel에 테스트 프로브 추가 + `readyState='loading'` 시뮬레이션 + 360/768/1024 viewport별 slide width assert(22M 회귀 자동 감지), SubpageBlockRenderer/HomePopupModal/RightSidebar/KoglFooter 4개 story, KRDS showcase 7개(실제 사용하는 variant만), MSW 기반 검색/팝업 시나리오
+- **Stage 7h 예고**: Carousel에 테스트 프로브 추가 + `readyState='loading'` 시뮬레이션 + 360/768/1024 viewport별 slide width assert(22M 회귀 자동 감지), MSW 기반 검색/팝업 시나리오
+- **Stage 7g에서 만난 이슈 — addon-vitest dep cache**: admin과 동일 증상으로 첫 실행 `Failed to fetch dynamically imported module` 발생. `node_modules/.cache/storybook + .vite` 삭제 후 성공
+- **Story meta decorator로 실사용처 맥락 재현 패턴**: `SubpageBlockRenderer`처럼 부모 wrapper(`<article>` + CSS 클래스)에 의존하는 컴포넌트는 `layout: 'padded'`만으론 시각적으로 묻힘. `meta.decorators`에 실제 rendering 환경을 축약 재현한 wrapper를 추가해 story 레벨에서도 동등한 맥락 확보. 가치는 (a) 단독 variant의 시각 확인 용이, (b) 렌더 실패 vs 묻힘 구분 명확화
 
 ## 콘텐츠 표시 규칙
 

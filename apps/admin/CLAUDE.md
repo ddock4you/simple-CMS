@@ -862,9 +862,9 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 - 운영 효율 + 데이터 입력 흐름 우선
 - 반복 패턴 충분히 생기면 내부 공용 컴포넌트 정리 → 이후에만 분리 검토
 
-### Storybook + Vitest (Stage 7f — shell)
+### Storybook + Vitest (Stage 7f shell → 7g story 확장)
 
-admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인프라를 shell 단계로 도입. 상세 판단 기준/파일 위치는 루트 CLAUDE.md "테스트 전략" 참조.
+admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인프라를 shell로 도입하고, Stage 7g에서 story 볼륨을 대폭 확장. 상세 판단 기준/파일 위치는 루트 CLAUDE.md "테스트 전략" 참조.
 
 - **Framework**: `@storybook/nextjs-vite` (v10 stable). Vite 기반이라 Vitest addon과 호환. 프로덕션 빌드는 Turbopack 그대로
 - **파일 구성**:
@@ -878,9 +878,20 @@ admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인�
   - **Authenticated decorator (opt-in)**: `parameters.authenticated === true` 일 때만 `PermissionProvider + SidebarProvider(defaultOpen)` 래핑 — `app/(authenticated)/layout.tsx` 재현
   - `parameters.permissions`로 `PermissionMap` override, `parameters.isSystem`으로 총괄 관리자 모드 토글. 기본값은 `RESOURCE_ACTIONS` 순회 full-access
   - LoginForm/RegisterForm 같은 비인증 컴포넌트는 root-only, 운영 화면은 `parameters.authenticated: true` 선언
-- **Sidebar 카테고리**: `Admin/{Shadcn,Shared,Features}` (7f 시점 샘플 2개: `Admin/Shadcn/Button` 5 variants + `Admin/Features/Auth/LoginForm` smoke). 초기 story 10개 확장은 Stage 7g
+- **Sidebar 카테고리 (Stage 7g 완료 시점 10 story 파일 · 총 28 tests)**:
+  - `Admin/Shadcn/Button` (5 variants — Stage 7f)
+  - `Admin/Features/Auth/LoginForm` (Stage 7f)
+  - `Admin/Features/Role/CreateRoleDialog` — **authenticated decorator 실행 검증 story** (7f 미완 leg 해소)
+  - `Admin/Features/Subpage/SubpageForm` (Empty / WithCCLType1)
+  - `Admin/Features/Post/PostForm` (Empty / Draft / Published)
+  - `Admin/Features/Block/BlockEditDialog` (CreateRichText / CreateHtml / CreateImage / CreateIframe — `key` 리마운트 패턴으로 type별 분리)
+  - `Admin/Shared/ConfirmLeaveDialog` (Open / Closed / CustomLabels)
+  - `Admin/Shared/BulkActionBar` (NoSelection / OneSelected / ManySelected / AllSelected)
+  - `Admin/Shared/Layout/AdminHeader` (Default / WithoutRole)
+  - `Admin/Entities/Media/ImageUrlInput` (UrlOnly / WithExternalUrl / WithLibraryMedia)
 - **명령**: `pnpm --filter @simple-cms/admin storybook` (port 6006), `pnpm --filter @simple-cms/admin test` (unit + storybook project 자동 병행), `pnpm --filter @simple-cms/admin build-storybook`
-- **Stage 7g 예고**: play function 상호작용 테스트(LoginForm validation, CreateRoleDialog submit, SubpageForm slug/CCL 자동화, useDirtyGuard, 권한별 UI 토글, BlockEditDialog 타입 전환), MSW mutation 낙관적 업데이트 시나리오, admin 10개 초기 story 완성
+- **Stage 7h 예고**: play function 상호작용 테스트(LoginForm validation / CreateRoleDialog submit / SubpageForm slug+CCL / useDirtyGuard / 권한별 UI 토글 / BlockEditDialog type별), `msw-storybook-addon` + handler 3~4개, swiper 22M 회귀 테스트, **프로젝트 커스텀 래퍼 showcase**(`Admin/Shared/Dialog + AlertDialog` 중첩 블러 규약 시연, `Admin/Shared/InlineStatusToggle` + `InlineBooleanToggle` 권한별 Badge fallback, `Admin/Shared/LinkTargetInput` subpage/board/external 분기 — full shadcn showcase는 공식 docs와 정보 중복으로 권장 안 함, 프로젝트 고유 UX 규약만 선별)
+- **Stage 7g에서 만난 이슈 — Storybook addon-vitest dep cache**: story 대량 추가 후 첫 vitest run에서 `TypeError: Failed to fetch dynamically imported module: .../sb-vitest/deps/@storybook_react-dom-shim.js?v=...` 발생. 해결: `rm -rf node_modules/.cache/storybook node_modules/.vite` 후 재실행. 향후 의존성 업데이트나 story 대량 추가 시 cleanup 절차로 참고
 
 ## 데이터 처리 패턴
 

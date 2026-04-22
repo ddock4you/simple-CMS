@@ -10,9 +10,14 @@ import type { Preview } from '@storybook/react';
 
 // web은 Server Component 중심이라 전역 Provider 없음.
 // Pretendard CDN은 `.storybook/preview-head.html`에서 <link>로 삽입.
+// `nextjs.appDirectory: true`는 `usePathname()`/`useRouter()` 등 next/navigation 훅을
+// 쓰는 Client Component(RightSidebar 등)가 Storybook 환경에서 동작하도록 mock 제공.
 const preview: Preview = {
   parameters: {
     layout: 'padded',
+    nextjs: {
+      appDirectory: true,
+    },
   },
 };
 
