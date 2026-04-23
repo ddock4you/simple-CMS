@@ -53,16 +53,21 @@ export function bulkDeleteMedia(
 /**
  * FormData multipart 업로드. fetchClient는 Content-Type을 강제하므로 직접 fetch.
  * 응답에 `reused: true`이면 기존 미디어 재사용 — 호출자가 토스트로 안내.
+ *
+ * `endpoint` (Stage 7l): 업로드 엔드포인트 override. 기본 `/api/media/upload`.
+ * 브랜딩 업로드는 `/api/media/branding-upload` 전달 (SVG 차단 + ICO 허용).
+ * 분리 엔드포인트 사유: 정책(허용 MIME) 분기를 클라이언트가 아니라 서버에서 명시적으로 표현.
  */
 export async function uploadMedia(
   file: File,
   category: string = 'home',
+  endpoint: string = '/api/media/upload',
 ): Promise<UploadMediaResponse> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('category', category);
 
-  const response = await fetch('/api/media/upload', {
+  const response = await fetch(endpoint, {
     method: 'POST',
     body: formData,
   });

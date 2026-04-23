@@ -16,6 +16,14 @@ interface MediaGridProps {
   selectedIds?: Set<string>;
   /** 체크박스 토글 콜백 */
   onToggleSelect?: (id: string, next: boolean) => void;
+  /**
+   * Stage 7l — 선택 가능 MIME 화이트리스트.
+   * 미전달 시 모든 미디어 선택 가능 (backward compat).
+   * 매칭 안 되는 카드는 disabled + Tooltip 처리 (hide 아님).
+   */
+  acceptMimeTypes?: string[];
+  /** disabled 카드의 Tooltip 메시지 */
+  disabledReason?: string;
 }
 
 export function MediaGrid({
@@ -26,6 +34,8 @@ export function MediaGrid({
   selectable,
   selectedIds,
   onToggleSelect,
+  acceptMimeTypes,
+  disabledReason,
 }: MediaGridProps) {
   if (isLoading) {
     return (
@@ -48,19 +58,26 @@ export function MediaGrid({
     );
   }
 
+  const acceptSet = acceptMimeTypes ? new Set(acceptMimeTypes) : null;
+
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-      {items.map((media) => (
-        <MediaCard
-          key={media.id}
-          media={media}
-          onClick={onSelect}
-          selected={selectedId === media.id}
-          selectable={selectable}
-          checked={selectedIds?.has(media.id) ?? false}
-          onToggleSelect={onToggleSelect}
-        />
-      ))}
+      {items.map((media) => {
+        const disabled = acceptSet ? !acceptSet.has(media.mimeType) : false;
+        return (
+          <MediaCard
+            key={media.id}
+            media={media}
+            onClick={onSelect}
+            selected={selectedId === media.id}
+            selectable={selectable}
+            checked={selectedIds?.has(media.id) ?? false}
+            onToggleSelect={onToggleSelect}
+            disabled={disabled}
+            disabledReason={disabled ? disabledReason : undefined}
+          />
+        );
+      })}
     </div>
   );
 }

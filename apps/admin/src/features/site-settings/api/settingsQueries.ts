@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 
 import { settingsKeys } from '@/shared/api/queryKeys';
 import {
+  getBrandingSettings,
   getDomainSettings,
   getSecuritySettings,
   getUploadSettings,
@@ -23,4 +24,10 @@ export const uploadSettingsOptions = () =>
   queryOptions({
     queryKey: settingsKeys.upload(),
     queryFn: () => getUploadSettings(),
+  });
+
+export const brandingSettingsOptions = () =>
+  queryOptions({
+    queryKey: settingsKeys.branding(),
+    queryFn: () => getBrandingSettings(),
   });

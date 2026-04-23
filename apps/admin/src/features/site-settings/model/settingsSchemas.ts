@@ -39,6 +39,26 @@ export const updateUploadSchema = z.object({
 
 export type UpdateUploadData = z.infer<typeof updateUploadSchema>;
 
+export const updateBrandingSchema = z.object({
+  siteName: z
+    .string()
+    .min(1, '사이트명을 입력해주세요.')
+    .max(60, '사이트명은 60자 이내로 입력해주세요.'),
+  siteDescription: z
+    .string()
+    .max(200, '사이트 설명은 200자 이내로 입력해주세요.')
+    .nullable(),
+  logoMediaId: z.string().nullable(),
+  logoAlt: z
+    .string()
+    .max(120, '로고 대체 텍스트는 120자 이내로 입력해주세요.')
+    .nullable(),
+  faviconMediaId: z.string().nullable(),
+  ogImageMediaId: z.string().nullable(),
+});
+
+export type UpdateBrandingData = z.infer<typeof updateBrandingSchema>;
+
 // API 응답 타입
 export interface DomainSettingsData {
   domain: string | null;
@@ -59,3 +79,27 @@ export interface DnsCheckResult {
   verified: boolean;
   checkedAt: string;
 }
+
+/**
+ * 브랜딩 설정 GET 응답.
+ * mediaId는 입력/저장의 단일 출처, *Url은 표시용으로 GET 응답 시 Media.url을 join.
+ */
+export interface BrandingSettingsData {
+  siteName: string;
+  siteDescription: string | null;
+  logoMediaId: string | null;
+  logoUrl: string | null;
+  logoAlt: string | null;
+  faviconMediaId: string | null;
+  faviconUrl: string | null;
+  ogImageMediaId: string | null;
+  ogImageUrl: string | null;
+}
+
+/**
+ * DELETE 쿼리 파라미터 — 단일 자산만 제거.
+ * - logo: SITE_LOGO_MEDIA_ID + SITE_LOGO_ALT
+ * - favicon: SITE_FAVICON_MEDIA_ID
+ * - og: SITE_OG_IMAGE_MEDIA_ID
+ */
+export type BrandingAssetKind = 'logo' | 'favicon' | 'og';

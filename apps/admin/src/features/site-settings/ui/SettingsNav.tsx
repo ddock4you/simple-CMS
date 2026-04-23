@@ -10,6 +10,7 @@ const TABS = [
   { label: '보안', href: '/settings/security' },
   { label: '업로드', href: '/settings/upload' },
   { label: '권한', href: '/settings/roles' },
+  { label: '브랜딩', href: '/settings/branding' },
 ];
 
 export function SettingsNav() {

@@ -1,0 +1,347 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
+import { Image as ImageIcon, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Button } from '@/shared/ui/shadcn/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/shared/ui/shadcn/card';
+import { Input } from '@/shared/ui/shadcn/input';
+import { Label } from '@/shared/ui/shadcn/label';
+import { Textarea } from '@/shared/ui/shadcn/textarea';
+import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
+import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
+import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput';
+
+import { brandingSettingsOptions } from '../api/settingsQueries';
+import {
+  useDeleteBrandingAsset,
+  useUpdateBranding,
+} from '../api/useSettingsMutations';
+import {
+  updateBrandingSchema,
+  type BrandingAssetKind,
+  type UpdateBrandingData,
+} from '../model/settingsSchemas';
+
+const BRANDING_ENDPOINT = '/api/media/branding-upload';
+
+const LOGO_MIME = ['image/jpeg', 'image/png', 'image/webp'];
+const FAVICON_MIME = [
+  'image/png',
+  'image/webp',
+  'image/x-icon',
+  'image/vnd.microsoft.icon',
+];
+const OG_MIME = ['image/jpeg', 'image/png', 'image/webp'];
+
+const LOGO_REASON = '로고는 PNG, JPG, WEBP만 사용할 수 있습니다.';
+const FAVICON_REASON = '파비콘은 PNG, WEBP, ICO만 사용할 수 있습니다.';
+const OG_REASON = 'OG 이미지는 PNG, JPG, WEBP만 사용할 수 있습니다.';
+
+export function BrandingSettingsForm() {
+  const { data } = useQuery(brandingSettingsOptions());
+  const updateMutation = useUpdateBranding();
+  const deleteAssetMutation = useDeleteBrandingAsset();
+
+  // 표시용 url state — form 필드(mediaId만)와 분리
+  const [logoUrl, setLogoUrl] = useState<string>('');
+  const [faviconUrl, setFaviconUrl] = useState<string>('');
+  const [ogImageUrl, setOgImageUrl] = useState<string>('');
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors, isDirty },
+  } = useForm<UpdateBrandingData>({
+    resolver: zodResolver(updateBrandingSchema),
+    defaultValues: {
+      siteName: 'Simple CMS',
+      siteDescription: null,
+      logoMediaId: null,
+      logoAlt: null,
+      faviconMediaId: null,
+      ogImageMediaId: null,
+    },
+  });
+
+  // GET 데이터 로드/갱신 시 form + local url 동기화
+  useEffect(() => {
+    if (!data) return;
+    reset({
+      siteName: data.siteName,
+      siteDescription: data.siteDescription,
+      logoMediaId: data.logoMediaId,
+      logoAlt: data.logoAlt,
+      faviconMediaId: data.faviconMediaId,
+      ogImageMediaId: data.ogImageMediaId,
+    });
+    setLogoUrl(data.logoUrl ?? '');
+    setFaviconUrl(data.faviconUrl ?? '');
+    setOgImageUrl(data.ogImageUrl ?? '');
+  }, [data, reset]);
+
+  const dirtyGuard = useDirtyGuard(isDirty);
+
+  const onSubmit = (formData: UpdateBrandingData) => {
+    updateMutation.mutate(formData);
+  };
+
+  /**
+   * ImageUrlInput onChange 가드 — mediaId 없는 url 입력은 차단(외부 URL 미지원).
+   * disableUrlInput=true로 input은 readOnly이지만, 만약을 위해 onChange에서도 한 번 더 검증.
+   */
+  const handleAssetChange = (
+    field: 'logoMediaId' | 'faviconMediaId' | 'ogImageMediaId',
+    setLocalUrl: (url: string) => void,
+    next: { url: string; mediaId: string | null },
+  ) => {
+    if (!next.mediaId && next.url) {
+      toast.error('업로드 또는 라이브러리에서 선택해주세요.');
+      return;
+    }
+    setValue(field, next.mediaId, { shouldDirty: true });
+    setLocalUrl(next.url);
+  };
+
+  const handleDeleteAsset = (kind: BrandingAssetKind) => {
+    deleteAssetMutation.mutate(kind, {
+      onSuccess: () => {
+        if (kind === 'logo') {
+          setValue('logoMediaId', null, { shouldDirty: false });
+          setValue('logoAlt', null, { shouldDirty: false });
+          setLogoUrl('');
+        } else if (kind === 'favicon') {
+          setValue('faviconMediaId', null, { shouldDirty: false });
+          setFaviconUrl('');
+        } else {
+          setValue('ogImageMediaId', null, { shouldDirty: false });
+          setOgImageUrl('');
+        }
+      },
+    });
+  };
+
+  const watchLogoMediaId = watch('logoMediaId');
+  const watchFaviconMediaId = watch('faviconMediaId');
+  const watchOgImageMediaId = watch('ogImageMediaId');
+
+  return (
+    <>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>기본 정보</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="siteName">사이트명</Label>
+              <Input
+                id="siteName"
+                {...register('siteName')}
+                placeholder="예: 우리 회사 CMS"
+                maxLength={60}
+              />
+              {errors.siteName && (
+                <p className="text-sm text-destructive">
+                  {errors.siteName.message}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                헤더 폴백 텍스트, 메타데이터 title, 푸터 copyright에 사용됩니다.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="siteDescription">사이트 설명 (SEO)</Label>
+              <Textarea
+                id="siteDescription"
+                {...register('siteDescription', {
+                  setValueAs: (v) => {
+                  const s = typeof v === 'string' ? v.trim() : '';
+                  return s === '' ? null : s;
+                },
+                })}
+                placeholder="검색 엔진과 SNS 미리보기에 표시되는 설명 (200자 이내 권장)"
+                maxLength={200}
+                rows={3}
+              />
+              {errors.siteDescription && (
+                <p className="text-sm text-destructive">
+                  {errors.siteDescription.message}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="size-5" />
+              로고
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>로고 이미지</Label>
+              <ImageUrlInput
+                value={logoUrl}
+                mediaId={watchLogoMediaId}
+                category="branding"
+                endpoint={BRANDING_ENDPOINT}
+                acceptMimeTypes={LOGO_MIME}
+                disabledReason={LOGO_REASON}
+                disableUrlInput
+                onChange={(next) =>
+                  handleAssetChange('logoMediaId', setLogoUrl, next)
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                권장: 가로형 PNG/WEBP. 헤더 max-height에 맞춰 표시됩니다. SVG는
+                보안상 차단됩니다.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="logoAlt">로고 대체 텍스트 (alt)</Label>
+              <Input
+                id="logoAlt"
+                {...register('logoAlt', {
+                  setValueAs: (v) => {
+                  const s = typeof v === 'string' ? v.trim() : '';
+                  return s === '' ? null : s;
+                },
+                })}
+                placeholder="비우면 사이트명을 사용합니다."
+                maxLength={120}
+              />
+              {errors.logoAlt && (
+                <p className="text-sm text-destructive">
+                  {errors.logoAlt.message}
+                </p>
+              )}
+            </div>
+
+            {watchLogoMediaId && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleDeleteAsset('logo')}
+                disabled={deleteAssetMutation.isPending}
+              >
+                <Trash2 className="size-4" />
+                로고 제거
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>파비콘 (브라우저 탭 아이콘)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <ImageUrlInput
+                value={faviconUrl}
+                mediaId={watchFaviconMediaId}
+                category="branding"
+                endpoint={BRANDING_ENDPOINT}
+                acceptMimeTypes={FAVICON_MIME}
+                disabledReason={FAVICON_REASON}
+                disableUrlInput
+                onChange={(next) =>
+                  handleAssetChange('faviconMediaId', setFaviconUrl, next)
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                권장: 32×32 ~ 512×512 정사각형 PNG. ICO도 가능하지만 브라우저별
+                MIME 인식 차이로 거부될 수 있어 PNG 권장. 변경 후 브라우저
+                캐시로 사용자에게 반영되기까지 수일 걸릴 수 있습니다.
+              </p>
+            </div>
+
+            {watchFaviconMediaId && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleDeleteAsset('favicon')}
+                disabled={deleteAssetMutation.isPending}
+              >
+                <Trash2 className="size-4" />
+                파비콘 제거
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>OG 이미지 (SNS 미리보기)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <ImageUrlInput
+                value={ogImageUrl}
+                mediaId={watchOgImageMediaId}
+                category="branding"
+                endpoint={BRANDING_ENDPOINT}
+                acceptMimeTypes={OG_MIME}
+                disabledReason={OG_REASON}
+                disableUrlInput
+                onChange={(next) =>
+                  handleAssetChange('ogImageMediaId', setOgImageUrl, next)
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                권장: 1200×630 PNG/JPG. Twitter/Slack/카톡 등 SNS 카드 미리보기에
+                사용됩니다.
+              </p>
+            </div>
+
+            {watchOgImageMediaId && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleDeleteAsset('og')}
+                disabled={deleteAssetMutation.isPending}
+              >
+                <Trash2 className="size-4" />
+                OG 이미지 제거
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            변경사항은 공개 웹에 최대 1분 후 반영됩니다.
+          </p>
+          <Button
+            type="submit"
+            disabled={updateMutation.isPending || !isDirty}
+          >
+            {updateMutation.isPending ? '저장 중...' : '저장'}
+          </Button>
+        </div>
+      </form>
+
+      <ConfirmLeaveDialog {...dirtyGuard.confirmDialogProps} />
+    </>
+  );
+}

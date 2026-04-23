@@ -5,6 +5,11 @@ import type { MediaListItem } from '@simple-cms/types';
 
 import { resolveMediaPreviewUrl } from '@/shared/lib/mediaUrl';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/shared/ui/shadcn/tooltip';
 
 import { formatFileSize } from '../lib/formatFileSize';
 
@@ -19,6 +24,14 @@ interface MediaCardProps {
   checked?: boolean;
   /** 체크박스 토글 콜백 */
   onToggleSelect?: (id: string, next: boolean) => void;
+  /**
+   * MIME 타입 제약으로 선택 불가한 상태 (Stage 7l).
+   * Picker의 acceptMimeTypes에 매칭되지 않을 때 true.
+   * 클릭 차단 + opacity-50 + Tooltip 안내.
+   */
+  disabled?: boolean;
+  /** disabled일 때 Tooltip에 표시할 안내 메시지 */
+  disabledReason?: string;
 }
 
 export function MediaCard({
@@ -28,17 +41,22 @@ export function MediaCard({
   selectable,
   checked,
   onToggleSelect,
+  disabled = false,
+  disabledReason,
 }: MediaCardProps) {
   const isImage = media.mimeType.startsWith('image/');
-  const handleClick = () => onClick?.(media);
+  const handleClick = () => {
+    if (disabled) return;
+    onClick?.(media);
+  };
 
-  return (
+  const cardBody = (
     <div
       className={`group relative flex flex-col rounded-md border bg-card text-left transition-colors hover:border-primary ${
         selected || checked ? 'border-primary ring-2 ring-primary' : ''
-      }`}
+      } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
     >
-      {selectable && (
+      {selectable && !disabled && (
         <div
           className={`absolute right-2 top-2 z-10 flex size-6 items-center justify-center rounded-md border bg-background/90 shadow-sm backdrop-blur transition-opacity ${
             checked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
@@ -58,7 +76,9 @@ export function MediaCard({
       <button
         type="button"
         onClick={handleClick}
-        className="flex flex-col text-left focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
+        disabled={disabled}
+        aria-disabled={disabled}
+        className="flex flex-col text-left focus:outline-none focus:ring-2 focus:ring-primary rounded-md disabled:cursor-not-allowed"
       >
         <div className="relative aspect-square w-full overflow-hidden rounded-t-md bg-muted">
           {isImage ? (
@@ -93,4 +113,15 @@ export function MediaCard({
       </button>
     </div>
   );
+
+  if (disabled && disabledReason) {
+    return (
+      <Tooltip>
+        <TooltipTrigger render={<div />}>{cardBody}</TooltipTrigger>
+        <TooltipContent>{disabledReason}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return cardBody;
 }

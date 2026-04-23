@@ -3,28 +3,68 @@ import type { Metadata } from 'next';
 import 'krds-react/dist/index.css';
 
 import { getMenuBySlot } from '@/entities/navigation/api/getNavigation';
+import { getCachedBranding } from '@/shared/lib/brandingCache';
 import { ErrorReporterMount } from '@/shared/ui/ErrorReporterMount';
 import { PageLayout } from '@/widgets/layout/ui/PageLayout';
 
 import './globals.css';
 
-export const metadata: Metadata = {
-  title: {
-    default: 'Simple CMS',
-    template: '%s | Simple CMS',
-  },
-  description: '공개 웹',
-};
+/**
+ * 동적 메타데이터 (Stage 7l).
+ * SiteSettings 기반으로 title/description/icons/openGraph 생성.
+ *
+ * - title.default + template: SITE_NAME 동적
+ * - description: SITE_DESCRIPTION (폴백 '공개 웹')
+ * - icons.icon: SITE_FAVICON_MEDIA_ID Media.url + ?v=mediaId (브라우저 favicon 캐시 무효화)
+ * - openGraph.images: SITE_OG_IMAGE_MEDIA_ID Media.url, 1200x630 권장
+ *
+ * brandingCache 실패 시 폴백 객체 반환 — 페이지 렌더 차단 방지.
+ * `RootLayout`도 같은 `getCachedBranding()`을 호출하지만 모듈 레벨 TTL 캐시(60s/5s)로 dedup.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await getCachedBranding();
+
+  const metadata: Metadata = {
+    title: {
+      default: branding.siteName,
+      template: `%s | ${branding.siteName}`,
+    },
+    description: branding.siteDescription,
+  };
+
+  if (branding.faviconUrl) {
+    // ?v={mediaId}로 cache busting — 동일 바이너리 재업로드는 같은 mediaId라 무효화 발생 안 함 (의도적)
+    metadata.icons = {
+      icon: `${branding.faviconUrl}?v=${branding.faviconMediaId ?? ''}`,
+    };
+  }
+
+  if (branding.ogImageUrl) {
+    metadata.openGraph = {
+      images: [
+        {
+          url: branding.ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: branding.siteName,
+        },
+      ],
+    };
+  }
+
+  return metadata;
+}
 
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [headerMenu, footerMenu, sidebarMenu] = await Promise.all([
+  const [headerMenu, footerMenu, sidebarMenu, branding] = await Promise.all([
     getMenuBySlot('HEADER'),
     getMenuBySlot('FOOTER'),
     getMenuBySlot('SIDEBAR'),
+    getCachedBranding(),
   ]);
   return (
     <html lang="ko">
@@ -45,6 +85,7 @@ export default async function RootLayout({
               ? { name: sidebarMenu.name, items: sidebarMenu.items }
               : null
           }
+          branding={branding}
         >
           {children}
         </PageLayout>

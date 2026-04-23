@@ -30,6 +30,20 @@ interface MediaPickerProps {
   category?: string;
   title?: string;
   description?: string;
+  /**
+   * Stage 7l — 업로드 엔드포인트 override.
+   * 미전달 시 기본 `/api/media/upload`. 브랜딩은 `/api/media/branding-upload`.
+   */
+  endpoint?: string;
+  /**
+   * Stage 7l — 선택/업로드 가능 MIME 화이트리스트.
+   * 미전달 시 모든 미디어 선택 가능 (backward compat).
+   * 라이브러리 그리드의 비매칭 카드는 disabled + Tooltip 처리.
+   * MediaUploadButton의 `<input accept>` 필터에도 전달.
+   */
+  acceptMimeTypes?: string[];
+  /** disabled 카드의 Tooltip 메시지 (acceptMimeTypes 전달 시 표시) */
+  disabledReason?: string;
 }
 
 const PICKER_PAGE_SIZE = 12;
@@ -41,6 +55,9 @@ export function MediaPicker({
   category = 'home',
   title = '미디어 선택',
   description = '라이브러리에서 선택하거나 새 파일을 업로드하세요.',
+  endpoint,
+  acceptMimeTypes,
+  disabledReason,
 }: MediaPickerProps) {
   const canCreate = usePermission('media', 'create');
 
@@ -92,6 +109,8 @@ export function MediaPicker({
             {canCreate && (
               <MediaUploadButton
                 category={category}
+                endpoint={endpoint}
+                acceptMimeTypes={acceptMimeTypes}
                 onUploaded={(uploaded) =>
                   handleSelect({
                     id: uploaded.id,
@@ -115,6 +134,8 @@ export function MediaPicker({
             items={data?.items ?? []}
             isLoading={isLoading}
             onSelect={handleSelect}
+            acceptMimeTypes={acceptMimeTypes}
+            disabledReason={disabledReason}
           />
 
           <MediaPagination

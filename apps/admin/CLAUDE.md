@@ -137,6 +137,7 @@ src/
 /settings/security      # 보안 설정 (동시 로그인 정책)
 /settings/upload        # 업로드 제한 설정 (허용 확장자, MIME 타입, 최대 파일 크기)
 /settings/roles         # 권한 관리 (역할 목록 + 메뉴별 CRUD 매트릭스)
+/settings/branding      # 사이트 브랜딩 + SEO 메타데이터 (Stage 7l — 로고/favicon/OG/사이트명·설명)
 ```
 
 ## 기능별 상세 스펙
@@ -743,6 +744,75 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 | 역할 삭제           | DELETE | ROLE       |
 | 기본 역할 설정      | UPDATE | ROLE       |
 | 사용자 역할 배정    | UPDATE | USER       |
+
+### 사이트 브랜딩 + SEO 메타데이터 관리 (Stage 7l)
+
+- 라우트: `/settings/branding` (SettingsNav 5번째 탭)
+- FSD: `features/site-settings/` (도메인/보안/업로드 설정과 동일 슬라이스에 추가)
+- 권한: 기존 `settings:read|update` 그대로 사용 (변경 없음)
+
+#### SiteSettings 키 (6개)
+
+| 키                       | 값             | 설명                                       |
+| ------------------------ | -------------- | ------------------------------------------ |
+| `SITE_NAME`              | string         | 헤더 폴백, metadata title, 푸터 copyright |
+| `SITE_DESCRIPTION`       | string (≤200) | metadata description                       |
+| `SITE_LOGO_MEDIA_ID`     | Media.id       | 헤더 로고                                  |
+| `SITE_LOGO_ALT`          | string (≤120) | 로고 sr-only (비우면 SITE_NAME 폴백)       |
+| `SITE_FAVICON_MEDIA_ID`  | Media.id       | 브라우저 탭 favicon                        |
+| `SITE_OG_IMAGE_MEDIA_ID` | Media.id       | OG 카드 미리보기 (1200x630 권장)           |
+
+- mediaId만 저장 + Media join. URL은 별도 키로 저장하지 않음 (단일 출처 + Media 삭제 시 자동 일관성)
+- DB 마이그레이션 0 — SiteSettings 키-값 6개 추가만
+
+#### API Routes
+
+| Method | Route                          | 권한              | 용도                                              |
+| ------ | ------------------------------ | ----------------- | ------------------------------------------------- |
+| GET    | `/api/settings/branding`       | settings:read     | 6키 + 3 Media url join 응답                       |
+| PATCH  | `/api/settings/branding`       | settings:update   | 6키 일괄 저장 + 키별 MIME 게이트 + 변경된 키만 audit |
+| DELETE | `/api/settings/branding?kind=` | settings:update   | 단일 자산 제거 (`logo`/`favicon`/`og`)            |
+| POST   | `/api/media/branding-upload`   | 인증 (역할 불문)  | branding 전용 업로드 (SVG 차단, ICO 허용)         |
+
+#### 키별 MIME 화이트리스트 (PATCH server gate)
+
+| 필드             | 허용 MIME                                                                |
+| ---------------- | ------------------------------------------------------------------------ |
+| `logoMediaId`    | image/jpeg, image/png, image/webp                                        |
+| `faviconMediaId` | image/png, image/webp, image/x-icon, image/vnd.microsoft.icon            |
+| `ogImageMediaId` | image/jpeg, image/png, image/webp                                        |
+
+`application/octet-stream`은 의도적 제외 — 일부 브라우저가 valid ICO를 octet-stream으로 보고하지만 임의 바이너리도 같은 MIME이라 스푸핑 위험. 거부 시 PNG 변환 안내.
+
+#### MediaPicker SVG 우회 차단 (defense-in-depth)
+
+- **서버 게이트** (Step 4 PATCH): logoMediaId/faviconMediaId/ogImageMediaId의 Media.mimeType을 화이트리스트로 검증. 사용자가 강제로 PATCH 호출(curl 등) 시에도 최종 차단
+- **UX 게이트** (MediaPicker `acceptMimeTypes` prop): 비매칭 카드 **disabled + Tooltip** (hide 아님 — "어제 올린 SVG가 왜 안 보이지?" 혼란 회피)
+
+#### 외부 URL 차단 (Stage 7l 결정)
+
+- `ImageUrlInput`의 `disableUrlInput=true` prop으로 Input readOnly + onChange 가드
+- 사유: 외부 URL의 mimeType 검증 불가(HEAD 요청도 spoofing 가능) → SVG 차단 정책 충돌, SSRF 잠재 위험, 외부 도메인 다운/SSL/CORS 시 헤더 깨짐
+- 운영자는 라이브러리/업로드만 사용 (toast.error로 안내)
+
+#### 캐시 정책
+
+- 공개 웹: `apps/web/src/shared/lib/brandingCache.ts` 인메모리 60s prod / 5s dev TTL
+- admin → web 별 인스턴스라 즉시 invalidate 불가 → "**최대 1분 후 반영**" UI 안내
+- favicon은 브라우저 캐시로 추가 수일 지연 가능 — `?v={mediaId}` cache busting
+
+#### 감사 로그
+
+- `entityType: SITE_SETTINGS`, `entityId: SITE_BRANDING` (DELETE는 `entityTitle`에 "(kind 제거)" suffix)
+- 변경된 키만 `changes.before`/`changes.after`에 포함 (도메인 패턴 일관성)
+- no-op short-circuit: 변경된 키 0개면 audit 기록 skip
+
+#### 신규/확장 컴포넌트
+
+- `BrandingSettingsForm.tsx` — 6필드 (siteName/siteDescription/logo+alt/favicon/og)
+- `MediaUploadButton`/`useUploadMedia`/`uploadMedia` — `endpoint?` + `acceptMimeTypes?` prop 추가 (옵셔널 backward compat)
+- `MediaCard`/`MediaGrid`/`MediaPicker` — `disabled`/`acceptMimeTypes`/`disabledReason` prop 추가
+- `ImageUrlInput` — `endpoint`/`acceptMimeTypes`/`disableUrlInput`/`disabledReason` prop 추가
 
 ### 미리보기 (Stage 7a)
 

@@ -175,6 +175,31 @@ apps/{앱}/
 - 이미지 업로드 엔드포인트는 이미지 MIME 타입만 허용 (jpeg/png/gif/webp/svg+xml)
 - Docker 배포 시 `apps/web/public/uploads/`에 볼륨 마운트 필요 (local provider)
 
+### 사이트 브랜딩 + SEO 메타데이터 정책 (Stage 7l)
+
+- **6개 SiteSettings 키 통합 관리** (`/settings/branding`):
+
+  | 키                       | 값            | 설명                                          |
+  | ------------------------ | ------------- | --------------------------------------------- |
+  | `SITE_NAME`              | string        | 헤더 폴백 텍스트, metadata title, 푸터 copyright |
+  | `SITE_DESCRIPTION`       | string        | metadata description (SEO)                    |
+  | `SITE_LOGO_MEDIA_ID`     | Media.id 문자열 | 헤더 로고                                      |
+  | `SITE_LOGO_ALT`          | string        | 로고 sr-only 텍스트 (비우면 SITE_NAME 폴백)     |
+  | `SITE_FAVICON_MEDIA_ID`  | Media.id 문자열 | 브라우저 탭 favicon                            |
+  | `SITE_OG_IMAGE_MEDIA_ID` | Media.id 문자열 | OG 카드 미리보기 (1200x630 권장)               |
+
+- **mediaId만 저장 + Media join**: URL은 별도 키로 저장하지 않고 GET/캐시에서 `Media.url` join. 단일 출처 + Media 삭제 시 자동 일관성. **외부 URL 직접 입력 차단** — 보안(SVG MIME 검증 불가) + SVG 차단 정책 일관성. 운영자는 업로드 또는 라이브러리에서만 선택
+- **SVG 차단 (모든 키 공통)**: `/api/media/branding-upload`에서 `image/svg+xml` 거부. 새 탭에서 SVG가 `<script>` 실행 가능한 XSS 위험 회피. 기존 `/api/media/upload`는 정책 변경 없음
+- **MediaPicker 우회 차단 (defense-in-depth)**:
+  - 서버 게이트: PATCH 시 logoMediaId/faviconMediaId/ogImageMediaId의 Media.mimeType을 키별 화이트리스트로 검증 (로고/OG: PNG/JPG/WEBP, favicon: PNG/WEBP/ICO 4종)
+  - UX 게이트: MediaPicker `acceptMimeTypes` prop으로 비매칭 카드 disabled + Tooltip 표시 (hide 아님 — "어제 올린 SVG가 왜 안 보이지?" 혼란 회피)
+- **참조 추적 화이트리스트**: `apps/admin/src/features/media-management/lib/mediaBearingSettings.ts`의 `MEDIA_BEARING_SETTING_KEYS`가 단일 출처. `findMediaReferences()`의 8번째 경로에서 부분 스캔. 향후 미디어 키 추가(예: 다중 favicon, 폴백 OG) 시 한 곳만 수정
+- **공개 웹 캐시**: `apps/web/src/shared/lib/brandingCache.ts`가 `domainCache.ts` 동일 패턴(인메모리 60s prod / 5s dev TTL). admin → web 별 인스턴스라 즉시 invalidate 불가 → "최대 1분 후 반영" UI 명시. brandingCache fetch 실패 시 폴백 객체 반환 (페이지 렌더 차단 안 함)
+- **favicon cache busting**: `<link rel="icon" href="${url}?v=${mediaId}">` — 동일 바이너리 재업로드는 같은 mediaId라 무효화 발생 안 함 (의도적). 다른 favicon 업로드 시 mediaId 변경 → 브라우저가 새 favicon fetch
+- **헤더 로고 마크업**: KRDS `Header.Branding`은 `children`을 `.logo` `<h2>` **밖**에 렌더하므로 로고 이미지를 클릭 가능 영역 안에 두려면 그대로 사용 불가. **Stage 7d `RightSidebar`/`SubpageSideNavigation` 동일 패턴**으로 KRDS DOM 클래스(`.header-branding > h2.logo > a`) 차용한 커스텀 JSX(`apps/web/src/widgets/layout/ui/HeaderBranding.tsx`)로 대체. KRDS 메이저 업데이트 시 이 컴포넌트 + 7d 2개를 함께 점검
+- **generateMetadata 동적화**: `apps/web/app/layout.tsx`가 `export const metadata` → `export async function generateMetadata()` 변환. SITE_NAME으로 `title.default` + `template`, SITE_DESCRIPTION으로 `description`, faviconUrl로 `icons.icon`, ogImageUrl로 `openGraph.images` 자동 채움. try/catch + 폴백으로 brandingCache 실패 시에도 페이지 렌더 차단 안 함
+- **app 디렉토리 file convention 충돌 주의**: `apps/web/app/favicon.ico` / `app/icon.*` / `app/apple-icon.*` / `app/opengraph-image.*` 파일은 Next.js가 자동 picking하여 `generateMetadata().icons` / `openGraph`를 override함. Stage 7l 진입 시 0건 확인 완료 — **누군가 이 파일들을 추가하면 동적 favicon/OG가 무시됨**. 추가 금지
+
 ### 미디어 라이브러리 정책 (Stage 5a-2)
 
 - **중복 방지**: 업로드 시 SHA-256 해시로 동일 바이너리 검출 → 기존 Media 레코드 재사용 (응답 `reused: true`, 파일 저장 + 새 레코드 생성 모두 skip)
@@ -355,6 +380,7 @@ apps/{앱}/
 | 7j   | CI matrix + turbo `test.dependsOn` 정리 + MSW 대신 fetch stub decorator + play function 2건 + addon-vitest 30초 timeout 탐사 | GitHub Actions admin/web × {lint, typecheck, test} 6 job 병렬 / `test.dependsOn: ['^build']` 제거 / `msw-storybook-addon` v2.1 부재 primary source 확인 후 `window.fetch` stub decorator 채택 / CreateRoleDialog Submit Success·Conflict + SectionReorderProbe Reorder500 / `optimizeDeps.include` 시도→효과 없어 revert + findings 기록 | **완료** |
 | 7k-1 | 청소 — LinkTarget API 경로 rename + `IFRAME_ALLOWED_HOSTS` 공유 모듈 추출 | `/api/home-popups/references` → `/api/link-target/references` (7i 이연 처리) / `@simple-cms/types`의 `block.types.ts`에 `IFRAME_ALLOWED_HOSTS` + `isIframeHostAllowed` 단일 출처 통합 (admin/web 3곳 복제 해소, Stage 7b부터 이연) / `normalizeIframeEmbedUrl`은 admin 전용 유지 | **완료** |
 | 7k-3 | addon-vitest 30s cold start 탐사 (measure-first) | primary source 확인(`storybookScript`는 watch 전용, `disableAddonDocs` 기본 true) + `browser.isolate: false` 시도 결과 10초 기준 미달로 revert. Stage 8+ 이연 | **완료 (findings only)** |
+| 7l   | 사이트 브랜딩 + SEO 메타데이터 (로고/favicon/OG/사이트명·설명)       | admin `/settings/branding` 5번째 탭에서 6키 통합 관리 + web 헤더 동적 로고 + `generateMetadata`로 title/description/icons/openGraph 자동 반영 | **완료** |
 | 8    | Docker + CI/CD + 문서화                                             | `docker compose up`으로 전체 실행                                                           | 대기     |
 
 #### Stage 7c 결과 요약
@@ -544,6 +570,26 @@ Stage 7f~7i의 Storybook + Vitest 인프라 위에 **CI 자동화 + 보류된 mu
   - 효과: 호스트 리스트 정책 변경 시 3곳 동기화 필요 → 1곳으로 수렴. Stage 7b "공유 모듈 추출은 Stage 8+ 과제" 약속을 실제로 이행
 - **stale artifact 주의**: admin의 `.next/types/validator.ts`가 기존 `/api/home-popups/references/route.js` 참조를 캐싱하고 있어 rename 후 typecheck 실패. `rm -rf apps/admin/.next/types` 후 재검증으로 해소
 - **검증**: `pnpm typecheck` + `pnpm lint` 모두 녹색 (admin 56 + web 33 = **89 tests 유지**). `rg "/api/home-popups/references"` 결과 CLAUDE.md/route.ts 주석 제외 실행 코드 0건, `rg "IFRAME_ALLOWED_HOSTS"` 정의 1곳(packages/types) + re-export/import만 남음
+
+#### Stage 7l 결과 요약
+
+사이트 브랜딩(헤더 로고 + 사이트명) + SEO 메타데이터(favicon + OG 이미지 + 사이트 설명)를 admin `/settings/branding` 5번째 탭에서 통합 관리. DB 스키마 변경 없이 SiteSettings 6키만 추가.
+
+- **신규 6키**: `SITE_NAME`, `SITE_DESCRIPTION`, `SITE_LOGO_MEDIA_ID`, `SITE_LOGO_ALT`, `SITE_FAVICON_MEDIA_ID`, `SITE_OG_IMAGE_MEDIA_ID`. 마이그레이션 0 (`pnpm db:push` 불필요)
+- **신규 API 2개**: `/api/settings/branding` (GET/PATCH/DELETE — 6키 통합 + 키별 MIME 게이트 + 변경된 키만 audit diff + no-op short-circuit), `/api/media/branding-upload` (SVG 차단, ICO 허용, category='branding' 강제)
+- **참조 추적 8번째 경로**: `apps/admin/src/features/media-management/lib/mediaBearingSettings.ts`의 `MEDIA_BEARING_SETTING_KEYS = ['SITE_LOGO_MEDIA_ID', 'SITE_FAVICON_MEDIA_ID', 'SITE_OG_IMAGE_MEDIA_ID']` 화이트리스트로 `findMediaReferences()` 부분 스캔. SiteSettings 풀스캔 회피. 키별 라벨 매핑(`MEDIA_BEARING_SETTING_LABELS`)으로 사용처 표시 분리. `MediaReferenceType`에 `'SITE_SETTINGS'` 추가
+- **MediaPicker `acceptMimeTypes` prop**: 옵셔널 — 미전달 시 backward compat. 비매칭 카드를 **disabled + Tooltip**(advisor 권장 — hide 아님). MediaUploadButton의 `<input accept>` + `endpoint` prop도 함께 추가하여 BrandingSettingsForm이 `/api/media/branding-upload`로 라우팅. ImageUrlInput에 `disableUrlInput` prop 추가하여 외부 URL 직접 입력 차단
+- **공개 웹 brandingCache**: `apps/web/src/shared/lib/brandingCache.ts`가 `domainCache.ts` 동일 패턴(60s prod / 5s dev TTL). 6키 + 3개 Media join 1회. fetch 실패 시 폴백 객체로 페이지 렌더 차단 방지. admin → web 별 인스턴스라 revalidate 불가 → "최대 1분 후 반영" UI/CLAUDE.md 명시
+- **`generateMetadata` 동적화**: `apps/web/app/layout.tsx`의 `export const metadata` → `export async function generateMetadata()` 변환. `title.default = siteName` + `template = '%s | ${siteName}'`, `description = siteDescription` (폴백 '공개 웹'), `icons.icon = ${faviconUrl}?v=${faviconMediaId}` (브라우저 favicon 캐시 무효화), `openGraph.images = [{ url, width: 1200, height: 630, alt: siteName }]`. try/catch 폴백으로 brandingCache fetch 실패 시 metadata만 기본값으로 폴백 (페이지 자체는 정상 렌더)
+- **헤더 커스텀 컴포넌트**: `apps/web/src/widgets/layout/ui/HeaderBranding.tsx` (NEW) — KRDS `Header.Branding`이 `children`을 `.logo` 밖에 렌더하는 제약 회피. Stage 7d `RightSidebar`/`SubpageSideNavigation` 동일 패턴(KRDS DOM 클래스 차용). logoUrl 미설정 시 `.header-logo-text`로 사이트명 시각 폴백. globals.css에 `.header-logo-image { max-height: 100%; width: auto; max-width: 200px; object-fit: contain }` + `.header-logo-text` 추가 (와이드 로고가 헤더 height 깨지 않게)
+- **푸터 copyright 동기화**: `PageLayout`의 `copyright="© Simple CMS. All rights reserved."` 하드코딩을 `copyright={`© ${branding.siteName}. All rights reserved.`}`로 교체 (advisor — 헤더는 바뀌는데 푸터가 안 바뀌면 회귀처럼 보임). Masthead 정부 공식 문구는 무변경
+- **PATCH MediaPicker SVG 우회 차단 (advisor 핵심)**: 키별 MIME 화이트리스트(로고/OG: PNG/JPG/WEBP, favicon: PNG/WEBP/ICO 4종)로 서버 검증. MediaPicker UX 게이트가 SVG를 disabled 표시하지만 사용자가 강제로 PATCH 호출(curl 등) 시에도 서버가 최종 차단. `application/octet-stream`은 의도적 제외 — 일부 브라우저가 valid ICO를 octet-stream으로 보고하지만 임의 바이너리도 같은 MIME이라 스푸핑 위험
+- **감사 로그 — 변경된 키만 diff** (advisor 권장): 6키 풀 덤프는 노이즈. 도메인 설정 패턴 일관성 — before/after 비교하여 다른 키만 `changes`에 포함. no-op short-circuit (`changedKeys.length === 0`이면 audit 기록 skip)
+- **favicon cache busting**: `<link rel="icon" href="${url}?v=${mediaId}">`. 동일 바이너리 재업로드는 같은 mediaId(SHA-256 기반)라 무효화 발생 안 함 — 의도적. 다른 favicon 업로드 시 mediaId 변경 → 브라우저가 새 favicon fetch. 그래도 운영자에게 "수일 지연 가능" UI 안내 (브라우저 캐시 정책 차이)
+- **app/favicon.ico 파일 컨벤션 충돌 검증**: Stage 7l 진입 시 `apps/web/app/{favicon,icon,apple-icon,opengraph-image,twitter-image}.*` 모두 0건 확인 (Glob). 향후 누가 추가하면 동적 favicon/OG 무시되니 CLAUDE.md "사이트 브랜딩 정책"에 금지 명시
+- **외부 URL 로고 차단 결정**: ImageUrlInput에 `disableUrlInput=true` 전달 + `handleAssetChange`에서 mediaId 없는 url 거부 + toast.error. 사유: 외부 URL의 mimeType 검증 불가(HEAD 요청도 spoofing 가능) → SVG 차단 정책 충돌, SSRF 잠재 위험, 외부 도메인 다운/SSL/CORS 시 헤더 깨짐. 운영자는 라이브러리/업로드만 사용
+- **Storybook + 검증**: `BrandingSettingsForm.stories.tsx` 4 variants (Default / Filled / SubmitSuccess / SubmitError400). LinkTargetInput의 `MockRefsProvider` 패턴(자체 QueryClient + `setQueryData`)으로 GET 응답 모킹 + `fetchStubDecorator`로 PATCH 200/400 분기. **admin 19 files / 60 tests** (56 → +4)
+- **Stage 7l이 하지 않은 것** (Out of Scope): 모바일/PC 분리 로고, 다크모드 로고, 외부 URL 로고 직접 입력, `@vercel/og` 동적 OG 합성, 로고 클릭 분석 이벤트(분석 인프라 부재), favicon 다중 사이즈, twitter:card 메타, robots.txt/sitemap.xml에 사이트명 반영 — 점진적 확장 후보
 
 #### Stage 7k-3 결과 요약 (findings-only, 코드 변경 0)
 

@@ -1,12 +1,15 @@
 import { fetchClient } from '@/shared/api/fetchClient';
 import type {
+  BrandingAssetKind,
+  BrandingSettingsData,
+  DnsCheckResult,
   DomainSettingsData,
   SecuritySettingsData,
-  UploadSettingsData,
-  DnsCheckResult,
+  UpdateBrandingData,
   UpdateDomainData,
   UpdateSecurityData,
   UpdateUploadData,
+  UploadSettingsData,
 } from '../model/settingsSchemas';
 
 // Domain
@@ -52,5 +55,25 @@ export function updateUploadSettings(data: UpdateUploadData): Promise<null> {
   return fetchClient<null>('/api/settings/upload', {
     method: 'PATCH',
     body: JSON.stringify(data),
+  });
+}
+
+// Branding (Stage 7l)
+export function getBrandingSettings(): Promise<BrandingSettingsData> {
+  return fetchClient<BrandingSettingsData>('/api/settings/branding');
+}
+
+export function updateBrandingSettings(
+  data: UpdateBrandingData,
+): Promise<null> {
+  return fetchClient<null>('/api/settings/branding', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteBrandingAsset(kind: BrandingAssetKind): Promise<null> {
+  return fetchClient<null>(`/api/settings/branding?kind=${kind}`, {
+    method: 'DELETE',
   });
 }

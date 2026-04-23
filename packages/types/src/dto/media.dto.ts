@@ -59,7 +59,8 @@ export type MediaReferenceType =
   | 'HOME_SECTION'
   | 'POST_CONTENT'
   | 'HOME_POPUP'
-  | 'PAGE_BLOCK_IMAGE';
+  | 'PAGE_BLOCK_IMAGE'
+  | 'SITE_SETTINGS';
 
 export interface MediaReference {
   type: MediaReferenceType;

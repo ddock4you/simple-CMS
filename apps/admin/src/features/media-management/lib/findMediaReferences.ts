@@ -1,6 +1,12 @@
 import { prisma } from '@simple-cms/db';
 import type { MediaReference } from '@simple-cms/types';
 
+import {
+  MEDIA_BEARING_SETTING_KEYS,
+  MEDIA_BEARING_SETTING_LABELS,
+  type MediaBearingSettingKey,
+} from './mediaBearingSettings';
+
 /**
  * 한 Media가 어디에서 사용 중인지 추적한다.
  *
@@ -12,6 +18,7 @@ import type { MediaReference } from '@simple-cms/types';
  * 5. HomePopup.imageMediaId (FK, Stage 5b)
  * 6. PageBlock IMAGE 블록 configJson.imageMediaId (JSONB containment, Stage 6)
  * 7. PageBlock RICH_TEXT 블록 configJson.contentJson (Tiptap JSON 재귀, Stage 6 — 통합 블록 모델)
+ * 8. SiteSettings via MEDIA_BEARING_SETTING_KEYS 화이트리스트 (Stage 7l — LOGO/FAVICON/OG_IMAGE)
  *
  * 서브페이지 본문은 RICH_TEXT 블록으로 흡수되어 Subpage.contentJson 경로는 더 이상 존재하지 않는다.
  * Media 삭제 전 차단 판정 + 사용처 안내에 사용한다.
@@ -167,6 +174,27 @@ export async function findMediaReferences(
         entityId: b.id,
         label: b.subpage.title,
         context: '서브페이지 본문 블록 (이미지 포함)',
+      });
+    }
+  }
+
+  // ─── 8. SiteSettings 화이트리스트 (Stage 7l — LOGO/FAVICON/OG_IMAGE) ──
+  // value === mediaId인 키만 직접 매칭. 키는 화이트리스트로 한정하여 비-미디어 키 풀스캔 회피.
+  const settingMatches = await prisma.siteSettings.findMany({
+    where: {
+      key: { in: [...MEDIA_BEARING_SETTING_KEYS] },
+      value: mediaId,
+    },
+    select: { key: true },
+  });
+  for (const s of settingMatches) {
+    const meta = MEDIA_BEARING_SETTING_LABELS[s.key as MediaBearingSettingKey];
+    if (meta) {
+      references.push({
+        type: 'SITE_SETTINGS',
+        entityId: 'SITE_BRANDING',
+        label: meta.label,
+        context: meta.context,
       });
     }
   }

@@ -47,6 +47,23 @@ interface ImageUrlInputProps {
   id?: string;
   /** 추가 클래스 */
   className?: string;
+  /**
+   * Stage 7l — 업로드 엔드포인트 override.
+   * 미전달 시 기본 `/api/media/upload`. 브랜딩은 `/api/media/branding-upload`.
+   */
+  endpoint?: string;
+  /**
+   * Stage 7l — 선택/업로드 가능 MIME 화이트리스트.
+   * MediaUploadButton 파일 다이얼로그 + MediaPicker 그리드 disabled 처리에 사용.
+   */
+  acceptMimeTypes?: string[];
+  /** acceptMimeTypes 전달 시 MediaPicker disabled 카드의 Tooltip 메시지 */
+  disabledReason?: string;
+  /**
+   * Stage 7l — URL 직접 입력 비활성화. 브랜딩처럼 외부 URL을 차단하는 호출자가 사용.
+   * true면 Input이 readOnly + 안내 문구 표시. 업로드/라이브러리만 허용.
+   */
+  disableUrlInput?: boolean;
 }
 
 /**
@@ -89,6 +106,10 @@ export function ImageUrlInput({
   placeholder = 'https://... 또는 /uploads/...',
   id,
   className,
+  endpoint,
+  acceptMimeTypes,
+  disabledReason,
+  disableUrlInput = false,
 }: ImageUrlInputProps) {
   const [previewError, setPreviewError] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -119,11 +140,18 @@ export function ImageUrlInput({
           type="text"
           value={value}
           onChange={handleUrlChange}
-          placeholder={placeholder}
+          placeholder={
+            disableUrlInput
+              ? '업로드 또는 라이브러리에서 선택해주세요.'
+              : placeholder
+          }
+          readOnly={disableUrlInput}
           className="min-w-[200px] flex-1"
         />
         <MediaUploadButton
           category={category}
+          endpoint={endpoint}
+          acceptMimeTypes={acceptMimeTypes}
           variant="outline"
           label="업로드"
           onUploaded={(uploaded) => {
@@ -163,6 +191,9 @@ export function ImageUrlInput({
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         category={category}
+        endpoint={endpoint}
+        acceptMimeTypes={acceptMimeTypes}
+        disabledReason={disabledReason}
         onSelect={(media) => {
           onChange({
             url: media.url,

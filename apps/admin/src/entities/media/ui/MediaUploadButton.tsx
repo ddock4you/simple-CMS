@@ -9,6 +9,14 @@ import { Button } from '@/shared/ui/shadcn/button';
 
 import { useUploadMedia } from '../api/useUploadMedia';
 
+const DEFAULT_ACCEPT_MIME = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+];
+
 interface MediaUploadButtonProps {
   category?: string;
   /** 업로드 후 콜백 (Picker에서 자동 선택용) */
@@ -18,6 +26,16 @@ interface MediaUploadButtonProps {
   size?: 'sm' | 'default' | 'lg';
   variant?: 'default' | 'outline' | 'secondary';
   label?: string;
+  /**
+   * 업로드 엔드포인트 override. 기본 `/api/media/upload`.
+   * 브랜딩 업로드(Stage 7l)는 `/api/media/branding-upload` 전달.
+   */
+  endpoint?: string;
+  /**
+   * `<input accept>`로 파일 선택 다이얼로그 필터에 사용. 기본 일반 이미지(SVG 포함).
+   * 브랜딩(SVG 차단)은 호출자가 명시적으로 좁혀서 전달.
+   */
+  acceptMimeTypes?: string[];
 }
 
 export function MediaUploadButton({
@@ -27,6 +45,8 @@ export function MediaUploadButton({
   size = 'default',
   variant = 'default',
   label = '업로드',
+  endpoint,
+  acceptMimeTypes,
 }: MediaUploadButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const upload = useUploadMedia({ onSuccess: onUploaded, silent });
@@ -39,8 +59,10 @@ export function MediaUploadButton({
     const file = e.target.files?.[0];
     e.target.value = ''; // 같은 파일 재선택 허용
     if (!file) return;
-    upload.mutate({ file, category });
+    upload.mutate({ file, category, endpoint });
   };
+
+  const acceptValue = (acceptMimeTypes ?? DEFAULT_ACCEPT_MIME).join(',');
 
   return (
     <>
@@ -57,7 +79,7 @@ export function MediaUploadButton({
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+        accept={acceptValue}
         className="hidden"
         onChange={handleChange}
       />

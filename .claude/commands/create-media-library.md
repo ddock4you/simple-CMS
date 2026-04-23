@@ -58,7 +58,7 @@
 | 대상 | 파일 | 핵심 |
 | ---- | ---- | ---- |
 | 업로드 중복 방지 | `apps/admin/app/api/media/upload/route.ts` (수정) | SHA-256 해시 계산 → `findUnique({ contentHash })` → hit면 `reused: true` 반환(파일·레코드·로그 모두 skip) |
-| 참조 추적 헬퍼 | `apps/admin/src/features/media-management/lib/findMediaReferences.ts` (신규) | 3경로: FK(Subpage/Post.featuredImageId), JSONB `@>` (HomeSection configJson), Tiptap JSON 재귀 walk (Subpage/Post contentJson) |
+| 참조 추적 헬퍼 | `apps/admin/src/features/media-management/lib/findMediaReferences.ts` (신규) | 다중 경로 스캔: FK(Subpage/Post.featuredImageId, HomePopup.imageMediaId), JSONB `@>` (HomeSection configJson, PageBlock IMAGE), Tiptap JSON 재귀 walk (Post.contentJson, RICH_TEXT 블록), **SiteSettings 화이트리스트 (Stage 7l — `MEDIA_BEARING_SETTING_KEYS` 부분 스캔, 풀스캔 금지)** |
 | 목록 API | `apps/admin/app/api/media/route.ts` (신규) | GET, `media:read`, q/mimeType 필터 + 페이지네이션 + uploadedBy include |
 | 상세/수정/삭제 API | `apps/admin/app/api/media/[id]/route.ts` (신규) | GET/PATCH/DELETE, 참조 있으면 409 차단 |
 | 사용처 조회 API | `apps/admin/app/api/media/[id]/references/route.ts` (신규) | `findMediaReferences` 결과 반환 |
@@ -87,9 +87,11 @@
 | Grid | `entities/media/ui/MediaGrid.tsx` | `selectedIds: Set<string>` 전파 |
 | Filters | `entities/media/ui/MediaFilters.tsx` | `onChange` 콜백 지원 — `/media`는 URL, Picker는 internal state 분기 |
 | Pagination | `entities/media/ui/MediaPagination.tsx` | `onPageChange` 콜백 지원 |
-| UploadButton | `entities/media/ui/MediaUploadButton.tsx` | `onUploaded` 콜백, `entities/media/api/useUploadMedia` 참조 |
-| MediaPicker | `entities/media/ui/MediaPicker.tsx` | 위 컴포넌트 조합, internal state + `onSelect` 콜백 (공용 — home/popup/block/tiptap에서 재사용) |
-| ImageUrlInput | `entities/media/ui/ImageUrlInput.tsx` | URL 직접 입력 + UploadButton + MediaPicker 통합 복합 입력 (공용). **단일 `onChange(next: { url, mediaId, originalName })`** API — §"ImageUrlInput 단일 onChange 패턴" 참조 |
+| UploadButton | `entities/media/ui/MediaUploadButton.tsx` | `onUploaded` 콜백, `entities/media/api/useUploadMedia` 참조. **Stage 7l 추가 prop**: `endpoint?: string` (기본 `/api/media/upload`, 브랜딩은 `/api/media/branding-upload`), `acceptMimeTypes?: string[]` (`<input accept>` 동적 생성) |
+| MediaCard | `entities/media/ui/MediaCard.tsx` | `selectable/checked/onToggleSelect` props 지원, 우측상단 체크박스. **Stage 7l 추가 prop**: `disabled?: boolean` + `disabledReason?: string` (disabled 시 클릭 차단 + opacity-50 + Tooltip) |
+| MediaGrid | `entities/media/ui/MediaGrid.tsx` | `selectedIds: Set<string>` 전파. **Stage 7l 추가 prop**: `acceptMimeTypes?: string[]` + `disabledReason?: string` (비매칭 카드를 MediaCard에 disabled 전파 — `acceptSet ? !acceptSet.has(media.mimeType) : false`) |
+| MediaPicker | `entities/media/ui/MediaPicker.tsx` | 위 컴포넌트 조합, internal state + `onSelect` 콜백 (공용 — home/popup/block/tiptap에서 재사용). **Stage 7l 추가 prop**: `endpoint?`, `acceptMimeTypes?`, `disabledReason?` 패스스루 |
+| ImageUrlInput | `entities/media/ui/ImageUrlInput.tsx` | URL 직접 입력 + UploadButton + MediaPicker 통합 복합 입력 (공용). **단일 `onChange(next: { url, mediaId, originalName })`** API — §"ImageUrlInput 단일 onChange 패턴" 참조. **Stage 7l 추가 prop**: `endpoint?`, `acceptMimeTypes?`, `disabledReason?` 패스스루 + `disableUrlInput?: boolean` (Input readOnly로 외부 URL 직접 입력 차단) |
 | formatFileSize | `entities/media/lib/formatFileSize.ts` | B/KB/MB/GB 변환 |
 | DetailDialog | `features/media-management/ui/MediaDetailDialog.tsx` | useQuery(`@/entities/media/api/mediaQueries`) + references + alt 편집 + 삭제 버튼 |
 | DeleteDialog | `features/media-management/ui/DeleteMediaDialog.tsx` | AlertDialog + 사용처 표시 + 차단 |

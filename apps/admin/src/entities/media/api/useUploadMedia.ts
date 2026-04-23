@@ -13,6 +13,8 @@ import { uploadMedia } from './mediaFetchers';
 export interface UploadMediaInput {
   file: File;
   category?: string;
+  /** 업로드 엔드포인트 override. 기본 `/api/media/upload`. 브랜딩은 `/api/media/branding-upload` (Stage 7l) */
+  endpoint?: string;
 }
 
 export function useUploadMedia(options?: {
@@ -23,8 +25,8 @@ export function useUploadMedia(options?: {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ file, category }: UploadMediaInput) =>
-      uploadMedia(file, category),
+    mutationFn: ({ file, category, endpoint }: UploadMediaInput) =>
+      uploadMedia(file, category, endpoint),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: mediaKeys.lists() });
       if (!options?.silent) {

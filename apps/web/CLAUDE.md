@@ -415,6 +415,53 @@ src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 
 - 폴백: DB 설정 없으면 `NEXT_PUBLIC_SITE_URL` 환경변수 사용
 - 상세 명세: `docs/react-cms-커스텀-도메인-명세서.md`
 
+## 헤더 브랜딩 + 동적 메타데이터 (Stage 7l)
+
+관리자가 admin `/settings/branding`에서 설정한 사이트명/로고/favicon/OG 이미지/사이트 설명을 공개 웹 헤더와 SEO 메타데이터에 반영한다. SiteSettings 6키(`SITE_NAME`, `SITE_DESCRIPTION`, `SITE_LOGO_MEDIA_ID`, `SITE_LOGO_ALT`, `SITE_FAVICON_MEDIA_ID`, `SITE_OG_IMAGE_MEDIA_ID`) 기반.
+
+### `getCachedBranding` 캐시
+
+- 위치: `src/shared/lib/brandingCache.ts`
+- 패턴: `domainCache.ts` 동일 — 인메모리 60s prod / 5s dev TTL
+- 6키 + 3개 Media url join을 1회 fetch
+- admin → web 별 인스턴스라 즉시 invalidate 불가 → "최대 1분 후 반영"
+- fetch 실패 시 폴백 객체 반환 (`siteName: 'Simple CMS'`, `siteDescription: '공개 웹'`, 나머지 null) — 페이지 렌더 차단 안 함
+
+### 헤더 커스텀 컴포넌트
+
+- 위치: `src/widgets/layout/ui/HeaderBranding.tsx` (Stage 7l NEW)
+- KRDS `Header.Branding`이 `children`을 `.logo`(`<h2>`) **밖**에 렌더하므로 로고 이미지를 클릭 가능 영역(`<a href="/">`) 안에 두려면 그대로 사용 불가
+- Stage 7d `RightSidebar`/`SubpageSideNavigation` 동일 패턴 — KRDS DOM 클래스(`.header-branding > h2.logo > a`) 차용한 커스텀 JSX
+- 폴백: logoUrl 미설정 시 sr-only 대신 `.header-logo-text`로 사이트명 시각 표시
+- KRDS 메이저 업데이트 시 이 컴포넌트와 7d 2개를 함께 점검
+
+### globals.css 로고 클래스
+
+- `.header-branding .header-logo-image { max-height: 100%; width: auto; max-width: 200px; object-fit: contain; display: block }`
+- `.header-branding .header-logo-text { font-size: 1.125rem; font-weight: 700 }`
+- 와이드 로고도 헤더 height 깨지 않게 max-height/object-fit으로 fit
+
+### `generateMetadata` 동적화 (`apps/web/app/layout.tsx`)
+
+`export const metadata` → `export async function generateMetadata()` 변환.
+
+- `title.default = branding.siteName`, `template = '%s | ${branding.siteName}'` (페이지별 metadata override 그대로 동작)
+- `description = branding.siteDescription` (폴백 '공개 웹')
+- `icons.icon = ${faviconUrl}?v=${faviconMediaId}` — 브라우저 favicon 캐시 무효화 (mediaId 변경 시 새 favicon fetch)
+- `openGraph.images = [{ url: ogImageUrl, width: 1200, height: 630, alt: siteName }]`
+- `RootLayout`도 같은 `getCachedBranding()` 호출 — 인메모리 TTL 캐시(60s/5s)로 dedup, 첫 호출만 DB hit
+
+### 푸터 copyright 동기화
+
+- `PageLayout`이 `branding` prop을 받아 `copyright={`© ${branding.siteName}. All rights reserved.`}` 동적 생성
+- Masthead 정부 공식 문구는 무변경
+
+### `app/favicon.ico` 파일 컨벤션 충돌 주의
+
+- Next.js 16 App Router는 `app/favicon.ico` / `app/icon.*` / `app/apple-icon.*` / `app/opengraph-image.*` 파일을 자동 picking하여 `metadata.icons` / `openGraph`를 override함
+- Stage 7l 진입 시 0건 확인 완료
+- **누군가 이 파일들을 추가하면 동적 favicon/OG가 무시됨** — 추가 금지
+
 ## 데이터 페칭 패턴
 
 - 기본: **Server Component + `@simple-cms/db` 직접 Prisma 쿼리** (SSR/SEO 우선)

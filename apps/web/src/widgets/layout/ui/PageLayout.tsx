@@ -2,14 +2,14 @@
 
 import type { ReactNode } from 'react';
 
-import Link from 'next/link';
-
 import { Footer, Header, Masthead, SkipLink } from 'krds-react';
 import type { FooterLink } from 'krds-react';
 
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import { getMenuItemHref } from '@/entities/navigation/lib/getMenuItemHref';
+import type { Branding } from '@/shared/lib/brandingCache';
 
+import { HeaderBranding } from './HeaderBranding';
 import { RightSidebar } from './RightSidebar';
 
 interface PageLayoutProps {
@@ -17,6 +17,7 @@ interface PageLayoutProps {
   headerMenuItems: FilteredMenuItem[];
   footerMenuItems: FilteredMenuItem[];
   rightSidebar: { name: string; items: FilteredMenuItem[] } | null;
+  branding: Branding;
 }
 
 function buildDesktopMenu(items: FilteredMenuItem[]) {
@@ -133,6 +134,7 @@ export function PageLayout({
   headerMenuItems,
   footerMenuItems,
   rightSidebar,
+  branding,
 }: PageLayoutProps) {
   const hasHeaderMenu = headerMenuItems.length > 0;
   const hasRightSidebar = !!rightSidebar && rightSidebar.items.length > 0;
@@ -143,22 +145,13 @@ export function PageLayout({
       <Masthead text="이 누리집은 대한민국 공식 전자정부 누리집입니다." />
       <Header>
         <Header.Container>
-          <Header.Branding logoHref="/" logoAltText="Simple CMS">
-            <Link href="/search" className="header-search-link" aria-label="검색">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </Link>
-          </Header.Branding>
+          {/*
+            KRDS Header.Branding 대신 커스텀 HeaderBranding (Stage 7l).
+            KRDS 원본은 children을 .logo 밖에 렌더하므로 로고 이미지를
+            클릭 가능 영역(<a>) 안에 배치하지 못한다.
+            Stage 7d RightSidebar/SubpageSideNavigation 동일 패턴 (KRDS DOM 클래스 차용).
+          */}
+          <HeaderBranding branding={branding} />
         </Header.Container>
         {hasHeaderMenu && (
           <Header.MainMenu
@@ -186,7 +179,7 @@ export function PageLayout({
             ? buildFooterLinks(footerMenuItems)
             : undefined
         }
-        copyright="© Simple CMS. All rights reserved."
+        copyright={`© ${branding.siteName}. All rights reserved.`}
         hideQuickLinks
         hideIdentifier
       />
