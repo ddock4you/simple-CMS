@@ -6,9 +6,13 @@ import type { ApiResponse, HomePopupReferencesDto } from '@simple-cms/types';
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 
 /**
- * 팝업 LinkTargetInput 탭 드롭다운용 참조 데이터.
+ * LinkTargetInput 공용 참조 데이터 (팝업 + 홈 섹션 공통).
+ * Stage 7k-1에서 `/api/home-popups/references` → 의미 일관성 있는 현재 경로로 rename.
+ *
  * - subpages: PUBLISHED 서브페이지
  * - boards: isPublic 게시판
+ *
+ * 권한은 `home-popups:read` 유지 — 이 endpoint의 권한 재설계는 별도 scope.
  */
 export async function GET(_request: Request): Promise<NextResponse> {
   const { error } = await requirePermission('home-popups', 'read');
@@ -34,7 +38,7 @@ export async function GET(_request: Request): Promise<NextResponse> {
       { success: true, data } satisfies ApiResponse<HomePopupReferencesDto>,
     );
   } catch (err) {
-    console.error('[HomePopups References GET] Unexpected error:', err);
+    console.error('[LinkTarget References GET] Unexpected error:', err);
     return NextResponse.json(
       {
         success: false,

@@ -56,7 +56,11 @@ export type {
   IframeBlockConfig,
   PageBlockConfig,
 } from './domain/block.types';
-export { PAGE_BLOCK_MAX_PER_SUBPAGE } from './domain/block.types';
+export {
+  PAGE_BLOCK_MAX_PER_SUBPAGE,
+  IFRAME_ALLOWED_HOSTS,
+  isIframeHostAllowed,
+} from './domain/block.types';
 
 export type {
   PageBlockListItem,

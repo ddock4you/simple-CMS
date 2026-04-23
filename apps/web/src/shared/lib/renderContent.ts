@@ -1,6 +1,7 @@
 import DOMPurify from 'isomorphic-dompurify';
 
 import { generateHTML, getSharedExtensions } from '@simple-cms/editor';
+import { isIframeHostAllowed } from '@simple-cms/types';
 
 const purifyConfig = {
   ALLOWED_TAGS: [
@@ -38,28 +39,6 @@ export function renderTiptapContent(json: unknown): string | null {
   } catch {
     console.error('[renderTiptapContent] Failed to generate HTML from Tiptap JSON');
     return null;
-  }
-}
-
-/**
- * Subpage.customHtml 전용 허용 호스트 — iframe src 재검증용.
- * admin `features/block-management/model/blockLabels.ts`의 IFRAME_ALLOWED_HOSTS와 동기화 유지.
- * (공유 모듈 추출은 Stage 8+ 과제)
- */
-const IFRAME_ALLOWED_HOSTS = new Set([
-  'www.youtube.com',
-  'youtube.com',
-  'www.youtube-nocookie.com',
-  'player.vimeo.com',
-]);
-
-function isAllowedIframeSrc(src: string | null | undefined): boolean {
-  if (!src) return false;
-  try {
-    const host = new URL(src).hostname.toLowerCase();
-    return IFRAME_ALLOWED_HOSTS.has(host);
-  } catch {
-    return false;
   }
 }
 
@@ -109,7 +88,7 @@ export function sanitizeCustomHtml(raw: string | null | undefined): string {
   // src가 있는 iframe: 허용 호스트 아니면 제거
   sanitized = sanitized.replace(
     /<iframe\b([^>]*)\bsrc=(['"])([^'"]*)\2([^>]*)>([\s\S]*?)<\/iframe>/gi,
-    (match, _attrsBefore, _quote, src) => (isAllowedIframeSrc(src) ? match : ''),
+    (match, _attrsBefore, _quote, src) => (isIframeHostAllowed(src) ? match : ''),
   );
   // src 속성이 아예 없는 iframe은 의미 없음 → 제거
   sanitized = sanitized.replace(

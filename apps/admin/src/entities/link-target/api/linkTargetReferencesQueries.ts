@@ -8,7 +8,7 @@ import { linkTargetKeys } from '@/shared/api/queryKeys';
 export type LinkTargetReferencesDto = HomePopupReferencesDto;
 
 export function getLinkTargetReferences(): Promise<LinkTargetReferencesDto> {
-  return fetchClient<LinkTargetReferencesDto>('/api/home-popups/references');
+  return fetchClient<LinkTargetReferencesDto>('/api/link-target/references');
 }
 
 export const linkTargetReferencesOptions = () =>

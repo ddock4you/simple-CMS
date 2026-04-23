@@ -1,5 +1,7 @@
 import type { PageBlockType } from '@simple-cms/types';
 
+export { IFRAME_ALLOWED_HOSTS, isIframeHostAllowed } from '@simple-cms/types';
+
 export const BLOCK_TYPE_LABELS: Record<PageBlockType, string> = {
   RICH_TEXT: '본문',
   HTML: 'HTML',
@@ -13,32 +15,6 @@ export const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlockType, string> = {
   IMAGE: '이미지 + alt + 선택적 캡션/링크',
   IFRAME: '허용된 외부 임베드 (YouTube, Vimeo)',
 };
-
-/**
- * IFRAME 블록 src 허용 호스트 (서버 + 클라이언트 양쪽 검증 재사용).
- *
- * 하드코딩 운영 — SiteSettings 기반 관리형 전환은 2차 과제.
- * 하위 도메인은 `endsWith('.youtube.com')` 같은 판정 대신 정확 일치 사용.
- */
-export const IFRAME_ALLOWED_HOSTS = [
-  'www.youtube.com',
-  'youtube.com',
-  'www.youtube-nocookie.com',
-  'player.vimeo.com',
-] as const;
-
-/**
- * iframe src 호스트가 허용 목록에 있는지 검사한다.
- * URL 파싱 실패 시 false 반환.
- */
-export function isIframeHostAllowed(src: string): boolean {
-  try {
-    const host = new URL(src).hostname.toLowerCase();
-    return (IFRAME_ALLOWED_HOSTS as readonly string[]).includes(host);
-  } catch {
-    return false;
-  }
-}
 
 /**
  * iframe src를 **임베드 가능한 URL**로 정규화한다.

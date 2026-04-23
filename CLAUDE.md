@@ -353,6 +353,8 @@ apps/{앱}/
 | 7h   | play function 5건 (MSW 무의존 범위) + hook 검증 probe 패턴 정립 | LoginForm validation / PermissionProvider 권한 토글 / DirtyGuardProbe / SubpageForm CCL+AI / BlockEditDialog IFRAME rejection. MSW 통합은 msw-storybook-addon + addon-vitest browser mode 호환성 이슈로 이관 | **완료** |
 | 7i   | Swiper 22M 회귀 자동 감지 + LinkTargetInput 승격·적용 + 커스텀 래퍼 showcase 5개 | Carousel container resize play로 ResizeObserver 경로 강제 트리거 + slide width assert / LinkTargetInput을 entities/link-target로 승격하여 home-management 5개 fields(Cta+Hero+Recommended+Shortcut+Notice) 적용 / Admin/Shared 4개 + Admin/Entities/LinkTarget 1개 showcase | **완료** |
 | 7j   | CI matrix + turbo `test.dependsOn` 정리 + MSW 대신 fetch stub decorator + play function 2건 + addon-vitest 30초 timeout 탐사 | GitHub Actions admin/web × {lint, typecheck, test} 6 job 병렬 / `test.dependsOn: ['^build']` 제거 / `msw-storybook-addon` v2.1 부재 primary source 확인 후 `window.fetch` stub decorator 채택 / CreateRoleDialog Submit Success·Conflict + SectionReorderProbe Reorder500 / `optimizeDeps.include` 시도→효과 없어 revert + findings 기록 | **완료** |
+| 7k-1 | 청소 — LinkTarget API 경로 rename + `IFRAME_ALLOWED_HOSTS` 공유 모듈 추출 | `/api/home-popups/references` → `/api/link-target/references` (7i 이연 처리) / `@simple-cms/types`의 `block.types.ts`에 `IFRAME_ALLOWED_HOSTS` + `isIframeHostAllowed` 단일 출처 통합 (admin/web 3곳 복제 해소, Stage 7b부터 이연) / `normalizeIframeEmbedUrl`은 admin 전용 유지 | **완료** |
+| 7k-3 | addon-vitest 30s cold start 탐사 (measure-first) | `vitest run --reporter=verbose` 프로파일링 + `storybookTest` signature primary source 확인 + 시도→판정→커밋/revert | 진행 중 |
 | 8    | Docker + CI/CD + 문서화                                             | `docker compose up`으로 전체 실행                                                           | 대기     |
 
 #### Stage 7c 결과 요약
@@ -504,7 +506,7 @@ Stage 7h에서 이관된 "Swiper 22M 회귀 자동 감지"와 "커스텀 래퍼 
 - **구현 중 발견 — Dialog NestedDialog play function 재현 조건**: 자식 Dialog를 부모 Dialog와 **DOM 상 병렬**(sibling)로 렌더하면 Base-UI가 nested 관계를 인식하지 못해 `data-nested-dialog-open` 속성이 부착되지 않음. 자식 Dialog를 부모 `<Dialog>` 컴포넌트의 **children으로** 배치해야 함. 실사용 예: `MenuItemDialog.tsx`가 `<Dialog><DialogContent>...</DialogContent><ConfirmLeaveDialog /></Dialog>` 구조로 자식 Dialog를 Dialog 컴포넌트 내부에 sibling으로 두어 context 공유
 - **검증**: admin 17 files / **52 tests passed** (35 → +17), web 12 files / **33 tests passed** (32 → +1 = Regression22M). `pnpm test` 루트 **총 85 tests 통과**. `build-storybook` 생략(기본 story 로드가 test에서 검증됨)
 - **이관된 Stage 7h 작업 처리 완료**: Swiper 22M 회귀 자동 감지 ✅, 커스텀 래퍼 showcase 4개 ✅ (+ LinkTargetInput 1개로 5개). 남은 7j 작업: MSW 재조사 + CreateRoleDialog submit / reorder rollback + GitHub Actions CI matrix + `test.dependsOn` 정리 + addon-vitest 30초 timeout 해소
-- **후속 정리 노트**: API endpoint `/api/home-popups/references`는 의미상 LinkTargetInput 공용 엔드포인트가 되었지만 경로 rename은 별도 작업으로 이연 (기존 사용처 추적 + 감사 로그/테스트 영향 범위 파악 필요). 현재는 `linkTargetReferencesOptions`가 해당 경로를 fetch하는 구조로 의미 일관성 확보
+- **후속 정리 노트**: API endpoint `/api/home-popups/references`는 의미상 LinkTargetInput 공용 엔드포인트가 되었지만 경로 rename은 별도 작업으로 이연 → **Stage 7k-1에서 `/api/link-target/references`로 rename 완료**
 
 #### Stage 7j 결과 요약
 
@@ -530,6 +532,18 @@ Stage 7f~7i의 Storybook + Vitest 인프라 위에 **CI 자동화 + 보류된 mu
   - web `SkipLink.stories.tsx`의 unescaped entity (`"..."` → `&ldquo;...&rdquo;`)
   - **검증**: `pnpm lint` / `pnpm typecheck` / `pnpm test` 모두 녹색, 총 **89 tests** 통과
 - 상세 계획: [`C:/Users/ddock/.claude/plans/stage-7i-parsed-flame.md`](../../../Users/ddock/.claude/plans/stage-7i-parsed-flame.md) (파일명은 초기 7i 오타 기반, 내용은 Stage 7j)
+
+#### Stage 7k-1 결과 요약
+
+7 시리즈에서 이연된 청소 2건을 일괄 처리. Stage 8 진입 전 기술 부채 0 상태 목표.
+
+- **API endpoint rename**: `/api/home-popups/references` → `/api/link-target/references` (route handler 파일 이동 + `linkTargetReferencesQueries.ts`의 fetch URL 1줄 수정). Stage 7i에서 LinkTargetInput을 `entities/link-target`으로 승격한 뒤에도 endpoint 경로만 옛 이름이던 의미 일관성 갭 해소. 권한 체크(`home-popups:read`)는 유지 — endpoint 권한 재설계는 별도 scope
+- **`IFRAME_ALLOWED_HOSTS` 단일 출처 통합**: `packages/types/src/domain/block.types.ts`에 상수 + `isIframeHostAllowed(src)` 헬퍼 추가 후 `index.ts`에서 export. `RESOURCE_ACTIONS` 선례와 동일 패턴(types가 값/함수도 export)
+  - admin `features/block-management/model/blockLabels.ts`: 두 심볼을 `@simple-cms/types`에서 re-export (기존 import 경로 호환). `normalizeIframeEmbedUrl`(YouTube `/watch?v=` → `/embed/` 변환 등 저장 시점 정규화)은 admin 전용 유지 — web은 이미 정규화된 URL만 받으므로 host 재검증만 필요
+  - web `SubpageBlockRenderer.tsx` + `shared/lib/renderContent.ts`: 각 파일의 private `IFRAME_ALLOWED_HOSTS` + 자체 호스트 검증 헬퍼(`isIframeSrcAllowed`/`isAllowedIframeSrc`) 제거, `@simple-cms/types`의 `isIframeHostAllowed` import
+  - 효과: 호스트 리스트 정책 변경 시 3곳 동기화 필요 → 1곳으로 수렴. Stage 7b "공유 모듈 추출은 Stage 8+ 과제" 약속을 실제로 이행
+- **stale artifact 주의**: admin의 `.next/types/validator.ts`가 기존 `/api/home-popups/references/route.js` 참조를 캐싱하고 있어 rename 후 typecheck 실패. `rm -rf apps/admin/.next/types` 후 재검증으로 해소
+- **검증**: `pnpm typecheck` + `pnpm lint` 모두 녹색 (admin 56 + web 33 = **89 tests 유지**). `rg "/api/home-popups/references"` 결과 CLAUDE.md/route.ts 주석 제외 실행 코드 0건, `rg "IFRAME_ALLOWED_HOSTS"` 정의 1곳(packages/types) + re-export/import만 남음
 
 ## 명령어
 

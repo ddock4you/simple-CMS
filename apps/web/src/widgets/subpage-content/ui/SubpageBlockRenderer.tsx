@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 
 import type { PageBlockType } from '@simple-cms/types';
+import { isIframeHostAllowed } from '@simple-cms/types';
 
 import {
   renderTiptapContent,
@@ -28,22 +29,6 @@ interface BlockInput {
   configJson: unknown;
   displayOrder: number;
   isVisible?: boolean;
-}
-
-/** IFRAME 서버 측 재검증용 허용 호스트 (클라이언트 admin과 동일 목록). */
-const IFRAME_ALLOWED_HOSTS = new Set([
-  'www.youtube.com',
-  'youtube.com',
-  'www.youtube-nocookie.com',
-  'player.vimeo.com',
-]);
-
-function isIframeSrcAllowed(src: string): boolean {
-  try {
-    return IFRAME_ALLOWED_HOSTS.has(new URL(src).hostname.toLowerCase());
-  } catch {
-    return false;
-  }
 }
 
 function RichTextBlock({ config }: { config: unknown }) {
@@ -134,7 +119,7 @@ function IframeBlock({ config }: { config: unknown }) {
   if (!cfg?.src || !cfg.title) return null;
 
   // 2중 방어: 서버에서 허용 호스트 재확인. 관리자가 우회 입력 시에도 공개 웹 차단.
-  if (!isIframeSrcAllowed(cfg.src)) return null;
+  if (!isIframeHostAllowed(cfg.src)) return null;
 
   const ratio = cfg.aspectRatio ?? '16:9';
   return (

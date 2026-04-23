@@ -341,10 +341,10 @@ admin에서 발급한 토큰을 교환해 **draft 콘텐츠**를 공개 웹 렌�
 2. **HTML 블록의 CSS/HTML (Stage 7b — Option B)**: HTML 블록의 `configJson`이 `{ html, css? }` 구조 — 페이지 단위 `Subpage.customHtml`/`customCss` 필드는 폐기됨. HTML 블록 내부에서 처리:
    - 페이지 컴포넌트(`SubpagePage`)가 `<article id="subpage-${subpage.id}">` 루트 + `<SubpageBlockRenderer subpageId={subpage.id} ... />` 호출
    - `SubpageBlockRenderer.HtmlBlock`이 css가 있으면 `scopeCustomCss(css, subpageId)`(`src/shared/lib/scopeCustomCss.ts`)로 `#subpage-{id}` prefix 주입 + `html`/`body`/`:root` 치환 → `<style dangerouslySetInnerHTML>`을 `<div>` 옆에 삽입
-   - html이 있으면 `sanitizeCustomHtml(raw)`(`src/shared/lib/renderContent.ts`)로 확장 DOMPurify config(iframe / section / article / figure / details / summary / nav / header / footer / main 등 의미론 태그 허용 + iframe src `IFRAME_ALLOWED_HOSTS` 서버 재검증)로 정화 → `<div className="subpage-block subpage-block-html" dangerouslySetInnerHTML>` 렌더
+   - html이 있으면 `sanitizeCustomHtml(raw)`(`src/shared/lib/renderContent.ts`)로 확장 DOMPurify config(iframe / section / article / figure / details / summary / nav / header / footer / main 등 의미론 태그 허용 + iframe src를 `@simple-cms/types`의 `isIframeHostAllowed`로 서버 재검증)로 정화 → `<div className="subpage-block subpage-block-html" dangerouslySetInnerHTML>` 렌더
    - 같은 페이지에 HTML 블록이 N개 있어도 모두 같은 `#subpage-{id}` prefix 공유 → 한 블록의 css가 페이지 전체(다른 블록 포함)에 영향. 운영자가 "이 페이지의 h2 빨강"을 한 블록에서 처리 가능
    - `<script>`, `on*` 이벤트 핸들러, `javascript:` URL은 DOMPurify가 제거. iframe src는 `www.youtube.com` / `youtube.com` / `www.youtube-nocookie.com` / `player.vimeo.com`만 허용, 그 외는 iframe 전체 제거
-   - `IFRAME_ALLOWED_HOSTS`는 `renderContent.ts`(customHtml용)와 `SubpageBlockRenderer.tsx`(IFRAME 블록용)에 복제됨 — 공유 모듈 추출은 Stage 8+ 과제
+   - `IFRAME_ALLOWED_HOSTS` + `isIframeHostAllowed`는 Stage 7k-1에 `@simple-cms/types`의 `block.types.ts`로 단일 출처 통합. `renderContent.ts`와 `SubpageBlockRenderer.tsx` 양쪽이 `import { isIframeHostAllowed } from '@simple-cms/types'`로 참조
    - 알려진 한계: `scopeCustomCss`는 `:is()` / `:where()` / `:has()` / `@container` / CSS nesting 등 신형 CSS 기능의 내부 복합 셀렉터 완전 지원 불가 — 필요 시 `postcss-prefix-selector` 도입 검토
 
 - 블록 순서와 노출 여부는 admin에서 관리한 대로 반영

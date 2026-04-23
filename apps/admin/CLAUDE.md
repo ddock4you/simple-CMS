@@ -208,7 +208,7 @@ src/
 
 - 허용 호스트: `www.youtube.com`, `youtube.com`, `www.youtube-nocookie.com`, `player.vimeo.com`
 - `features/block-management/model/blockLabels.ts`
-  - `IFRAME_ALLOWED_HOSTS` 상수 (서버 API와 클라이언트 검증 공용)
+  - `IFRAME_ALLOWED_HOSTS` 상수 + `isIframeHostAllowed` 헬퍼 (Stage 7k-1에 `@simple-cms/types`로 단일 출처 통합, `blockLabels.ts`는 re-export만 담당)
   - `isIframeHostAllowed(src)` — host만 검증
   - `normalizeIframeEmbedUrl(src)` — 일반 URL → embed URL 변환
 - **정규화 규칙** (저장 시점에 자동 변환):
@@ -362,7 +362,7 @@ src/
   - **외부 URL**: 자유 입력 (`https://...`)
 - 편집 시 저장된 URL을 파싱해 어느 탭이 활성인지 자동 추론 (references 캐시 기반). 매칭 실패 시 EXTERNAL 폴백 + 원본 url 보존
 - **`allowNone?: boolean` prop** (default true): url이 필수 필드인 호출자(CtaFields/ShortcutFields)는 `false` 전달
-- **Stage 7i 사용처**: popup(content/image), home-management(CTA/Hero/Recommended/Shortcut/Notice). API endpoint는 의미 일관성상 `/api/home-popups/references` 그대로 유지(경로 rename은 후속 작업)
+- **Stage 7i 사용처**: popup(content/image), home-management(CTA/Hero/Recommended/Shortcut/Notice). API endpoint는 Stage 7k-1에서 `/api/link-target/references`로 rename 완료 (의미 일관성 확보)
 
 #### API Routes
 
@@ -374,7 +374,7 @@ src/
 | PATCH  | `/api/home-popups/[id]`       | home-popups:update | 수정 (타입 전환 시 반대 필드 초기화) |
 | DELETE | `/api/home-popups/[id]`       | home-popups:delete | 삭제 + displayOrder 정규화    |
 | PATCH  | `/api/home-popups/reorder`    | home-popups:update | 순서 일괄 변경                |
-| GET    | `/api/home-popups/references` | home-popups:read   | LinkTargetInput 드롭다운용    |
+| GET    | `/api/link-target/references` | home-popups:read   | LinkTargetInput 드롭다운용 (Stage 7k-1 rename, 권한은 home-popups:read 유지)    |
 
 #### 감사 로그
 
@@ -910,7 +910,7 @@ admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인�
 - **Stage 7i 결과**: 커스텀 래퍼 showcase 5개 신규 추가 + LinkTargetInput을 `entities/link-target`으로 승격 + home-management 5개 fields 적용:
   - Sidebar 카테고리 5개 신규 (`Admin/Shared/Dialog`, `Admin/Shared/AlertDialog`, `Admin/Shared/InlineStatusToggle`, `Admin/Shared/InlineBooleanToggle`, **`Admin/Entities/LinkTarget/LinkTargetInput`**). 총 변동 — admin 17 files / **52 tests** (기존 35 → +17)
   - **Dialog `NestedDialog` play 재현 조건**: 자식 Dialog를 부모 Dialog의 children으로 렌더해야 Base-UI가 nested 관계를 인식하고 `data-nested-dialog-open`을 부모 Popup에 부착. sibling으로 두면 미부착 (구현 중 발견). 실사용 예: `MenuItemDialog`가 `<Dialog>`의 children 영역에 `<ConfirmLeaveDialog>`를 sibling으로 렌더
-  - **LinkTargetInput 승격 경로**: `features/popup-management/ui/LinkTargetInput.tsx` → `entities/link-target/ui/LinkTargetInput.tsx`. 쿼리도 `homePopupReferencesOptions` → `linkTargetReferencesOptions`로 rename하며 `entities/link-target/api/linkTargetReferencesQueries.ts`로 이동. API endpoint `/api/home-popups/references`는 그대로 유지
+  - **LinkTargetInput 승격 경로**: `features/popup-management/ui/LinkTargetInput.tsx` → `entities/link-target/ui/LinkTargetInput.tsx`. 쿼리도 `homePopupReferencesOptions` → `linkTargetReferencesOptions`로 rename하며 `entities/link-target/api/linkTargetReferencesQueries.ts`로 이동. API endpoint는 Stage 7k-1에서 `/api/link-target/references`로 rename 완료
   - **`allowNone?: boolean` prop 신규** (default true): url이 필수 필드인 CtaFields + ShortcutFields가 `allowNone={false}` 전달해 NONE 옵션 숨김. 빈 value 진입 시 EXTERNAL 모드 default 활성
   - **home-management 5개 fields 적용**: CtaFields(buttonUrl 필수 → allowNone=false) + HeroFields(slides[].url) + RecommendedFields(items[].url) + ShortcutFields(items[].url 필수 → allowNone=false) + NoticeFields(items[].url nullable, `?? ''` 정규화). CtaFields는 control prop 신규 추가 → CtaSectionForm에서 `form.control` 전달
   - **호환성**: 기존 저장된 URL은 자동 EXTERNAL 탭 폴백 + 원본 보존. DB 마이그레이션 0. 운영 시 내부 페이지 참조로 전환하려면 SUBPAGE/BOARD 탭에서 재선택

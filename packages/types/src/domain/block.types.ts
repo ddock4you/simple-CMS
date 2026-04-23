@@ -58,3 +58,38 @@ export type PageBlockConfig =
  * UX/성능 관점에서 50개는 실사용 상한으로 충분.
  */
 export const PAGE_BLOCK_MAX_PER_SUBPAGE = 50;
+
+/**
+ * IFRAME 블록 / Subpage customHtml 양쪽의 iframe src 허용 호스트 (단일 출처).
+ *
+ * admin 저장 시점(IframeBlockFields, API Route handler)과 web 렌더 시점
+ * (`SubpageBlockRenderer`, `renderContent.ts`)에서 공용으로 참조. Stage 7k-1에
+ * admin/web 3곳 복제를 이 상수로 통합했다. 하드코딩 운영이며 SiteSettings 기반
+ * 관리형 전환은 2차 과제.
+ *
+ * 하위 도메인은 `endsWith('.youtube.com')` 같은 판정 대신 정확 일치 사용.
+ */
+export const IFRAME_ALLOWED_HOSTS = [
+  'www.youtube.com',
+  'youtube.com',
+  'www.youtube-nocookie.com',
+  'player.vimeo.com',
+] as const;
+
+/**
+ * iframe src 호스트가 {@link IFRAME_ALLOWED_HOSTS}에 있는지 검사한다.
+ * URL 파싱 실패 시 false 반환.
+ *
+ * 서버 재검증(API Route POST/PATCH), 공개 웹 렌더 재검증(admin 우회 입력 방어) 공용.
+ * admin 저장 시점 YouTube/Vimeo 정규화(`normalizeIframeEmbedUrl`)는 admin 전용이라
+ * 공유하지 않음 — web은 이미 정규화된 URL만 받으므로 host 재검증만 필요.
+ */
+export function isIframeHostAllowed(src: string | null | undefined): boolean {
+  if (!src) return false;
+  try {
+    const host = new URL(src).hostname.toLowerCase();
+    return (IFRAME_ALLOWED_HOSTS as readonly string[]).includes(host);
+  } catch {
+    return false;
+  }
+}
