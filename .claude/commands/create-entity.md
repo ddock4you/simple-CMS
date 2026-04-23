@@ -16,6 +16,8 @@
 src/entities/{domain}/
 ├── model/            # 도메인 로직, 유틸, 타입
 │   └── .gitkeep
+├── api/              # 도메인 데이터 fetch / queryOptions (선택, 여러 features에서 공유 시)
+│   └── .gitkeep
 └── ui/               # 도메인 표시용 컴포넌트 (선택)
     └── .gitkeep
 ```
@@ -27,16 +29,26 @@ src/entities/{domain}/
 import { PostCard } from '@/entities/{domain}/ui/PostCard';
 import { formatPostDate } from '@/entities/{domain}/model/postUtils';
 import type { PostType } from '@/entities/{domain}/model/{domain}.types';
+import { postReferencesOptions } from '@/entities/{domain}/api/postReferencesQueries';
 ```
 
 ## 규칙
 
 - 이미 존재하는 슬라이스면 생성하지 않고 현재 구조를 보여줌
 - `model/`은 도메인 관련 순수 로직, 유틸, `@simple-cms/types` re-export
-- `ui/`는 도메인 데이터를 표시하는 컴포넌트 (카드, 리스트 아이템 등)
+- `api/`는 도메인 데이터 페칭이 **여러 features에서 공유**될 때 신설 (예: `linkTargetReferencesQueries.ts` — popup + home-management 공용. 단일 feature 전용이면 `features/{x}/api/`에 두는 것이 적절)
+- `ui/`는 도메인 데이터를 표시하는 컴포넌트 (카드, 리스트 아이템 등) 또는 여러 features에서 공유하는 도메인 인지 입력 컴포넌트(예: `LinkTargetInput`)
 - 외부에서는 슬라이스 내부 파일을 직접 경로로 import (barrel export 사용하지 않음)
 - 같은 레이어의 다른 entity를 직접 import하지 않음
 - entities는 `shared`만 의존 가능 (features, pages 의존 금지)
+
+## features → entities 승격 시점
+
+다음 신호가 보이면 features 슬라이스의 코드를 entities로 하강 검토:
+
+- 같은 컴포넌트/쿼리를 **다른 feature 슬라이스에서 import하고 싶다** (FSD 위반 — features 간 직접 import 금지)
+- 도메인 데이터(예: subpages/boards 참조)를 다루지만 특정 인터랙션에 묶이지 않음
+- 사례: Stage 7i의 `LinkTargetInput`은 popup-management 내부에 있다가 home-management도 사용해야 해서 `entities/link-target`로 승격됨. 쿼리 이름도 `homePopupReferencesOptions` → `linkTargetReferencesOptions`로 도메인 중립화
 
 ## features vs entities 판단 기준
 

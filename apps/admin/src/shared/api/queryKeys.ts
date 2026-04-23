@@ -48,7 +48,11 @@ export const popupKeys = {
   all: ['home-popups'] as const,
   lists: () => [...popupKeys.all, 'list'] as const,
   detail: (id: string) => [...popupKeys.all, 'detail', id] as const,
-  references: () => [...popupKeys.all, 'references'] as const,
+};
+
+export const linkTargetKeys = {
+  all: ['link-target'] as const,
+  references: () => [...linkTargetKeys.all, 'references'] as const,
 };
 
 export const auditLogKeys = {

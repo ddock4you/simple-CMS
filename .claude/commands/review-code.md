@@ -42,6 +42,15 @@
 - [ ] **인증+인가 검사**: 데이터 변경 API Route 핸들러에 `requirePermission()` 호출 포함 (프로필 등 예외는 `getCurrentUser()`만 사용)
 - [ ] **리소스 등록**: 새 도메인 추가 시 `packages/types`의 `RESOURCE_ACTIONS`에 리소스 등록 여부
 
+### 링크/URL 입력 (admin, Stage 7i)
+
+admin에 새 URL 입력 필드를 추가할 때:
+
+- [ ] **LinkTargetInput 공용 컴포넌트 우선 검토**: `import { LinkTargetInput } from '@/entities/link-target/ui/LinkTargetInput'` 사용. NONE/SUBPAGE/BOARD/EXTERNAL 분기 자동 + slug 변경에 안전. raw `<Input {...register('url')} />` 직접 사용은 운영자가 slug 변경 시 깨지는 URL을 직접 추적해야 하므로 지양
+- [ ] **react-hook-form Controller 패턴**: `<Controller name="url" control={control} render={({ field }) => <LinkTargetInput value={field.value ?? ''} onChange={field.onChange} />} />`. nullable 필드는 `field.value ?? ''`로 정규화
+- [ ] **`allowNone` prop 결정**: Zod schema의 url이 `min(1)` 필수면 `allowNone={false}` 전달 (NONE 옵션이 select에서 hide되어 빈 값 진입 차단). 그 외는 default true
+- [ ] **References prefetch (선택)**: 페이지 진입 시 `linkTargetReferencesOptions()`를 `prefetchQuery`하면 첫 렌더에 빈 Select 깜박임 제거 가능 (PopupEditPage 패턴)
+
 ### 입력 Dialog (admin)
 
 폼/필드를 담은 Dialog 추가/수정 시:

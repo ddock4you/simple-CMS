@@ -4,7 +4,6 @@ import type {
   CreateHomePopupDto,
   UpdateHomePopupDto,
   ReorderHomePopupsDto,
-  HomePopupReferencesDto,
 } from '@simple-cms/types';
 
 import { fetchClient } from '@/shared/api/fetchClient';
@@ -45,10 +44,6 @@ export function reorderHomePopups(data: ReorderHomePopupsDto): Promise<null> {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-}
-
-export function getHomePopupReferences(): Promise<HomePopupReferencesDto> {
-  return fetchClient<HomePopupReferencesDto>('/api/home-popups/references');
 }
 
 export function toggleHomePopupVisibility(

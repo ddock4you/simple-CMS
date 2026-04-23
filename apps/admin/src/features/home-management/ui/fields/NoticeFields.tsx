@@ -5,13 +5,14 @@ import type {
   FieldErrors,
   UseFormRegister,
 } from 'react-hook-form';
-import { useFieldArray } from 'react-hook-form';
+import { Controller, useFieldArray } from 'react-hook-form';
 import { Plus, Trash2 } from 'lucide-react';
 
 import { Button } from '@/shared/ui/shadcn/button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
+import { LinkTargetInput } from '@/entities/link-target/ui/LinkTargetInput';
 
 import type { NoticeConfigData } from '../../model/homeSchemas';
 
@@ -99,10 +100,16 @@ export function NoticeFields({
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       <div className="space-y-1">
-                        <Label className="text-xs">링크 (선택)</Label>
-                        <Input
-                          {...register(`items.${index}.url`)}
-                          placeholder="/notice/1"
+                        <Controller
+                          control={control}
+                          name={`items.${index}.url`}
+                          render={({ field }) => (
+                            <LinkTargetInput
+                              value={field.value ?? ''}
+                              onChange={field.onChange}
+                              label="링크 (선택)"
+                            />
+                          )}
                         />
                       </div>
                       <div className="space-y-1">

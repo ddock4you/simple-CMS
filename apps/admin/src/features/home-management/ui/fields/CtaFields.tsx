@@ -1,19 +1,22 @@
 'use client';
 
-import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import type { Control, FieldErrors, UseFormRegister } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
+import { LinkTargetInput } from '@/entities/link-target/ui/LinkTargetInput';
 
 import type { CtaConfigData } from '../../model/homeSchemas';
 
 interface CtaFieldsProps {
   register: UseFormRegister<CtaConfigData>;
+  control: Control<CtaConfigData>;
   errors: FieldErrors<CtaConfigData>;
 }
 
-export function CtaFields({ register, errors }: CtaFieldsProps) {
+export function CtaFields({ register, control, errors }: CtaFieldsProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -53,11 +56,18 @@ export function CtaFields({ register, errors }: CtaFieldsProps) {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="buttonUrl">버튼 URL *</Label>
-          <Input
-            id="buttonUrl"
-            {...register('buttonUrl')}
-            placeholder="/about 또는 https://..."
+          <Controller
+            name="buttonUrl"
+            control={control}
+            render={({ field }) => (
+              <LinkTargetInput
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                label="버튼 URL *"
+                id="buttonUrl"
+                allowNone={false}
+              />
+            )}
           />
           {errors.buttonUrl && (
             <p className="text-sm text-destructive">

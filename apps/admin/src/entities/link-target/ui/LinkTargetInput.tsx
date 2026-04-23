@@ -12,7 +12,7 @@ import {
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 
-import { homePopupReferencesOptions } from '../api/popupQueries';
+import { linkTargetReferencesOptions } from '../api/linkTargetReferencesQueries';
 
 type LinkKind = 'NONE' | 'SUBPAGE' | 'BOARD' | 'EXTERNAL';
 
@@ -28,6 +28,12 @@ interface LinkTargetInputProps {
   onChange: (url: string) => void;
   label?: string;
   id?: string;
+  /**
+   * NONE(링크 없음) 옵션 노출 여부. 기본 true.
+   * url이 필수 필드인 호출자(예: ShortcutFields)는 false 전달.
+   * false면 NONE 옵션이 select에서 숨겨지고, 빈 value 진입 시 EXTERNAL 모드가 default.
+   */
+  allowNone?: boolean;
 }
 
 export function LinkTargetInput({
@@ -35,9 +41,10 @@ export function LinkTargetInput({
   onChange,
   label = '링크',
   id,
+  allowNone = true,
 }: LinkTargetInputProps) {
-  const { data: refs } = useQuery(homePopupReferencesOptions());
-  const [kind, setKind] = useState<LinkKind>('NONE');
+  const { data: refs } = useQuery(linkTargetReferencesOptions());
+  const [kind, setKind] = useState<LinkKind>(allowNone ? 'NONE' : 'EXTERNAL');
   const [subpageId, setSubpageId] = useState<string>('');
   const [boardId, setBoardId] = useState<string>('');
   const [external, setExternal] = useState<string>('');
@@ -48,7 +55,7 @@ export function LinkTargetInput({
     /* eslint-disable react-hooks/set-state-in-effect */
     if (initialized) return;
     if (!value) {
-      setKind('NONE');
+      setKind(allowNone ? 'NONE' : 'EXTERNAL');
       setInitialized(true);
       return;
     }
@@ -78,7 +85,7 @@ export function LinkTargetInput({
     setExternal(value);
     setInitialized(true);
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [value, refs, initialized]);
+  }, [value, refs, initialized, allowNone]);
 
   const handleKindChange = (newKind: LinkKind) => {
     setKind(newKind);
@@ -114,6 +121,12 @@ export function LinkTargetInput({
     onChange(url);
   };
 
+  const kindOptions = (
+    allowNone
+      ? (['NONE', 'SUBPAGE', 'BOARD', 'EXTERNAL'] as const)
+      : (['SUBPAGE', 'BOARD', 'EXTERNAL'] as const)
+  );
+
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
@@ -125,7 +138,7 @@ export function LinkTargetInput({
           <span>{KIND_LABELS[kind]}</span>
         </SelectTrigger>
         <SelectContent>
-          {(['NONE', 'SUBPAGE', 'BOARD', 'EXTERNAL'] as const).map((k) => (
+          {kindOptions.map((k) => (
             <SelectItem key={k} value={k}>
               {KIND_LABELS[k]}
             </SelectItem>

@@ -6,10 +6,9 @@ import type { UseFormReturn } from 'react-hook-form';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { TiptapEditor } from '@/shared/ui/TiptapEditor';
+import { LinkTargetInput } from '@/entities/link-target/ui/LinkTargetInput';
 
 import type { PopupFormValues } from '../model/popupSchemas';
-
-import { LinkTargetInput } from './LinkTargetInput';
 
 export function PopupContentFields({
   form,

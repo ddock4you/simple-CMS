@@ -15,6 +15,7 @@ import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
 
 import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput';
+import { LinkTargetInput } from '@/entities/link-target/ui/LinkTargetInput';
 
 import type { RecommendedConfigData } from '../../model/homeSchemas';
 import { SlideOptionsPanel } from './SlideOptionsPanel';
@@ -184,10 +185,16 @@ export function RecommendedFields({
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs">링크 URL (선택)</Label>
-                  <Input
-                    {...register(`items.${index}.url`)}
-                    placeholder="/p/about 또는 https://... (비우면 링크 없음)"
+                  <Controller
+                    control={control}
+                    name={`items.${index}.url`}
+                    render={({ field }) => (
+                      <LinkTargetInput
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        label="링크 URL (선택)"
+                      />
+                    )}
                   />
                   <p className="text-xs text-muted-foreground">
                     URL을 입력하면 카드 전체가 링크로 동작합니다.

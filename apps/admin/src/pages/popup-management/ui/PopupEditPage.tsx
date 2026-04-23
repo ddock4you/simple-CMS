@@ -2,10 +2,8 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 
 import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { getQueryClient } from '@/shared/api/queryClient';
-import {
-  homePopupDetailOptions,
-  homePopupReferencesOptions,
-} from '@/features/popup-management/api/popupQueries';
+import { linkTargetReferencesOptions } from '@/entities/link-target/api/linkTargetReferencesQueries';
+import { homePopupDetailOptions } from '@/features/popup-management/api/popupQueries';
 import { PopupForm } from '@/features/popup-management/ui/PopupForm';
 
 import { PopupEditClient } from './PopupEditClient';
@@ -20,7 +18,7 @@ export default async function PopupEditPage({ mode, id }: Props) {
 
   const queryClient = getQueryClient();
   // LinkTargetInput 드롭다운용 references는 항상 prefetch
-  await queryClient.prefetchQuery(homePopupReferencesOptions());
+  await queryClient.prefetchQuery(linkTargetReferencesOptions());
 
   if (mode === 'create') {
     return (

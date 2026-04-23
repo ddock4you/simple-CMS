@@ -315,7 +315,7 @@ src/
   - 업로드 API: `POST /api/media/upload` (multipart/form-data, `file` + `category='home'`)
   - 스토리지: 루트 CLAUDE.md "파일 업로드 스토리지 정책" 참조 (`STORAGE_PROVIDER=local|supabase`)
   - Media 테이블에 레코드 생성 + `MEDIA` 감사 로그 기록
-- 링크 URL은 optional — 입력 시 해당 슬라이드/카드 전체가 `<Link>`로 감싸짐
+- 링크 URL은 optional — 입력 시 해당 슬라이드/카드 전체가 `<Link>`로 감싸짐. **Stage 7i부터 모든 fields(CTA/Hero/Recommended/Shortcut/Notice)의 URL 입력이 `@/entities/link-target/ui/LinkTargetInput` 공용 컴포넌트로 통합** — NONE/SUBPAGE/BOARD/EXTERNAL 분기 입력으로 slug 변경에 안전. CtaFields + ShortcutFields는 url 필수라 `allowNone={false}` 전달
 - URL은 내부 경로(`/about`)와 외부 URL(`https://...`) 모두 허용
 - **Tiptap 미사용** — 모든 섹션을 단순 text 필드로 관리
 - **UI**: `/home` 단일 페이지, 6개 섹션 카드 + dnd-kit 드래그 순서변경 + 노출토글 + 타입별 편집 Dialog
@@ -354,12 +354,15 @@ src/
 
 #### 링크 입력 (LinkTargetInput)
 
+- **위치**: `apps/admin/src/entities/link-target/ui/LinkTargetInput.tsx` (Stage 7i에서 `features/popup-management` → `entities/link-target` 승격 — admin 전반 URL 입력의 공용 컴포넌트). 쿼리는 `entities/link-target/api/linkTargetReferencesQueries.ts`의 `linkTargetReferencesOptions`
 - 단일 `linkUrl` 필드로 저장하되 admin UI는 유형별 분기 Select + 입력:
-  - **없음**: linkUrl = ''
+  - **없음**: linkUrl = '' (`allowNone={false}`이면 옵션 hide)
   - **서브페이지**: 발행된 Subpage 드롭다운 → `/p/{slug}` 자동 생성
   - **게시판**: 공개 Board 드롭다운 → `/board/{slug}` 자동 생성
   - **외부 URL**: 자유 입력 (`https://...`)
-- 편집 시 저장된 URL을 파싱해 어느 탭이 활성인지 자동 추론 (references 캐시 기반)
+- 편집 시 저장된 URL을 파싱해 어느 탭이 활성인지 자동 추론 (references 캐시 기반). 매칭 실패 시 EXTERNAL 폴백 + 원본 url 보존
+- **`allowNone?: boolean` prop** (default true): url이 필수 필드인 호출자(CtaFields/ShortcutFields)는 `false` 전달
+- **Stage 7i 사용처**: popup(content/image), home-management(CTA/Hero/Recommended/Shortcut/Notice). API endpoint는 의미 일관성상 `/api/home-popups/references` 그대로 유지(경로 rename은 후속 작업)
 
 #### API Routes
 
@@ -899,7 +902,14 @@ admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인�
   - 훅 단독 검증이 필요할 때 **probe 컴포넌트 패턴** — 전용 `*Probe.stories.tsx` 파일에 inline probe 컴포넌트 + `data-testid`/Dialog로 훅 반환값 DOM 노출. `PermissionProbe`/`DirtyGuardProbe` 사례
   - Canvas iframe 환경 주의: `useDirtyGuard` 같은 same-path 필터가 있는 훅 probe는 `href="/dashboard"`처럼 iframe pathname과 다른 경로를 써야 가드가 트리거됨 (`href="#fragment"`는 same-path라 skip)
 - **Stage 7h에서 보류된 것 (Stage 7j의 MSW 재조사 이후)**: `msw-storybook-addon@^2.0.7` + `@storybook/addon-vitest@^10` browser mode(Playwright Chromium) 조합 호환성 이슈로 MSW 통합 전면 보류. CreateRoleDialog submit 성공/실패 + reorder rollback은 MSW 무의존 경로로 대체 불가하여 이관. `msw-storybook-addon` v2.1+ 또는 dual `setupServer` 세팅 방식 조사 후 재도입
-- **Stage 7i 예고**: Swiper 22M 회귀 자동 감지 (Carousel 테스트 프로브 + viewport 360/768/1024 resize + `slide.style.width < threshold` assert) + 프로젝트 커스텀 래퍼 showcase 4개 (`Admin/Shared/Dialog + AlertDialog` 중첩 블러 규약, `InlineStatusToggle`/`InlineBooleanToggle` 권한별 Badge fallback, `LinkTargetInput` subpage/board/external 분기)
+- **Stage 7i 결과**: 커스텀 래퍼 showcase 5개 신규 추가 + LinkTargetInput을 `entities/link-target`으로 승격 + home-management 5개 fields 적용:
+  - Sidebar 카테고리 5개 신규 (`Admin/Shared/Dialog`, `Admin/Shared/AlertDialog`, `Admin/Shared/InlineStatusToggle`, `Admin/Shared/InlineBooleanToggle`, **`Admin/Entities/LinkTarget/LinkTargetInput`**). 총 변동 — admin 17 files / **52 tests** (기존 35 → +17)
+  - **Dialog `NestedDialog` play 재현 조건**: 자식 Dialog를 부모 Dialog의 children으로 렌더해야 Base-UI가 nested 관계를 인식하고 `data-nested-dialog-open`을 부모 Popup에 부착. sibling으로 두면 미부착 (구현 중 발견). 실사용 예: `MenuItemDialog`가 `<Dialog>`의 children 영역에 `<ConfirmLeaveDialog>`를 sibling으로 렌더
+  - **LinkTargetInput 승격 경로**: `features/popup-management/ui/LinkTargetInput.tsx` → `entities/link-target/ui/LinkTargetInput.tsx`. 쿼리도 `homePopupReferencesOptions` → `linkTargetReferencesOptions`로 rename하며 `entities/link-target/api/linkTargetReferencesQueries.ts`로 이동. API endpoint `/api/home-popups/references`는 그대로 유지
+  - **`allowNone?: boolean` prop 신규** (default true): url이 필수 필드인 CtaFields + ShortcutFields가 `allowNone={false}` 전달해 NONE 옵션 숨김. 빈 value 진입 시 EXTERNAL 모드 default 활성
+  - **home-management 5개 fields 적용**: CtaFields(buttonUrl 필수 → allowNone=false) + HeroFields(slides[].url) + RecommendedFields(items[].url) + ShortcutFields(items[].url 필수 → allowNone=false) + NoticeFields(items[].url nullable, `?? ''` 정규화). CtaFields는 control prop 신규 추가 → CtaSectionForm에서 `form.control` 전달
+  - **호환성**: 기존 저장된 URL은 자동 EXTERNAL 탭 폴백 + 원본 보존. DB 마이그레이션 0. 운영 시 내부 페이지 참조로 전환하려면 SUBPAGE/BOARD 탭에서 재선택
+  - **MSW 무의존 패턴**: LinkTargetInput story는 `withMockRefs` decorator가 자체 `QueryClientProvider`를 래핑하여 `setQueryData(linkTargetReferencesOptions().queryKey, MOCK_REFS)` 주입. 7h probe 패턴과 일관
 - **Stage 7g에서 만난 이슈 — Storybook addon-vitest dep cache**: story 대량 추가 후 첫 vitest run에서 `TypeError: Failed to fetch dynamically imported module: .../sb-vitest/deps/@storybook_react-dom-shim.js?v=...` 발생. 해결: `rm -rf node_modules/.cache/storybook node_modules/.vite` 후 재실행. 향후 의존성 업데이트나 story 대량 추가 시 cleanup 절차로 참고
 - **Stage 7h에서 만난 이슈 — msw-storybook-addon + addon-vitest 호환성**: `initialize()` + `mswLoader` 전역 등록 시 `Test Files 0 passed (10)` 무한 대기 및 `Failed to connect to the browser session` 타임아웃 발생. `tags: ['!test']` story 제외나 `navigator.webdriver` 런타임 분기로도 해결 안 됨 — MSW 패키지 devDep 존재만으로도 addon-vitest backend가 block됨을 확인. 최종 조치: `git restore` + `rm -rf apps/admin/public apps/admin/node_modules/.cache/storybook apps/admin/node_modules/.vite` + `pnpm install`로 Stage 7g 커밋 상태 완전 복원 → 28 tests 정상 통과 확인. 재도입은 Stage 7j에서 `msw-storybook-addon` v2.1+/Node setupServer 이중 세팅 재조사 후
 

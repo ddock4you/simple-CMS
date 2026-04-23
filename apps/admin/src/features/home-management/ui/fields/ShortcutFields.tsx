@@ -5,13 +5,14 @@ import type {
   FieldErrors,
   UseFormRegister,
 } from 'react-hook-form';
-import { useFieldArray } from 'react-hook-form';
+import { Controller, useFieldArray } from 'react-hook-form';
 import { Plus, Trash2 } from 'lucide-react';
 
 import { Button } from '@/shared/ui/shadcn/button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
+import { LinkTargetInput } from '@/entities/link-target/ui/LinkTargetInput';
 
 import type { ShortcutConfigData } from '../../model/homeSchemas';
 
@@ -99,10 +100,17 @@ export function ShortcutFields({
                         )}
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">URL *</Label>
-                        <Input
-                          {...register(`items.${index}.url`)}
-                          placeholder="/notice 또는 https://..."
+                        <Controller
+                          control={control}
+                          name={`items.${index}.url`}
+                          render={({ field }) => (
+                            <LinkTargetInput
+                              value={field.value ?? ''}
+                              onChange={field.onChange}
+                              label="URL *"
+                              allowNone={false}
+                            />
+                          )}
                         />
                         {errors.items?.[index]?.url && (
                           <p className="text-xs text-destructive">

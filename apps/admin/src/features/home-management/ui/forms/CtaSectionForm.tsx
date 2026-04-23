@@ -77,7 +77,11 @@ export function CtaSectionForm({
       onSubmit={onSubmit}
       onCancel={onClose}
     >
-      <CtaFields register={form.register} errors={form.formState.errors} />
+      <CtaFields
+        register={form.register}
+        control={form.control}
+        errors={form.formState.errors}
+      />
     </SectionFormShell>
   );
 }
