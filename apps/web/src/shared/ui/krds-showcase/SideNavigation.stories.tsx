@@ -25,7 +25,12 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+// render에서 커스텀 JSX를 사용하므로 args는 실제 사용되지 않지만
+// meta.component가 children을 요구하여 타입을 만족시키기 위한 placeholder.
+const placeholderArgs = { children: null };
+
 export const Collapsed: Story = {
+  args: placeholderArgs,
   render: () => (
     <SideNavigation aria-label="소개 하위 메뉴">
       <SideNavigation.Title>소개</SideNavigation.Title>
@@ -45,6 +50,7 @@ export const Collapsed: Story = {
 };
 
 export const Expanded: Story = {
+  args: placeholderArgs,
   render: () => (
     <SideNavigation aria-label="정책 하위 메뉴">
       <SideNavigation.Title>정책</SideNavigation.Title>

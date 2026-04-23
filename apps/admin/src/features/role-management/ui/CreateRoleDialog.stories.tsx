@@ -1,13 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { CreateRoleDialog } from './CreateRoleDialog';
 
 /**
- * authenticated decorator 실행 경로를 이번 Stage에 처음 돌려보는 story.
- * `parameters.authenticated: true`로 `PermissionProvider + SidebarProvider`가 래핑되어야 한다.
- *
- * 초기 렌더는 Trigger 버튼만 보이고, 클릭 시 Dialog가 열린다.
- * submit 경로(POST /api/roles)는 Stage 7h의 MSW 도입 이후 실제 테스트 가능.
+ * authenticated decorator 실행 경로를 처음 돌려본 Stage 7g story.
+ * Stage 7j에서 fetchStubDecorator 기반 submit 성공/실패 분기 play function 추가.
  */
 const meta = {
   title: 'Admin/Features/Role/CreateRoleDialog',
@@ -23,3 +21,68 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+export const SubmitSuccess: Story = {
+  parameters: {
+    fetchMock: {
+      '/api/roles': {
+        status: 201,
+        body: {
+          success: true,
+          data: {
+            id: 'role-new',
+            name: 'Editor',
+            description: null,
+            permissions: {},
+          },
+        },
+      },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const body = within(document.body);
+
+    await userEvent.click(await canvas.findByRole('button', { name: /새 역할/ }));
+
+    const nameInput = await body.findByLabelText('역할명');
+    await userEvent.type(nameInput, 'Editor');
+
+    await userEvent.click(await body.findByRole('button', { name: '생성' }));
+
+    await body.findByText('역할이 생성되었습니다.');
+
+    await waitFor(() => {
+      expect(body.queryByText('새 역할 추가')).not.toBeInTheDocument();
+    });
+  },
+};
+
+export const SubmitConflict: Story = {
+  parameters: {
+    fetchMock: {
+      '/api/roles': {
+        status: 409,
+        body: {
+          success: false,
+          error: '이미 사용 중인 역할명입니다.',
+        },
+      },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const body = within(document.body);
+
+    await userEvent.click(await canvas.findByRole('button', { name: /새 역할/ }));
+
+    const nameInput = await body.findByLabelText('역할명');
+    await userEvent.type(nameInput, 'Admin');
+
+    await userEvent.click(await body.findByRole('button', { name: '생성' }));
+
+    await body.findByText('이미 사용 중인 역할명입니다.');
+
+    await expect(body.getByText('새 역할 추가')).toBeInTheDocument();
+  },
+};

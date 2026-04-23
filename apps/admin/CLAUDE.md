@@ -896,12 +896,17 @@ admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인�
   - `Admin/Entities/Media/ImageUrlInput` (UrlOnly / WithExternalUrl / WithLibraryMedia)
 - **명령**: `pnpm --filter @simple-cms/admin storybook` (port 6006), `pnpm --filter @simple-cms/admin test` (unit + storybook project 자동 병행), `pnpm --filter @simple-cms/admin build-storybook`
 - **Stage 7h에서 정립된 play function 패턴** (`storybook/test` v10 core):
-  - `expect` / `userEvent` / `within` / `fn`을 `storybook/test`에서 import (core 패키지, `@storybook/test` 별도 설치 금지)
+  - `expect` / `userEvent` / `within` / `waitFor` / `fn`을 `storybook/test`에서 import (core 패키지, `@storybook/test` 별도 설치 금지)
   - Dialog/toast는 body portal 렌더 → `within(canvasElement)` 아닌 `within(document.body)` 범위에서 탐색
-  - 비동기 state 변화에는 `findByText` / `findByRole` (내장 retry/wait) 사용
-  - 훅 단독 검증이 필요할 때 **probe 컴포넌트 패턴** — 전용 `*Probe.stories.tsx` 파일에 inline probe 컴포넌트 + `data-testid`/Dialog로 훅 반환값 DOM 노출. `PermissionProbe`/`DirtyGuardProbe` 사례
+  - 비동기 state 변화에는 `findByText` / `findByRole` (내장 retry/wait) 사용. toast 후 Dialog 닫힘 순서처럼 타이밍이 이중으로 겹칠 땐 `waitFor(() => expect(...).not.toBeInTheDocument())` 필요
+  - 훅 단독 검증이 필요할 때 **probe 컴포넌트 패턴** — 전용 `*Probe.stories.tsx` 파일에 inline probe 컴포넌트 + `data-testid`/Dialog로 훅 반환값 DOM 노출. `PermissionProbe`/`DirtyGuardProbe`/`SectionReorderProbe` 사례
   - Canvas iframe 환경 주의: `useDirtyGuard` 같은 same-path 필터가 있는 훅 probe는 `href="/dashboard"`처럼 iframe pathname과 다른 경로를 써야 가드가 트리거됨 (`href="#fragment"`는 same-path라 skip)
-- **Stage 7h에서 보류된 것 (Stage 7j의 MSW 재조사 이후)**: `msw-storybook-addon@^2.0.7` + `@storybook/addon-vitest@^10` browser mode(Playwright Chromium) 조합 호환성 이슈로 MSW 통합 전면 보류. CreateRoleDialog submit 성공/실패 + reorder rollback은 MSW 무의존 경로로 대체 불가하여 이관. `msw-storybook-addon` v2.1+ 또는 dual `setupServer` 세팅 방식 조사 후 재도입
+- **Stage 7j에서 정립된 fetch stub 패턴** (MSW 대체):
+  - `apps/admin/.storybook/fetchStubDecorator.ts` — Story `parameters.fetchMock: { [path-substring]: { status, body } }` 맵으로 `window.fetch` 일시 override. `useRef` + `useEffect`로 re-render 안전하게 설치/복원. preview.tsx decorators 배열 맨 뒤(innermost)에 등록
+  - Storybook decorator 배열은 `reduceRight`로 적용되어 **첫 번째가 outermost, 마지막이 innermost**. 알아두면 Provider 중첩 순서 설계에 유용 (예: 데이터 context는 outer, 권한 context는 inner)
+  - 응답 body 포맷은 admin fetchClient 표준(`{ success, data?, error? }`)에 맞춤 — fetchClient의 `response.ok` 분기와 `body.error` throw 경로를 그대로 통과
+  - 적용 예시: `CreateRoleDialog` Submit Success(`/api/roles` → 201) / SubmitConflict(409), `SectionReorderProbe` Reorder500(`/api/home/reorder` → 500 → `useReorderHomeSections` onError rollback 검증)
+- **Stage 7j 결론 — MSW는 현 시점에 Storybook 통합 불가**: `npm view msw-storybook-addon versions --json`로 latest=2.0.7 (2026-04-08), v2.1 부재(canary/beta/next 모두 v2.0.x). 7h 실패 시점과 동일 버전이라 재시도 가치 없음. addon-vitest Playwright browser mode와의 호환성 수정은 MSW/Storybook 양쪽 upstream에 없음. **fetch stub decorator가 CLAUDE.md 원래 의도("submit 분기 검증")를 infra delta 0에 가까이 달성**. 향후 `msw-storybook-addon` v2.1+ 또는 공식 dual `setupServer` 가이드가 나오면 재평가
 - **Stage 7i 결과**: 커스텀 래퍼 showcase 5개 신규 추가 + LinkTargetInput을 `entities/link-target`으로 승격 + home-management 5개 fields 적용:
   - Sidebar 카테고리 5개 신규 (`Admin/Shared/Dialog`, `Admin/Shared/AlertDialog`, `Admin/Shared/InlineStatusToggle`, `Admin/Shared/InlineBooleanToggle`, **`Admin/Entities/LinkTarget/LinkTargetInput`**). 총 변동 — admin 17 files / **52 tests** (기존 35 → +17)
   - **Dialog `NestedDialog` play 재현 조건**: 자식 Dialog를 부모 Dialog의 children으로 렌더해야 Base-UI가 nested 관계를 인식하고 `data-nested-dialog-open`을 부모 Popup에 부착. sibling으로 두면 미부착 (구현 중 발견). 실사용 예: `MenuItemDialog`가 `<Dialog>`의 children 영역에 `<ConfirmLeaveDialog>`를 sibling으로 렌더

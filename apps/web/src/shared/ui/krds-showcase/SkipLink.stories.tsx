@@ -29,8 +29,8 @@ export const Default: Story = {
   render: () => (
     <div>
       <p style={{ padding: 16, background: '#f6f6f6' }}>
-        <strong>Tip:</strong> Tab 키를 누르면 좌상단에 "본문 바로가기" 링크가
-        나타납니다.
+        <strong>Tip:</strong> Tab 키를 누르면 좌상단에 &ldquo;본문
+        바로가기&rdquo; 링크가 나타납니다.
       </p>
       <SkipLink targetId="main-content">본문 바로가기</SkipLink>
       <main

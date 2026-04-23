@@ -1,5 +1,5 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { expect, within } from 'storybook/test';
 
@@ -30,7 +30,7 @@ const MOCK_REFS = {
   ],
 };
 
-const withMockRefs: Decorator = (Story) => {
+function MockRefsProvider({ children }: { children: ReactNode }) {
   const [client] = useState(() => {
     const c = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -39,11 +39,15 @@ const withMockRefs: Decorator = (Story) => {
     return c;
   });
   return (
-    <QueryClientProvider client={client}>
-      <Story />
-    </QueryClientProvider>
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
-};
+}
+
+const withMockRefs: Decorator = (Story) => (
+  <MockRefsProvider>
+    <Story />
+  </MockRefsProvider>
+);
 
 const meta = {
   title: 'Admin/Entities/LinkTarget/LinkTargetInput',

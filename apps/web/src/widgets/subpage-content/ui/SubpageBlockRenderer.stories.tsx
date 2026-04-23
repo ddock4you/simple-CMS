@@ -1,6 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import type { ComponentProps } from 'react';
 
 import { SubpageBlockRenderer } from './SubpageBlockRenderer';
+
+type SubpageBlockRendererProps = ComponentProps<typeof SubpageBlockRenderer>;
 
 /**
  * Server Component지만 async가 아니라 Storybook에서 정상 렌더.
@@ -74,7 +77,7 @@ const iframeBlock = {
   },
 };
 
-const meta = {
+const meta: Meta<SubpageBlockRendererProps> = {
   title: 'Web/Widgets/SubpageBlockRenderer',
   component: SubpageBlockRenderer,
   parameters: {
@@ -104,11 +107,11 @@ const meta = {
   args: {
     subpageId: 'story-subpage-1',
   },
-} satisfies Meta<typeof SubpageBlockRenderer>;
+};
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<SubpageBlockRendererProps>;
 
 export const Mixed: Story = {
   args: {

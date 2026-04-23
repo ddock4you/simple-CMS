@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import type { ComponentProps } from 'react';
 import { Header } from 'krds-react';
+
+type HeaderProps = ComponentProps<typeof Header>;
 
 /**
  * KRDS `Header` showcase.
@@ -8,7 +11,7 @@ import { Header } from 'krds-react';
  * 이 프로젝트에서 쓰는 variant만 등록 (KRDS 모든 variant 전수 등록은 scope 외).
  * PageLayout에서 Header.Container + Header.Branding (+옵션 Header.MainMenu)로 조합.
  */
-const meta = {
+const meta: Meta<HeaderProps> = {
   title: 'Web/KRDS/Header',
   component: Header,
   parameters: {
@@ -20,11 +23,11 @@ const meta = {
       },
     },
   },
-} satisfies Meta<typeof Header>;
+};
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<HeaderProps>;
 
 export const Branded: Story = {
   render: () => (
