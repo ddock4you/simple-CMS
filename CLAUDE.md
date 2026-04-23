@@ -354,7 +354,7 @@ apps/{앱}/
 | 7i   | Swiper 22M 회귀 자동 감지 + LinkTargetInput 승격·적용 + 커스텀 래퍼 showcase 5개 | Carousel container resize play로 ResizeObserver 경로 강제 트리거 + slide width assert / LinkTargetInput을 entities/link-target로 승격하여 home-management 5개 fields(Cta+Hero+Recommended+Shortcut+Notice) 적용 / Admin/Shared 4개 + Admin/Entities/LinkTarget 1개 showcase | **완료** |
 | 7j   | CI matrix + turbo `test.dependsOn` 정리 + MSW 대신 fetch stub decorator + play function 2건 + addon-vitest 30초 timeout 탐사 | GitHub Actions admin/web × {lint, typecheck, test} 6 job 병렬 / `test.dependsOn: ['^build']` 제거 / `msw-storybook-addon` v2.1 부재 primary source 확인 후 `window.fetch` stub decorator 채택 / CreateRoleDialog Submit Success·Conflict + SectionReorderProbe Reorder500 / `optimizeDeps.include` 시도→효과 없어 revert + findings 기록 | **완료** |
 | 7k-1 | 청소 — LinkTarget API 경로 rename + `IFRAME_ALLOWED_HOSTS` 공유 모듈 추출 | `/api/home-popups/references` → `/api/link-target/references` (7i 이연 처리) / `@simple-cms/types`의 `block.types.ts`에 `IFRAME_ALLOWED_HOSTS` + `isIframeHostAllowed` 단일 출처 통합 (admin/web 3곳 복제 해소, Stage 7b부터 이연) / `normalizeIframeEmbedUrl`은 admin 전용 유지 | **완료** |
-| 7k-3 | addon-vitest 30s cold start 탐사 (measure-first) | `vitest run --reporter=verbose` 프로파일링 + `storybookTest` signature primary source 확인 + 시도→판정→커밋/revert | 진행 중 |
+| 7k-3 | addon-vitest 30s cold start 탐사 (measure-first) | primary source 확인(`storybookScript`는 watch 전용, `disableAddonDocs` 기본 true) + `browser.isolate: false` 시도 결과 10초 기준 미달로 revert. Stage 8+ 이연 | **완료 (findings only)** |
 | 8    | Docker + CI/CD + 문서화                                             | `docker compose up`으로 전체 실행                                                           | 대기     |
 
 #### Stage 7c 결과 요약
@@ -544,6 +544,24 @@ Stage 7f~7i의 Storybook + Vitest 인프라 위에 **CI 자동화 + 보류된 mu
   - 효과: 호스트 리스트 정책 변경 시 3곳 동기화 필요 → 1곳으로 수렴. Stage 7b "공유 모듈 추출은 Stage 8+ 과제" 약속을 실제로 이행
 - **stale artifact 주의**: admin의 `.next/types/validator.ts`가 기존 `/api/home-popups/references/route.js` 참조를 캐싱하고 있어 rename 후 typecheck 실패. `rm -rf apps/admin/.next/types` 후 재검증으로 해소
 - **검증**: `pnpm typecheck` + `pnpm lint` 모두 녹색 (admin 56 + web 33 = **89 tests 유지**). `rg "/api/home-popups/references"` 결과 CLAUDE.md/route.ts 주석 제외 실행 코드 0건, `rg "IFRAME_ALLOWED_HOSTS"` 정의 1곳(packages/types) + re-export/import만 남음
+
+#### Stage 7k-3 결과 요약 (findings-only, 코드 변경 0)
+
+Stage 7j에서 `optimizeDeps.include` 시도가 실패로 revert된 뒤 근본 원인 없이 남아있던 `vitest run` setup time(이전 세션 31.56s)을 **measure-first** 원칙으로 재접근. 모든 현실적 후보를 검토 후 Stage 8+ 이연 결론.
+
+- **Primary source 확인** (`node_modules/.pnpm/@storybook+addon-vitest@.../dist/vitest-plugin/index.d.ts`):
+  - `storybookScript?: string` — **watch 모드 전용** ("when ran in watch mode"). `vitest run` cold start와 무관 → 후보에서 제외. Stage 7j에서 Agent가 "v10.3+에 없을 수 있음"으로 추정했던 것을 primary source로 교정
+  - `disableAddonDocs?: boolean = true` — 기본값이 이미 true이므로 추가 개선 여지 0
+  - 남는 유효 옵션은 `configDir`/`storybookUrl`/`tags`뿐. 어느 것도 cold start 단축 효과 없음
+- **Baseline 3회 측정** (이 세션 기준): duration 49.50s / 50.85s / 53.56s → **평균 51.30s**. setup 62.75s / 64.93s / 70.13s → **평균 65.94s**. 7j 측정치(31.56s)에서 약 2배로 상승. 세션 간 환경 노이즈가 최적화 효과 측정을 **압도**하는 수준
+- **`browser.isolate: false` 시도 3회**: duration 51.87s / 41.83s / 53.20s → 평균 **48.97s**(−2.33s, −4.5%). setup 58.25s / 56.85s / 67.25s → 평균 **60.78s**(−5.16s, −7.8%). 10초 기준 미달 + 변동폭(41.83~53.20s)이 개선폭을 초과 → **노이즈 범위**. 격리성 trade-off(test 간 browser context 공유로 fetch stub/전역 상태 누수 위험)까지 고려하면 이득 없음. revert
+- **후보 (c) Playwright launch option(`--disable-gpu` 등)**: Linux 컨테이너에선 이득 있지만 Windows 로컬 headless에서 변동폭 대비 효과 낮을 것으로 판단 → 미시도. CI(ubuntu-latest)에서는 재측정 가치 있음
+- **후보 (d) `deps.inline`/`deps.external` 튜닝**: 7j의 `optimizeDeps.include` 실패와 유사 영역 → 반복 회피
+- **근본 원인 재정의**: `setup 60s+` 중 대부분은 **Playwright Chromium launch(Windows 프로세스 spawn 오버헤드) + Storybook preview bundle 초기화**. JS 레벨 옵션으로는 해결 불가. 체감 가능한 단축은 다음 중 하나 필요:
+  1. `@storybook/addon-vitest` major 업그레이드 + 공식 성능 개선
+  2. Vitest 5+ browser mode 재설계
+  3. CI 환경에서 Playwright cache + 병렬 worker 튜닝
+- **결론**: Stage 8+ 이연. 로컬 `vitest run`은 CI blast radius 밖이라 PR 게이트 속도에 영향 없음 — CI의 실제 wall clock(5분 이내)만 유지되면 실용상 문제 없음
 
 ## 명령어
 
