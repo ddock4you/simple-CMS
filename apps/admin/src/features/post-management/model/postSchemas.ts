@@ -14,6 +14,14 @@ export const createPostSchema = z.object({
     .max(200, '제목은 200자 이하여야 합니다.'),
   slug: z.string().max(200).optional(),
   boardId: z.string().min(1, '게시판을 선택해주세요.'),
+  seoTitle: z
+    .string()
+    .max(200, 'SEO 제목은 200자 이내로 입력해주세요.')
+    .optional(),
+  seoDescription: z
+    .string()
+    .max(500, 'SEO 설명은 500자 이내로 입력해주세요.')
+    .optional(),
   contentJson: z.any().optional(),
   status: z.enum(['DRAFT', 'PUBLISHED']).optional().default('DRAFT'),
 });
@@ -28,6 +36,16 @@ export const updatePostSchema = z.object({
     .optional(),
   slug: z.string().max(200).optional(),
   boardId: z.string().min(1).optional(),
+  seoTitle: z
+    .string()
+    .max(200, 'SEO 제목은 200자 이내로 입력해주세요.')
+    .optional()
+    .nullable(),
+  seoDescription: z
+    .string()
+    .max(500, 'SEO 설명은 500자 이내로 입력해주세요.')
+    .optional()
+    .nullable(),
   contentJson: z.any().optional(),
   status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
 });

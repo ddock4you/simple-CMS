@@ -10,6 +10,7 @@ import type {
   UpdateBrandingData,
   UpdateDomainData,
   UpdateSecurityData,
+  UpdateSeoData,
   UpdateUploadData,
 } from '../model/settingsSchemas';
 import {
@@ -19,6 +20,7 @@ import {
   updateBrandingSettings,
   updateDomainSettings,
   updateSecuritySettings,
+  updateSeoSettings,
   updateUploadSettings,
 } from './settingsFetchers';
 
@@ -93,6 +95,19 @@ export function useUpdateBranding() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.branding() });
       toast.success('브랜딩 설정이 저장되었습니다. 공개 웹에 최대 1분 후 반영됩니다.');
+    },
+    onError: (error: FetchError) => { toast.error(error.message); },
+  });
+}
+
+// SEO (Stage 9 Phase 1)
+export function useUpdateSeo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: UpdateSeoData) => updateSeoSettings(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: settingsKeys.seo() });
+      toast.success('SEO 설정이 저장되었습니다. 공개 웹에 최대 1분 후 반영됩니다.');
     },
     onError: (error: FetchError) => { toast.error(error.message); },
   });

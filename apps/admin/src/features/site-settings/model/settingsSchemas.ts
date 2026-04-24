@@ -59,6 +59,26 @@ export const updateBrandingSchema = z.object({
 
 export type UpdateBrandingData = z.infer<typeof updateBrandingSchema>;
 
+/**
+ * SEO 설정 (Stage 9 Phase 1).
+ * - robotsAdditionalDisallow: `/api/`는 기본 disallow이므로 중복 시 서버에서 제거.
+ *   각 경로는 `/`로 시작해야 함. 빈 문자열·공백은 제출 전 필터링.
+ */
+export const updateSeoSchema = z.object({
+  robotsAdditionalDisallow: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, '빈 경로는 허용되지 않습니다.')
+        .max(200, '경로는 200자 이내로 입력해주세요.')
+        .regex(/^\//, '경로는 "/"로 시작해야 합니다.'),
+    )
+    .max(50, '추가 Disallow 경로는 최대 50개까지 설정 가능합니다.'),
+});
+
+export type UpdateSeoData = z.infer<typeof updateSeoSchema>;
+
 // API 응답 타입
 export interface DomainSettingsData {
   domain: string | null;
@@ -103,3 +123,13 @@ export interface BrandingSettingsData {
  * - og: SITE_OG_IMAGE_MEDIA_ID
  */
 export type BrandingAssetKind = 'logo' | 'favicon' | 'og';
+
+/**
+ * SEO 설정 GET 응답.
+ * baseUrl/sitemapUrl은 읽기 전용 — 서버에서 현재 `getSiteUrl()` 파생값을 내려주어 UI에서 링크/안내 표시.
+ */
+export interface SeoSettingsData {
+  robotsAdditionalDisallow: string[];
+  baseUrl: string;
+  sitemapUrl: string;
+}

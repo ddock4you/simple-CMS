@@ -11,6 +11,7 @@ const TABS = [
   { label: '업로드', href: '/settings/upload' },
   { label: '권한', href: '/settings/roles' },
   { label: '브랜딩', href: '/settings/branding' },
+  { label: 'SEO', href: '/settings/seo' },
 ];
 
 export function SettingsNav() {

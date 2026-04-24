@@ -4,6 +4,12 @@ import 'krds-react/dist/index.css';
 
 import { getMenuBySlot } from '@/entities/navigation/api/getNavigation';
 import { getCachedBranding } from '@/shared/lib/brandingCache';
+import { getSiteUrl } from '@/shared/lib/siteUrl';
+import {
+  buildOrganizationJsonLd,
+  buildWebSiteJsonLd,
+  serializeJsonLd,
+} from '@/shared/lib/structuredData';
 import { ErrorReporterMount } from '@/shared/ui/ErrorReporterMount';
 import { PageLayout } from '@/widgets/layout/ui/PageLayout';
 
@@ -60,12 +66,25 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [headerMenu, footerMenu, sidebarMenu, branding] = await Promise.all([
+  const [headerMenu, footerMenu, sidebarMenu, branding, baseUrl] = await Promise.all([
     getMenuBySlot('HEADER'),
     getMenuBySlot('FOOTER'),
     getMenuBySlot('SIDEBAR'),
     getCachedBranding(),
+    getSiteUrl(),
   ]);
+
+  const organizationJsonLd = buildOrganizationJsonLd({
+    siteName: branding.siteName,
+    baseUrl,
+    logoUrl: branding.logoUrl,
+  });
+  const websiteJsonLd = buildWebSiteJsonLd({
+    siteName: branding.siteName,
+    siteDescription: branding.siteDescription,
+    baseUrl,
+  });
+
   return (
     <html lang="ko">
       <head>
@@ -73,6 +92,14 @@ export default async function RootLayout({
           rel="stylesheet"
           as="style"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(websiteJsonLd) }}
         />
       </head>
       <body>

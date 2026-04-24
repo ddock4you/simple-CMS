@@ -15,6 +15,8 @@ const draftPost: PostDetail = {
   boardId: 'story-board-1',
   boardName: '공지사항',
   boardSlug: 'notice',
+  seoTitle: null,
+  seoDescription: null,
   contentJson: null,
   status: 'DRAFT',
   authorId: 'story-author-1',

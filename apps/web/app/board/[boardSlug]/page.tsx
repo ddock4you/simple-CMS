@@ -3,6 +3,12 @@ import { notFound } from 'next/navigation';
 
 import { getPublishedBoard } from '@/entities/board/api/getBoard';
 import { getPublishedPosts } from '@/entities/post/api/getPostList';
+import { getCachedBranding } from '@/shared/lib/brandingCache';
+import { getSiteUrl } from '@/shared/lib/siteUrl';
+import {
+  buildBreadcrumbJsonLd,
+  serializeJsonLd,
+} from '@/shared/lib/structuredData';
 import { BoardPage } from '@/pages/board/ui/BoardPage';
 
 interface PageProps {
@@ -34,5 +40,24 @@ export default async function Page({ params, searchParams }: PageProps) {
   const page = Math.max(1, Number(pageParam) || 1);
   const posts = await getPublishedPosts(board.id, page);
 
-  return <BoardPage board={board} posts={posts} />;
+  const [branding, baseUrl] = await Promise.all([
+    getCachedBranding(),
+    getSiteUrl(),
+  ]);
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: branding.siteName, url: baseUrl },
+    { name: board.name, url: `${baseUrl}/board/${boardSlug}` },
+  ]);
+
+  return (
+    <>
+      {breadcrumbJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
+        />
+      )}
+      <BoardPage board={board} posts={posts} />
+    </>
+  );
 }

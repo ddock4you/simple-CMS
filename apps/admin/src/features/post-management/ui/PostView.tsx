@@ -140,6 +140,28 @@ export function PostView({ id }: PostViewProps) {
               </div>
             </CardContent>
           </Card>
+
+          {(data.seoTitle || data.seoDescription) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>SEO</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                {data.seoTitle && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground">SEO 제목</span>
+                    <p>{data.seoTitle}</p>
+                  </div>
+                )}
+                {data.seoDescription && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground">SEO 설명</span>
+                    <p className="whitespace-pre-wrap">{data.seoDescription}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

@@ -5,9 +5,11 @@ import type {
   DnsCheckResult,
   DomainSettingsData,
   SecuritySettingsData,
+  SeoSettingsData,
   UpdateBrandingData,
   UpdateDomainData,
   UpdateSecurityData,
+  UpdateSeoData,
   UpdateUploadData,
   UploadSettingsData,
 } from '../model/settingsSchemas';
@@ -75,5 +77,17 @@ export function updateBrandingSettings(
 export function deleteBrandingAsset(kind: BrandingAssetKind): Promise<null> {
   return fetchClient<null>(`/api/settings/branding?kind=${kind}`, {
     method: 'DELETE',
+  });
+}
+
+// SEO (Stage 9 Phase 1)
+export function getSeoSettings(): Promise<SeoSettingsData> {
+  return fetchClient<SeoSettingsData>('/api/settings/seo');
+}
+
+export function updateSeoSettings(data: UpdateSeoData): Promise<null> {
+  return fetchClient<null>('/api/settings/seo', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
   });
 }

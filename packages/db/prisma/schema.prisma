@@ -249,6 +249,8 @@ model Post {
   title           String
   slug            String
   boardId         String
+  seoTitle        String?
+  seoDescription  String?       @db.Text
   contentJson     Json?
   content         String?       @db.Text
   status          ContentStatus @default(DRAFT)

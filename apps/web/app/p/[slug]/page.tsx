@@ -1,6 +1,13 @@
 import type { Metadata } from 'next';
 
 import { getPublishedSubpage } from '@/entities/subpage/api/getSubpage';
+import { getCachedBranding } from '@/shared/lib/brandingCache';
+import { getSiteUrl } from '@/shared/lib/siteUrl';
+import {
+  buildArticleJsonLd,
+  buildBreadcrumbJsonLd,
+  serializeJsonLd,
+} from '@/shared/lib/structuredData';
 import { SubpagePage } from '@/pages/subpage/ui/SubpagePage';
 
 interface PageProps {
@@ -35,5 +42,46 @@ export async function generateMetadata({
 
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
-  return <SubpagePage slug={slug} />;
+  const subpage = await getPublishedSubpage(slug);
+
+  if (!subpage) {
+    return <SubpagePage slug={slug} />;
+  }
+
+  const [branding, baseUrl] = await Promise.all([
+    getCachedBranding(),
+    getSiteUrl(),
+  ]);
+  const subpageUrl = `${baseUrl}/p/${slug}`;
+  const articleJsonLd = buildArticleJsonLd({
+    url: subpageUrl,
+    headline: subpage.seoTitle?.trim() || subpage.title,
+    description: subpage.seoDescription?.trim() ?? null,
+    publishedAt: subpage.publishedAt,
+    modifiedAt: subpage.updatedAt,
+    siteName: branding.siteName,
+    baseUrl,
+    logoUrl: branding.logoUrl,
+    imageUrl: branding.ogImageUrl,
+  });
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: branding.siteName, url: baseUrl },
+    { name: subpage.title, url: subpageUrl },
+  ]);
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleJsonLd) }}
+      />
+      {breadcrumbJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
+        />
+      )}
+      <SubpagePage slug={slug} />
+    </>
+  );
 }

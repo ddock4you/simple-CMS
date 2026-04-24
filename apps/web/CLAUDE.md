@@ -49,6 +49,40 @@ src/
 - slug 기반 URL 관리
 - `published` 상태 콘텐츠만 공개 노출
 
+### sitemap.xml + robots.txt (Stage 9)
+
+- `apps/web/app/sitemap.ts` — Next.js 16 `MetadataRoute.Sitemap`. `dynamic = 'force-dynamic'` + Prisma 직접 조회로 published Subpage/Board/Post 자동 수집
+  - 우선순위/변경 주기: 홈 daily/1.0, Subpage monthly/0.8, Board index weekly/0.7, Post weekly/0.6
+  - `lastModified = updatedAt ?? publishedAt ?? now()` 3단 폴백
+  - baseUrl은 `getSiteUrl()` (커스텀 도메인 → `NEXT_PUBLIC_SITE_URL` 폴백)
+  - 수만 건 이상으로 커지면 `revalidate = 300` 검토 (현재 규모는 요청당 Prisma 3쿼리로 충분)
+- `apps/web/app/robots.ts` — `MetadataRoute.Robots` 구조체. `dynamic = 'force-dynamic'`
+  - 기본 Disallow `/api/` + admin이 `/settings/seo`에서 관리하는 `ROBOTS_ADDITIONAL_DISALLOW` SiteSetting(JSON 배열) 병합
+  - `sitemap: ${baseUrl}/sitemap.xml`, `host: baseUrl` 자동 포함
+- `apps/web/src/shared/lib/seoCache.ts` — `brandingCache.ts`/`domainCache.ts` 동일 패턴(60s prod / 5s dev TTL). `ROBOTS_ADDITIONAL_DISALLOW` 파싱 실패 시 빈 배열 폴백(robots.txt 서빙 차단 금지)
+
+### 페이지별 SEO 메타데이터
+
+- Subpage: `seoTitle`, `seoDescription` 스키마 기존 보유(Stage 7m 이전). `/p/[slug]/page.tsx` `generateMetadata`가 `seoTitle ?? title`, `seoDescription ?? undefined` 폴백
+- Post (Stage 9): `seoTitle`, `seoDescription` 필드 신규 추가. `/board/[boardSlug]/[postSlug]/page.tsx` `generateMetadata`가 `seoTitle ?? title`, `seoDescription ?? summarizeContent(content)` 3단 폴백 (`summarizeContent` inline 헬퍼 — 공백 정규화 + 160자 truncate + `…`)
+- Board: `description` 사용 (SEO 전용 필드 없음, Stage 9 범위 외)
+
+### Schema.org JSON-LD (Stage 9)
+
+- 위치: `apps/web/src/shared/lib/structuredData.ts` — 빌더 4종 + 안전 직렬화
+  - `buildOrganizationJsonLd` — 전 페이지 공통
+  - `buildWebSiteJsonLd` — `SearchAction` 포함(sitelinks searchbox 자격)
+  - `buildArticleJsonLd` — Subpage/Post 공용, `mainEntityOfPage`로 canonical URL
+  - `buildBreadcrumbJsonLd` — 빈 배열이면 null 반환
+  - `serializeJsonLd` — `<` → `<` 이스케이프로 `</script>` 인젝션 차단. `dangerouslySetInnerHTML` 사용처 공통 규약
+- 삽입 위치:
+  - `app/layout.tsx` `<head>`: Organization + WebSite 2개 (전 페이지 공통)
+  - `/p/[slug]/page.tsx`: Article + BreadcrumbList (홈 → Subpage). Preview 모드는 JSON-LD 없음 (draft 노출 부적합)
+  - `/board/[boardSlug]/page.tsx`: BreadcrumbList (홈 → Board)
+  - `/board/[boardSlug]/[postSlug]/page.tsx`: Article + BreadcrumbList (홈 → Board → Post). Preview 모드는 JSON-LD 없음
+- 검증: [Google Rich Results Test](https://search.google.com/test/rich-results)로 배포 URL 제출 → Article + BreadcrumbList 인식 확인
+- **`metadata.other` vs `<script>`**: JSON-LD는 `<script type="application/ld+json">`이 표준. Next.js `metadata.other`는 meta 태그 전용이라 부적합 — `<script dangerouslySetInnerHTML>` + `serializeJsonLd` 패턴 고정
+
 ## KRDS 사용 원칙
 
 - KRDS는 공개 웹 전용 UI 기반

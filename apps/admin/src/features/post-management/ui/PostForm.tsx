@@ -10,6 +10,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/shared/ui/shadcn/button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
+import { Textarea } from '@/shared/ui/shadcn/textarea';
 import {
   Card,
   CardContent,
@@ -70,6 +71,8 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
       title: initialData?.title ?? '',
       slug: initialData?.slug ?? '',
       boardId: initialData?.boardId ?? defaultBoardId ?? '',
+      seoTitle: initialData?.seoTitle ?? '',
+      seoDescription: initialData?.seoDescription ?? '',
       contentJson: initialData?.contentJson ?? undefined,
       status: initialData?.status ?? 'DRAFT',
     },
@@ -223,6 +226,41 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
                   />
                 )}
               />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>SEO</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="seoTitle">SEO 제목</Label>
+                <Input
+                  id="seoTitle"
+                  {...register('seoTitle')}
+                  placeholder="검색 결과에 표시될 제목 (비워두면 기본 제목 사용)"
+                />
+                {errors.seoTitle && (
+                  <p className="text-sm text-destructive">
+                    {errors.seoTitle.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="seoDescription">SEO 설명</Label>
+                <Textarea
+                  id="seoDescription"
+                  {...register('seoDescription')}
+                  placeholder="검색 결과에 표시될 설명"
+                  rows={3}
+                />
+                {errors.seoDescription && (
+                  <p className="text-sm text-destructive">
+                    {errors.seoDescription.message}
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -74,6 +74,7 @@ export const settingsKeys = {
   security: () => [...settingsKeys.all, 'security'] as const,
   upload: () => [...settingsKeys.all, 'upload'] as const,
   branding: () => [...settingsKeys.all, 'branding'] as const,
+  seo: () => [...settingsKeys.all, 'seo'] as const,
 };
 
 export const mediaKeys = {

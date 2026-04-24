@@ -138,6 +138,7 @@ src/
 /settings/upload        # 업로드 제한 설정 (허용 확장자, MIME 타입, 최대 파일 크기)
 /settings/roles         # 권한 관리 (역할 목록 + 메뉴별 CRUD 매트릭스)
 /settings/branding      # 사이트 브랜딩 + SEO 메타데이터 (Stage 7l — 로고/favicon/OG/사이트명·설명)
+/settings/seo           # SEO 설정 (Stage 9 — sitemap URL 안내 + robots.txt 추가 Disallow)
 ```
 
 ## 기능별 상세 스펙
@@ -367,6 +368,7 @@ src/
 ### 게시글 CRUD
 
 - 제목, 본문(Tiptap JSON), 게시판 소속, 작성자(자동 설정)
+- **SEO (Stage 9)**: `seoTitle String?`(max 200) / `seoDescription String? @db.Text`(max 500) 필드. PostForm 좌측 콘텐츠 컬럼 하단 "SEO" Card + PostView 우측에서 둘 중 하나라도 있을 때 SEO Card 조건부 렌더. 빈 문자열은 `.trim() || null`로 DB에 null 저장. audit diff(CREATE/UPDATE) 포함. 공개 웹 `generateMetadata`가 `seoTitle ?? title`, `seoDescription ?? summarizeContent(content)` 3단 폴백
 - draft / published 상태, 발행일 관리
 - slug: 게시판 단위 unique (`@@unique([boardId, slug])`)
 - 게시판 변경 허용 (편집 시 다른 게시판으로 이동 가능)
@@ -694,7 +696,7 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 ### 사이트 설정 관리
 
-- **SettingsNav 4탭**: 도메인 | 보안 | 업로드 | 권한 (권한은 Stage 2f에서 구현)
+- **SettingsNav 6탭**: 도메인 | 보안 | 업로드 | 권한 | 브랜딩 | SEO (탭은 Stage 2f · Stage 7l · Stage 9에 걸쳐 확장됨)
 - DB 헬퍼: `packages/db/src/siteSettings.ts` (getSiteSetting/setSiteSetting), `packages/db/src/uploadRestriction.ts` (getUploadRestrictions/validateFileUpload)
 - 라우트: `/settings/domain`
 - FSD: `features/site-settings/` (api, model, ui)
@@ -916,6 +918,46 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 - `MediaUploadButton`/`useUploadMedia`/`uploadMedia` — `endpoint?` + `acceptMimeTypes?` prop 추가 (옵셔널 backward compat)
 - `MediaCard`/`MediaGrid`/`MediaPicker` — `disabled`/`acceptMimeTypes`/`disabledReason` prop 추가
 - `ImageUrlInput` — `endpoint`/`acceptMimeTypes`/`disableUrlInput`/`disabledReason` prop 추가
+
+### SEO 설정 관리 (Stage 9)
+
+- 라우트: `/settings/seo` (SettingsNav 6번째 탭)
+- FSD: `features/site-settings/` (도메인/보안/업로드/브랜딩과 동일 슬라이스에 추가)
+- 권한: 기존 `settings:read|update` 재사용
+
+#### SiteSettings 키
+
+| 키                          | 값 형식          | 기본값    | 설명                                         |
+| --------------------------- | ---------------- | --------- | -------------------------------------------- |
+| `ROBOTS_ADDITIONAL_DISALLOW` | JSON 배열 문자열 | `[]`      | robots.txt에 `/api/` 외로 추가할 Disallow 경로 |
+
+- 공개 URL + sitemap URL 표시는 SiteSettings.SITE_DOMAIN에서 파생 (읽기 전용 안내)
+- `/api/`는 robots.ts가 항상 기본 Disallow로 포함 → 관리자 입력에서 중복 시 서버에서 제거
+
+#### API Routes
+
+| Method | Route                 | 권한              | 용도                                                                  |
+| ------ | --------------------- | ----------------- | --------------------------------------------------------------------- |
+| GET    | `/api/settings/seo`   | settings:read     | `{ robotsAdditionalDisallow, baseUrl, sitemapUrl }` 응답 (baseUrl/sitemapUrl 파생) |
+| PATCH  | `/api/settings/seo`   | settings:update   | `robotsAdditionalDisallow` 저장 + dedupe + 정렬 비교 no-op short-circuit + audit |
+
+#### Zod 검증 (`updateSeoSchema`)
+
+- `robotsAdditionalDisallow: z.array(z.string().trim().min(1).max(200).regex(/^\//))` (경로 `/` 시작 강제)
+- 배열 `max(50)` — 대량 등록 차단 + 운영 직관
+
+#### UI (`SeoSettingsForm.tsx`)
+
+- 2개 Card 구조
+  - **sitemap.xml · robots.txt** Card: 공개 URL 표시 + sitemap URL 링크(새 탭) + "검색엔진 콘솔에 등록하세요" 안내
+  - **robots.txt 추가 Disallow** Card: Textarea(한 줄 하나) + Controller로 `string[]` ↔ string 변환
+- Textarea ↔ array 변환 헬퍼: `parseTextareaToPaths(text)`/`pathsToTextarea(paths)` (공백 trim + 빈 줄 제거)
+- 공통 안내: "`/api/`는 기본 차단됨. 경로는 `/`로 시작, 최대 50개. 공개 웹 반영까지 최대 1분"
+
+#### 감사 로그
+
+- `entityType: SITE_SETTINGS`, `entityId: ROBOTS_ADDITIONAL_DISALLOW`, `entityTitle: 'SEO 설정 (robots.txt)'`
+- 변경 전후 정렬 비교로 no-op 시 audit 기록 skip (브랜딩 패턴 일관성)
 
 ### 미리보기 (Stage 7a)
 

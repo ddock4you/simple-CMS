@@ -8,7 +8,10 @@ type PublishedPost = Prisma.PostGetPayload<{
     id: true;
     title: true;
     slug: true;
+    seoTitle: true;
+    seoDescription: true;
     contentJson: true;
+    content: true;
     publishedAt: true;
     updatedAt: true;
     board: { select: { name: true; slug: true } };
@@ -21,7 +24,10 @@ type PreviewPost = Prisma.PostGetPayload<{
     id: true;
     title: true;
     slug: true;
+    seoTitle: true;
+    seoDescription: true;
     contentJson: true;
+    content: true;
     status: true;
     publishedAt: true;
     updatedAt: true;
@@ -42,7 +48,10 @@ export const getPublishedPost = cache(
         id: true,
         title: true,
         slug: true,
+        seoTitle: true,
+        seoDescription: true,
         contentJson: true,
+        content: true,
         publishedAt: true,
         updatedAt: true,
         board: { select: { name: true, slug: true } },
@@ -70,7 +79,10 @@ export const getPostForPreview = cache(
         id: true,
         title: true,
         slug: true,
+        seoTitle: true,
+        seoDescription: true,
         contentJson: true,
+        content: true,
         status: true,
         publishedAt: true,
         updatedAt: true,

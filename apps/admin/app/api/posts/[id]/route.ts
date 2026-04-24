@@ -40,6 +40,8 @@ export async function GET(
       boardId: post.board.id,
       boardName: post.board.name,
       boardSlug: post.board.slug,
+      seoTitle: post.seoTitle,
+      seoDescription: post.seoDescription,
       contentJson: post.contentJson,
       status: post.status,
       authorId: post.author?.id ?? null,
@@ -90,7 +92,7 @@ export async function PATCH(
       );
     }
 
-    const { title, slug, boardId, contentJson, status } = parsed.data;
+    const { title, slug, boardId, seoTitle, seoDescription, contentJson, status } = parsed.data;
 
     // Validate board if changing
     if (boardId && boardId !== post.boardId) {
@@ -122,6 +124,8 @@ export async function PATCH(
     if (title !== undefined) updateData.title = title;
     if (slug !== undefined) updateData.slug = slug;
     if (boardId !== undefined) updateData.boardId = boardId;
+    if (seoTitle !== undefined) updateData.seoTitle = seoTitle?.trim() || null;
+    if (seoDescription !== undefined) updateData.seoDescription = seoDescription?.trim() || null;
     if (contentJson !== undefined) {
       updateData.contentJson = contentJson;
       updateData.content = extractTextFromTiptap(contentJson);
@@ -155,6 +159,20 @@ export async function PATCH(
     if (status !== undefined && status !== post.status) {
       before.status = post.status;
       after.status = status;
+    }
+    if (seoTitle !== undefined) {
+      const normalized = seoTitle?.trim() || null;
+      if (normalized !== post.seoTitle) {
+        before.seoTitle = post.seoTitle;
+        after.seoTitle = normalized;
+      }
+    }
+    if (seoDescription !== undefined) {
+      const normalized = seoDescription?.trim() || null;
+      if (normalized !== post.seoDescription) {
+        before.seoDescription = post.seoDescription;
+        after.seoDescription = normalized;
+      }
     }
 
     if (Object.keys(after).length > 0) {

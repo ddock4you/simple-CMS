@@ -35,6 +35,8 @@ export interface PostDetail {
   boardId: string;
   boardName: string;
   boardSlug: string;
+  seoTitle: string | null;
+  seoDescription: string | null;
   contentJson: unknown;
   status: ContentStatus;
   authorId: string | null;

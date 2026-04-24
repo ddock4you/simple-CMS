@@ -103,7 +103,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const { title, boardId, contentJson, status } = parsed.data;
+    const { title, boardId, seoTitle, seoDescription, contentJson, status } = parsed.data;
 
     const board = await prisma.board.findUnique({ where: { id: boardId } });
     if (!board) {
@@ -139,11 +139,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     const content = contentJson ? extractTextFromTiptap(contentJson) : null;
     const publishedAt = status === 'PUBLISHED' ? new Date() : null;
 
+    const normalizedSeoTitle = seoTitle?.trim() || null;
+    const normalizedSeoDescription = seoDescription?.trim() || null;
+
     const post = await prisma.post.create({
       data: {
         title,
         slug,
         boardId,
+        seoTitle: normalizedSeoTitle,
+        seoDescription: normalizedSeoDescription,
         contentJson: contentJson ?? undefined,
         content,
         status,
@@ -159,7 +164,16 @@ export async function POST(request: Request): Promise<NextResponse> {
       entityType: 'POST',
       entityId: post.id,
       entityTitle: title,
-      changes: { after: { title, slug, boardId, status } },
+      changes: {
+        after: {
+          title,
+          slug,
+          boardId,
+          status,
+          seoTitle: normalizedSeoTitle,
+          seoDescription: normalizedSeoDescription,
+        },
+      },
       userId: user!.id,
       ipAddress: auditContext.ipAddress,
       userAgent: auditContext.userAgent,

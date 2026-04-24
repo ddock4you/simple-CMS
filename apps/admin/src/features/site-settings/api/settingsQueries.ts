@@ -5,6 +5,7 @@ import {
   getBrandingSettings,
   getDomainSettings,
   getSecuritySettings,
+  getSeoSettings,
   getUploadSettings,
 } from './settingsFetchers';
 
@@ -30,4 +31,10 @@ export const brandingSettingsOptions = () =>
   queryOptions({
     queryKey: settingsKeys.branding(),
     queryFn: () => getBrandingSettings(),
+  });
+
+export const seoSettingsOptions = () =>
+  queryOptions({
+    queryKey: settingsKeys.seo(),
+    queryFn: () => getSeoSettings(),
   });

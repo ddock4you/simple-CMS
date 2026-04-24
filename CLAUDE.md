@@ -365,7 +365,7 @@ apps/{앱}/
 | 5a   | 메인 섹션 관리 + **Admin UI + Web 렌더링** | 섹션 데이터 편집 → 메인에 반영     | **완료** |
 | 5b   | 메인 팝업 관리 + **Admin UI + Web 모달**   | 팝업 등록 → 메인 방문 시 모달 표시 | **완료** |
 
-### Stage 6–8 — 확장 / 인프라
+### Stage 6+ — 확장 / 인프라 / SEO
 
 | 단계 | 내용                                                                | 확인 가능한 것                                                                              | 상태     |
 | ---- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------- |
@@ -385,6 +385,7 @@ apps/{앱}/
 | 7l   | 사이트 브랜딩 + SEO 메타데이터 (로고/favicon/OG/사이트명·설명) [[상세]](docs/stages/stage-7l.md) | admin `/settings/branding` 5번째 탭에서 6키 통합 관리 + web 헤더 동적 로고 + `generateMetadata`로 title/description/icons/openGraph 자동 반영 | **완료** |
 | 7m   | 서브페이지 버전 관리 (이력 / 롤백 / 작성자 필터 · admin 미리보기) [[상세]](docs/stages/stage-7m.md) | `SubpageVersion` 단일 JSON 스냅샷 + 명시적 [버전 저장] + DRAFT→PUBLISHED AUTO_PUBLISH + 소프트 롤백 (PRE_ROLLBACK 자동 백업) + 깃 스타일 메모 + 낙관 동시성(`Subpage.revision`) + 보존 30개 lazy cleanup | **완료** |
 | 8    | Docker + CI/CD + 문서화                                             | `docker compose up`으로 전체 실행                                                           | 대기     |
+| 9    | SEO 기반 구축 (sitemap + robots + 페이지별 SEO + Schema.org JSON-LD) [[상세]](docs/stages/stage-9.md) | `/sitemap.xml`·`/robots.txt` 자동 생성 + Post에 seoTitle/seoDescription + Article/BreadcrumbList/Organization/WebSite JSON-LD + admin `/settings/seo` 탭에서 robots 추가 Disallow 관리 | **완료** |
 
 ## 명령어
 
