@@ -89,9 +89,35 @@ export type {
   PreviewTokenResponse,
 } from './dto/preview.dto';
 
-export type { CclType, SubpageCclInfo } from './domain/subpage.types';
+export type {
+  CclType,
+  SubpageCclInfo,
+  SubpageContentStatus,
+  SubpageVersionSource,
+  SubpageVersionStatusStrategy,
+} from './domain/subpage.types';
 export {
   CCL_TYPE_LABELS,
   CCL_TYPE_ASSET,
   CCL_AI_ASSET,
+  SUBPAGE_VERSION_SOURCE_LABELS,
 } from './domain/subpage.types';
+
+export type {
+  SubpageVersionSnapshotMeta,
+  SubpageVersionSnapshotBlock,
+  SubpageVersionSnapshot,
+  SubpageVersionAuthor,
+  SubpageVersionListItem,
+  SubpageVersionDetail,
+  SubpageVersionListResponse,
+  SubpageVersionListFilters,
+  CreateSubpageVersionDto,
+  RollbackSubpageVersionDto,
+  UpdateSubpageVersionDto,
+} from './dto/subpage-version.dto';
+export {
+  SUBPAGE_VERSION_RETENTION_LIMIT,
+  SUBPAGE_VERSION_LABEL_MAX_LENGTH,
+  SUBPAGE_VERSION_SUBJECT_DISPLAY_LIMIT,
+} from './dto/subpage-version.dto';

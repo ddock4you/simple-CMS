@@ -77,6 +77,7 @@ enum AuditAction {
 
 enum AuditEntityType {
   SUBPAGE
+  SUBPAGE_VERSION
   BOARD
   POST
   NAVIGATION_MENU
@@ -109,6 +110,12 @@ enum PreviewEntityType {
   POST
 }
 
+enum SubpageVersionSource {
+  MANUAL
+  AUTO_PUBLISH
+  PRE_ROLLBACK
+}
+
 // ─── Models ──────────────────────────────────────────────
 
 model Role {
@@ -137,12 +144,13 @@ model User {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  role           Role?          @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  sessions       Session[]
-  auditLogs      AuditLog[]
-  posts          Post[]
-  uploadedMedia  Media[]        @relation("MediaUploader")
-  previewTokens  PreviewToken[]
+  role            Role?            @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  sessions        Session[]
+  auditLogs       AuditLog[]
+  posts           Post[]
+  uploadedMedia   Media[]          @relation("MediaUploader")
+  previewTokens   PreviewToken[]
+  subpageVersions SubpageVersion[] @relation("SubpageVersionAuthor")
 
   @@index([roleId])
   @@index([status])
@@ -193,12 +201,32 @@ model Subpage {
   cclType         CclType?
   cclAi           Boolean       @default(false)
   displayOrder    Int           @default(0)
+  revision        Int           @default(0)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   featuredImage       Media?               @relation(fields: [featuredImageId], references: [id], onDelete: SetNull)
   blocks              PageBlock[]
   navigationMenuItems NavigationMenuItem[] @relation("SubpageMenuItems")
+  versions            SubpageVersion[]
+}
+
+model SubpageVersion {
+  id           String               @id @default(cuid())
+  subpageId    String
+  createdById  String?
+  createdAt    DateTime             @default(now())
+  label        String?              @db.Text
+  snapshot     Json
+  isPinned     Boolean              @default(false)
+  sourceAction SubpageVersionSource
+
+  subpage   Subpage @relation(fields: [subpageId], references: [id], onDelete: Cascade)
+  createdBy User?   @relation("SubpageVersionAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([subpageId, createdAt])
+  @@index([createdById])
+  @@index([isPinned])
 }
 
 model Board {

@@ -2,6 +2,7 @@ export class FetchError extends Error {
   constructor(
     message: string,
     public status: number,
+    public code?: string,
   ) {
     super(message);
     this.name = 'FetchError';
@@ -33,6 +34,7 @@ export async function fetchClient<T>(
     throw new FetchError(
       body.error ?? '요청 처리에 실패했습니다.',
       response.status,
+      typeof body.code === 'string' ? body.code : undefined,
     );
   }
 

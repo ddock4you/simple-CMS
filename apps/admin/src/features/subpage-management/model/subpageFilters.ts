@@ -36,6 +36,7 @@ export interface SubpageDetail {
   cclType: CclType | null;
   cclAi: boolean;
   displayOrder: number;
+  revision: number;
   createdAt: string;
   updatedAt: string;
 }

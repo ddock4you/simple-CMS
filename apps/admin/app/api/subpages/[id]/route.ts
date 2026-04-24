@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { prisma, logAuditEvent } from '@simple-cms/db';
+import { prisma, logAuditEvent, createSubpageVersionSnapshot } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
@@ -37,6 +37,7 @@ export async function GET(
       cclType: subpage.cclType,
       cclAi: subpage.cclAi,
       displayOrder: subpage.displayOrder,
+      revision: subpage.revision,
       createdAt: subpage.createdAt.toISOString(),
       updatedAt: subpage.updatedAt.toISOString(),
     };
@@ -81,8 +82,15 @@ export async function PATCH(
       );
     }
 
-    const { title, slug, seoTitle, seoDescription, status, cclType, cclAi } =
-      parsed.data;
+    const {
+      title,
+      slug,
+      seoTitle,
+      seoDescription,
+      status,
+      cclType,
+      cclAi,
+    } = parsed.data;
 
     if (slug && slug !== subpage.slug) {
       const existing = await prisma.subpage.findUnique({ where: { slug } });
@@ -93,6 +101,9 @@ export async function PATCH(
         );
       }
     }
+
+    const willPublish =
+      status === 'PUBLISHED' && subpage.status === 'DRAFT';
 
     const updateData: Record<string, unknown> = {};
     if (title !== undefined) updateData.title = title;
@@ -119,6 +130,23 @@ export async function PATCH(
       data: updateData,
     });
 
+    if (willPublish) {
+      try {
+        await createSubpageVersionSnapshot({
+          subpageId: id,
+          createdById: user!.id,
+          label: null,
+          sourceAction: 'AUTO_PUBLISH',
+        });
+      } catch (snapshotError) {
+        console.error(
+          '[Subpages PATCH] AUTO_PUBLISH snapshot failed:',
+          snapshotError,
+        );
+        // 주 액션은 진행 — 감사 로그와 동일한 fire-and-forget 원칙
+      }
+    }
+
     const before: Record<string, string | boolean | null> = {};
     const after: Record<string, string | boolean | null> = {};
     if (title !== undefined && title !== subpage.title) {
@@ -128,6 +156,20 @@ export async function PATCH(
     if (slug !== undefined && slug !== subpage.slug) {
       before.slug = subpage.slug;
       after.slug = slug;
+    }
+    if (
+      seoTitle !== undefined &&
+      (seoTitle ?? null) !== (subpage.seoTitle ?? null)
+    ) {
+      before.seoTitle = subpage.seoTitle;
+      after.seoTitle = seoTitle ?? null;
+    }
+    if (
+      seoDescription !== undefined &&
+      (seoDescription ?? null) !== (subpage.seoDescription ?? null)
+    ) {
+      before.seoDescription = subpage.seoDescription;
+      after.seoDescription = seoDescription ?? null;
     }
     if (status !== undefined && status !== subpage.status) {
       before.status = subpage.status;

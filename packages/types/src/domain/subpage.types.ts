@@ -50,3 +50,29 @@ export interface SubpageCclInfo {
   cclType: CclType | null;
   cclAi: boolean;
 }
+
+/**
+ * 서브페이지 콘텐츠 상태 (Stage 7m 버전 관리용 union, Prisma ContentStatus와 값 일치).
+ */
+export type SubpageContentStatus = 'DRAFT' | 'PUBLISHED';
+
+/**
+ * 서브페이지 버전 스냅샷의 생성 원인 (Stage 7m).
+ * - MANUAL: 운영자가 [버전 저장] 버튼으로 명시적으로 생성
+ * - AUTO_PUBLISH: DRAFT → PUBLISHED 전환 시 자동 생성
+ * - PRE_ROLLBACK: 롤백 직전 현재 상태를 자동 백업
+ */
+export type SubpageVersionSource = 'MANUAL' | 'AUTO_PUBLISH' | 'PRE_ROLLBACK';
+
+export const SUBPAGE_VERSION_SOURCE_LABELS: Record<SubpageVersionSource, string> = {
+  MANUAL: '수동 저장',
+  AUTO_PUBLISH: '발행 전환',
+  PRE_ROLLBACK: '롤백 직전',
+};
+
+/**
+ * 롤백 시 상태 전략.
+ * - KEEP_CURRENT: 현재 Subpage의 status를 유지하고 본문만 버전 내용으로 덮어씀 (기본)
+ * - APPLY_VERSION: 버전 스냅샷이 담고 있던 status까지 적용
+ */
+export type SubpageVersionStatusStrategy = 'KEEP_CURRENT' | 'APPLY_VERSION';

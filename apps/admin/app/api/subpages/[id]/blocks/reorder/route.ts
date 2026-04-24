@@ -62,7 +62,7 @@ export async function PATCH(
       );
     }
 
-    // 트랜잭션으로 일괄 갱신
+    // 트랜잭션으로 일괄 갱신 (reorder는 SubpageVersion 생성하지 않고 Subpage.revision도 건드리지 않음)
     await prisma.$transaction(
       blocks.map((b) =>
         prisma.pageBlock.update({

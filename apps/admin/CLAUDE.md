@@ -249,6 +249,109 @@ src/
 - **렌더러 교체 지점 1곳**: `apps/web/src/widgets/subpage-content/ui/SubpageBlockRenderer.tsx` 하나만 교체. admin CRUD와 DB는 무변경
 - **새 블록 타입 추가 절차 4곳**: `PageBlockType` enum → `configSchemaByType` 맵 → `features/block-management/ui/fields/` 새 필드 컴포넌트 → `SubpageBlockRenderer` case
 
+### 서브페이지 버전 관리 (Stage 7m)
+
+서브페이지의 모든 메타 + PageBlock 배열을 스냅샷 JSON으로 저장해 이력 조회/롤백을 지원. 감사 로그와 독립된 "콘텐츠 스냅샷" 시스템.
+
+#### 저장 트리거 (의미 있는 체크포인트만)
+
+| 트리거 | sourceAction | 생성 주체 |
+|--------|--------------|-----------|
+| 편집 페이지 [버전 저장] 버튼 | `MANUAL` | 운영자 명시적 |
+| `Subpage` PATCH 중 DRAFT → PUBLISHED 전환 | `AUTO_PUBLISH` | 서버 자동 (try/catch, 주 액션 차단 안 함) |
+| `restoreSubpageFromVersion` 트랜잭션 내부 | `PRE_ROLLBACK` | 롤백 직전 현재 상태 자동 백업 (label=null) |
+
+- **블록 reorder 및 블록 CUD는 개별 버전을 만들지 않음** — 노이즈 폭증 방지. 운영자가 의미 있는 지점에만 [버전 저장]을 명시적으로 누르는 흐름
+- `/api/subpages/[id]/blocks/reorder`에 "버전 생성 안 함" 주석 명시
+
+#### 메모 구조 (깃 커밋 스타일)
+
+- `SubpageVersion.label String? @db.Text` 단일 필드 (최대 10,000자, 선택 입력)
+- 첫 줄 = 요약(subject), 빈 줄 이후 = 본문(body). `parseVersionLabel(label)`이 `/^([\s\S]*?)\n[ \t]*\n([\s\S]*)$/` 정규식으로 분리
+- 목록 표시: `subject` 72자까지 (`SUBPAGE_VERSION_SUBJECT_DISPLAY_LIMIT`), 초과 시 `…` + hover tooltip에 원본. `formatVersionSubject` 헬퍼
+- 상세 Dialog: 최상단 "메모" 섹션에 subject(`text-lg font-semibold`) + body(`<pre className="whitespace-pre-wrap font-sans">`)
+- **빈 메모 허용**: `label=null` 저장 가능 → 목록에서 `sourceAction` 기반 fallback 텍스트 ("(메모 없음)" / "발행 전환 시 자동 저장" / "다른 버전으로 복원 직전 자동 저장") — 시스템 기본 문구를 DB에 저장하지 않고 UI에서만 파생
+
+#### 낙관 동시성 (`Subpage.revision Int @default(0)`)
+
+**rollback 엔드포인트(`/api/subpages/[id]/versions/[versionId]/rollback`)에서만** `expectedRevision` 수신 → 불일치 시 `409 { code: 'REVISION_MISMATCH' }`. 메타 PATCH와 블록 CUD/reorder는 revision guard 없음 + revision++ 없음
+
+- 보호 범위: rollback은 본질적으로 파괴적(PRE_ROLLBACK 스냅샷 → 전체 meta/blocks overwrite)이라 "rollback 직전 stale 상태에 기반한 복원" 차단이 필요
+- **메타 PATCH에서 guard 제거한 이유**: 실사용 검증 중 React Query `staleTime: 60s` + Server Component `prefetchQuery` + Next.js route cache가 상호작용해 SubpageEditClient의 `useQuery(subpageDetailOptions)` 데이터가 stale한 상태로 SubpageForm에 props 전달. 사용자가 혼자 디바이스에서 저장을 반복해도 `initialData.revision`이 서버 최신값보다 뒤처져 반복 409 발생. 사용자 UX 우선으로 guard 제거
+- **블록 CUD/reorder에서 guard 제거한 이유**: 같은 편집 페이지에 SubpageForm + BlockManager 공존. 블록 CUD가 revision을 올리면 SubpageForm의 stale cache revision이 refetch 완료 전이라 연쇄 race. 블록은 자체 id 단위 보호로 충분
+- `Subpage.revision` 컬럼은 유지 — `restoreSubpageFromVersion` 트랜잭션 안에서만 `increment: 1`. rollback 요청 시 클라이언트(SubpageView)가 `data.revision`(useQuery 최신)을 `RestoreVersionAlertDialog`의 `subpageRevision` prop으로 직접 전달
+- `ApiResponse<T>`에 `code?: string` 옵션 추가 (backward compat)
+
+#### 롤백 정책 (소프트 롤백)
+
+`restoreSubpageFromVersion` 트랜잭션:
+1. revision 낙관 락 검사 (불일치 시 `RevisionMismatchError` → 409)
+2. 현재 상태를 `PRE_ROLLBACK` 버전으로 자동 백업
+3. slug 충돌 검사 (다른 Subpage가 이미 차지 시 `SubpageVersionSlugConflictError` → 409 + `VERSION_SLUG_CONFLICT` code)
+4. Subpage 메타 덮어쓰기 + `revision++`
+5. `pageBlock.deleteMany` → 스냅샷 블록 `createMany` (id는 새 cuid로 재생성)
+
+검색용 `Subpage.content`(PGroonga plain text)는 트랜잭션 후 route handler가 `recalculateSubpageContent` 별도 호출 (블록 CUD와 동일 2단계 패턴)
+
+**상태 전략**: `KEEP_CURRENT` (기본) = 본문만 복원 + status 유지 / `APPLY_VERSION` = 버전의 status까지 적용 (PUBLISHED 전환 위험 → 기본 아님)
+
+#### Media 참조 추적 (advisor option 2)
+
+`findMediaReferences()` 확장 **안 함** — 확장 시 장기 운영 Subpage의 Media 삭제가 사실상 불가능해짐. 대신 `findDanglingMediaIds(snapshot)` 헬퍼로 롤백 시점에 누락된 Media ID 감지:
+- IMAGE 블록의 `configJson.imageMediaId`
+- RICH_TEXT 블록 Tiptap JSON 내 `image` 노드의 `attrs.mediaId` (재귀 수집)
+- 차집합 = dangling → UI에 경고 + 체크박스 "누락된 이미지를 인지했습니다" ack 후 롤백 허용
+
+#### 보존 정책
+
+- `isPinned=false` 버전 Subpage당 **30개** 상한 (`SUBPAGE_VERSION_RETENTION_LIMIT`)
+- `isPinned=true`는 상한에서 제외 — 운영자가 중요 버전 "고정"으로 영구 보존
+- **lazy cleanup** in save handler: `createSubpageVersionSnapshot` 직후 `enforceRetention` 호출 → 오래된 non-pinned부터 삭제 (cron 없음)
+- 시간 기반 보존(ErrorLog의 90일)보다 개수 상한이 운영자 직관에 맞음
+
+#### API Routes (6개)
+
+| Method | Route | 권한 | 용도 |
+|--------|-------|------|------|
+| GET    | `/api/subpages/[id]/versions` | subpages:read | 목록 (filter: authorId, from, to, pinnedOnly, source) + 페이지네이션 |
+| POST   | `/api/subpages/[id]/versions` | subpages:update | 수동 저장 (body: `{ label? }`, sourceAction=MANUAL) |
+| GET    | `/api/subpages/[id]/versions/[versionId]` | subpages:read | 상세 (snapshot + danglingMediaIds) |
+| POST   | `/api/subpages/[id]/versions/[versionId]/rollback` | subpages:update | 복원 (body: `{ expectedRevision, statusStrategy?, acknowledgeDangling? }`) |
+| PATCH  | `/api/subpages/[id]/versions/[versionId]` | subpages:update | `isPinned` 토글 |
+| DELETE | `/api/subpages/[id]/versions/[versionId]` | subpages:update | 삭제 (pinned는 400) |
+
+**권한은 `subpages:update` 재사용** — 별도 리소스 신설 안 함 (seed/role migration 부담 회피)
+
+#### UI 구성
+
+- **SubpageView (`/subpages/[id]`) 툴바**: `[미리보기] [사이트 보기] [버전 저장] [삭제] [편집]` 순. `SaveVersionButton`은 **뷰 페이지**에 배치 — 이 버튼은 현재 DB 상태를 스냅샷하는 것이지 편집 중인 값을 저장+스냅샷하는 것이 아니므로 편집 페이지가 아닌 뷰 페이지가 맥락상 일치. 편집 페이지에 두었던 초기 구현은 "저장 전엔 버전 저장이 안 된다"는 운영자 혼란을 유발해 이관
+- **SubpageView 우측 컬럼**: `RecentVersionsCard` (최근 5개 요약 + [전체 이력 보기])
+- **VersionHistoryDialog**: 전체 이력 (작성자/날짜/소스/pinned 필터 + 페이지네이션 + 상세/복원/핀/삭제 액션)
+- **VersionDetailDialog**: 최상단 메모 → 메타 diff 표 → `BlockDiffSummary` → `BlockContentView` 재사용 (스냅샷 블록을 `PageBlockListItem[]` shape로 매핑) → dangling media 경고
+- **RestoreVersionAlertDialog**: 상태 전략 Select + dangling 체크박스 ack — 부모가 `<... key={rollbackVersionId}>`로 리마운트시켜 state 초기화 (React Compiler `useEffect` + `setState` cascading render 경고 회피)
+
+##### UI 경험칙 — Dialog × Form 함정
+
+- **Dialog form submit의 외부 form 버블링 방지**: `SaveVersionButton`처럼 내부에 `<form onSubmit>`을 가진 Dialog를 바깥 SubpageForm/페이지 레벨 `<form>` 안에 배치할 때, React 이벤트 버블링은 `createPortal`과 무관하게 virtual DOM 기준으로 동작하므로 Dialog 내 submit이 외부 form의 onSubmit까지 도달한다. 두 방어를 함께 적용:
+  1. Dialog를 여는 trigger 버튼에 **`type="button"` 명시** (shadcn `Button` 기본 type="submit"이라 외부 form submit 트리거 발생)
+  2. Dialog 내부 `<form>`의 submit 핸들러에서 `e.preventDefault()` + **`e.stopPropagation()`** 호출 후 `handleSubmit(...)(e)` 호출
+  - 두 토스트(예: "버전이 저장되었습니다" + "기본 정보가 저장되었습니다")가 동시에 뜨는 증상으로 발견
+- **Base-UI Select — `<SelectValue />` 대신 `<span>` 직접 렌더**: 트리거 내부에 `<span>{조건부 한글 라벨}</span>`로 현재 값의 표시 텍스트를 직접 제어. `<SelectValue />`가 value(예: `'KEEP_CURRENT'`) 그대로를 노출하는 케이스 회피. 기존 `SubpageForm`의 Select 패턴(`<SelectTrigger><span>{field.value === 'PUBLISHED' ? '발행' : '초안'}</span></SelectTrigger>`)과 일관
+- **Dialog state 초기화는 `key`로 리마운트**: 열릴 때마다 state 초기화가 필요한 경우 `useEffect([open])` 내부 `setState`는 React Compiler ESLint `cascading renders` 경고 대상. 부모가 `<Dialog key={...}>`로 리마운트시켜 useState 기본값으로 자연 초기화하는 패턴 권장
+
+#### 감사 로그
+
+- `entityType: SUBPAGE_VERSION`:
+  - 수동 저장: `CREATE`, `changes: { after: { versionId, label, sourceAction: 'MANUAL' } }`
+  - Pin 토글: `UPDATE`, `changes: { before: { isPinned }, after: { isPinned } }`
+  - 삭제: `DELETE`, `changes: { before: { versionId, sourceAction, label } }`
+  - AUTO_PUBLISH/PRE_ROLLBACK은 AuditLog 기록 없음 (주 액션의 부수 효과 — 롤백 자체의 `SUBPAGE UPDATE` 로그에 `preRollbackVersionId` 포함)
+- 롤백 자체: 기존 `entityType: SUBPAGE` + `action: UPDATE` + `entityTitle` "(롤백)" suffix + `changes.after = { rolledBackFromVersionId, preRollbackVersionId, statusStrategy, newRevision }`
+
+#### drive-by 정리
+
+- 기존 `/api/subpages/[id]` PATCH audit `changes`에 `seoTitle`/`seoDescription` 누락 gap 해소 — Stage 7m 같은 커밋에서 추가
+
 ### 게시판 CRUD
 
 - 이름, slug, 설명, 스킨 타입(LIST/GALLERY), 공개 여부

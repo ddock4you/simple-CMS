@@ -91,3 +91,15 @@ export const blockKeys = {
   detail: (subpageId: string, blockId: string) =>
     [...blockKeys.all, 'detail', subpageId, blockId] as const,
 };
+
+export const subpageVersionKeys = {
+  all: ['subpage-versions'] as const,
+  lists: (subpageId: string) =>
+    [...subpageVersionKeys.all, 'list', subpageId] as const,
+  list: (subpageId: string, filters: unknown) =>
+    [...subpageVersionKeys.lists(subpageId), filters] as const,
+  detail: (subpageId: string, versionId: string) =>
+    [...subpageVersionKeys.all, 'detail', subpageId, versionId] as const,
+  recent: (subpageId: string) =>
+    [...subpageVersionKeys.all, 'recent', subpageId] as const,
+};

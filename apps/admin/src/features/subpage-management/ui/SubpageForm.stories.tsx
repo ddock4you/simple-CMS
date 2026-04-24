@@ -15,6 +15,7 @@ const cclType1InitialData: SubpageDetail = {
   cclType: 'TYPE_1',
   cclAi: true,
   displayOrder: 1,
+  revision: 0,
   createdAt: '2026-03-20T00:00:00.000Z',
   updatedAt: '2026-04-01T00:00:00.000Z',
 };

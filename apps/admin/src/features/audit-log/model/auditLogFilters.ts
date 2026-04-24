@@ -51,6 +51,7 @@ export const ACTION_LABELS: Record<AuditAction, string> = {
 
 export const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   SUBPAGE: '서브 페이지',
+  SUBPAGE_VERSION: '서브페이지 버전',
   BOARD: '게시판',
   POST: '게시글',
   NAVIGATION_MENU: '메뉴',

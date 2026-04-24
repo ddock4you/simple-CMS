@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -24,6 +25,12 @@ import { useDeleteSubpage } from '../api/useSubpageMutations';
 import { BlockContentView } from '@/features/block-management/ui/BlockContentView';
 import { blockListOptions } from '@/features/block-management/api/blockQueries';
 import { BLOCK_TYPE_LABELS } from '@/features/block-management/model/blockLabels';
+import { RecentVersionsCard } from '@/features/subpage-version/ui/RecentVersionsCard';
+import { VersionHistoryDialog } from '@/features/subpage-version/ui/VersionHistoryDialog';
+import { VersionDetailDialog } from '@/features/subpage-version/ui/VersionDetailDialog';
+import { RestoreVersionAlertDialog } from '@/features/subpage-version/ui/RestoreVersionAlertDialog';
+import { SaveVersionButton } from '@/features/subpage-version/ui/SaveVersionButton';
+import { useRollbackSubpageVersion } from '@/features/subpage-version/api/useVersionMutations';
 import { SubpageStatusBadge } from './SubpageStatusBadge';
 import { DeleteSubpageDialog } from './DeleteSubpageDialog';
 
@@ -37,6 +44,20 @@ export function SubpageView({ id }: SubpageViewProps) {
   const deleteMutation = useDeleteSubpage();
   const canUpdate = usePermission('subpages', 'update');
   const canDelete = usePermission('subpages', 'delete');
+
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [detailVersionId, setDetailVersionId] = useState<string | null>(null);
+  const [rollbackVersionId, setRollbackVersionId] = useState<string | null>(null);
+
+  const { mutate: rollbackMutate, isPending: rollbackPending } =
+    useRollbackSubpageVersion(id, {
+      onSuccess: () => {
+        // 복원 성공 시 열려 있던 모든 버전 관련 모달을 닫는다 — 복원된 내용을 바로 확인하기 쉽도록.
+        setRollbackVersionId(null);
+        setDetailVersionId(null);
+        setHistoryOpen(false);
+      },
+    });
 
   if (!data) return null;
 
@@ -61,6 +82,7 @@ export function SubpageView({ id }: SubpageViewProps) {
           {data.status === 'PUBLISHED' && (
             <ViewLiveButton url={getSubpagePublicUrl(data.slug)} />
           )}
+          {canUpdate && <SaveVersionButton subpageId={id} />}
           {canDelete && (
             <DeleteSubpageDialog
               title={data.title}
@@ -193,8 +215,50 @@ export function SubpageView({ id }: SubpageViewProps) {
               </CardContent>
             </Card>
           )}
+
+          <RecentVersionsCard
+            subpageId={id}
+            onViewAll={() => setHistoryOpen(true)}
+            onViewDetail={(versionId) => setDetailVersionId(versionId)}
+          />
         </div>
       </div>
+
+      <VersionHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        subpageId={id}
+        onViewDetail={(versionId) => setDetailVersionId(versionId)}
+        onRollbackClick={(versionId) => setRollbackVersionId(versionId)}
+      />
+      <VersionDetailDialog
+        open={detailVersionId !== null}
+        onOpenChange={(next) => {
+          if (!next) setDetailVersionId(null);
+        }}
+        subpageId={id}
+        versionId={detailVersionId}
+        onRollbackClick={(versionId) => setRollbackVersionId(versionId)}
+      />
+      {rollbackVersionId && (
+        <RestoreVersionAlertDialog
+          key={rollbackVersionId}
+          open
+          onOpenChange={(next) => {
+            if (!next) setRollbackVersionId(null);
+          }}
+          subpageId={id}
+          versionId={rollbackVersionId}
+          subpageRevision={data.revision}
+          isPending={rollbackPending}
+          onConfirm={(payload) => {
+            rollbackMutate({
+              versionId: rollbackVersionId,
+              data: payload,
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 export type ApiResponse<T> =
   | { success: true; data: T }
-  | { success: false; error: string };
+  | { success: false; error: string; code?: string };
 
 export interface PaginatedResponse<T> {
   items: T[];

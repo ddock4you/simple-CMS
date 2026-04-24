@@ -32,11 +32,28 @@ export {
 } from './errorLog';
 export type { LogWebErrorInput } from './errorLog';
 
+export {
+  createSubpageVersionSnapshot,
+  restoreSubpageFromVersion,
+  findDanglingMediaIds,
+  RevisionMismatchError,
+  SubpageVersionNotFoundError,
+  SubpageVersionSlugConflictError,
+  SUBPAGE_VERSION_RETENTION_LIMIT,
+} from './subpageVersion';
+export type {
+  SubpageSnapshotPayload,
+  CreateSubpageVersionSnapshotInput,
+  RestoreSubpageFromVersionInput,
+  RestoreSubpageFromVersionResult,
+} from './subpageVersion';
+
 export type {
   User,
   Role,
   Session,
   Subpage,
+  SubpageVersion,
   Board,
   Post,
   HomeSection,
@@ -66,4 +83,5 @@ export {
   ErrorLevel,
   ErrorSource,
   CclType,
+  SubpageVersionSource,
 } from './generated/prisma/client';
