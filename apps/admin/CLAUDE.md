@@ -966,15 +966,19 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 - FSD: `features/subpage-feedback/{api,model,ui}`, `pages/subpage-feedback/ui/SubpageFeedbackPage.tsx`
 - 권한 리소스: `subpage-feedback` (`read`, `delete`) — create/update 미정의 (익명 수신 + 운영자 편집 미도입)
 - SubpageForm "공개 옵션" 섹션의 `feedbackEnabled` Checkbox로 페이지별 opt-in 관리. 기본값 false
-- 통계 페이지 구성: FeedbackFilters(period 7/30/90/365 + 날짜 범위 + rating + 서브페이지 + 검색) → FeedbackStatsCards(4개 StatCard) → FeedbackTimelineChart(recharts BarChart 일별 stacked) + FeedbackPositiveReasonsChart(recharts horizontal BarChart) → FeedbackBySubpageTable(긍정율 progress bar, 행 클릭으로 필터 토글) → FeedbackListTable(시간/서브페이지/평가/이유/코멘트/상세)
-- 통계 집계: Prisma `findMany`(period 윈도우) + JS 집계. 빈 날짜도 0으로 채워 차트 매끄럽게. 365일 = 최대 수만 건 처리 충분
+- 통계 페이지 구성: FeedbackFilters(시작/끝 DatePicker + rating + 서브페이지 + 검색) → FeedbackStatsCards(4개 StatCard, 명시적 날짜 선택 시 "선택 기간 피드백 (N일)" / 미선택 시 "최근 30일 피드백" 라벨 자동 분기) → FeedbackTimelineChart(recharts BarChart 일별 stacked) + FeedbackPositiveReasonsChart(recharts horizontal BarChart) → FeedbackBySubpageTable(긍정율 progress bar, 행 클릭으로 필터 토글) → FeedbackListTable(시간/서브페이지/평가/이유/코멘트/상세)
+- **DatePicker가 단일 날짜 출처**: 초기 구현의 "최근 N일" period 드롭다운은 제거됨 (DatePicker와의 우선순위 모호 회피). from/to 미설정 시 통계/내보내기 모두 KST 기준 최근 30일을 서버에서 자동 적용
+- **KST 자정 경계 일관 적용**: list/stats/export 세 엔드포인트 모두 `T00:00:00+09:00` ~ `T23:59:59.999+09:00` 사용. DatePicker 출력도 KST 로컬 컴포넌트(`getFullYear/getMonth/getDate`) 기반 — 이전 `toISOString().slice(0,10)` 방식은 9시간 어긋남(잠재 버그)이라 교체. 같은 패턴이 `/audit-logs` export에도 있으므로 별도 추수 작업 후보
+- 통계 집계: Prisma `findMany`(from/to 윈도우, KST 자정 경계) + JS 집계. 빈 날짜도 0으로 채워 차트 매끄럽게. period은 `Math.round((until - since) / DAY_MS)`로 계산 (T23:59:59.999 종료라 inclusive day count, `+1` 오프셋 금지 — 추가 시 빈 막대 1개 노이즈)
 - recharts v3.3.0 신규 의존성 (admin only). Chart 컴포넌트는 `'use client'` + `ResponsiveContainer`
 - 삭제: `FeedbackDetailDialog`에 `usePermission('subpage-feedback', 'delete')` 게이팅 + window.confirm + DELETE → audit log `SUBPAGE_FEEDBACK DELETE` 기록
+- **Excel 내보내기**: 페이지 헤더 우측 `<FeedbackExport>` (시작/끝 DatePicker 별도 미보유 — 화면 필터 그대로 사용). 클라이언트는 응답의 `Content-Disposition` 파일명 + `X-Row-Count` 헤더를 읽어 0건은 info 토스트, 그 외는 success 토스트(N건 표시). 권한은 `usePermission('subpage-feedback', 'read')`로 버튼 자체 게이팅 + API에서 `requirePermission` 이중 차단
 - API Routes:
   | Method | Route | 권한 | 용도 |
   | ------ | ----- | ---- | ---- |
   | GET | `/api/subpage-feedback` | subpage-feedback:read | 목록 (필터: subpageId/rating/from/to/q + 페이지네이션) |
-  | GET | `/api/subpage-feedback/stats` | subpage-feedback:read | 집계 (period 1~365일) |
+  | GET | `/api/subpage-feedback/stats` | subpage-feedback:read | 집계 (필터: from/to optional, KST 미설정 시 최근 30일) |
+  | GET | `/api/subpage-feedback/export` | subpage-feedback:read | Excel 다운로드 (필터: from/to/rating/subpageId/q optional) + `X-Row-Count` 응답 헤더 + audit log `CREATE` 기록 |
   | DELETE | `/api/subpage-feedback/[id]` | subpage-feedback:delete | 삭제 + 감사 로그 |
 - SubpageVersion 스냅샷: `feedbackEnabled` 메타에 포함 → 롤백 시 함께 복원 (Stage 7m 일관)
 

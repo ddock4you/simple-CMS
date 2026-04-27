@@ -27,17 +27,10 @@ interface FeedbackFiltersProps {
   currentFrom: string | null;
   currentTo: string | null;
   currentQ: string | null;
-  currentPeriod: number;
   subpageOptions: SubpageOption[];
 }
 
 const RATING_OPTIONS: RatingFilter[] = ['ALL', 'POSITIVE', 'NEGATIVE'];
-const PERIOD_OPTIONS = [
-  { value: 7, label: '최근 7일' },
-  { value: 30, label: '최근 30일' },
-  { value: 90, label: '최근 90일' },
-  { value: 365, label: '최근 1년' },
-];
 
 function formatRatingLabel(rating: RatingFilter): string {
   if (rating === 'ALL') return '평가 전체';
@@ -50,7 +43,6 @@ export function FeedbackFilters({
   currentFrom,
   currentTo,
   currentQ,
-  currentPeriod,
   subpageOptions,
 }: FeedbackFiltersProps) {
   const router = useRouter();
@@ -68,7 +60,7 @@ export function FeedbackFilters({
   };
 
   const updateDate = (key: 'from' | 'to', date: Date | undefined) => {
-    updateParam(key, date ? date.toISOString().slice(0, 10) : null);
+    updateParam(key, date ? toLocalDateString(date) : null);
   };
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -80,25 +72,6 @@ export function FeedbackFilters({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-3">
-        <Select
-          value={String(currentPeriod)}
-          onValueChange={(v) => updateParam('period', v)}
-        >
-          <SelectTrigger className="w-[140px]">
-            <span>
-              {PERIOD_OPTIONS.find((o) => o.value === currentPeriod)?.label ??
-                '최근 30일'}
-            </span>
-          </SelectTrigger>
-          <SelectContent>
-            {PERIOD_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={String(opt.value)}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         <DatePicker
           value={currentFrom ? new Date(currentFrom) : undefined}
           onChange={(d) => updateDate('from', d)}
@@ -160,4 +133,11 @@ export function FeedbackFilters({
       </form>
     </div>
   );
+}
+
+function toLocalDateString(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }

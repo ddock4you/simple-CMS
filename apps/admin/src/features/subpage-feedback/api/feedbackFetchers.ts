@@ -24,13 +24,20 @@ export function getFeedbackList(
   );
 }
 
+export interface FeedbackStatsRange {
+  from?: string;
+  to?: string;
+}
+
 export function getFeedbackStats(
-  period: number,
+  range: FeedbackStatsRange,
 ): Promise<FeedbackStatsResponse> {
   const params = new URLSearchParams();
-  params.set('period', String(period));
+  if (range.from) params.set('from', range.from);
+  if (range.to) params.set('to', range.to);
+  const qs = params.toString();
   return fetchClient<FeedbackStatsResponse>(
-    `/api/subpage-feedback/stats?${params.toString()}`,
+    qs ? `/api/subpage-feedback/stats?${qs}` : '/api/subpage-feedback/stats',
   );
 }
 

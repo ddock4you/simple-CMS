@@ -9,6 +9,7 @@ import {
   subpageFeedbackStatsOptions,
 } from '@/features/subpage-feedback/api/feedbackQueries';
 import type { FeedbackListQuery } from '@/features/subpage-feedback/model/feedbackFilters';
+import { FeedbackExport } from '@/features/subpage-feedback/ui/FeedbackExport';
 import { FeedbackFilters } from '@/features/subpage-feedback/ui/FeedbackFilters';
 import { FeedbackListTable } from '@/features/subpage-feedback/ui/FeedbackListTable';
 import { FeedbackStatsSection } from '@/features/subpage-feedback/ui/FeedbackStatsSection';
@@ -18,7 +19,6 @@ type RatingFilter = 'ALL' | 'POSITIVE' | 'NEGATIVE';
 
 interface PageFilters {
   list: FeedbackListQuery;
-  period: number;
   search: string | null;
 }
 
@@ -32,13 +32,11 @@ function parseFilters(
   const from = (searchParams.from as string) || undefined;
   const to = (searchParams.to as string) || undefined;
   const q = (searchParams.q as string) || undefined;
-  const period = Number(searchParams.period) || 30;
   const page = Number(searchParams.page) || 1;
   const pageSize = Number(searchParams.pageSize) || 20;
 
   return {
     list: { subpageId, rating, from, to, q, page, pageSize },
-    period: Math.min(365, Math.max(1, period)),
     search: q ?? null,
   };
 }
@@ -55,7 +53,12 @@ export default async function SubpageFeedbackPage({
   const queryClient = getQueryClient();
   await Promise.all([
     queryClient.prefetchQuery(subpageFeedbackListOptions(filters.list)),
-    queryClient.prefetchQuery(subpageFeedbackStatsOptions(filters.period)),
+    queryClient.prefetchQuery(
+      subpageFeedbackStatsOptions({
+        from: filters.list.from,
+        to: filters.list.to,
+      }),
+    ),
   ]);
 
   const subpageOptions = await prisma.subpage.findMany({
@@ -65,13 +68,20 @@ export default async function SubpageFeedbackPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">사용자 피드백</h1>
           <p className="text-muted-foreground">
             공개 웹 서브페이지에서 수집된 만족도 조사를 분석하고 관리합니다.
           </p>
         </div>
+        <FeedbackExport
+          from={filters.list.from ?? null}
+          to={filters.list.to ?? null}
+          rating={filters.list.rating}
+          subpageId={filters.list.subpageId ?? null}
+          q={filters.search}
+        />
       </div>
 
       <HydrationBoundary state={dehydrate(queryClient)}>
@@ -82,13 +92,13 @@ export default async function SubpageFeedbackPage({
             currentFrom={filters.list.from ?? null}
             currentTo={filters.list.to ?? null}
             currentQ={filters.search}
-            currentPeriod={filters.period}
             subpageOptions={subpageOptions}
           />
         </Suspense>
 
         <FeedbackStatsSection
-          period={filters.period}
+          from={filters.list.from ?? null}
+          to={filters.list.to ?? null}
           selectedSubpageId={filters.list.subpageId ?? null}
         />
 

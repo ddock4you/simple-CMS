@@ -44,8 +44,8 @@ export async function GET(request: Request): Promise<NextResponse> {
     if (rating !== 'ALL') where.rating = rating;
     if (from || to) {
       where.createdAt = {
-        ...(from ? { gte: new Date(from) } : {}),
-        ...(to ? { lte: new Date(`${to}T23:59:59.999Z`) } : {}),
+        ...(from ? { gte: new Date(`${from}T00:00:00.000+09:00`) } : {}),
+        ...(to ? { lte: new Date(`${to}T23:59:59.999+09:00`) } : {}),
       };
     }
     if (q) where.comment = { contains: q, mode: 'insensitive' };

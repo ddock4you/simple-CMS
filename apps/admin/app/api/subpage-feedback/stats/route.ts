@@ -15,9 +15,19 @@ import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { feedbackStatsQuerySchema } from '@/features/subpage-feedback/model/feedbackFilters';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const DEFAULT_PERIOD_DAYS = 30;
 
-function toDateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
+function kstStartOfDay(dateStr: string): Date {
+  return new Date(`${dateStr}T00:00:00.000+09:00`);
+}
+
+function kstEndOfDay(dateStr: string): Date {
+  return new Date(`${dateStr}T23:59:59.999+09:00`);
+}
+
+function toKstDateKey(d: Date): string {
+  return new Date(d.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
 }
 
 export async function GET(request: Request): Promise<NextResponse> {
@@ -27,26 +37,41 @@ export async function GET(request: Request): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const parsed = feedbackStatsQuerySchema.safeParse({
-      period: searchParams.get('period') ?? undefined,
+      from: searchParams.get('from') ?? undefined,
+      to: searchParams.get('to') ?? undefined,
     });
 
     if (!parsed.success) {
       return NextResponse.json(
         {
           success: false,
-          error: '잘못된 요청입니다.',
+          error: parsed.error.issues[0]?.message ?? '잘못된 요청입니다.',
         } satisfies ApiResponse<never>,
         { status: 400 },
       );
     }
 
-    const { period } = parsed.data;
-    const since = new Date(Date.now() - period * DAY_MS);
-    // 일자 시작 정렬 (UTC 기준)
-    since.setUTCHours(0, 0, 0, 0);
+    // from/to가 없으면 최근 30일을 기본으로 적용 (KST 자정 정렬)
+    const todayKstKey = toKstDateKey(new Date());
+    const fallbackFromDate = new Date(
+      kstStartOfDay(todayKstKey).getTime() -
+        (DEFAULT_PERIOD_DAYS - 1) * DAY_MS,
+    );
+    const fallbackFromKey = toKstDateKey(fallbackFromDate);
+
+    const fromKey = parsed.data.from ?? fallbackFromKey;
+    const toKey = parsed.data.to ?? todayKstKey;
+
+    const since = kstStartOfDay(fromKey);
+    const until = kstEndOfDay(toKey);
+    // T23:59:59.999 종료라 (until - since) / DAY_MS는 N - 1ms/day → round 시 정확한 inclusive day count.
+    const period = Math.max(
+      1,
+      Math.round((until.getTime() - since.getTime()) / DAY_MS),
+    );
 
     const feedbacks = await prisma.subpageFeedback.findMany({
-      where: { createdAt: { gte: since } },
+      where: { createdAt: { gte: since, lte: until } },
       select: {
         subpageId: true,
         rating: true,
@@ -62,10 +87,10 @@ export async function GET(request: Request): Promise<NextResponse> {
     const positiveRate = total === 0 ? 0 : positive / total;
     const avgPerDay = period === 0 ? 0 : total / period;
 
-    // 일별 집계 (빈 날짜도 0으로 채워 차트가 매끄럽게)
+    // 일별 집계 (빈 날짜도 0으로 채워 차트가 매끄럽게, KST 자정 기준)
     const dailyMap = new Map<string, { positive: number; negative: number }>();
     for (const f of feedbacks) {
-      const key = toDateKey(f.createdAt);
+      const key = toKstDateKey(f.createdAt);
       const cur = dailyMap.get(key) ?? { positive: 0, negative: 0 };
       if (f.rating === 'POSITIVE') cur.positive += 1;
       else cur.negative += 1;
@@ -74,7 +99,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     const daily: FeedbackDailyPoint[] = [];
     for (let i = 0; i < period; i += 1) {
       const day = new Date(since.getTime() + i * DAY_MS);
-      const key = toDateKey(day);
+      const key = toKstDateKey(day);
       const cur = dailyMap.get(key) ?? { positive: 0, negative: 0 };
       daily.push({ date: key, positive: cur.positive, negative: cur.negative });
     }

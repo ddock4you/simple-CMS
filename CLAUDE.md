@@ -227,8 +227,9 @@ apps/{앱}/
 - **seed 동작 분기**: 운영 중 DB에 새 리소스 추가 시 `pnpm seed`는 총괄 관리자(`isSystem`) `permissions`만 자동 동기화. 일반 관리자는 `update: {}`라 보존 → admin `/settings/roles`에서 수동 활성화 필요
 - **SubpageVersion 스냅샷 포함**: `feedbackEnabled`도 메타에 포함 → 롤백 시 함께 복원 (Stage 7m과 일관)
 - **삭제 정책**: `Subpage @relation(onDelete: Cascade)` — Subpage 삭제 시 모든 피드백도 자동 삭제. `findMediaReferences()` 확장 불필요 (Media FK 없음)
-- **통계**: admin `/subpage-feedback` 페이지에서 recharts 기반 차트 (일별 BarChart + 긍정 이유 BarChart) + 서브페이지별 표 + 목록. period 7/30/90/365일 선택. Prisma `findMany` + JS 집계 (period 365일 = 최대 수만 건도 충분)
-- **MVP 범위 외**: isResolved 토글 / 카테고리·태그 / Excel 내보내기 / 대시보드 위젯 / 알림. Stage 11+ 확장 후보
+- **통계**: admin `/subpage-feedback` 페이지에서 recharts 기반 차트 (일별 BarChart + 긍정 이유 BarChart) + 서브페이지별 표 + 목록. 시작/끝 DatePicker가 단일 출처(period select 미사용 — 우선순위 모호 회피). Prisma `findMany` + JS 집계 (수만 건 처리 가능). 통계/목록/내보내기 세 경로 모두 KST 자정 경계(`T00:00:00+09:00` ~ `T23:59:59.999+09:00`)로 정렬되어 한국 운영자가 입력한 날짜와 정확히 일치
+- **Excel 내보내기**: admin `/subpage-feedback` 헤더 우측 [Excel 다운로드] 버튼 — 화면에 적용된 from/to/rating/subpageId/q 필터를 그대로 반영해 raw 데이터 워크북 생성. 컬럼 8개(제출일시 KST · 서브페이지 제목 · 슬러그 · 평가 · 긍정 이유 · 자유 의견 · IP 해시 · User Agent), 헤더 굵게 + freeze pane + AutoFilter. 0건일 때 응답 `X-Row-Count: 0` 헤더로 클라이언트가 info 토스트 안내. 내보내기 자체를 감사 로그에 기록(`entityType: SUBPAGE_FEEDBACK`, `action: CREATE`, entityTitle "사용자 피드백 내보내기" — IP 해시 + UA 외부 반출 추적)
+- **MVP 범위 외**: isResolved 토글 / 카테고리·태그 / 대시보드 위젯 / 알림. Stage 11+ 확장 후보
 
 ### 역할/권한 관리 정책
 

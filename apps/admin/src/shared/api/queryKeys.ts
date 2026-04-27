@@ -72,7 +72,7 @@ export const subpageFeedbackKeys = {
   all: ['subpage-feedback'] as const,
   lists: () => [...subpageFeedbackKeys.all, 'list'] as const,
   list: (filters: unknown) => [...subpageFeedbackKeys.lists(), filters] as const,
-  stats: (period: number) => [...subpageFeedbackKeys.all, 'stats', period] as const,
+  stats: (filters: unknown) => [...subpageFeedbackKeys.all, 'stats', filters] as const,
 };
 
 export const settingsKeys = {

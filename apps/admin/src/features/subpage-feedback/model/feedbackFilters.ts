@@ -12,8 +12,18 @@ export const feedbackListQuerySchema = z.object({
 
 export type FeedbackListQuery = z.infer<typeof feedbackListQuerySchema>;
 
-export const feedbackStatsQuerySchema = z.object({
-  period: z.coerce.number().int().min(1).max(365).default(30),
-});
+const dateString = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, '날짜는 YYYY-MM-DD 형식이어야 합니다.');
+
+export const feedbackStatsQuerySchema = z
+  .object({
+    from: dateString.optional(),
+    to: dateString.optional(),
+  })
+  .refine((data) => !(data.from && data.to) || data.from <= data.to, {
+    message: '시작일은 종료일보다 이전이어야 합니다.',
+    path: ['to'],
+  });
 
 export type FeedbackStatsQuery = z.infer<typeof feedbackStatsQuerySchema>;
