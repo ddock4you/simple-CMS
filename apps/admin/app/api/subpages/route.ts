@@ -91,7 +91,15 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const { title, seoTitle, seoDescription, status, cclType, cclAi } = parsed.data;
+    const {
+      title,
+      seoTitle,
+      seoDescription,
+      status,
+      cclType,
+      cclAi,
+      feedbackEnabled,
+    } = parsed.data;
     const slug = parsed.data.slug?.trim() || generateSlug(title);
 
     if (!slug) {
@@ -127,6 +135,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         publishedAt,
         cclType: cclType ?? null,
         cclAi: cclType ? cclAi : false,
+        feedbackEnabled: feedbackEnabled ?? false,
         displayOrder,
       },
     });
@@ -144,6 +153,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           status,
           cclType: subpage.cclType,
           cclAi: subpage.cclAi,
+          feedbackEnabled: subpage.feedbackEnabled,
         },
       },
       userId: user!.id,

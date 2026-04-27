@@ -74,6 +74,7 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
       status: initialData?.status ?? 'DRAFT',
       cclType: initialData?.cclType ?? null,
       cclAi: initialData?.cclAi ?? false,
+      feedbackEnabled: initialData?.feedbackEnabled ?? false,
     },
   });
 
@@ -302,6 +303,33 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
                     {errors.cclAi.message as string}
                   </p>
                 )}
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="text-sm font-semibold text-muted-foreground">
+                  공개 옵션
+                </h3>
+                <Controller
+                  name="feedbackEnabled"
+                  control={control}
+                  render={({ field }) => (
+                    <label className="flex items-start gap-2 pt-1 text-sm">
+                      <Checkbox
+                        checked={!!field.value}
+                        onCheckedChange={(next) =>
+                          field.onChange(next === true)
+                        }
+                      />
+                      <span className="space-y-0.5">
+                        <span className="block">사용자 피드백 UI 표시</span>
+                        <span className="block text-xs text-muted-foreground">
+                          공개 웹 서브페이지 하단에 만족도 조사를 노출합니다.
+                          비공개(초안)인 페이지에는 표시되지 않습니다.
+                        </span>
+                      </span>
+                    </label>
+                  )}
+                />
               </section>
             </div>
           </div>

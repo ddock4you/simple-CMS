@@ -32,6 +32,8 @@ export {
 } from './errorLog';
 export type { LogWebErrorInput } from './errorLog';
 
+export { cleanupOldFeedback } from './feedbackCleanup';
+
 export {
   createSubpageVersionSnapshot,
   restoreSubpageFromVersion,
@@ -54,6 +56,7 @@ export type {
   Session,
   Subpage,
   SubpageVersion,
+  SubpageFeedback,
   Board,
   Post,
   HomeSection,
@@ -84,4 +87,5 @@ export {
   ErrorSource,
   CclType,
   SubpageVersionSource,
+  FeedbackRating,
 } from './generated/prisma/client';

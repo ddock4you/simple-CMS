@@ -66,6 +66,7 @@ interface SnapshotMeta {
     | 'TYPE_4'
     | null;
   cclAi: boolean;
+  feedbackEnabled: boolean;
   featuredImageId: string | null;
   displayOrder: number;
 }
@@ -230,6 +231,7 @@ export async function restoreSubpageFromVersion(
         publishedAt: newPublishedAt,
         cclType: targetSnapshot.meta.cclType,
         cclAi: targetSnapshot.meta.cclAi,
+        feedbackEnabled: targetSnapshot.meta.feedbackEnabled ?? false,
         featuredImageId: targetSnapshot.meta.featuredImageId,
         displayOrder: targetSnapshot.meta.displayOrder,
         revision: { increment: 1 },
@@ -296,6 +298,7 @@ function buildSnapshotPayload(
       status: subpage.status,
       cclType: subpage.cclType,
       cclAi: subpage.cclAi,
+      feedbackEnabled: subpage.feedbackEnabled,
       featuredImageId: subpage.featuredImageId,
       displayOrder: subpage.displayOrder,
     },

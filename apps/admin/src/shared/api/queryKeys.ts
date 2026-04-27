@@ -68,6 +68,13 @@ export const errorLogKeys = {
   detail: (id: string) => [...errorLogKeys.all, 'detail', id] as const,
 };
 
+export const subpageFeedbackKeys = {
+  all: ['subpage-feedback'] as const,
+  lists: () => [...subpageFeedbackKeys.all, 'list'] as const,
+  list: (filters: unknown) => [...subpageFeedbackKeys.lists(), filters] as const,
+  stats: (period: number) => [...subpageFeedbackKeys.all, 'stats', period] as const,
+};
+
 export const settingsKeys = {
   all: ['settings'] as const,
   domain: () => [...settingsKeys.all, 'domain'] as const,

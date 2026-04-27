@@ -28,6 +28,7 @@ packages/types/
 │   │   ├── user.types.ts
 │   │   ├── role.types.ts          # Role 도메인 인터페이스
 │   │   ├── permission.types.ts    # RESOURCE_ACTIONS 상수, Resource, Action, PermissionMap 타입 (home-popups 포함)
+│   │   ├── feedback.types.ts      # FeedbackRating, FeedbackPositiveReason, FEEDBACK_POSITIVE_REASONS 상수 (Stage 10)
 │   │   ├── auditLog.types.ts
 │   │   └── siteSettings.types.ts
 │   ├── dto/                # API 요청/응답 DTO
@@ -39,6 +40,7 @@ packages/types/
 │   │   ├── popup.dto.ts       # HomePopupListItem, HomePopupDetail, CreateHomePopupDto, UpdateHomePopupDto, ReorderHomePopupsDto, HomePopupReferencesDto (Stage 5b)
 │   │   ├── block.dto.ts       # PageBlockListItem, PageBlockDetail, CreatePageBlockDto, UpdatePageBlockDto, ReorderPageBlocksDto (Stage 6)
 │   │   ├── media.dto.ts       # MediaListItem, MediaDetail, MediaListFilters, MediaListResponse, UpdateMediaDto, UploadMediaResponse, MediaReference, MediaReferencesResponse (MediaReferenceType에 PAGE_BLOCK_IMAGE 포함)
+│   │   ├── feedback.dto.ts    # CreateFeedbackDto, FeedbackListItem/ListResponse, FeedbackStatsResponse (Stage 10)
 │   │   ├── auditLog.dto.ts
 │   │   └── ...
 │   └── common.types.ts     # 공용 유틸리티 타입

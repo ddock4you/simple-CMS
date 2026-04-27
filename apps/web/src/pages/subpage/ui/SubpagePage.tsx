@@ -11,6 +11,7 @@ import { PreviewBanner } from '@/features/preview/ui/PreviewBanner';
 import { getPreviewSession } from '@/shared/lib/previewSession';
 import { SubpageBlockRenderer } from '@/widgets/subpage-content/ui/SubpageBlockRenderer';
 import { KoglFooter } from '@/widgets/subpage-content/ui/KoglFooter';
+import { SubpageFeedback } from '@/widgets/feedback/ui/SubpageFeedback';
 import { SubpageSideNavigation } from '@/widgets/subpage-sidebar/ui/SubpageSideNavigation';
 
 import type { CclType } from '@simple-cms/types';
@@ -25,6 +26,7 @@ interface RenderSubpageInput {
   publishedAt: Date | null;
   cclType: CclType | null;
   cclAi: boolean;
+  feedbackEnabled: boolean;
   blocks: Array<{
     id: string;
     blockType: 'RICH_TEXT' | 'HTML' | 'IMAGE' | 'IFRAME';
@@ -42,9 +44,11 @@ interface SideBranch {
 function SubpageArticle({
   subpage,
   showHidden,
+  previewMode,
 }: {
   subpage: RenderSubpageInput;
   showHidden: boolean;
+  previewMode: boolean;
 }) {
   const hasBlocks = subpage.blocks.length > 0;
   return (
@@ -75,6 +79,11 @@ function SubpageArticle({
         <p className="empty-content">콘텐츠가 준비 중입니다.</p>
       )}
       <KoglFooter cclType={subpage.cclType} cclAi={subpage.cclAi} />
+      <SubpageFeedback
+        subpageId={subpage.id}
+        feedbackEnabled={subpage.feedbackEnabled}
+        previewMode={previewMode}
+      />
     </article>
   );
 }
@@ -118,7 +127,11 @@ export async function SubpagePage({ slug }: SubpagePageProps) {
         <>
           <PreviewBanner label="서브 페이지 미리보기" />
           <SubpageLayout branch={branch}>
-            <SubpageArticle subpage={previewSubpage} showHidden />
+            <SubpageArticle
+              subpage={previewSubpage}
+              showHidden
+              previewMode
+            />
           </SubpageLayout>
         </>
       );
@@ -133,7 +146,7 @@ export async function SubpagePage({ slug }: SubpagePageProps) {
   const branch = await resolveSideBranch(slug, subpage.title);
   return (
     <SubpageLayout branch={branch}>
-      <SubpageArticle subpage={subpage} showHidden={false} />
+      <SubpageArticle subpage={subpage} showHidden={false} previewMode={false} />
     </SubpageLayout>
   );
 }

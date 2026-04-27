@@ -387,6 +387,19 @@ admin에서 발급한 토큰을 교환해 **draft 콘텐츠**를 공개 웹 렌�
 - HTML 블록의 css는 페이지 단위 스코프 — 같은 서브페이지의 다른 블록에도 영향. 다른 서브페이지에는 영향 없음 (전역 스타일 오염 방지)
 - 블록 스타일: `apps/web/app/globals.css`의 `.subpage-block-*` 클래스 (프로토타입, 시안 확정 시 렌더러와 함께 교체)
 
+### 사용자 피드백 위젯 (Stage 10)
+
+`<KoglFooter>` 다음에 `<SubpageFeedback>`이 자동 렌더된다. KRDS 가이드(https://www.krds.go.kr/html/site/global/global_05.html) + Figma 시안(`r1dfm2jnjfajM4bL0CpNGu` node `50:3508`) 기반.
+
+- 위치: `src/widgets/feedback/ui/SubpageFeedback.tsx` (Server) + `SubpageFeedbackForm.tsx` (Client) + `lib/feedbackStorage.ts` (localStorage 24h TTL wrapper)
+- **노출 조건**: `feedbackEnabled === true`. `getPublishedSubpage` / `getSubpageForPreview` select에 포함되어 SSR 단계에서 결정
+- **previewMode prop**: preview 세션에서는 UI 노출하되 평가완료 disabled + 안내 ("미리보기 모드에서는 피드백을 제출할 수 없습니다.") — 운영자 미리보기에서 통계 오염 방지
+- **상태 머신**: 초기(네/아니오 chip만) → POSITIVE면 Q1(긍정 이유 3개 체크박스) + Q2(자유 텍스트 1000자, 카운터) + 취소/평가완료 / NEGATIVE면 Q2 + 취소/평가완료. 제출 후 감사 메시지 + `aria-live="polite"`
+- **재제출 차단**: localStorage `feedback_submitted_{subpageId}` 24h TTL. 서버 `(ipHash, subpageId, 24h)` rate limit이 진실의 원천이고 클라이언트는 UX
+- **POST `/api/feedback`** (apps/web/app/api/feedback/route.ts, runtime nodejs): Zod 검증 → preview 쿠키 차단(403) → subpage 존재 + PUBLISHED + feedbackEnabled 게이트(403/404) → ipHash + subpageId 24h rate limit(429) → 화이트리스트 subset 검증 → `sha256(ip + FEEDBACK_IP_SALT)` → DB 저장. 감사 로그 생략(익명 입수 이벤트)
+- **환경 변수**: `.env`의 `FEEDBACK_IP_SALT` (운영 배포 전 강한 랜덤 값으로 교체 필수). 미설정 시 console.warn + fallback (dev 편의)
+- **KRDS Tailwind utility**: `bg-gray-5` / `rounded-5` / `p-7` / `text-title-s` / `text-body-m` / `bg-primary-50` / `text-point-50` 사용. native HTML form (KRDS 폼 컴포넌트 미사용 패턴 일관)
+
 ## 게시판 / 게시글 렌더링
 
 ### 게시판 목록

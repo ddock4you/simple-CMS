@@ -78,6 +78,7 @@ enum AuditAction {
 enum AuditEntityType {
   SUBPAGE
   SUBPAGE_VERSION
+  SUBPAGE_FEEDBACK
   BOARD
   POST
   NAVIGATION_MENU
@@ -90,6 +91,11 @@ enum AuditEntityType {
   SITE_SETTINGS
   ERROR_LOG
   MEDIA
+}
+
+enum FeedbackRating {
+  POSITIVE
+  NEGATIVE
 }
 
 enum ErrorLevel {
@@ -200,6 +206,7 @@ model Subpage {
   featuredImageId String?
   cclType         CclType?
   cclAi           Boolean       @default(false)
+  feedbackEnabled Boolean       @default(false)
   displayOrder    Int           @default(0)
   revision        Int           @default(0)
   createdAt       DateTime      @default(now())
@@ -209,6 +216,25 @@ model Subpage {
   blocks              PageBlock[]
   navigationMenuItems NavigationMenuItem[] @relation("SubpageMenuItems")
   versions            SubpageVersion[]
+  feedbacks           SubpageFeedback[]
+}
+
+model SubpageFeedback {
+  id              String         @id @default(cuid())
+  subpageId       String
+  rating          FeedbackRating
+  positiveReasons String[]       @default([])
+  comment         String?        @db.Text
+  ipAddressHash   String?
+  userAgent       String?        @db.Text
+  createdAt       DateTime       @default(now())
+
+  subpage Subpage @relation(fields: [subpageId], references: [id], onDelete: Cascade)
+
+  @@index([subpageId, createdAt])
+  @@index([subpageId, rating])
+  @@index([ipAddressHash, subpageId, createdAt])
+  @@index([createdAt])
 }
 
 model SubpageVersion {

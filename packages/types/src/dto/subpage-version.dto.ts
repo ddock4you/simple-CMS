@@ -21,6 +21,7 @@ export interface SubpageVersionSnapshotMeta {
   status: SubpageContentStatus;
   cclType: CclType | null;
   cclAi: boolean;
+  feedbackEnabled: boolean;
   featuredImageId: string | null;
   displayOrder: number;
 }

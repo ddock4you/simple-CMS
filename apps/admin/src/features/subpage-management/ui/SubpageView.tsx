@@ -191,6 +191,16 @@ export function SubpageView({ id }: SubpageViewProps) {
                   )}
                 </span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">사용자 피드백</span>
+                <span>
+                  {data.feedbackEnabled ? (
+                    '활성 (공개 시 표시)'
+                  ) : (
+                    <span className="text-muted-foreground">비활성</span>
+                  )}
+                </span>
+              </div>
             </CardContent>
           </Card>
 

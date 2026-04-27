@@ -22,6 +22,7 @@ export const createSubpageSchema = z
     status: z.enum(['DRAFT', 'PUBLISHED']).optional().default('DRAFT'),
     cclType: cclTypeSchema.optional().default(null),
     cclAi: z.boolean().optional().default(false),
+    feedbackEnabled: z.boolean().optional().default(false),
   })
   .superRefine((data, ctx) => {
     if (data.cclType === null && data.cclAi) {
@@ -48,6 +49,7 @@ export const updateSubpageSchema = z
     status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
     cclType: cclTypeSchema.optional(),
     cclAi: z.boolean().optional(),
+    feedbackEnabled: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.cclType === null && data.cclAi === true) {

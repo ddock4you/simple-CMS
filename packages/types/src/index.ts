@@ -90,6 +90,31 @@ export type {
 } from './dto/preview.dto';
 
 export type {
+  FeedbackRating,
+  FeedbackPositiveReason,
+} from './domain/feedback.types';
+export {
+  FEEDBACK_POSITIVE_REASONS,
+  FEEDBACK_POSITIVE_REASON_CODES,
+  FEEDBACK_RATING_LABELS,
+  FEEDBACK_COMMENT_MAX_LENGTH,
+  FEEDBACK_RATE_LIMIT_HOURS,
+  FEEDBACK_RETENTION_DAYS,
+} from './domain/feedback.types';
+
+export type {
+  CreateFeedbackDto,
+  FeedbackListItem,
+  FeedbackListFilters,
+  FeedbackListResponse,
+  FeedbackOverallStats,
+  FeedbackDailyPoint,
+  FeedbackBySubpageItem,
+  FeedbackPositiveReasonStat,
+  FeedbackStatsResponse,
+} from './dto/feedback.dto';
+
+export type {
   CclType,
   SubpageCclInfo,
   SubpageContentStatus,

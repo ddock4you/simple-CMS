@@ -100,6 +100,7 @@ apps/{앱}/
 | **ErrorLog**           | 공개 웹 런타임 에러 로그, 서버/클라이언트 에러 기록, fingerprint 기반 그룹핑                                            |
 | **Session**            | 커스텀 DB 세션, crypto.randomUUID 기반 토큰, httpOnly 쿠키, 동시 로그인 제어 대상                                       |
 | **PreviewToken**       | draft 미리보기 토큰 (Stage 7a), TTL 10분, admin→web 교환 후 web 도메인 쿠키로 치환                                      |
+| **SubpageFeedback**    | 공개 웹 익명 만족도 조사 (Stage 10), 네/아니오 + 긍정 이유 + 자유 텍스트, IP 해싱, 24h rate limit                        |
 
 ## 운영 정책
 
@@ -213,6 +214,22 @@ apps/{앱}/
 - **URL 경계 정규화**: DB에는 상대 경로(`/uploads/...`) 저장, admin 표시 시점에만 `resolveMediaPreviewUrl`로 절대 URL 변환. Tiptap은 JSON 단계 preprocess/postprocess로 initial 404 잔상 방지. provider(local/Supabase/S3) 전환 시 해당 렌더링 코드 수정 불필요
 - **Media 레코드**는 공용 리소스 — Stage 5b 팝업, 향후 게시글 본문 등에서도 동일 패턴으로 재사용
 
+### 사용자 피드백 정책 (Stage 10)
+
+- **수집 모델**: `SubpageFeedback` (subpageId, rating POSITIVE/NEGATIVE, positiveReasons String[], comment, ipAddressHash, userAgent). KRDS 가이드(https://www.krds.go.kr/html/site/global/global_05.html) + Figma 시안(`r1dfm2jnjfajM4bL0CpNGu` node `50:3508`) 준수
+- **opt-in 토글**: `Subpage.feedbackEnabled Boolean @default(false)` — 운영자가 페이지별 명시적으로 켜야 공개 웹에 위젯 노출. SubpageForm "공개 옵션" 섹션의 체크박스로 관리
+- **노출 조건**: `feedbackEnabled === true && status === 'PUBLISHED'`. preview 세션은 위젯 자체는 렌더하되 평가완료 버튼 disabled (운영자 미리보기에서 통계 오염 방지)
+- **익명 수집 — IP 해싱**: `apps/web/app/api/feedback/route.ts`가 `sha256(ip + FEEDBACK_IP_SALT)`로 해시만 저장, raw IP 저장 금지. `.env`의 `FEEDBACK_IP_SALT` 운영 배포 전 강한 랜덤 값으로 교체 필수
+- **Rate limit**: `(ipAddressHash, subpageId, createdAt >= now - 24h)` 조합 1건이라도 있으면 429. DB 쿼리 기반(in-memory 카운터 아님). IP 해싱 실패 시 rate limit 미적용
+- **클라이언트 재제출 차단**: `feedback_submitted_{subpageId}` localStorage 키, 24h TTL. 서버 차단(429)이 진실의 원천이고 클라이언트는 UX 친화적 표시 (감사 메시지 즉시 노출)
+- **감사 로그 정책**: 제출(POST)은 익명 입수 트래픽이라 감사 로그 **생략** (route handler에 사유 주석 명시). DELETE만 `entityType: 'SUBPAGE_FEEDBACK'`로 기록 (운영자 액션이므로)
+- **권한 리소스**: `subpage-feedback` (`read`, `delete`). create/update는 의미 없음 (익명 수집 + 운영자 편집 미도입). DEFAULT_PERMISSIONS는 `read`만 부여
+- **seed 동작 분기**: 운영 중 DB에 새 리소스 추가 시 `pnpm seed`는 총괄 관리자(`isSystem`) `permissions`만 자동 동기화. 일반 관리자는 `update: {}`라 보존 → admin `/settings/roles`에서 수동 활성화 필요
+- **SubpageVersion 스냅샷 포함**: `feedbackEnabled`도 메타에 포함 → 롤백 시 함께 복원 (Stage 7m과 일관)
+- **삭제 정책**: `Subpage @relation(onDelete: Cascade)` — Subpage 삭제 시 모든 피드백도 자동 삭제. `findMediaReferences()` 확장 불필요 (Media FK 없음)
+- **통계**: admin `/subpage-feedback` 페이지에서 recharts 기반 차트 (일별 BarChart + 긍정 이유 BarChart) + 서브페이지별 표 + 목록. period 7/30/90/365일 선택. Prisma `findMany` + JS 집계 (period 365일 = 최대 수만 건도 충분)
+- **MVP 범위 외**: isResolved 토글 / 카테고리·태그 / Excel 내보내기 / 대시보드 위젯 / 알림. Stage 11+ 확장 후보
+
 ### 역할/권한 관리 정책
 
 - `Role` 테이블: 역할(등급) 정의, `permissions` JSON으로 메뉴별 CRUD 권한 저장
@@ -281,6 +298,7 @@ apps/{앱}/
 `/navigation`, `/navigation/[menuId]`,
 `/home`, `/home/popups`, `/home/popups/new`, `/home/popups/[id]`, `/home/popups/[id]/edit`,
 `/media`, `/users`, `/profile`,
+`/subpage-feedback`,
 `/audit-logs`, `/error-logs`,
 `/settings`, `/settings/domain`, `/settings/security`, `/settings/upload`, `/settings/roles`
 
@@ -386,6 +404,7 @@ apps/{앱}/
 | 7m   | 서브페이지 버전 관리 (이력 / 롤백 / 작성자 필터 · admin 미리보기) [[상세]](docs/stages/stage-7m.md) | `SubpageVersion` 단일 JSON 스냅샷 + 명시적 [버전 저장] + DRAFT→PUBLISHED AUTO_PUBLISH + 소프트 롤백 (PRE_ROLLBACK 자동 백업) + 깃 스타일 메모 + 낙관 동시성(`Subpage.revision`) + 보존 30개 lazy cleanup | **완료** |
 | 8    | Docker + CI/CD + 문서화                                             | `docker compose up`으로 전체 실행                                                           | 대기     |
 | 9    | SEO 기반 구축 (sitemap + robots + 페이지별 SEO + Schema.org JSON-LD) [[상세]](docs/stages/stage-9.md) | `/sitemap.xml`·`/robots.txt` 자동 생성 + Post에 seoTitle/seoDescription + Article/BreadcrumbList/Organization/WebSite JSON-LD + admin `/settings/seo` 탭에서 robots 추가 Disallow 관리 | **완료** |
+| 10   | 사용자 피드백 (서브페이지 만족도 조사 + admin 통계/차트) [[상세]](docs/stages/stage-10.md) | KRDS 가이드 + Figma 시안 기반 네/아니오 + 긍정 이유 3개 + 자유 텍스트 / SubpageForm `feedbackEnabled` 토글(opt-in) / `/api/feedback` 익명 수집(IP 해싱 + 24h rate limit + preview 차단) / admin `/subpage-feedback`에서 recharts 통계 + 목록 + 삭제 / SubpageVersion 스냅샷에 `feedbackEnabled` 포함 | **완료** |
 
 ## 명령어
 

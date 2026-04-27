@@ -36,6 +36,7 @@ export async function GET(
       publishedAt: subpage.publishedAt?.toISOString() ?? null,
       cclType: subpage.cclType,
       cclAi: subpage.cclAi,
+      feedbackEnabled: subpage.feedbackEnabled,
       displayOrder: subpage.displayOrder,
       revision: subpage.revision,
       createdAt: subpage.createdAt.toISOString(),
@@ -90,6 +91,7 @@ export async function PATCH(
       status,
       cclType,
       cclAi,
+      feedbackEnabled,
     } = parsed.data;
 
     if (slug && slug !== subpage.slug) {
@@ -124,6 +126,7 @@ export async function PATCH(
       const nextType = cclType !== undefined ? cclType : subpage.cclType;
       updateData.cclAi = nextType ? cclAi : false;
     }
+    if (feedbackEnabled !== undefined) updateData.feedbackEnabled = feedbackEnabled;
 
     const updated = await prisma.subpage.update({
       where: { id },
@@ -182,6 +185,10 @@ export async function PATCH(
     if (updated.cclAi !== subpage.cclAi) {
       before.cclAi = subpage.cclAi;
       after.cclAi = updated.cclAi;
+    }
+    if (updated.feedbackEnabled !== subpage.feedbackEnabled) {
+      before.feedbackEnabled = subpage.feedbackEnabled;
+      after.feedbackEnabled = updated.feedbackEnabled;
     }
 
     if (Object.keys(after).length > 0) {

@@ -11,6 +11,7 @@ import {
   Users,
   ClipboardList,
   AlertTriangle,
+  MessageSquare,
   Settings,
 } from 'lucide-react';
 
@@ -49,6 +50,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: '시스템',
     items: [
       { title: '사용자 관리', url: '/users', icon: Users, resource: 'users' },
+      { title: '사용자 피드백', url: '/subpage-feedback', icon: MessageSquare, resource: 'subpage-feedback' },
       { title: '활동 이력', url: '/audit-logs', icon: ClipboardList, resource: 'auditLogs' },
       { title: '에러 로그', url: '/error-logs', icon: AlertTriangle, resource: 'errorLogs' },
       { title: '사이트 설정', url: '/settings', icon: Settings, resource: 'settings' },

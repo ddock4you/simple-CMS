@@ -130,6 +130,7 @@ src/
 /media                  # 미디어 라이브러리 (그리드 + 검색 + 상세 Dialog)
 /users                  # 사용자 관리 (목록, 승인/거절, 정지/해제)
 /profile                # 내 정보 변경 (이름, 비밀번호)
+/subpage-feedback       # 사용자 피드백 (Stage 10 — 서브페이지 만족도 조사 통계/목록/삭제)
 /audit-logs             # 활동 이력 (감사 로그)
 /error-logs             # 웹 에러 로그 (공개 웹 런타임 에러 조회, 상세는 Dialog)
 /settings               # 사이트 설정 (첫 번째 하위 설정으로 리다이렉트)
@@ -958,6 +959,24 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 - `entityType: SITE_SETTINGS`, `entityId: ROBOTS_ADDITIONAL_DISALLOW`, `entityTitle: 'SEO 설정 (robots.txt)'`
 - 변경 전후 정렬 비교로 no-op 시 audit 기록 skip (브랜딩 패턴 일관성)
+
+### 사용자 피드백 관리 (Stage 10)
+
+- 라우트: `/subpage-feedback` ("시스템" 그룹 사이드바)
+- FSD: `features/subpage-feedback/{api,model,ui}`, `pages/subpage-feedback/ui/SubpageFeedbackPage.tsx`
+- 권한 리소스: `subpage-feedback` (`read`, `delete`) — create/update 미정의 (익명 수신 + 운영자 편집 미도입)
+- SubpageForm "공개 옵션" 섹션의 `feedbackEnabled` Checkbox로 페이지별 opt-in 관리. 기본값 false
+- 통계 페이지 구성: FeedbackFilters(period 7/30/90/365 + 날짜 범위 + rating + 서브페이지 + 검색) → FeedbackStatsCards(4개 StatCard) → FeedbackTimelineChart(recharts BarChart 일별 stacked) + FeedbackPositiveReasonsChart(recharts horizontal BarChart) → FeedbackBySubpageTable(긍정율 progress bar, 행 클릭으로 필터 토글) → FeedbackListTable(시간/서브페이지/평가/이유/코멘트/상세)
+- 통계 집계: Prisma `findMany`(period 윈도우) + JS 집계. 빈 날짜도 0으로 채워 차트 매끄럽게. 365일 = 최대 수만 건 처리 충분
+- recharts v3.3.0 신규 의존성 (admin only). Chart 컴포넌트는 `'use client'` + `ResponsiveContainer`
+- 삭제: `FeedbackDetailDialog`에 `usePermission('subpage-feedback', 'delete')` 게이팅 + window.confirm + DELETE → audit log `SUBPAGE_FEEDBACK DELETE` 기록
+- API Routes:
+  | Method | Route | 권한 | 용도 |
+  | ------ | ----- | ---- | ---- |
+  | GET | `/api/subpage-feedback` | subpage-feedback:read | 목록 (필터: subpageId/rating/from/to/q + 페이지네이션) |
+  | GET | `/api/subpage-feedback/stats` | subpage-feedback:read | 집계 (period 1~365일) |
+  | DELETE | `/api/subpage-feedback/[id]` | subpage-feedback:delete | 삭제 + 감사 로그 |
+- SubpageVersion 스냅샷: `feedbackEnabled` 메타에 포함 → 롤백 시 함께 복원 (Stage 7m 일관)
 
 ### 미리보기 (Stage 7a)
 

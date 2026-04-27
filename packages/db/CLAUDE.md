@@ -175,6 +175,19 @@ pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
 - 메시지 저장 최대 2000자 (방어적 절단)
 - 해결 상태 업데이트는 app/api/error-logs/[id] PATCH에서 직접 처리 (헬퍼 경유하지 않음)
 
+## SubpageFeedback 모델 컨벤션 (Stage 10)
+
+- **익명 만족도 조사 모델**: `subpageId`, `rating FeedbackRating`(POSITIVE/NEGATIVE), `positiveReasons String[]`, `comment String? @db.Text`, `ipAddressHash String?`, `userAgent String? @db.Text`, `createdAt`
+- **IP 해싱 필수**: raw IP 저장 금지. `apps/web/app/api/feedback/route.ts`가 `sha256(ip + FEEDBACK_IP_SALT)`로 해시화하여 저장
+- **인덱스 4개**:
+  - `[subpageId, createdAt]` — 페이지별 최신 조회
+  - `[subpageId, rating]` — 페이지별 긍정/부정 집계
+  - `[ipAddressHash, subpageId, createdAt]` — 24h rate limit 쿼리 (POST 핸들러)
+  - `[createdAt]` — 전역 통계
+- **삭제 정책**: `Subpage @relation(onDelete: Cascade)` — Subpage 삭제 시 모든 피드백 자동 정리. `findMediaReferences()` 확장 불필요 (Media FK 없음)
+- **헬퍼**: `cleanupOldFeedback(retentionDays = 365)` — `packages/db/src/feedbackCleanup.ts`. cron 등록은 Stage 8 (Docker + CI/CD) 범위
+- **운영 정책**: 365일 보존이 기본 — 개인정보 최소화. 운영 중 단축 시 `cleanupOldFeedback(180)` 호출
+
 ## 세션 모델
 
 커스텀 세션 기반 인증에서 사용하는 모델:

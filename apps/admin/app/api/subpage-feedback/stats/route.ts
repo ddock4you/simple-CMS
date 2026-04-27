@@ -1,0 +1,159 @@
+import { NextResponse } from 'next/server';
+
+import { prisma } from '@simple-cms/db';
+import {
+  FEEDBACK_POSITIVE_REASON_CODES,
+  type ApiResponse,
+  type FeedbackBySubpageItem,
+  type FeedbackDailyPoint,
+  type FeedbackPositiveReason,
+  type FeedbackPositiveReasonStat,
+  type FeedbackStatsResponse,
+} from '@simple-cms/types';
+
+import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { feedbackStatsQuerySchema } from '@/features/subpage-feedback/model/feedbackFilters';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function toDateKey(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+export async function GET(request: Request): Promise<NextResponse> {
+  const { error } = await requirePermission('subpage-feedback', 'read');
+  if (error) return error;
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const parsed = feedbackStatsQuerySchema.safeParse({
+      period: searchParams.get('period') ?? undefined,
+    });
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: '잘못된 요청입니다.',
+        } satisfies ApiResponse<never>,
+        { status: 400 },
+      );
+    }
+
+    const { period } = parsed.data;
+    const since = new Date(Date.now() - period * DAY_MS);
+    // 일자 시작 정렬 (UTC 기준)
+    since.setUTCHours(0, 0, 0, 0);
+
+    const feedbacks = await prisma.subpageFeedback.findMany({
+      where: { createdAt: { gte: since } },
+      select: {
+        subpageId: true,
+        rating: true,
+        positiveReasons: true,
+        createdAt: true,
+        subpage: { select: { title: true, slug: true } },
+      },
+    });
+
+    const total = feedbacks.length;
+    const positive = feedbacks.filter((f) => f.rating === 'POSITIVE').length;
+    const negative = total - positive;
+    const positiveRate = total === 0 ? 0 : positive / total;
+    const avgPerDay = period === 0 ? 0 : total / period;
+
+    // 일별 집계 (빈 날짜도 0으로 채워 차트가 매끄럽게)
+    const dailyMap = new Map<string, { positive: number; negative: number }>();
+    for (const f of feedbacks) {
+      const key = toDateKey(f.createdAt);
+      const cur = dailyMap.get(key) ?? { positive: 0, negative: 0 };
+      if (f.rating === 'POSITIVE') cur.positive += 1;
+      else cur.negative += 1;
+      dailyMap.set(key, cur);
+    }
+    const daily: FeedbackDailyPoint[] = [];
+    for (let i = 0; i < period; i += 1) {
+      const day = new Date(since.getTime() + i * DAY_MS);
+      const key = toDateKey(day);
+      const cur = dailyMap.get(key) ?? { positive: 0, negative: 0 };
+      daily.push({ date: key, positive: cur.positive, negative: cur.negative });
+    }
+
+    // 서브페이지별 집계
+    const subpageMap = new Map<
+      string,
+      {
+        subpageTitle: string;
+        subpageSlug: string;
+        total: number;
+        positive: number;
+        negative: number;
+      }
+    >();
+    for (const f of feedbacks) {
+      const cur = subpageMap.get(f.subpageId) ?? {
+        subpageTitle: f.subpage.title,
+        subpageSlug: f.subpage.slug,
+        total: 0,
+        positive: 0,
+        negative: 0,
+      };
+      cur.total += 1;
+      if (f.rating === 'POSITIVE') cur.positive += 1;
+      else cur.negative += 1;
+      subpageMap.set(f.subpageId, cur);
+    }
+    const bySubpage: FeedbackBySubpageItem[] = Array.from(subpageMap.entries())
+      .map(([subpageId, v]) => ({
+        subpageId,
+        subpageTitle: v.subpageTitle,
+        subpageSlug: v.subpageSlug,
+        total: v.total,
+        positive: v.positive,
+        negative: v.negative,
+        positiveRate: v.total === 0 ? 0 : v.positive / v.total,
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    // 긍정 이유 TOP
+    const validReasons = new Set<FeedbackPositiveReason>(
+      FEEDBACK_POSITIVE_REASON_CODES,
+    );
+    const reasonMap = new Map<FeedbackPositiveReason, number>();
+    for (const f of feedbacks) {
+      if (f.rating !== 'POSITIVE') continue;
+      for (const r of f.positiveReasons) {
+        if (validReasons.has(r as FeedbackPositiveReason)) {
+          const code = r as FeedbackPositiveReason;
+          reasonMap.set(code, (reasonMap.get(code) ?? 0) + 1);
+        }
+      }
+    }
+    const topPositiveReasons: FeedbackPositiveReasonStat[] = Array.from(
+      reasonMap.entries(),
+    )
+      .map(([code, count]) => ({ code, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const data: FeedbackStatsResponse = {
+      periodDays: period,
+      overall: { total, positive, negative, positiveRate, avgPerDay },
+      daily,
+      bySubpage,
+      topPositiveReasons,
+    };
+
+    return NextResponse.json(
+      { success: true, data } satisfies ApiResponse<FeedbackStatsResponse>,
+    );
+  } catch (err) {
+    console.error('[SubpageFeedback Stats GET] Unexpected error:', err);
+    return NextResponse.json(
+      {
+        success: false,
+        error: '피드백 통계 조회에 실패했습니다.',
+      } satisfies ApiResponse<never>,
+      { status: 500 },
+    );
+  }
+}
