@@ -1,13 +1,33 @@
-import { test, expect, type BrowserContext, type APIRequestContext } from '@playwright/test';
+import {
+  test,
+  expect,
+  type BrowserContext,
+  type APIRequestContext,
+} from '@playwright/test';
 
 const ADMIN_URL = 'http://localhost:3001';
-const ADMIN_CREDS = { username: 'admin', password: 'changeme123' };
+const ADMIN_CREDS = {
+  username:
+    process.env.E2E_ADMIN_USERNAME ??
+    process.env.INITIAL_ADMIN_USERNAME ??
+    'admin',
+  password:
+    process.env.E2E_ADMIN_PASSWORD ??
+    process.env.INITIAL_ADMIN_PASSWORD ??
+    'tmdgus123!',
+};
 
 // ── 헬퍼 ────────────────────────────────────────────────────────────────────
 
 async function loginAsAdmin(request: APIRequestContext) {
-  const res = await request.post(`${ADMIN_URL}/api/auth/login`, { data: ADMIN_CREDS });
-  if (!res.ok()) throw new Error(`Admin login failed: ${res.status()}`);
+  const res = await request.post(`${ADMIN_URL}/api/auth/login`, {
+    data: ADMIN_CREDS,
+  });
+  if (!res.ok())
+    throw new Error(
+      `Admin login failed: ${res.status()} (username="${ADMIN_CREDS.username}"). ` +
+        `비밀번호가 변경됐다면 E2E_ADMIN_PASSWORD 환경변수를 설정하세요.`,
+    );
 }
 
 async function registerTestUser(request: APIRequestContext, username: string) {
@@ -22,7 +42,10 @@ async function registerTestUser(request: APIRequestContext, username: string) {
   if (!res.ok()) throw new Error(`Register failed: ${res.status()}`);
 }
 
-async function findPendingUserId(request: APIRequestContext, username: string): Promise<string> {
+async function findPendingUserId(
+  request: APIRequestContext,
+  username: string,
+): Promise<string> {
   const res = await request.get(`${ADMIN_URL}/api/users?status=PENDING`);
   const body = await res.json();
   const user = (body.data?.items ?? []).find(
@@ -42,7 +65,10 @@ async function suspendUser(request: APIRequestContext, userId: string) {
   if (!res.ok()) throw new Error(`Suspend failed: ${res.status()}`);
 }
 
-async function setConcurrentLogin(request: APIRequestContext, enabled: boolean) {
+async function setConcurrentLogin(
+  request: APIRequestContext,
+  enabled: boolean,
+) {
   const res = await request.patch(`${ADMIN_URL}/api/settings/security`, {
     data: { concurrentLoginEnabled: enabled },
   });
@@ -65,14 +91,14 @@ async function loginOnPage(
 test.describe('관리자 인증', () => {
   test('로그인 → 대시보드 이동', async ({ page }) => {
     await page.goto(`${ADMIN_URL}/login`);
-    await expect(page.getByRole('heading', { name: /로그인/ })).toBeVisible();
+    await expect(page.getByText('관리자 로그인')).toBeVisible();
 
-    await page.getByLabel('아이디').fill('admin');
-    await page.getByLabel('비밀번호').fill('changeme123');
+    await page.getByLabel('아이디').fill(ADMIN_CREDS.username);
+    await page.getByLabel('비밀번호').fill(ADMIN_CREDS.password);
     await page.getByRole('button', { name: '로그인' }).click();
 
     await page.waitForURL(`${ADMIN_URL}/dashboard`);
-    await expect(page.getByText('대시보드')).toBeVisible();
+    await expect(page.getByRole('heading', { name: '대시보드', level: 1 })).toBeVisible();
   });
 
   test('잘못된 자격증명으로 로그인 실패', async ({ page }) => {
@@ -85,10 +111,12 @@ test.describe('관리자 인증', () => {
     await expect(page).not.toHaveURL(`${ADMIN_URL}/dashboard`);
   });
 
-  test('인증 없이 대시보드 접근 시 로그인 페이지로 리다이렉트', async ({ page }) => {
+  test('인증 없이 대시보드 접근 시 로그인 페이지로 리다이렉트', async ({
+    page,
+  }) => {
     await page.goto(`${ADMIN_URL}/dashboard`);
     await page.waitForURL(`${ADMIN_URL}/login`);
-    await expect(page.getByRole('heading', { name: /로그인/ })).toBeVisible();
+    await expect(page.getByText('관리자 로그인')).toBeVisible();
   });
 });
 
@@ -104,8 +132,11 @@ test.describe('인증 분기 시나리오', () => {
     }
   });
 
-  test('PENDING 사용자 로그인 시도 → 승인 대기 메시지 표시', async ({ request, page }) => {
-    const username = `e2e_pend_${Date.now()}`;
+  test('PENDING 사용자 로그인 시도 → 승인 대기 메시지 표시', async ({
+    request,
+    page,
+  }) => {
+    const username = `e2e_pend_${String(Date.now()).slice(-8)}`;
 
     await loginAsAdmin(request);
     await registerTestUser(request, username);
@@ -116,8 +147,11 @@ test.describe('인증 분기 시나리오', () => {
     await expect(page).not.toHaveURL(`${ADMIN_URL}/dashboard`);
   });
 
-  test('SUSPENDED 사용자 로그인 시도 → 계정 정지 메시지 표시', async ({ request, page }) => {
-    const username = `e2e_susp_${Date.now()}`;
+  test('SUSPENDED 사용자 로그인 시도 → 계정 정지 메시지 표시', async ({
+    request,
+    page,
+  }) => {
+    const username = `e2e_susp_${String(Date.now()).slice(-8)}`;
 
     await loginAsAdmin(request);
     await registerTestUser(request, username);
@@ -135,7 +169,7 @@ test.describe('인증 분기 시나리오', () => {
     request,
     browser,
   }) => {
-    const username = `e2e_sess_${Date.now()}`;
+    const username = `e2e_sess_${String(Date.now()).slice(-8)}`;
     let userContext: BrowserContext | null = null;
 
     await loginAsAdmin(request);
@@ -165,7 +199,7 @@ test.describe('인증 분기 시나리오', () => {
     request,
     browser,
   }) => {
-    const username = `e2e_conc_f_${Date.now()}`;
+    const username = `e2e_conc_f_${String(Date.now()).slice(-8)}`;
     let contextA: BrowserContext | null = null;
     let contextB: BrowserContext | null = null;
 
@@ -203,8 +237,11 @@ test.describe('인증 분기 시나리오', () => {
     }
   });
 
-  test('CONCURRENT_LOGIN=true: 다중 세션 동시 유지', async ({ request, browser }) => {
-    const username = `e2e_conc_t_${Date.now()}`;
+  test('CONCURRENT_LOGIN=true: 다중 세션 동시 유지', async ({
+    request,
+    browser,
+  }) => {
+    const username = `e2e_conc_t_${String(Date.now()).slice(-8)}`;
     let contextA: BrowserContext | null = null;
     let contextB: BrowserContext | null = null;
 

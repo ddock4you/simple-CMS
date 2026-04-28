@@ -1,4 +1,23 @@
+import { readFileSync, existsSync } from 'fs';
+import { resolve } from 'path';
+
 import { defineConfig, devices } from '@playwright/test';
+
+// 루트 .env 파일을 Playwright 프로세스에 로드 (Next.js 서버와 별개 프로세스이므로 수동 로드 필요)
+const envPath = resolve(process.cwd(), '.env');
+if (existsSync(envPath)) {
+  readFileSync(envPath, 'utf-8')
+    .split('\n')
+    .forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) return;
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx < 1) return;
+      const key = trimmed.slice(0, eqIdx).trim();
+      const value = trimmed.slice(eqIdx + 1).trim();
+      if (!process.env[key]) process.env[key] = value;
+    });
+}
 
 /**
  * E2E 테스트 설정.
