@@ -2,6 +2,28 @@ import { prisma } from '@simple-cms/db';
 import { extractTextFromTiptap } from '@simple-cms/editor';
 
 /**
+ * RICH_TEXT 블록 배열(이미 RICH_TEXT 필터 + displayOrder 정렬된 상태)에서
+ * Subpage.content로 저장할 plain text를 생성한다.
+ *
+ * 각 블록의 contentJson을 plain text로 변환하고 '\n\n'으로 이어붙인다.
+ * 유효 텍스트가 없으면 null을 반환한다.
+ */
+export function computeBlocksContent(
+  blocks: Array<{ configJson: unknown }>,
+): string | null {
+  const parts: string[] = [];
+  for (const b of blocks) {
+    const cfg = b.configJson as { contentJson?: unknown } | null;
+    if (!cfg?.contentJson) continue;
+    const text = extractTextFromTiptap(
+      cfg.contentJson as Record<string, unknown>,
+    );
+    if (text && text.trim()) parts.push(text);
+  }
+  return parts.length > 0 ? parts.join('\n\n') : null;
+}
+
+/**
  * 서브페이지의 검색용 plain text(`Subpage.content`)를 RICH_TEXT 블록 기반으로 재집계한다.
  *
  * 호출 시점: 블록 CUD(POST/PATCH/DELETE/reorder) 직후.
@@ -22,17 +44,7 @@ export async function recalculateSubpageContent(
       select: { configJson: true },
     });
 
-    const parts: string[] = [];
-    for (const b of blocks) {
-      const cfg = b.configJson as { contentJson?: unknown } | null;
-      if (!cfg?.contentJson) continue;
-      const text = extractTextFromTiptap(
-        cfg.contentJson as Record<string, unknown>,
-      );
-      if (text && text.trim()) parts.push(text);
-    }
-
-    const content = parts.length > 0 ? parts.join('\n\n') : null;
+    const content = computeBlocksContent(blocks);
     await prisma.subpage.update({
       where: { id: subpageId },
       data: { content },

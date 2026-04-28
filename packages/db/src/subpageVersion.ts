@@ -311,7 +311,7 @@ function buildSnapshotPayload(
   };
 }
 
-function normalizeLabel(
+export function normalizeLabel(
   label: string | null | undefined,
 ): string | null {
   if (label == null) return null;
@@ -344,7 +344,7 @@ async function enforceRetention(
   });
 }
 
-function collectMediaIdsFromSnapshot(
+export function collectMediaIdsFromSnapshot(
   snapshot: SubpageSnapshotPayload,
 ): string[] {
   const ids: string[] = [];
@@ -364,7 +364,7 @@ function collectMediaIdsFromSnapshot(
   return ids;
 }
 
-function collectMediaIdsFromTiptapNode(node: unknown): string[] {
+export function collectMediaIdsFromTiptapNode(node: unknown): string[] {
   if (!node || typeof node !== 'object') return [];
   const n = node as {
     type?: string;
