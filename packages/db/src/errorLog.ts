@@ -23,7 +23,7 @@ const MESSAGE_LIMIT = 2000;
 const FINGERPRINT_MESSAGE_LIMIT = 200;
 const FINGERPRINT_HEX_LENGTH = 16;
 
-function normalizeMessage(message: string): string {
+export function normalizeMessage(message: string): string {
   return message
     .replace(
       /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi,
@@ -34,7 +34,7 @@ function normalizeMessage(message: string): string {
     .slice(0, FINGERPRINT_MESSAGE_LIMIT);
 }
 
-function normalizeUrl(url: string | null | undefined): string {
+export function normalizeUrl(url: string | null | undefined): string {
   if (!url) return '';
   let pathname = url;
   try {

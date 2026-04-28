@@ -11,6 +11,7 @@ import {
   SelectTrigger,
 } from '@/shared/ui/shadcn/select';
 
+import { toKstDateString } from '@/shared/lib/kstDate';
 import { userOptionsQuery } from '../api/auditLogQueries';
 import { ACTION_LABELS, ENTITY_TYPE_LABELS } from '../model/auditLogFilters';
 import type { AuditActionFilter } from '../model/auditLogFilters';
@@ -50,13 +51,13 @@ export function AuditLogFilters({
     <div className="flex flex-wrap items-center gap-3">
       <DatePicker
         value={currentFrom ? new Date(currentFrom) : undefined}
-        onChange={(date) => updateParam('from', date ? date.toISOString().slice(0, 10) : null)}
+        onChange={(date) => updateParam('from', date ? toKstDateString(date) : null)}
         placeholder="시작일"
       />
       <span className="text-muted-foreground">~</span>
       <DatePicker
         value={currentTo ? new Date(currentTo) : undefined}
-        onChange={(date) => updateParam('to', date ? date.toISOString().slice(0, 10) : null)}
+        onChange={(date) => updateParam('to', date ? toKstDateString(date) : null)}
         placeholder="종료일"
       />
 

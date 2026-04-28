@@ -7,6 +7,19 @@ import {
   type MediaBearingSettingKey,
 } from './mediaBearingSettings';
 
+/** Tiptap JSON 노드 트리에 특정 mediaId를 가진 image 노드가 있는지 재귀 탐색한다. */
+export function containsMediaReference(node: unknown, mediaId: string): boolean {
+  if (!node || typeof node !== 'object') return false;
+  const n = node as { type?: string; attrs?: { mediaId?: unknown }; content?: unknown };
+  if (n.type === 'image' && n.attrs?.mediaId === mediaId) return true;
+  if (Array.isArray(n.content)) {
+    for (const child of n.content) {
+      if (containsMediaReference(child, mediaId)) return true;
+    }
+  }
+  return false;
+}
+
 /**
  * 한 Media가 어디에서 사용 중인지 추적한다.
  *
@@ -86,20 +99,6 @@ export async function findMediaReferences(
   // ─── 4. Post.contentJson (Tiptap JSON 재귀 탐색) ─────────────
   // 현재 규모(수백 건) 기준으로 인메모리 탐색이 충분.
   // 향후 성능 이슈 시 JSONB GIN 인덱스 + jsonb_path_query 최적화 가능.
-  const usedMediaIds = (json: unknown): boolean => {
-    if (!json || typeof json !== 'object') return false;
-    const node = json as { type?: string; attrs?: { mediaId?: unknown }; content?: unknown };
-    if (node.type === 'image' && node.attrs?.mediaId === mediaId) {
-      return true;
-    }
-    if (Array.isArray(node.content)) {
-      for (const child of node.content) {
-        if (usedMediaIds(child)) return true;
-      }
-    }
-    return false;
-  };
-
   const postsWithContent = await prisma.post.findMany({
     select: {
       id: true,
@@ -109,7 +108,7 @@ export async function findMediaReferences(
     },
   });
   for (const post of postsWithContent) {
-    if (usedMediaIds(post.contentJson)) {
+    if (containsMediaReference(post.contentJson, mediaId)) {
       references.push({
         type: 'POST_CONTENT',
         entityId: post.id,
@@ -168,7 +167,7 @@ export async function findMediaReferences(
   });
   for (const b of richTextBlocks) {
     const cfg = b.configJson as { contentJson?: unknown } | null;
-    if (cfg?.contentJson && usedMediaIds(cfg.contentJson)) {
+    if (cfg?.contentJson && containsMediaReference(cfg.contentJson, mediaId)) {
       references.push({
         type: 'PAGE_BLOCK_IMAGE',
         entityId: b.id,

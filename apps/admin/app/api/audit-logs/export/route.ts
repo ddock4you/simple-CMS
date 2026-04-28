@@ -10,7 +10,7 @@ import {
   ACTION_LABELS,
   ENTITY_TYPE_LABELS,
 } from '@/features/audit-log/model/auditLogFilters';
-import { kstStartOfDay, kstEndOfDay } from '@/shared/lib/kstDate';
+import { kstStartOfDay, kstEndOfDay, formatKstDateTime } from '@/shared/lib/kstDate';
 
 export async function GET(request: Request): Promise<NextResponse> {
   const { error } = await requirePermission('auditLogs', 'read');
@@ -78,7 +78,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     for (const log of logs) {
       sheet.addRow({
-        date: log.createdAt.toISOString().replace('T', ' ').slice(0, 19),
+        date: formatKstDateTime(log.createdAt),
         user: log.user?.name ?? '-',
         action: ACTION_LABELS[log.action as AuditAction] ?? log.action,
         entityType: log.entityType

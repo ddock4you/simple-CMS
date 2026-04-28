@@ -8,6 +8,7 @@ import type {
   AuditLogListFilters,
   AuditActionFilter,
 } from '@/features/audit-log/model/auditLogFilters';
+import { toKstDateKey } from '@/shared/lib/kstDate';
 import { AuditLogFilters } from '@/features/audit-log/ui/AuditLogFilters';
 import { AuditLogTable } from '@/features/audit-log/ui/AuditLogTable';
 import { AuditLogExport } from '@/features/audit-log/ui/AuditLogExport';
@@ -17,8 +18,8 @@ function getDefaultDateRange() {
   const from = new Date();
   from.setMonth(from.getMonth() - 1);
   return {
-    from: from.toISOString().slice(0, 10),
-    to: to.toISOString().slice(0, 10),
+    from: toKstDateKey(from),
+    to: toKstDateKey(to),
   };
 }
 

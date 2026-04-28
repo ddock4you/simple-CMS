@@ -14,6 +14,7 @@ import {
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import { Label } from '@/shared/ui/shadcn/label';
 import { DatePicker } from '@/shared/ui/DatePicker';
+import { toKstDateString } from '@/shared/lib/kstDate';
 
 import {
   LEVEL_LABELS,
@@ -73,7 +74,7 @@ export function ErrorLogFilters({
   };
 
   const updateDate = (key: 'from' | 'to', date: Date | undefined) => {
-    updateParam(key, date ? date.toISOString().slice(0, 10) : null);
+    updateParam(key, date ? toKstDateString(date) : null);
   };
 
   const handleUrlSubmit = (e: React.FormEvent<HTMLFormElement>) => {

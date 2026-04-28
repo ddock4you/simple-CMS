@@ -10,6 +10,7 @@ import type {
   ErrorSourceFilter,
   ResolvedFilter,
 } from '@/features/error-log/model/errorLogFilters';
+import { toKstDateKey } from '@/shared/lib/kstDate';
 import { ErrorLogFilters } from '@/features/error-log/ui/ErrorLogFilters';
 import { ErrorLogTable } from '@/features/error-log/ui/ErrorLogTable';
 
@@ -18,8 +19,8 @@ function getDefaultDateRange() {
   const from = new Date();
   from.setMonth(from.getMonth() - 1);
   return {
-    from: from.toISOString().slice(0, 10),
-    to: to.toISOString().slice(0, 10),
+    from: toKstDateKey(from),
+    to: toKstDateKey(to),
   };
 }
 
