@@ -13,6 +13,7 @@ import { SubpageBlockRenderer } from '@/widgets/subpage-content/ui/SubpageBlockR
 import { KoglFooter } from '@/widgets/subpage-content/ui/KoglFooter';
 import { SubpageFeedback } from '@/widgets/feedback/ui/SubpageFeedback';
 import { SubpageSideNavigation } from '@/widgets/subpage-sidebar/ui/SubpageSideNavigation';
+import { ErrorBoundary } from '@/shared/ui/ErrorBoundary';
 
 import type { CclType } from '@simple-cms/types';
 
@@ -79,11 +80,13 @@ function SubpageArticle({
         <p className="empty-content">콘텐츠가 준비 중입니다.</p>
       )}
       <KoglFooter cclType={subpage.cclType} cclAi={subpage.cclAi} />
-      <SubpageFeedback
-        subpageId={subpage.id}
-        feedbackEnabled={subpage.feedbackEnabled}
-        previewMode={previewMode}
-      />
+      <ErrorBoundary boundaryName="SubpageFeedback" fallback={null}>
+        <SubpageFeedback
+          subpageId={subpage.id}
+          feedbackEnabled={subpage.feedbackEnabled}
+          previewMode={previewMode}
+        />
+      </ErrorBoundary>
     </article>
   );
 }

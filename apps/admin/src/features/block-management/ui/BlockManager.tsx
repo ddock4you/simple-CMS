@@ -33,6 +33,8 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/ui/shadcn/dropdown-menu';
 
+import { ErrorBoundary } from '@/shared/ui/ErrorBoundary';
+
 import { blockListOptions } from '../api/blockQueries';
 import {
   useDeleteBlock,
@@ -183,16 +185,21 @@ export function BlockManager({ subpageId }: { subpageId: string }) {
       )}
 
       {dialogOpen && activeType && (
-        <BlockEditDialog
+        <ErrorBoundary
           key={editingBlock ? `edit-${editingBlock.id}` : `create-${activeType}`}
-          subpageId={subpageId}
-          blockType={activeType}
-          block={editingBlock}
-          open={dialogOpen}
-          onOpenChange={(open) => {
-            if (!open) closeDialog();
-          }}
-        />
+          boundaryName="BlockEditDialog"
+          fallback={null}
+        >
+          <BlockEditDialog
+            subpageId={subpageId}
+            blockType={activeType}
+            block={editingBlock}
+            open={dialogOpen}
+            onOpenChange={(open) => {
+              if (!open) closeDialog();
+            }}
+          />
+        </ErrorBoundary>
       )}
     </div>
   );
