@@ -25,17 +25,14 @@ export function HeaderBranding({
   return (
     <div className="header-branding">
       <h2 className="logo">
-        <Link href="/">
+        <Link href="/" aria-label={branding.logoAlt}>
           {branding.logoUrl ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={branding.logoUrl}
-                alt=""
-                className="header-logo-image"
-              />
-              <span className="sr-only">{branding.logoAlt}</span>
-            </>
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={branding.logoUrl}
+              alt=""
+              className="header-logo-image"
+            />
           ) : (
             <span className="header-logo-text">{branding.siteName}</span>
           )}
@@ -54,6 +51,7 @@ export function HeaderBranding({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          aria-hidden="true"
         >
           <circle cx="11" cy="11" r="8" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
