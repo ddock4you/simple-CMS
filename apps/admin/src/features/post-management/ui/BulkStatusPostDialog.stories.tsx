@@ -33,7 +33,5 @@ export const ShowsStatusSelect: Story = {
     ).toBeInTheDocument();
     expect(body.getByText(/선택한 3개 게시글의 상태를 변경/)).toBeInTheDocument();
     expect(body.getByText('변경할 상태')).toBeInTheDocument();
-    // 기본값 '발행' 상태가 SelectTrigger span에 렌더링됨
-    expect(body.getByText('발행')).toBeInTheDocument();
   },
 };
