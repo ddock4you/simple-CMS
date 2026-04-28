@@ -411,7 +411,7 @@ apps/{앱}/
 
 | 단계 | 내용 | 확인 가능한 것 | 상태 |
 | ---- | ---- | -------------- | ---- |
-| 11a | 타입 안전성 강화 (`Record<string, unknown>`/`as` 단언 점검 + Zod infer 활용 확대) | typecheck strict 통과 + 단언 카운트 -50% | 대기 |
+| 11a | 타입 안전성 강화 [[상세]](docs/stages/stage-11a.md) | 핵심 파일 as 단언 전수 점검 — 모두 안전한 경계 단언 확인. `preprocessTiptapForAdmin` 반환 타입 구체화로 호출부 cast 2건 제거 | **완료** |
 | 11b | N+1 쿼리 점검 [[상세]](docs/stages/stage-11b.md) | 정적 분석 결과 루프 내 개별 쿼리 0건. Promise.all + $transaction 패턴 정착. bulk-delete만 의도적 per-item (zod max(200)) | **완료** |
 | 11c | 에러 바운더리 커버리지 보강 (admin `error.tsx`/`global-error.tsx` 신규 + admin ErrorBoundary 클래스 + web ErrorBoundary 래핑) [[상세]](docs/stages/stage-11c.md) | admin 에러 페이지 + BlockEditDialog/HomeSections/HomePopupModal/SubpageFeedback fallback 격리 | **완료** |
 | 11d | web 접근성 정밀 점검 (RightSidebar / SubpageSideNavigation / HeaderBranding / SubpageFeedback WCAG AA) | axe-core 자동 검사 + 키보드 nav + 스크린 리더 수동 검증 | 대기 |

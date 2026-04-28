@@ -36,8 +36,9 @@ function transformImageSrc(
  * `/uploads/...` 상대 경로를 web의 절대 URL로 치환하여 에디터 DOM이 처음부터
  * 올바른 URL로 이미지를 요청하게 한다. (초기 404 방지)
  */
-export function preprocessTiptapForAdmin(json: unknown): unknown {
-  return transformImageSrc(json, resolveMediaPreviewUrl);
+export function preprocessTiptapForAdmin(json: unknown): Record<string, unknown> | undefined {
+  if (!json || typeof json !== 'object') return undefined;
+  return transformImageSrc(json, resolveMediaPreviewUrl) as Record<string, unknown>;
 }
 
 /**

@@ -129,9 +129,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
   // useEditor는 이 content를 1회만 흡수하므로 빈 deps로 고정.
   const initialContent = useMemo(
     () =>
-      content
-        ? (preprocessTiptapForAdmin(content) as Record<string, unknown>)
-        : undefined,
+      content ? preprocessTiptapForAdmin(content) : undefined,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );

@@ -18,10 +18,8 @@ export function renderTiptapContentForAdmin(json: unknown): string | null {
 
   try {
     const transformed = preprocessTiptapForAdmin(json);
-    return generateHTML(
-      transformed as Record<string, unknown>,
-      getSharedExtensions(),
-    );
+    if (!transformed) return null;
+    return generateHTML(transformed, getSharedExtensions());
   } catch {
     console.error(
       '[renderTiptapContentForAdmin] Failed to generate HTML from Tiptap JSON',
