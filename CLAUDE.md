@@ -413,7 +413,7 @@ apps/{앱}/
 | ---- | ---- | -------------- | ---- |
 | 11a | 타입 안전성 강화 (`Record<string, unknown>`/`as` 단언 점검 + Zod infer 활용 확대) | typecheck strict 통과 + 단언 카운트 -50% | 대기 |
 | 11b | N+1 쿼리 점검 (게시판 목록 + 첨부 미디어, 메뉴 트리 + 참조 엔티티) | Prisma 쿼리 로깅으로 페이지당 쿼리 수 측정 + 임계치 회귀 테스트 | 대기 |
-| 11c | 에러 바운더리 커버리지 보강 (web `error.tsx`/`global-error.tsx` 외 features 단위) | 의도적 throw 시나리오에서 사용자 친화적 fallback 표시 | 대기 |
+| 11c | 에러 바운더리 커버리지 보강 (admin `error.tsx`/`global-error.tsx` 신규 + admin ErrorBoundary 클래스 + web ErrorBoundary 래핑) [[상세]](docs/stages/stage-11c.md) | admin 에러 페이지 + BlockEditDialog/HomeSections/HomePopupModal/SubpageFeedback fallback 격리 | **완료** |
 | 11d | web 접근성 정밀 점검 (RightSidebar / SubpageSideNavigation / HeaderBranding / SubpageFeedback WCAG AA) | axe-core 자동 검사 + 키보드 nav + 스크린 리더 수동 검증 | 대기 |
 | 11e | E2E 테스트 (Playwright) | 로그인 → 콘텐츠 발행 → 공개 웹 노출 → 검색 → 피드백 제출 골든 플로우 | 대기 |
 | 11f | `/check-fsd` 스킬 CI 통합 | PR마다 FSD 의존성 위반 자동 감지 + 차단 | 대기 |
