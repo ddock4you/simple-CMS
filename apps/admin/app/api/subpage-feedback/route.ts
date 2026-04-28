@@ -10,6 +10,7 @@ import type {
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { feedbackListQuerySchema } from '@/features/subpage-feedback/model/feedbackFilters';
+import { kstStartOfDay, kstEndOfDay } from '@/shared/lib/kstDate';
 
 export async function GET(request: Request): Promise<NextResponse> {
   const { error } = await requirePermission('subpage-feedback', 'read');
@@ -44,8 +45,8 @@ export async function GET(request: Request): Promise<NextResponse> {
     if (rating !== 'ALL') where.rating = rating;
     if (from || to) {
       where.createdAt = {
-        ...(from ? { gte: new Date(`${from}T00:00:00.000+09:00`) } : {}),
-        ...(to ? { lte: new Date(`${to}T23:59:59.999+09:00`) } : {}),
+        ...(from ? { gte: kstStartOfDay(from) } : {}),
+        ...(to ? { lte: kstEndOfDay(to) } : {}),
       };
     }
     if (q) where.comment = { contains: q, mode: 'insensitive' };

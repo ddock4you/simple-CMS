@@ -13,22 +13,13 @@ import {
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { feedbackStatsQuerySchema } from '@/features/subpage-feedback/model/feedbackFilters';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
-const DEFAULT_PERIOD_DAYS = 30;
-
-function kstStartOfDay(dateStr: string): Date {
-  return new Date(`${dateStr}T00:00:00.000+09:00`);
-}
-
-function kstEndOfDay(dateStr: string): Date {
-  return new Date(`${dateStr}T23:59:59.999+09:00`);
-}
-
-function toKstDateKey(d: Date): string {
-  return new Date(d.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
-}
+import {
+  DAY_MS,
+  kstStartOfDay,
+  kstEndOfDay,
+  toKstDateKey,
+  getDefaultKstRange,
+} from '@/shared/lib/kstDate';
 
 export async function GET(request: Request): Promise<NextResponse> {
   const { error } = await requirePermission('subpage-feedback', 'read');
@@ -52,15 +43,10 @@ export async function GET(request: Request): Promise<NextResponse> {
     }
 
     // from/to가 없으면 최근 30일을 기본으로 적용 (KST 자정 정렬)
-    const todayKstKey = toKstDateKey(new Date());
-    const fallbackFromDate = new Date(
-      kstStartOfDay(todayKstKey).getTime() -
-        (DEFAULT_PERIOD_DAYS - 1) * DAY_MS,
-    );
-    const fallbackFromKey = toKstDateKey(fallbackFromDate);
+    const { fromKey: fallbackFromKey, toKey: fallbackToKey } = getDefaultKstRange();
 
     const fromKey = parsed.data.from ?? fallbackFromKey;
-    const toKey = parsed.data.to ?? todayKstKey;
+    const toKey = parsed.data.to ?? fallbackToKey;
 
     const since = kstStartOfDay(fromKey);
     const until = kstEndOfDay(toKey);

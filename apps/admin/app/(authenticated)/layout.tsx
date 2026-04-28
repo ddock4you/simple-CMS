@@ -4,7 +4,7 @@ import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { PermissionProvider } from '@/entities/auth/ui/PermissionProvider';
 import { SidebarProvider, SidebarInset } from '@/shared/ui/shadcn/sidebar';
 import { AppSidebar } from '@/shared/ui/layout/AppSidebar';
-import { AdminHeader } from '@/shared/ui/layout/AdminHeader';
+import { AdminHeader } from '@/widgets/admin-header/ui/AdminHeader';
 import { CommandPalette } from '@/features/quick-switcher/ui/CommandPalette';
 
 export default async function AuthenticatedLayout({

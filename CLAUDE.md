@@ -407,6 +407,17 @@ apps/{앱}/
 | 9    | SEO 기반 구축 (sitemap + robots + 페이지별 SEO + Schema.org JSON-LD) [[상세]](docs/stages/stage-9.md) | `/sitemap.xml`·`/robots.txt` 자동 생성 + Post에 seoTitle/seoDescription + Article/BreadcrumbList/Organization/WebSite JSON-LD + admin `/settings/seo` 탭에서 robots 추가 Disallow 관리 | **완료** |
 | 10   | 사용자 피드백 (서브페이지 만족도 조사 + admin 통계/차트) [[상세]](docs/stages/stage-10.md) | KRDS 가이드 + Figma 시안 기반 네/아니오 + 긍정 이유 3개 + 자유 텍스트 / SubpageForm `feedbackEnabled` 토글(opt-in) / `/api/feedback` 익명 수집(IP 해싱 + 24h rate limit + preview 차단) / admin `/subpage-feedback`에서 recharts 통계 + 목록 + 삭제 / SubpageVersion 스냅샷에 `feedbackEnabled` 포함 | **완료** |
 
+### Stage 11 — 코드 품질 · 관측성 강화
+
+| 단계 | 내용 | 확인 가능한 것 | 상태 |
+| ---- | ---- | -------------- | ---- |
+| 11a | 타입 안전성 강화 (`Record<string, unknown>`/`as` 단언 점검 + Zod infer 활용 확대) | typecheck strict 통과 + 단언 카운트 -50% | 대기 |
+| 11b | N+1 쿼리 점검 (게시판 목록 + 첨부 미디어, 메뉴 트리 + 참조 엔티티) | Prisma 쿼리 로깅으로 페이지당 쿼리 수 측정 + 임계치 회귀 테스트 | 대기 |
+| 11c | 에러 바운더리 커버리지 보강 (web `error.tsx`/`global-error.tsx` 외 features 단위) | 의도적 throw 시나리오에서 사용자 친화적 fallback 표시 | 대기 |
+| 11d | web 접근성 정밀 점검 (RightSidebar / SubpageSideNavigation / HeaderBranding / SubpageFeedback WCAG AA) | axe-core 자동 검사 + 키보드 nav + 스크린 리더 수동 검증 | 대기 |
+| 11e | E2E 테스트 (Playwright) | 로그인 → 콘텐츠 발행 → 공개 웹 노출 → 검색 → 피드백 제출 골든 플로우 | 대기 |
+| 11f | `/check-fsd` 스킬 CI 통합 | PR마다 FSD 의존성 위반 자동 감지 + 차단 | 대기 |
+
 ## 명령어
 
 ```bash

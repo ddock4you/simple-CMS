@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
 
 import { prisma } from '@simple-cms/db';
+import type { AuditAction, AuditEntityType } from '@simple-cms/db';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { auditLogExportQuerySchema } from '@/features/audit-log/model/auditLogSchemas';
@@ -9,7 +10,7 @@ import {
   ACTION_LABELS,
   ENTITY_TYPE_LABELS,
 } from '@/features/audit-log/model/auditLogFilters';
-import type { AuditAction, AuditEntityType } from '@simple-cms/db';
+import { kstStartOfDay, kstEndOfDay } from '@/shared/lib/kstDate';
 
 export async function GET(request: Request): Promise<NextResponse> {
   const { error } = await requirePermission('auditLogs', 'read');
@@ -36,8 +37,8 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     const where: Record<string, unknown> = {
       createdAt: {
-        gte: new Date(from),
-        lte: new Date(`${to}T23:59:59.999Z`),
+        gte: kstStartOfDay(from),
+        lte: kstEndOfDay(to),
       },
     };
     if (action && action !== 'ALL') where.action = action;

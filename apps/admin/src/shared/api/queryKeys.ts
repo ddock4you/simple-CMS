@@ -1,6 +1,7 @@
 export const userKeys = {
   all: ['users'] as const,
   lists: () => [...userKeys.all, 'list'] as const,
+  list: (filters: unknown) => [...userKeys.lists(), filters] as const,
 };
 
 export const roleKeys = {
@@ -14,6 +15,7 @@ export const subpageKeys = {
   lists: () => [...subpageKeys.all, 'list'] as const,
   list: (filters: unknown) => [...subpageKeys.lists(), filters] as const,
   detail: (id: string) => [...subpageKeys.all, 'detail', id] as const,
+  options: () => [...subpageKeys.all, 'options'] as const,
 };
 
 export const boardKeys = {

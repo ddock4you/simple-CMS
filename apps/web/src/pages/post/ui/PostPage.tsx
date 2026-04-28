@@ -1,6 +1,4 @@
-'use client';
-
-import { Breadcrumb } from 'krds-react';
+import { Breadcrumb } from '@/shared/ui/KrdsBreadcrumb';
 
 import { TiptapContent } from '@/shared/ui/TiptapContent';
 

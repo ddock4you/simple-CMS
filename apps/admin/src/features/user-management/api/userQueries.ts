@@ -5,18 +5,9 @@ import {
   getUserList,
   getRoleList,
 } from '@/features/user-management/api/userFetchers';
-import {
-  userKeys as baseUserKeys,
-  roleKeys,
-} from '@/shared/api/queryKeys';
+import { userKeys, roleKeys } from '@/shared/api/queryKeys';
 
-export { roleKeys };
-
-export const userKeys = {
-  ...baseUserKeys,
-  list: (filters: UserListFilters) =>
-    [...baseUserKeys.lists(), filters] as const,
-};
+export { userKeys, roleKeys };
 
 export const userListOptions = (filters: UserListFilters) =>
   queryOptions({

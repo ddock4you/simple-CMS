@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { getSiteSetting, setSiteSetting, logAuditEvent } from '@simple-cms/db';
+import { SITE_SETTING_KEYS } from '@simple-cms/types';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
@@ -15,7 +16,7 @@ export async function GET(_request: Request): Promise<NextResponse> {
   if (error) return error;
 
   try {
-    const value = await getSiteSetting('CONCURRENT_LOGIN_ENABLED');
+    const value = await getSiteSetting(SITE_SETTING_KEYS.CONCURRENT_LOGIN_ENABLED);
     const concurrentLoginEnabled = value !== 'false';
 
     return NextResponse.json(
@@ -46,10 +47,10 @@ export async function PATCH(request: Request): Promise<NextResponse> {
     }
 
     const { concurrentLoginEnabled } = parsed.data;
-    const oldValue = await getSiteSetting('CONCURRENT_LOGIN_ENABLED');
+    const oldValue = await getSiteSetting(SITE_SETTING_KEYS.CONCURRENT_LOGIN_ENABLED);
 
     await setSiteSetting(
-      'CONCURRENT_LOGIN_ENABLED',
+      SITE_SETTING_KEYS.CONCURRENT_LOGIN_ENABLED,
       String(concurrentLoginEnabled),
       '동시 로그인 허용 여부',
     );
@@ -58,7 +59,7 @@ export async function PATCH(request: Request): Promise<NextResponse> {
     logAuditEvent({
       action: 'UPDATE',
       entityType: 'SITE_SETTINGS',
-      entityId: 'CONCURRENT_LOGIN_ENABLED',
+      entityId: SITE_SETTING_KEYS.CONCURRENT_LOGIN_ENABLED,
       entityTitle: '동시 로그인 설정',
       changes: {
         before: { CONCURRENT_LOGIN_ENABLED: oldValue ?? 'true' },

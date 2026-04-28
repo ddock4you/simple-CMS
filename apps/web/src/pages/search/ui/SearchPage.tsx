@@ -1,8 +1,6 @@
-'use client';
-
 import Link from 'next/link';
 
-import { Breadcrumb } from 'krds-react';
+import { Breadcrumb } from '@/shared/ui/KrdsBreadcrumb';
 
 import type { SearchResponse } from '@simple-cms/db';
 

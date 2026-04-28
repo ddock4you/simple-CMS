@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { setSiteSetting, logAuditEvent, getUploadRestrictions } from '@simple-cms/db';
+import { SITE_SETTING_KEYS } from '@simple-cms/types';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
@@ -48,17 +49,17 @@ export async function PATCH(request: Request): Promise<NextResponse> {
     const oldRestrictions = await getUploadRestrictions();
 
     await setSiteSetting(
-      'UPLOAD_ALLOWED_EXTENSIONS',
+      SITE_SETTING_KEYS.UPLOAD_ALLOWED_EXTENSIONS,
       JSON.stringify(allowedExtensions),
       '허용 파일 확장자',
     );
     await setSiteSetting(
-      'UPLOAD_ALLOWED_MIME_TYPES',
+      SITE_SETTING_KEYS.UPLOAD_ALLOWED_MIME_TYPES,
       JSON.stringify(allowedMimeTypes),
       '허용 MIME 타입',
     );
     await setSiteSetting(
-      'UPLOAD_MAX_FILE_SIZE_MB',
+      SITE_SETTING_KEYS.UPLOAD_MAX_FILE_SIZE_MB,
       String(maxFileSizeMb),
       '최대 파일 크기 (MB)',
     );

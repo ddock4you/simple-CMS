@@ -10,29 +10,12 @@ import {
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { feedbackExportQuerySchema } from '@/features/subpage-feedback/model/feedbackExportSchema';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
-const DEFAULT_PERIOD_DAYS = 30;
-
-function kstStartOfDay(dateStr: string): Date {
-  return new Date(`${dateStr}T00:00:00.000+09:00`);
-}
-
-function kstEndOfDay(dateStr: string): Date {
-  return new Date(`${dateStr}T23:59:59.999+09:00`);
-}
-
-function toKstDateKey(d: Date): string {
-  return new Date(d.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
-}
-
-function formatKstDateTime(d: Date): string {
-  return new Date(d.getTime() + KST_OFFSET_MS)
-    .toISOString()
-    .replace('T', ' ')
-    .slice(0, 19);
-}
+import {
+  kstStartOfDay,
+  kstEndOfDay,
+  formatKstDateTime,
+  getDefaultKstRange,
+} from '@/shared/lib/kstDate';
 
 export async function GET(request: Request): Promise<NextResponse> {
   const { user, error } = await requirePermission('subpage-feedback', 'read');
@@ -58,15 +41,9 @@ export async function GET(request: Request): Promise<NextResponse> {
     const { rating, subpageId, q } = parsed.data;
 
     // from/to가 없으면 KST 기준 최근 30일을 기본 적용. 응답 파일명도 이 값으로 채움.
-    const todayKstKey = toKstDateKey(new Date());
-    const fallbackFromDate = new Date(
-      kstStartOfDay(todayKstKey).getTime() -
-        (DEFAULT_PERIOD_DAYS - 1) * DAY_MS,
-    );
-    const fallbackFromKey = toKstDateKey(fallbackFromDate);
-
+    const { fromKey: fallbackFromKey, toKey: fallbackToKey } = getDefaultKstRange();
     const fromKey = parsed.data.from ?? fallbackFromKey;
-    const toKey = parsed.data.to ?? todayKstKey;
+    const toKey = parsed.data.to ?? fallbackToKey;
 
     const where: Record<string, unknown> = {
       createdAt: {

@@ -23,7 +23,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from '@/shared/ui/shadcn/select';
-import { TiptapEditor } from '@/shared/ui/TiptapEditor';
+import { TiptapEditor } from '@/entities/editor/ui/TiptapEditor';
 import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 

@@ -1,21 +1,15 @@
 import { getSiteSetting } from '@simple-cms/db';
+import { SITE_SETTING_KEYS } from '@simple-cms/types';
 
-const TTL_MS = process.env.NODE_ENV === 'production' ? 60_000 : 5_000;
+import { createSettingsCache } from './createSettingsCache';
 
-let cache: { domain: string | null; fetchedAt: number } | null = null;
+const domainCache = createSettingsCache({
+  fetcher: async (): Promise<string | null> => {
+    const domain = await getSiteSetting(SITE_SETTING_KEYS.SITE_DOMAIN);
+    return domain || null;
+  },
+});
 
-export async function getCachedDomain(): Promise<string | null> {
-  const now = Date.now();
+export const getCachedDomain = () => domainCache.get();
 
-  if (cache && now - cache.fetchedAt < TTL_MS) {
-    return cache.domain;
-  }
-
-  const domain = await getSiteSetting('SITE_DOMAIN');
-  cache = { domain: domain || null, fetchedAt: now };
-  return cache.domain;
-}
-
-export function invalidateDomainCache(): void {
-  cache = null;
-}
+export const invalidateDomainCache = () => domainCache.invalidate();

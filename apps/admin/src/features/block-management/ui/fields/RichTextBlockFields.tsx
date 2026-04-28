@@ -1,7 +1,7 @@
 'use client';
 
 import { Label } from '@/shared/ui/shadcn/label';
-import { TiptapEditor } from '@/shared/ui/TiptapEditor';
+import { TiptapEditor } from '@/entities/editor/ui/TiptapEditor';
 
 import type { RichTextBlockConfigData } from '../../model/blockSchemas';
 

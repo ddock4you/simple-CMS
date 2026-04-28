@@ -7,6 +7,7 @@ import {
   prisma,
   setSiteSetting,
 } from '@simple-cms/db';
+import { SITE_SETTING_KEYS } from '@simple-cms/types';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
@@ -31,12 +32,12 @@ import {
  */
 
 const SETTING_KEYS = {
-  siteName: 'SITE_NAME',
-  siteDescription: 'SITE_DESCRIPTION',
-  logoMediaId: 'SITE_LOGO_MEDIA_ID',
-  logoAlt: 'SITE_LOGO_ALT',
-  faviconMediaId: 'SITE_FAVICON_MEDIA_ID',
-  ogImageMediaId: 'SITE_OG_IMAGE_MEDIA_ID',
+  siteName: SITE_SETTING_KEYS.SITE_NAME,
+  siteDescription: SITE_SETTING_KEYS.SITE_DESCRIPTION,
+  logoMediaId: SITE_SETTING_KEYS.SITE_LOGO_MEDIA_ID,
+  logoAlt: SITE_SETTING_KEYS.SITE_LOGO_ALT,
+  faviconMediaId: SITE_SETTING_KEYS.SITE_FAVICON_MEDIA_ID,
+  ogImageMediaId: SITE_SETTING_KEYS.SITE_OG_IMAGE_MEDIA_ID,
 } as const;
 
 const SETTING_DESCRIPTIONS: Record<string, string> = {

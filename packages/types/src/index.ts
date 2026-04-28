@@ -114,6 +114,9 @@ export type {
   FeedbackStatsResponse,
 } from './dto/feedback.dto';
 
+export type { SiteSettingKey } from './domain/siteSettings.types';
+export { SITE_SETTING_KEYS } from './domain/siteSettings.types';
+
 export type {
   CclType,
   SubpageCclInfo,

@@ -1,11 +1,14 @@
 import { getSiteSettings, prisma } from '@simple-cms/db';
+import { SITE_SETTING_KEYS } from '@simple-cms/types';
+
+import { createSettingsCache } from './createSettingsCache';
 
 /**
  * 공개 웹 브랜딩 데이터 (Stage 7l).
  *
  * SiteSettings 6개 키 + 3개 Media join 결과를 인메모리 캐시.
- * `domainCache.ts` 동일 패턴 — admin → web 인메모리 무효화는 별 인스턴스라 불가능.
- * TTL(60s prod / 5s dev) 만료 후 자연 갱신. UI/CLAUDE.md에 "최대 1분 후 반영" 명시.
+ * admin → web 별 인스턴스라 즉시 invalidate 불가.
+ * TTL 만료 후 자연 갱신. UI/CLAUDE.md에 "최대 1분 후 반영" 명시.
  */
 export interface Branding {
   siteName: string;
@@ -20,10 +23,6 @@ export interface Branding {
   ogImageUrl: string | null;
 }
 
-const TTL_MS = process.env.NODE_ENV === 'production' ? 60_000 : 5_000;
-
-let cache: { data: Branding; fetchedAt: number } | null = null;
-
 const FALLBACK: Branding = {
   siteName: 'Simple CMS',
   siteDescription: '공개 웹',
@@ -34,20 +33,15 @@ const FALLBACK: Branding = {
   ogImageUrl: null,
 };
 
-export async function getCachedBranding(): Promise<Branding> {
-  const now = Date.now();
-  if (cache && now - cache.fetchedAt < TTL_MS) {
-    return cache.data;
-  }
-
-  try {
+const brandingCache = createSettingsCache({
+  fetcher: async (): Promise<Branding> => {
     const values = await getSiteSettings([
-      'SITE_NAME',
-      'SITE_DESCRIPTION',
-      'SITE_LOGO_MEDIA_ID',
-      'SITE_LOGO_ALT',
-      'SITE_FAVICON_MEDIA_ID',
-      'SITE_OG_IMAGE_MEDIA_ID',
+      SITE_SETTING_KEYS.SITE_NAME,
+      SITE_SETTING_KEYS.SITE_DESCRIPTION,
+      SITE_SETTING_KEYS.SITE_LOGO_MEDIA_ID,
+      SITE_SETTING_KEYS.SITE_LOGO_ALT,
+      SITE_SETTING_KEYS.SITE_FAVICON_MEDIA_ID,
+      SITE_SETTING_KEYS.SITE_OG_IMAGE_MEDIA_ID,
     ]);
 
     const mediaIds = [
@@ -66,33 +60,30 @@ export async function getCachedBranding(): Promise<Branding> {
     }
 
     const siteName = values.SITE_NAME?.trim() || FALLBACK.siteName;
-    const data: Branding = {
+    return {
       siteName,
       siteDescription:
         values.SITE_DESCRIPTION?.trim() || FALLBACK.siteDescription,
       logoUrl: values.SITE_LOGO_MEDIA_ID
-        ? urlByMediaId.get(values.SITE_LOGO_MEDIA_ID) ?? null
+        ? (urlByMediaId.get(values.SITE_LOGO_MEDIA_ID) ?? null)
         : null,
       logoAlt: values.SITE_LOGO_ALT?.trim() || siteName,
       faviconUrl: values.SITE_FAVICON_MEDIA_ID
-        ? urlByMediaId.get(values.SITE_FAVICON_MEDIA_ID) ?? null
+        ? (urlByMediaId.get(values.SITE_FAVICON_MEDIA_ID) ?? null)
         : null,
       faviconMediaId: values.SITE_FAVICON_MEDIA_ID,
       ogImageUrl: values.SITE_OG_IMAGE_MEDIA_ID
-        ? urlByMediaId.get(values.SITE_OG_IMAGE_MEDIA_ID) ?? null
+        ? (urlByMediaId.get(values.SITE_OG_IMAGE_MEDIA_ID) ?? null)
         : null,
     };
-
-    cache = { data, fetchedAt: now };
-    return data;
-  } catch (err) {
+  },
+  onError: (err) => {
     console.error('[brandingCache] fetch failed, returning fallback:', err);
-    // 캐시는 갱신하지 않음 — 다음 요청에서 재시도
     return FALLBACK;
-  }
-}
+  },
+});
+
+export const getCachedBranding = () => brandingCache.get();
 
 /** 테스트/개발 환경에서 강제 무효화용. 운영은 TTL 만료 자연 갱신. */
-export function invalidateBrandingCache(): void {
-  cache = null;
-}
+export const invalidateBrandingCache = () => brandingCache.invalidate();

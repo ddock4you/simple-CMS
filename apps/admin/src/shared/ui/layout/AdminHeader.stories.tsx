@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { AdminHeader } from './AdminHeader';
+import { AdminHeader } from '@/widgets/admin-header/ui/AdminHeader';
 
 /**
  * `SidebarTrigger`가 `useSidebar()`를 호출하므로 `SidebarProvider`가 필수.
@@ -10,7 +10,7 @@ import { AdminHeader } from './AdminHeader';
  * Storybook canvas에서 단축키 focus가 불안정할 수 있음 (수동 클릭만 테스트).
  */
 const meta = {
-  title: 'Admin/Shared/Layout/AdminHeader',
+  title: 'Admin/Widgets/AdminHeader',
   component: AdminHeader,
   parameters: {
     layout: 'fullscreen',

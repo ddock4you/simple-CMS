@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { getSiteSetting, setSiteSetting, logAuditEvent } from '@simple-cms/db';
+import { SITE_SETTING_KEYS } from '@simple-cms/types';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
@@ -10,7 +11,7 @@ import {
   type SeoSettingsData,
 } from '@/features/site-settings/model/settingsSchemas';
 
-const ROBOTS_ADDITIONAL_DISALLOW_KEY = 'ROBOTS_ADDITIONAL_DISALLOW';
+const ROBOTS_ADDITIONAL_DISALLOW_KEY = SITE_SETTING_KEYS.ROBOTS_ADDITIONAL_DISALLOW;
 
 function getBaseUrl(domain: string | null): string {
   if (domain) return `https://${domain}`;

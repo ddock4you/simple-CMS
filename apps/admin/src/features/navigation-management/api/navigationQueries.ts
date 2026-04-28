@@ -22,7 +22,7 @@ export const menuSetDetailOptions = (menuId: string) =>
 
 export const subpageOptionsQuery = () =>
   queryOptions({
-    queryKey: [...subpageKeys.all, 'options'] as const,
+    queryKey: subpageKeys.options(),
     queryFn: () => getSubpageOptions(),
     staleTime: 5 * 60 * 1000,
   });

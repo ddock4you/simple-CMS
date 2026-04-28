@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Button } from '@/shared/ui/shadcn/button';
 
 import { DatePicker } from '@/shared/ui/DatePicker';
+import { toKstDateString } from '@/shared/lib/kstDate';
 
 function getDefaultDateRange() {
   const to = new Date();
@@ -29,8 +30,8 @@ export function AuditLogExport() {
 
     setIsExporting(true);
     try {
-      const fromStr = from.toISOString().slice(0, 10);
-      const toStr = to.toISOString().slice(0, 10);
+      const fromStr = toKstDateString(from);
+      const toStr = toKstDateString(to);
 
       const response = await fetch(
         `/api/audit-logs/export?from=${fromStr}&to=${toStr}`,
