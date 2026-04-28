@@ -59,7 +59,7 @@ test.describe('골든 플로우', () => {
     await page.waitForTimeout(300);
 
     // slug 필드를 고정값으로 교체
-    const slugField = page.getByLabel('슬러그');
+    const slugField = page.getByLabel('Slug');
     await slugField.fill('');
     await slugField.fill(SLUG);
 
