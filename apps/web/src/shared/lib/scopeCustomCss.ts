@@ -31,12 +31,13 @@ export function scopeCustomCss(css: string, subpageId: string): string {
   });
 
   // Step 2: 세미콜론 종결형 AT 규칙 placeholder (@import, @charset, @namespace)
+  // 플레이스홀더를 '@'로 시작하면 Step 4 셀렉터 정규식([^{};@\s])이 건너뜀 → 다음 줄 셀렉터가 분리됨
   const excludedStatements: string[] = [];
   const excludeStatementPattern = /@(?:import|charset|namespace)\b[^;]*;/gi;
   processed = processed.replace(excludeStatementPattern, (match) => {
     const index = excludedStatements.length;
     excludedStatements.push(match);
-    return `__SCOPE_EX_STMT_${index}__`;
+    return `@__SCOPE_STMT_${index}__`;
   });
 
   // Step 3: html / body / :root → scope 치환
@@ -45,10 +46,15 @@ export function scopeCustomCss(css: string, subpageId: string): string {
 
   // Step 4: 셀렉터 리스트 prefix 주입
   // 매칭: (시작/구분자) + (@로 시작하지 않는 셀렉터 문자열) + {
-  // @media / @supports / @container / @layer 자체 줄은 제외(첫 문자가 @이므로 스킵)
+  // @media / @supports / @container / @layer 자체 조건부(예: `(max-width: 768px)`)는
+  // '('로 시작하는 rawSelectors를 감지하여 그대로 통과시킴 — CSS 셀렉터는 '('로 시작하지 않음
   processed = processed.replace(
     /(^|[{};\s])([^{};@\s][^{};]*)\{/g,
     (_match, prefix: string, rawSelectors: string) => {
+      // @media/@supports 조건 `(max-width: 768px)` 등은 prefix 금지
+      if (rawSelectors.trim().startsWith('(')) {
+        return _match;
+      }
       const scoped = rawSelectors
         .split(',')
         .map((s) => {
@@ -67,7 +73,7 @@ export function scopeCustomCss(css: string, subpageId: string): string {
   );
 
   // Step 5: placeholder 복원
-  processed = processed.replace(/__SCOPE_EX_STMT_(\d+)__/g, (_m, i) => {
+  processed = processed.replace(/@__SCOPE_STMT_(\d+)__/g, (_m, i) => {
     const idx = Number(i);
     return excludedStatements[idx] ?? '';
   });

@@ -8,6 +8,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "test": "vitest run",
     "generate": "prisma generate",
     "push": "prisma db push",
     "migrate": "prisma migrate dev",
