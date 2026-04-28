@@ -54,8 +54,8 @@ import {
   postprocessTiptapForSave,
   preprocessTiptapForAdmin,
 } from '@/shared/lib/tiptapContentTransform';
-import { usePermission } from '@/entities/auth/ui/PermissionProvider';
-import { MediaPicker } from '@/entities/media/ui/MediaPicker';
+import { usePermission } from '@/entities/auth/ui/PermissionProvider'; // @fsd-allow: auth는 cross-cutting — PermissionProvider 추후 shared/ui로 이전 예정
+import { MediaPicker } from '@/entities/media/ui/MediaPicker'; // @fsd-allow: 에디터가 미디어 선택기를 직접 포함하는 설계 — 추후 entities 간 의존 해소 예정
 
 interface TiptapEditorProps {
   content: unknown;

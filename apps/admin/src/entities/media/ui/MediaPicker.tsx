@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
-import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { usePermission } from '@/entities/auth/ui/PermissionProvider'; // @fsd-allow: auth는 cross-cutting — PermissionProvider 추후 shared/ui로 이전 예정
 
 import { mediaListOptions } from '../api/mediaQueries';
 import { DEFAULT_MEDIA_PAGE_SIZE } from '../model/mediaFilters';

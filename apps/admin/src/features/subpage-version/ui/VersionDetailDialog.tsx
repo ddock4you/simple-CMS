@@ -23,6 +23,7 @@ import {
 import { Separator } from '@/shared/ui/shadcn/separator';
 import { Skeleton } from '@/shared/ui/shadcn/skeleton';
 
+// @fsd-allow: VersionDetailDialog는 버전 diff 표시를 위해 block-management·subpage-management를 참조 — BlockContentView 추후 shared/ui로 이전 예정
 import { BlockContentView } from '@/features/block-management/ui/BlockContentView';
 import { blockListOptions } from '@/features/block-management/api/blockQueries';
 import { subpageDetailOptions } from '@/features/subpage-management/api/subpageQueries';

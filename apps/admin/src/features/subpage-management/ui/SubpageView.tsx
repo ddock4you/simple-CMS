@@ -22,6 +22,7 @@ import { ViewLiveButton } from '@/entities/preview/ui/ViewLiveButton';
 
 import { subpageDetailOptions } from '../api/subpageQueries';
 import { useDeleteSubpage } from '../api/useSubpageMutations';
+// @fsd-allow: SubpageView는 block-management·subpage-version을 조립하는 pages급 컴포넌트 — 추후 pages 레이어로 이전 예정
 import { BlockContentView } from '@/features/block-management/ui/BlockContentView';
 import { blockListOptions } from '@/features/block-management/api/blockQueries';
 import { BLOCK_TYPE_LABELS } from '@/features/block-management/model/blockLabels';

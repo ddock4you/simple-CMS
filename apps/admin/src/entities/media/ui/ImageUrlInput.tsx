@@ -6,7 +6,7 @@ import { ImageOff, Library, X, Paperclip } from 'lucide-react';
 import { Button } from '@/shared/ui/shadcn/button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { resolveMediaPreviewUrl } from '@/shared/lib/mediaUrl';
-import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { usePermission } from '@/entities/auth/ui/PermissionProvider'; // @fsd-allow: auth는 cross-cutting — PermissionProvider 추후 shared/ui로 이전 예정
 
 import { MediaPicker } from './MediaPicker';
 import { MediaUploadButton } from './MediaUploadButton';
