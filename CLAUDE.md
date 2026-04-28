@@ -418,6 +418,21 @@ apps/{앱}/
 | 11e | E2E 테스트 (Playwright) [[상세]](docs/stages/stage-11e.md) | playwright.config.ts + e2e/ 골든 플로우 5단계 + admin 인증 3건 + web 탐색 3건. CI 통합은 Stage 8(Docker) 이후 | **완료** |
 | 11f | `/check-fsd` 스킬 CI 통합 [[상세]](docs/stages/stage-11f.md) | PR마다 FSD 의존성 위반 자동 감지 + 차단. `@fsd-allow` 블록 주석으로 기존 기술 부채 문서화 | **완료** |
 
+### Stage 12 — 테스트 커버리지 보강 (12a~12j)
+
+| 단계 | 내용 | 확인 가능한 것 | 상태 |
+| ---- | ---- | -------------- | ---- |
+| 12a | 보안 순수 로직 unit (sanitizeCustomHtml, hashIp/extractIp, isIframeHostAllowed, normalizeIframeEmbedUrl, scopeCustomCss, validateFileUpload) [[상세]](docs/stages/stage-12.md) | 6 파일 ~40 it, XSS·PII·iframe·업로드 우회 회귀 방어 | **완료** |
+| 12b | RBAC + 인증 분기 unit + E2E (hasPermission, requirePermission, getVisibleMenuItems / auth 4분기) [[상세]](docs/stages/stage-12.md) | unit 3 파일 + e2e auth.spec 보강 | **완료** |
+| 12c | 데이터 무결성 + kstDate UTC 절단 버그 fix (findMediaReferences, errorLog fingerprint, kstDate) [[상세]](docs/stages/stage-12.md) | unit 3 파일 + fix(kstDate): `Intl.DateTimeFormat` 교체 | **완료** |
+| 12d | 콘텐츠 무결성 unit (recalculateSubpageContent, subpageVersion diff·dangling·retention) [[상세]](docs/stages/stage-12.md) | unit 3~5 파일 | **완료** |
+| 12e | Block UI play (BlockEditDialog 4분기 + dnd 키보드 a11y) [[상세]](docs/stages/stage-12.md) | play 8~10건 | **완료** |
+| 12f | 메인+네비+일괄작업 play (SectionEditDialog 5분기, BulkDialog, MenuItemTree dnd-kit) [[상세]](docs/stages/stage-12.md) | play 12~15건 | **완료** |
+| 12g | RBAC UI play (UserActionButtons, PermissionMatrix, AppSidebar 권한 토글) [[상세]](docs/stages/stage-12.md) | play 8~10건 | **완료** |
+| 12h | 미디어+브랜딩+Settings play + branding MIME E2E (SVG 차단·PNG 허용) [[상세]](docs/stages/stage-12.md) | play 10~14건 + e2e 2건 | **완료** |
+| 12i | P1 일괄 unit+play (extractTextFromTiptap, generateSlug, searchContent, getAuditContext / admin·web 다수 stories) [[상세]](docs/stages/stage-12.md) | unit 4 파일 + play 8~12건 | **완료** |
+| 12j | CI E2E job + RBAC 매트릭스 E2E (Owner/Editor/Viewer × 사이드바·API 403) [[상세]](docs/stages/stage-12.md) | workflow_dispatch E2E job / rbac-matrix.spec 5케이스 / coverage threshold 베이스라인 측정 후 결정 | **완료** |
+
 ## 명령어
 
 ```bash
