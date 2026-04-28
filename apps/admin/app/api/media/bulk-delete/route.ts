@@ -70,6 +70,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     const deleted: string[] = [];
     const blocked: BulkDeleteMediaResponse['blocked'] = [];
 
+    // 의도적 per-item 루프: 참조 확인 후 개별 삭제/차단 분리 → partial success 행동.
+    // zod max(200) 상한으로 최대 쿼리 수 통제.
     for (const media of medias) {
       const references = await findMediaReferences(media.id);
       if (references.length > 0) {
