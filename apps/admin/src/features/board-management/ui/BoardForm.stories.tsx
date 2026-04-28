@@ -17,8 +17,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Stage 12i — 게시판 이름 입력 시 저장 버튼 활성화 회귀 방어.
- * defaultValues 기준 isDirty=false → 이름 입력 후 isDirty=true → 버튼 활성화.
+ * Stage 12i — 게시판 생성 폼 기본 렌더 + 이름 입력 smoke 테스트.
+ * create 모드에서 저장 버튼은 처음부터 활성화(isCreate=true → disabled 조건 비적용).
+ * 이름 필드에 값 입력 후 값 반영 확인.
  */
 export const CreateModeNameInput: Story = {
   args: { mode: 'create' },
@@ -27,10 +28,11 @@ export const CreateModeNameInput: Story = {
     const nameInput = canvas.getByLabelText(/게시판 이름|이름/);
     const saveBtn = canvas.getByRole('button', { name: '저장' });
 
-    expect(saveBtn).toBeDisabled();
+    // create 모드: 저장 버튼은 처음부터 활성화
+    expect(saveBtn).not.toBeDisabled();
     await userEvent.click(nameInput);
     await userEvent.type(nameInput, '공지사항');
-    await waitFor(() => expect(saveBtn).not.toBeDisabled());
+    await waitFor(() => expect(nameInput).toHaveValue('공지사항'));
   },
 };
 

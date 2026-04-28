@@ -17,8 +17,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Stage 12i — 팝업 제목 입력 시 저장 버튼 활성화 회귀 방어.
- * mode='create', 기본 CONTENT 타입. isDirty 기반 버튼 활성화 검증.
+ * Stage 12i — 팝업 생성 폼 기본 렌더 + 제목 입력 smoke 테스트.
+ * create 모드에서 저장 버튼은 처음부터 활성화(isCreate=true → disabled 조건 비적용).
+ * 제목 입력 후 값 반영 확인.
  */
 export const CreateContentType: Story = {
   args: { mode: 'create' },
@@ -27,10 +28,11 @@ export const CreateContentType: Story = {
     const titleInput = canvas.getByLabelText(/제목/);
     const saveBtn = canvas.getByRole('button', { name: '저장' });
 
-    expect(saveBtn).toBeDisabled();
+    // create 모드: 저장 버튼은 처음부터 활성화
+    expect(saveBtn).not.toBeDisabled();
     await userEvent.click(titleInput);
     await userEvent.type(titleInput, '신규 팝업');
-    await waitFor(() => expect(saveBtn).not.toBeDisabled());
+    await waitFor(() => expect(titleInput).toHaveValue('신규 팝업'));
   },
 };
 

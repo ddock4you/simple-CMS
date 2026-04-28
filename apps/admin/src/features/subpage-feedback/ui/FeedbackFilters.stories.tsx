@@ -33,8 +33,9 @@ type Story = StoryObj<typeof meta>;
 export const DefaultRender: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    expect(canvas.getByPlaceholderText('시작일')).toBeInTheDocument();
-    expect(canvas.getByPlaceholderText('종료일')).toBeInTheDocument();
+    // DatePicker는 <button>으로 렌더 (placeholder 아님)
+    expect(canvas.getByRole('button', { name: /시작일/ })).toBeInTheDocument();
+    expect(canvas.getByRole('button', { name: /종료일/ })).toBeInTheDocument();
     expect(canvas.getByPlaceholderText('코멘트 검색')).toBeInTheDocument();
     expect(canvas.getByText('평가 전체')).toBeInTheDocument();
     expect(canvas.getByText('서브페이지 전체')).toBeInTheDocument();
