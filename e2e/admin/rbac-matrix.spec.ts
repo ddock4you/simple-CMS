@@ -10,7 +10,7 @@
  * 매트릭스 요약:
  *                    | subpages | posts | media | users | settings
  * Owner  (isSystem)  |    ✅    |  ✅   |  ✅   |  ✅   |   ✅
- * Editor (default)   |    ✅    |  ✅   |  ✅   |  ❌   |   ❌
+ * Editor (explicit)  |    ✅    |  ✅   |  ✅   |  ❌   |   ❌
  * Viewer (read-only) |    ✅    |  ❌   |  ❌   |  ❌   |   ❌
  */
 import {
@@ -95,6 +95,7 @@ test.describe('RBAC 매트릭스 — 역할별 사이드바 노출·API 접근 �
 
   let editorUserId = '';
   let viewerUserId = '';
+  let editorRoleId = '';
   let viewerRoleId = '';
 
   let ownerContext: BrowserContext | null = null;
@@ -105,7 +106,25 @@ test.describe('RBAC 매트릭스 — 역할별 사이드바 노출·API 접근 �
     // 1. Admin login
     await adminLogin(request);
 
-    // 2. "읽기 전용" 역할 생성 (subpages:read 만)
+    // 2. "편집자" 역할 생성 (subpages/posts/media:read + posts/media:create)
+    const editorRoleRes = await request.post(`${ADMIN_URL}/api/roles`, {
+      data: {
+        name: `편집자 E2E ${suffix}`,
+        description: 'E2E 테스트용 편집자 역할',
+        permissions: {
+          subpages: { read: true },
+          boards: { read: true },
+          posts: { create: true, read: true, update: true },
+          media: { read: true, create: true },
+          'subpage-feedback': { read: true },
+        },
+      },
+    });
+    if (!editorRoleRes.ok())
+      throw new Error(`Create editor role failed: ${editorRoleRes.status()}`);
+    editorRoleId = (await editorRoleRes.json()).data.id;
+
+    // 3. "읽기 전용" 역할 생성 (subpages:read 만)
     const roleRes = await request.post(`${ADMIN_URL}/api/roles`, {
       data: {
         name: `읽기 전용 E2E ${suffix}`,
@@ -117,7 +136,7 @@ test.describe('RBAC 매트릭스 — 역할별 사이드바 노출·API 접근 �
       throw new Error(`Create viewer role failed: ${roleRes.status()}`);
     viewerRoleId = (await roleRes.json()).data.id;
 
-    // 3. 테스트 사용자 생성 + 승인 (기본 역할 배정)
+    // 4. 테스트 사용자 생성 + 승인
     await registerTestUser(request, editorUsername);
     await registerTestUser(request, viewerUsername);
 
@@ -127,7 +146,15 @@ test.describe('RBAC 매트릭스 — 역할별 사이드바 노출·API 접근 �
     await approveUser(request, editorUserId);
     await approveUser(request, viewerUserId);
 
-    // 4. viewerUser에 "읽기 전용" 역할 배정
+    // 5. editorUser에 "편집자" 역할 배정
+    const assignEditorRes = await request.patch(
+      `${ADMIN_URL}/api/users/${editorUserId}/role`,
+      { data: { roleId: editorRoleId } },
+    );
+    if (!assignEditorRes.ok())
+      throw new Error(`Assign editor role failed: ${assignEditorRes.status()}`);
+
+    // 6. viewerUser에 "읽기 전용" 역할 배정
     const assignRes = await request.patch(
       `${ADMIN_URL}/api/users/${viewerUserId}/role`,
       { data: { roleId: viewerRoleId } },
@@ -150,7 +177,7 @@ test.describe('RBAC 매트릭스 — 역할별 사이드바 노출·API 접근 �
     await editorContext?.close();
     await viewerContext?.close();
 
-    // 역할 삭제 전 viewerUser를 기본 역할로 돌려놓음
+    // 역할 삭제 전 테스트 유저들을 기본 역할로 되돌린 후 E2E 전용 역할 삭제
     try {
       await adminLogin(request);
       // default role 조회
@@ -158,10 +185,20 @@ test.describe('RBAC 매트릭스 — 역할별 사이드바 노출·API 접근 �
       const defaultRole = (await rolesRes.json()).data?.roles?.find(
         (r: { isDefault: boolean; id: string }) => r.isDefault,
       );
-      if (defaultRole && viewerUserId) {
-        await request.patch(`${ADMIN_URL}/api/users/${viewerUserId}/role`, {
-          data: { roleId: defaultRole.id },
-        });
+      if (defaultRole) {
+        if (editorUserId) {
+          await request.patch(`${ADMIN_URL}/api/users/${editorUserId}/role`, {
+            data: { roleId: defaultRole.id },
+          });
+        }
+        if (viewerUserId) {
+          await request.patch(`${ADMIN_URL}/api/users/${viewerUserId}/role`, {
+            data: { roleId: defaultRole.id },
+          });
+        }
+      }
+      if (editorRoleId) {
+        await request.delete(`${ADMIN_URL}/api/roles/${editorRoleId}`);
       }
       if (viewerRoleId) {
         await request.delete(`${ADMIN_URL}/api/roles/${viewerRoleId}`);

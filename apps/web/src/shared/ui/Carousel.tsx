@@ -213,6 +213,7 @@ export function Carousel({
           {options.showDots && (
             <div
               className="krds-carousel-dots"
+              role="group"
               aria-label="슬라이드 인디케이터"
             />
           )}

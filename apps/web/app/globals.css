@@ -406,7 +406,7 @@ body {
 
 .empty-message {
   text-align: center;
-  color: #999;
+  color: #767676;
   padding: var(--gap-8, 40px) 0;
 }
 
@@ -432,7 +432,7 @@ body {
 
 .home-empty-message {
   text-align: center;
-  color: #999;
+  color: #767676;
   padding: var(--gap-6, 24px) 0;
 }
 

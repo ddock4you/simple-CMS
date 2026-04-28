@@ -42,7 +42,7 @@ test.describe('골든 플로우', () => {
     await page.getByLabel('비밀번호').fill(ADMIN_PASSWORD);
     await page.getByRole('button', { name: '로그인' }).click();
     await page.waitForURL(`${ADMIN_URL}/dashboard`);
-    await expect(page.getByText('대시보드')).toBeVisible();
+    await expect(page.getByRole('heading', { name: '대시보드' })).toBeVisible();
   });
 
   test('2. 서브페이지 생성 (초안)', async ({ page }) => {
@@ -53,7 +53,7 @@ test.describe('골든 플로우', () => {
     await page.waitForURL(`${ADMIN_URL}/dashboard`);
 
     await page.goto(`${ADMIN_URL}/subpages/new`);
-    await page.getByLabel('제목').fill(TITLE);
+    await page.getByLabel('제목', { exact: true }).fill(TITLE);
 
     // slug 자동 생성 대기
     await page.waitForTimeout(300);
