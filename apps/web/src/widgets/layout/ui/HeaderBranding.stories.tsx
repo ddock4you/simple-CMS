@@ -34,7 +34,9 @@ export const WithLogo: Story = {
     const logoLink = canvas.getByRole('link', { name: 'Simple CMS 로고' });
     expect(logoLink).toBeInTheDocument();
     expect(logoLink).toHaveAttribute('href', '/');
-    const logoImg = canvas.getByRole('img');
+    // alt=""인 장식 이미지는 role="presentation" → getByRole('img') 불가
+    const logoImg = canvasElement.querySelector('img');
+    expect(logoImg).toBeInTheDocument();
     expect(logoImg).toHaveAttribute('alt', '');
     expect(canvas.getByRole('link', { name: '검색' })).toBeInTheDocument();
   },
