@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   DndContext,
   closestCenter,
@@ -16,9 +17,15 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
-import { Button } from '@/shared/ui/shadcn/button';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { navigationKeys } from '@/shared/api/queryKeys';
+import { useStagedOrder } from '@/shared/lib/useStagedOrder';
+import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
+import { Button } from '@/shared/ui/shadcn/button';
+import { OrderActionButtons } from '@/shared/ui/OrderActionButtons';
+import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 
 import type { MenuItemNode } from '../model/navigationFilters';
 import type { CreateMenuItemData, UpdateMenuItemData } from '../model/navigationSchemas';
@@ -36,15 +43,28 @@ interface MenuItemTreeProps {
   items: MenuItemNode[];
 }
 
-export function MenuItemTree({ menuId, items }: MenuItemTreeProps) {
+export function MenuItemTree({ menuId, items: propItems }: MenuItemTreeProps) {
   const canCreate = usePermission('navigation', 'create');
   const canUpdate = usePermission('navigation', 'update');
   const canDelete = usePermission('navigation', 'delete');
 
+  const queryClient = useQueryClient();
   const createMutation = useCreateMenuItem(menuId);
   const updateMutation = useUpdateMenuItem(menuId);
   const deleteMutation = useDeleteMenuItem(menuId);
   const reorderMutation = useReorderItems(menuId);
+
+  const { items, isDirty, dirtyCount, applyTreeDragEnd, getDirtyPayload, reset } =
+    useStagedOrder({
+      data: propItems,
+      mode: 'tree',
+      getId: (n) => n.id,
+      getOrder: (n) => n.displayOrder,
+      getChildren: (n) => n.children,
+      setChildren: (n, children) => ({ ...n, children }),
+    });
+
+  const { confirmDialogProps } = useDirtyGuard(isDirty && canUpdate);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogParentId, setDialogParentId] = useState<string | null>(null);
@@ -60,37 +80,35 @@ export function MenuItemTree({ menuId, items }: MenuItemTreeProps) {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
-      // Find the parent group these items belong to
-      const activeItem = findItem(items, String(active.id));
-      const overItem = findItem(items, String(over.id));
-      if (!activeItem || !overItem) return;
-
       // Only reorder within same parent
       const activeParent = findParentId(items, String(active.id));
       const overParent = findParentId(items, String(over.id));
       if (activeParent !== overParent) return;
 
-      const siblings = activeParent === null
-        ? items
-        : findItem(items, activeParent)?.children ?? [];
-
-      const oldIndex = siblings.findIndex((i) => i.id === active.id);
-      const newIndex = siblings.findIndex((i) => i.id === over.id);
-      if (oldIndex === -1 || newIndex === -1) return;
-
-      const reordered = [...siblings];
-      const [moved] = reordered.splice(oldIndex, 1);
-      reordered.splice(newIndex, 0, moved);
-
-      reorderMutation.mutate({
-        items: reordered.map((item, index) => ({
-          id: item.id,
-          displayOrder: index,
-        })),
+      applyTreeDragEnd({
+        parentId: activeParent,
+        activeId: String(active.id),
+        overId: String(over.id),
       });
     },
-    [items, reorderMutation],
+    [items, applyTreeDragEnd],
   );
+
+  const handleSave = () => {
+    reorderMutation.mutate(
+      { items: getDirtyPayload() },
+      {
+        onSuccess: () => {
+          reset();
+          queryClient.invalidateQueries({ queryKey: navigationKeys.detail(menuId) });
+          toast.success('순서가 저장되었습니다.');
+        },
+        onError: (error) => {
+          toast.error(error.message);
+        },
+      },
+    );
+  };
 
   const handleAddRoot = () => {
     setEditItem(null);
@@ -150,12 +168,22 @@ export function MenuItemTree({ menuId, items }: MenuItemTreeProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">메뉴 항목</h3>
-        {canCreate && (
-          <Button variant="outline" size="sm" onClick={handleAddRoot}>
-            <Plus className="size-4" />
-            항목 추가
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {canUpdate && (
+            <OrderActionButtons
+              dirtyCount={dirtyCount}
+              isSaving={reorderMutation.isPending}
+              onReset={reset}
+              onSave={handleSave}
+            />
+          )}
+          {canCreate && (
+            <Button variant="outline" size="sm" onClick={handleAddRoot}>
+              <Plus className="size-4" />
+              항목 추가
+            </Button>
+          )}
+        </div>
       </div>
 
       {items.length === 0 ? (
@@ -245,18 +273,10 @@ export function MenuItemTree({ menuId, items }: MenuItemTreeProps) {
         parentId={dialogParentId}
         editItem={editItem}
       />
+
+      <ConfirmLeaveDialog {...confirmDialogProps} />
     </div>
   );
-}
-
-// Helper: find item in tree
-function findItem(items: MenuItemNode[], id: string): MenuItemNode | null {
-  for (const item of items) {
-    if (item.id === id) return item;
-    const found = findItem(item.children, id);
-    if (found) return found;
-  }
-  return null;
 }
 
 // Helper: find parent ID of an item

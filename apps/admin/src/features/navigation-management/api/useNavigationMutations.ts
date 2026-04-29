@@ -13,7 +13,6 @@ import type {
   UpdateMenuItemData,
   ReorderItemsData,
 } from '../model/navigationSchemas';
-import type { MenuSetDetail } from '../model/navigationFilters';
 import {
   createMenuSet,
   updateMenuSet,
@@ -124,54 +123,8 @@ export function useDeleteMenuItem(menuId: string) {
   });
 }
 
-interface ReorderTreeNode {
-  id: string;
-  displayOrder: number;
-  children: ReorderTreeNode[];
-}
-
-function applyReorderToTree<T extends ReorderTreeNode>(
-  nodes: T[],
-  orderMap: Map<string, number>,
-): T[] {
-  return nodes
-    .map((node) => ({
-      ...node,
-      displayOrder: orderMap.get(node.id) ?? node.displayOrder,
-      children: applyReorderToTree(node.children, orderMap),
-    }))
-    .sort((a, b) => a.displayOrder - b.displayOrder);
-}
-
 export function useReorderItems(menuId: string) {
-  const queryClient = useQueryClient();
-  const queryKey = navigationKeys.detail(menuId);
-
   return useMutation({
     mutationFn: (data: ReorderItemsData) => reorderItems(menuId, data),
-    onMutate: async (variables) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previousData =
-        queryClient.getQueryData<MenuSetDetail>(queryKey);
-      if (previousData) {
-        const orderMap = new Map(
-          variables.items.map(({ id, displayOrder }) => [id, displayOrder]),
-        );
-        queryClient.setQueryData(queryKey, {
-          ...previousData,
-          items: applyReorderToTree(previousData.items, orderMap),
-        });
-      }
-      return { previousData };
-    },
-    onError: (error: FetchError, _vars, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(queryKey, context.previousData);
-      }
-      toast.error(error.message);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
-    },
   });
 }
