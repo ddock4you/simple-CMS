@@ -70,7 +70,7 @@ test.describe('골든 플로우', () => {
     const url = page.url();
     subpageId = url.split('/').pop() ?? '';
     expect(subpageId).toBeTruthy();
-    await expect(page.getByText('초안')).toBeVisible();
+    await expect(page.getByText('초안', { exact: true })).toBeVisible();
   });
 
   test('3. 서브페이지 발행', async ({ page }) => {
@@ -90,7 +90,7 @@ test.describe('골든 플로우', () => {
 
     await page.getByRole('button', { name: '저장' }).click();
     await page.waitForURL(`${ADMIN_URL}/subpages/${subpageId}`);
-    await expect(page.getByText('발행')).toBeVisible();
+    await expect(page.getByText('발행', { exact: true })).toBeVisible();
   });
 
   test('4. web에서 공개 서브페이지 확인', async ({ page }) => {

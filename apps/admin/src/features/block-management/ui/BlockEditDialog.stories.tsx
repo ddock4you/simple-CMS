@@ -101,7 +101,7 @@ export const CreateImageUrlRequired: Story = {
     const body = within(document.body);
     const altInput = await body.findByLabelText(/대체 텍스트/);
     await userEvent.type(altInput, '이미지 설명');
-    await userEvent.click(body.getByRole('button', { name: '저장' }));
+    await userEvent.click(await body.findByRole('button', { name: '저장' }));
     expect(
       await body.findByText(/이미지 URL을 입력해주세요/),
     ).toBeInTheDocument();
