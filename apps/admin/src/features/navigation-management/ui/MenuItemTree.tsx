@@ -99,9 +99,8 @@ export function MenuItemTree({ menuId, items: propItems }: MenuItemTreeProps) {
       { items: getDirtyPayload() },
       {
         onSuccess: () => {
-          reset();
-          queryClient.invalidateQueries({ queryKey: navigationKeys.detail(menuId) });
           toast.success('순서가 저장되었습니다.');
+          void queryClient.invalidateQueries({ queryKey: navigationKeys.detail(menuId) }).then(() => reset());
         },
         onError: (error) => {
           toast.error(error.message);

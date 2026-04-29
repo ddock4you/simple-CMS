@@ -110,9 +110,8 @@ export function BlockManager({ subpageId }: { subpageId: string }) {
       { blocks: getDirtyPayload() },
       {
         onSuccess: () => {
-          reset();
-          queryClient.invalidateQueries({ queryKey: blockKeys.lists(subpageId) });
           toast.success('순서가 저장되었습니다.');
+          void queryClient.invalidateQueries({ queryKey: blockKeys.lists(subpageId) }).then(() => reset());
         },
         onError: (error) => {
           toast.error(error.message);

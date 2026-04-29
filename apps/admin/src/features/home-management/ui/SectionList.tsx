@@ -86,9 +86,8 @@ export function SectionList({ sections, canUpdate }: SectionListProps) {
       { sections: getDirtyPayload() },
       {
         onSuccess: () => {
-          reset();
-          queryClient.invalidateQueries({ queryKey: homeKeys.all });
           toast.success('순서가 저장되었습니다.');
+          void queryClient.invalidateQueries({ queryKey: homeKeys.all }).then(() => reset());
         },
         onError: (error) => {
           toast.error(error.message);
