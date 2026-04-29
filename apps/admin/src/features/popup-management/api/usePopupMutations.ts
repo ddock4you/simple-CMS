@@ -74,38 +74,8 @@ export function useDeleteHomePopup() {
 }
 
 export function useReorderHomePopups() {
-  const queryClient = useQueryClient();
-  const queryKey = popupKeys.lists();
-
   return useMutation({
     mutationFn: (data: ReorderHomePopupsDto) => reorderHomePopups(data),
-    onMutate: async (variables) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previousData =
-        queryClient.getQueryData<HomePopupListItem[]>(queryKey);
-      if (previousData) {
-        const orderMap = new Map(
-          variables.popups.map(({ id, displayOrder }) => [id, displayOrder]),
-        );
-        const sorted = [...previousData]
-          .map((item) => ({
-            ...item,
-            displayOrder: orderMap.get(item.id) ?? item.displayOrder,
-          }))
-          .sort((a, b) => a.displayOrder - b.displayOrder);
-        queryClient.setQueryData(queryKey, sorted);
-      }
-      return { previousData };
-    },
-    onError: (error: FetchError, _vars, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(queryKey, context.previousData);
-      }
-      toast.error(error.message);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
-    },
   });
 }
 

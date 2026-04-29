@@ -1,6 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   DndContext,
   closestCenter,
@@ -15,8 +16,14 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { toast } from 'sonner';
 
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { popupKeys } from '@/shared/api/queryKeys';
+import { useStagedOrder } from '@/shared/lib/useStagedOrder';
+import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
+import { OrderActionButtons } from '@/shared/ui/OrderActionButtons';
+import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 
 import { homePopupListOptions } from '../api/popupQueries';
 import { useReorderHomePopups } from '../api/usePopupMutations';
@@ -26,7 +33,18 @@ import { SortablePopupCard } from './SortablePopupCard';
 export function PopupList() {
   const { data } = useQuery(homePopupListOptions());
   const reorder = useReorderHomePopups();
+  const queryClient = useQueryClient();
   const canUpdate = usePermission('home-popups', 'update');
+
+  const { items, isDirty, dirtyCount, applyDragEnd, getDirtyPayload, reset } =
+    useStagedOrder({
+      data: data ?? [],
+      mode: 'list',
+      getId: (p) => p.id,
+      getOrder: (p) => p.displayOrder,
+    });
+
+  const { confirmDialogProps } = useDirtyGuard(isDirty && canUpdate);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -35,19 +53,29 @@ export function PopupList() {
     }),
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    if (!data) return;
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = data.findIndex((p) => p.id === active.id);
-    const newIndex = data.findIndex((p) => p.id === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
-    const reordered = [...data];
-    const [moved] = reordered.splice(oldIndex, 1);
-    reordered.splice(newIndex, 0, moved);
-    reorder.mutate({
-      popups: reordered.map((p, i) => ({ id: p.id, displayOrder: i })),
-    });
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      applyDragEnd(String(active.id), String(over.id));
+    },
+    [applyDragEnd],
+  );
+
+  const handleSave = () => {
+    reorder.mutate(
+      { popups: getDirtyPayload() },
+      {
+        onSuccess: () => {
+          reset();
+          queryClient.invalidateQueries({ queryKey: popupKeys.all });
+          toast.success('순서가 저장되었습니다.');
+        },
+        onError: (error) => {
+          toast.error(error.message);
+        },
+      },
+    );
   };
 
   if (!data) return null;
@@ -61,25 +89,38 @@ export function PopupList() {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        items={data.map((p) => p.id)}
-        strategy={verticalListSortingStrategy}
+    <>
+      {canUpdate && (
+        <OrderActionButtons
+          dirtyCount={dirtyCount}
+          isSaving={reorder.isPending}
+          onReset={reset}
+          onSave={handleSave}
+        />
+      )}
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
       >
-        <div className="space-y-2">
-          {data.map((popup) => (
-            <SortablePopupCard
-              key={popup.id}
-              popup={popup}
-              canUpdate={canUpdate}
-            />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+        <SortableContext
+          items={items.map((p) => p.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-2">
+            {items.map((popup) => (
+              <SortablePopupCard
+                key={popup.id}
+                popup={popup}
+                canUpdate={canUpdate}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      <ConfirmLeaveDialog {...confirmDialogProps} />
+    </>
   );
 }
