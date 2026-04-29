@@ -48,13 +48,15 @@ export async function PATCH(
       );
     }
 
-    // Batch update displayOrder
-    for (const item of items) {
-      await prisma.navigationMenuItem.update({
-        where: { id: item.id },
-        data: { displayOrder: item.displayOrder },
-      });
-    }
+    // Batch update displayOrder atomically
+    await prisma.$transaction(
+      items.map((item) =>
+        prisma.navigationMenuItem.update({
+          where: { id: item.id },
+          data: { displayOrder: item.displayOrder },
+        }),
+      ),
+    );
 
     const auditContext = getAuditContext(request);
     logAuditEvent({
