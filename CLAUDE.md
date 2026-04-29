@@ -433,6 +433,16 @@ apps/{앱}/
 | 12i | P1 일괄 unit+play (extractTextFromTiptap, generateSlug, searchContent, getAuditContext / admin·web 다수 stories) [[상세]](docs/stages/stage-12.md) | unit 4 파일 + play 8~12건 | **완료** |
 | 12j | CI E2E job + RBAC 매트릭스 E2E (Owner/Editor/Viewer × 사이드바·API 403) [[상세]](docs/stages/stage-12.md) | workflow_dispatch E2E job / rbac-matrix.spec 5케이스 / coverage threshold 베이스라인 측정 후 결정 | **완료** |
 
+### Stage 13 — DnD Staged Save (드롭 즉시 저장 → 명시적 [순서 저장] 버튼으로 전환)
+
+| 단계 | 내용 | 확인 가능한 것 | 상태 |
+| ---- | ---- | -------------- | ---- |
+| 13a | 공통 인프라: `useStagedOrder` 훅 + `OrderActionButtons` UI + unit/Storybook 테스트 | 훅 unit 260/260 통과, Storybook play 6건 | **완료** |
+| 13b | HomeSection 적용 (SectionList + useHomeMutations onMutate 제거 + 페이지 가드) | 섹션 DnD 후 [순서 저장] 클릭 시에만 서버 반영 | 대기 |
+| 13c | HomePopup 적용 (PopupList + usePopupMutations onMutate 제거) | 팝업 DnD staged 흐름 + id 집합 변경 배너 | 대기 |
+| 13d | PageBlock 적용 (BlockManager + SubpageEditClient 복합 dirty 가드) | 블록 순서 저장 + "변경 즉시 저장됩니다" 안내 제거 | 대기 |
+| 13e | NavigationMenuItem 적용 (tree 모드) + reorder API 트랜잭션 fix | 메뉴 DnD staged + 원자적 reorder 보장 | 대기 |
+
 ## 명령어
 
 ```bash
