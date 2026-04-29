@@ -20,6 +20,10 @@ import { toast } from 'sonner';
 
 import type { FetchError } from '@/shared/api/fetchClient';
 import { homeKeys } from '@/shared/api/queryKeys';
+import { useStagedOrder } from '@/shared/lib/useStagedOrder';
+import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
+import { OrderActionButtons } from '@/shared/ui/OrderActionButtons';
+import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 
 import { useReorderHomeSections } from '../api/useHomeMutations';
 import { updateHomeSection } from '../api/homeFetchers';
@@ -38,6 +42,16 @@ export function SectionList({ sections, canUpdate }: SectionListProps) {
   const [editingSection, setEditingSection] =
     useState<HomeSectionListItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const { items, isDirty, dirtyCount, applyDragEnd, getDirtyPayload, reset } =
+    useStagedOrder({
+      data: sections,
+      mode: 'list',
+      getId: (s) => s.id,
+      getOrder: (s) => s.displayOrder,
+    });
+
+  const { confirmDialogProps } = useDirtyGuard(isDirty && canUpdate);
 
   // 섹션 수가 6개로 고정되지만, 토글은 단일 mutation에 id를 인자로 주입하여 hook 규칙 준수.
   const toggleMutation = useMutation({
@@ -62,24 +76,26 @@ export function SectionList({ sections, canUpdate }: SectionListProps) {
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-
-      const oldIndex = sections.findIndex((s) => s.id === active.id);
-      const newIndex = sections.findIndex((s) => s.id === over.id);
-      if (oldIndex === -1 || newIndex === -1) return;
-
-      const reordered = [...sections];
-      const [moved] = reordered.splice(oldIndex, 1);
-      reordered.splice(newIndex, 0, moved);
-
-      reorderMutation.mutate({
-        sections: reordered.map((section, index) => ({
-          id: section.id,
-          displayOrder: index,
-        })),
-      });
+      applyDragEnd(String(active.id), String(over.id));
     },
-    [sections, reorderMutation],
+    [applyDragEnd],
   );
+
+  const handleSave = () => {
+    reorderMutation.mutate(
+      { sections: getDirtyPayload() },
+      {
+        onSuccess: () => {
+          reset();
+          queryClient.invalidateQueries({ queryKey: homeKeys.all });
+          toast.success('순서가 저장되었습니다.');
+        },
+        onError: (error) => {
+          toast.error(error.message);
+        },
+      },
+    );
+  };
 
   const handleEdit = (section: HomeSectionListItem) => {
     setEditingSection(section);
@@ -95,17 +111,26 @@ export function SectionList({ sections, canUpdate }: SectionListProps) {
 
   return (
     <>
+      {canUpdate && (
+        <OrderActionButtons
+          dirtyCount={dirtyCount}
+          isSaving={reorderMutation.isPending}
+          onReset={reset}
+          onSave={handleSave}
+        />
+      )}
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={sections.map((s) => s.id)}
+          items={items.map((s) => s.id)}
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-2">
-            {sections.map((section) => (
+            {items.map((section) => (
               <SortableSectionCard
                 key={section.id}
                 section={section}
@@ -126,6 +151,8 @@ export function SectionList({ sections, canUpdate }: SectionListProps) {
           if (!open) setEditingSection(null);
         }}
       />
+
+      <ConfirmLeaveDialog {...confirmDialogProps} />
     </>
   );
 }
