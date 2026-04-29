@@ -437,11 +437,11 @@ apps/{앱}/
 
 | 단계 | 내용 | 확인 가능한 것 | 상태 |
 | ---- | ---- | -------------- | ---- |
-| 13a | 공통 인프라: `useStagedOrder` 훅 + `OrderActionButtons` UI + unit/Storybook 테스트 | 훅 unit 260/260 통과, Storybook play 6건 | **완료** |
-| 13b | HomeSection 적용 (SectionList + useHomeMutations onMutate 제거 + 페이지 가드) | 섹션 DnD 후 [순서 저장] 클릭 시에만 서버 반영 | 대기 |
-| 13c | HomePopup 적용 (PopupList + usePopupMutations onMutate 제거) | 팝업 DnD staged 흐름 + id 집합 변경 배너 | 대기 |
-| 13d | PageBlock 적용 (BlockManager + SubpageEditClient 복합 dirty 가드) | 블록 순서 저장 + "변경 즉시 저장됩니다" 안내 제거 | 대기 |
-| 13e | NavigationMenuItem 적용 (tree 모드) + reorder API 트랜잭션 fix | 메뉴 DnD staged + 원자적 reorder 보장 | 대기 |
+| 13a | 공통 인프라: `useStagedOrder` 훅 + `OrderActionButtons` UI + unit/Storybook 테스트 | 훅 unit 132/132 통과, Storybook play 6건 | **완료** |
+| 13b | HomeSection 적용 (SectionList + useHomeMutations onMutate 제거 + 페이지 가드) | 섹션 DnD 후 [순서 저장] 클릭 시에만 서버 반영 | **완료** |
+| 13c | HomePopup 적용 (PopupList + usePopupMutations onMutate 제거) | 팝업 DnD staged 흐름 + visibility 토글 staged 공존 | **완료** |
+| 13d | PageBlock 적용 (BlockManager + SubpageForm 복합 dirty 가드 공존) | 블록 순서 저장 + "블록 추가·편집·삭제는 즉시 저장됩니다" 안내 교체 | **완료** |
+| 13e | NavigationMenuItem 적용 (tree 모드) + reorder API 트랜잭션 fix [[상세]](docs/stages/stage-13.md) | 메뉴 DnD staged + prisma.$transaction 원자적 reorder | **완료** |
 
 ## 명령어
 
@@ -593,7 +593,7 @@ shared/lib/
 | 폼 관리                  | react-hook-form + zod                              | admin               | shadcn/ui Form 패턴 활용                                                                                          |
 | 테이블                   | TanStack Table                                     | admin               | shadcn/ui Data Table 패턴 활용                                                                                    |
 | 토스트/알림              | sonner                                             | admin               | shadcn/ui Toast 패턴 활용                                                                                         |
-| 드래그&드롭              | dnd-kit                                            | admin               | displayOrder 관리용                                                                                               |
+| 드래그&드롭              | dnd-kit                                            | admin               | displayOrder 관리용. drop 즉시 저장이 아닌 staged commit 패턴 (`useStagedOrder` + `[순서 저장]` 버튼으로 명시적 commit) |
 | 콘텐츠 에디터            | Tiptap                                             | admin               | WYSIWYG 편집, Tiptap JSON으로 저장                                                                                |
 | 콘텐츠 렌더러            | @tiptap/html (generateHTML)                        | web                 | Server-side HTML 생성, DOMPurify 새니타이징                                                                       |
 | 공유 에디터 설정         | @simple-cms/editor                                 | 전체                | Tiptap 확장 정의, 콘텐츠 CSS, 텍스트 추출 유틸                                                                    |
