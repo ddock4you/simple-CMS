@@ -16,7 +16,7 @@ import {
 } from '@/shared/ui/shadcn/table';
 import { Button } from '@/shared/ui/shadcn/button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
-import { InlineStatusToggle } from '@/shared/ui/InlineStatusToggle';
+import { InlineStatusSwitchToggle } from '@/shared/ui/InlineStatusSwitchToggle';
 import { BulkActionBar } from '@/shared/ui/BulkActionBar';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
@@ -27,11 +27,6 @@ import { SubpageStatusBadge } from './SubpageStatusBadge';
 import { SubpagePagination } from './SubpagePagination';
 import { BulkDeleteSubpageDialog } from './BulkDeleteSubpageDialog';
 import { BulkStatusSubpageDialog } from './BulkStatusSubpageDialog';
-
-const STATUS_OPTIONS = [
-  { value: 'DRAFT' as const, label: '초안' },
-  { value: 'PUBLISHED' as const, label: '발행' },
-];
 
 interface SubpageTableProps {
   filters: SubpageListFilters;
@@ -173,9 +168,10 @@ export function SubpageTable({ filters }: SubpageTableProps) {
                   </TableCell>
                   <TableCell>
                     {canUpdate ? (
-                      <InlineStatusToggle
+                      <InlineStatusSwitchToggle
                         value={subpage.status}
-                        options={STATUS_OPTIONS}
+                        onState="PUBLISHED"
+                        offState="DRAFT"
                         onChange={(status) =>
                           toggleStatus.mutate({ id: subpage.id, status })
                         }

@@ -16,7 +16,7 @@ import {
 } from '@/shared/ui/shadcn/table';
 import { Button } from '@/shared/ui/shadcn/button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
-import { InlineStatusToggle } from '@/shared/ui/InlineStatusToggle';
+import { InlineStatusSwitchToggle } from '@/shared/ui/InlineStatusSwitchToggle';
 import { BulkActionBar } from '@/shared/ui/BulkActionBar';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
@@ -28,11 +28,6 @@ import { PostPagination } from './PostPagination';
 import { BulkDeletePostDialog } from './BulkDeletePostDialog';
 import { BulkStatusPostDialog } from './BulkStatusPostDialog';
 import { BulkMovePostDialog } from './BulkMovePostDialog';
-
-const STATUS_OPTIONS = [
-  { value: 'DRAFT' as const, label: '초안' },
-  { value: 'PUBLISHED' as const, label: '발행' },
-];
 
 interface PostTableProps {
   filters: PostListFilters;
@@ -180,9 +175,10 @@ export function PostTable({ filters }: PostTableProps) {
                   </TableCell>
                   <TableCell>
                     {canUpdate ? (
-                      <InlineStatusToggle
+                      <InlineStatusSwitchToggle
                         value={post.status}
-                        options={STATUS_OPTIONS}
+                        onState="PUBLISHED"
+                        offState="DRAFT"
                         onChange={(status) =>
                           toggleStatus.mutate({ id: post.id, status })
                         }
