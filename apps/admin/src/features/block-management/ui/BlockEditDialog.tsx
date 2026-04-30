@@ -14,6 +14,7 @@ import { Button } from '@/shared/ui/shadcn/button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -138,7 +139,7 @@ export function BlockEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal>
-      <DialogContent size="lg" className="w-[95vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent size="lg" bodyOnlyScroll className="w-[95vw]">
         <DialogHeader>
           <DialogTitle>
             {mode === 'create' ? '블록 추가' : '블록 편집'} —{' '}
@@ -151,7 +152,7 @@ export function BlockEditDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <DialogBody className="space-y-4 px-0">
           {activeType === 'RICH_TEXT' && (
             <RichTextBlockFields
               value={config as RichTextBlockConfigData}
@@ -187,7 +188,7 @@ export function BlockEditDialog({
               공개 웹에 노출
             </Label>
           </div>
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button

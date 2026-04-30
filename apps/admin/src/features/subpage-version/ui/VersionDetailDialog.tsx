@@ -14,6 +14,7 @@ import { Badge } from '@/shared/ui/shadcn/badge';
 import { Button } from '@/shared/ui/shadcn/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -150,7 +151,7 @@ export function VersionDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal>
-      <DialogContent size="lg" className="max-h-[90vh] overflow-y-auto">
+      <DialogContent size="lg" bodyOnlyScroll>
         <DialogHeader>
           <DialogTitle>버전 상세</DialogTitle>
           <DialogDescription>
@@ -158,6 +159,7 @@ export function VersionDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <DialogBody className="px-0">
         {versionLoading && (
           <div className="space-y-3">
             <Skeleton className="h-6 w-1/2" />
@@ -290,6 +292,7 @@ export function VersionDetailDialog({
             </section>
           </div>
         )}
+        </DialogBody>
 
         <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
           <div>

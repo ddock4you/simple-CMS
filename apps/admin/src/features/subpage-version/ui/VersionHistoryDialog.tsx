@@ -11,6 +11,7 @@ import { Badge } from '@/shared/ui/shadcn/badge';
 import { Button } from '@/shared/ui/shadcn/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -129,7 +130,7 @@ export function VersionHistoryDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent bodyOnlyScroll className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <History className="size-5" aria-hidden />
@@ -140,6 +141,7 @@ export function VersionHistoryDialog({
             </DialogDescription>
           </DialogHeader>
 
+          <DialogBody className="px-0">
           {/* 필터 영역 */}
           <div className="grid grid-cols-1 gap-3 rounded-md border bg-muted/20 p-3 text-sm md:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1">
@@ -410,6 +412,7 @@ export function VersionHistoryDialog({
               </div>
             </div>
           )}
+          </DialogBody>
 
           <DialogFooter>
             <Button
