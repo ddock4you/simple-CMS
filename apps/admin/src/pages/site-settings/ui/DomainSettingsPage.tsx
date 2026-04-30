@@ -3,6 +3,7 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { getQueryClient } from '@/shared/api/queryClient';
 import { domainSettingsOptions } from '@/features/site-settings/api/settingsQueries';
+import { PageHeader } from '@/shared/ui/PageHeader';
 import { SettingsNav } from '@/features/site-settings/ui/SettingsNav';
 import { DomainSettingsForm } from '@/features/site-settings/ui/DomainSettingsForm';
 
@@ -14,11 +15,11 @@ export default async function DomainSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">사이트 설정</h1>
-        <p className="text-muted-foreground">사이트 전역 설정을 관리합니다.</p>
-      </div>
-      <SettingsNav />
+      <PageHeader
+        title="사이트 설정"
+        description="사이트 전역 설정을 관리합니다."
+        tabs={<SettingsNav />}
+      />
       <div>
         <h2 className="text-lg font-semibold">도메인 설정</h2>
         <p className="text-sm text-muted-foreground mb-4">
