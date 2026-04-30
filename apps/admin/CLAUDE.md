@@ -1103,6 +1103,40 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 - 운영 효율 + 데이터 입력 흐름 우선
 - 반복 패턴 충분히 생기면 내부 공용 컴포넌트 정리 → 이후에만 분리 검토
 
+### 페이지 레이아웃 공통 컴포넌트 (Stage 14a/14a-2)
+
+**PageHeader** (`shared/ui/PageHeader.tsx`): 페이지 제목 영역. **sticky 아님** (default `false`).
+- 슬롯: `back`, `title`, `description`, `tabs`
+- `actions` 슬롯은 **legacy — 신규 사용 금지** (PageToolbar.right로 대체)
+
+**PageToolbar** (`shared/ui/PageToolbar.tsx`): 필터·CUD 액션 one-row toolbar. **`sticky top-14 z-20`** (AdminHeader 바로 아래 고정).
+- 슬롯: `left` (Read — 필터/검색), `right` (CUD — 추가/편집/삭제/저장)
+- 모바일(`<md`): 각 슬롯을 버튼으로 collapse → 클릭 시 Top Sheet 펼침
+- 단일 자식 그룹은 `mobileCollapseLeft={false}` / `mobileCollapseRight={false}` opt-out
+- **편집 폼의 [저장]/[삭제]는 반드시 `PageToolbar.right`에 배치** (CardFooter/FormSaveBar 사용 금지)
+- 모달 내부 등 non-sticky 사용 시 `sticky={false}` 전달
+
+**페이지 구조 패턴**
+
+```tsx
+// list 페이지
+<PageHeader title="목록명" />
+<PageToolbar left={<Filters />} right={canCreate && <NewButton />} />
+<DataTable ... />
+
+// view 페이지
+<PageHeader back={<BackButton />} title={data.name} />
+<PageToolbar right={<><DeleteDialog /><EditButton /></>} />
+<DetailCards ... />
+
+// edit 페이지 (form 안에 PageToolbar → type="submit" 자연 트리거)
+<form onSubmit={...}>
+  <PageHeader back={<BackButton />} title="편집" />
+  <PageToolbar right={<><DeleteDialog /><Button type="submit">저장</Button></>} />
+  <Card>...폼 필드...</Card>
+</form>
+```
+
 ### Storybook + Vitest (Stage 7f shell → 7g story 확장)
 
 admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인프라를 shell로 도입하고, Stage 7g에서 story 볼륨을 대폭 확장. 상세 판단 기준/파일 위치는 루트 CLAUDE.md "테스트 전략" 참조.

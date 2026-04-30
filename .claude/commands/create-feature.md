@@ -53,6 +53,13 @@ import { pageSchema } from '@/features/{domain}/model/page.schema';
 - features 레이어가 폼/액션의 중심
 - `api/`에 fetcher/query/mutation 정의가 주로 위치, API Route 핸들러는 `app/api/`에 배치
 
+**admin 페이지 UI 구조 (Stage 14b 이후 표준)**
+- `PageHeader` + `PageToolbar` 조합으로 모든 admin 페이지 상단 구성 (`shared/ui/PageHeader.tsx`, `shared/ui/PageToolbar.tsx`)
+- **list 페이지**: `<PageHeader title="..." />` + `<PageToolbar left={필터} right={신규버튼} />`
+- **view 페이지**: `<PageHeader back={뒤로가기} title={...} />` + `<PageToolbar right={삭제/편집버튼} />`
+- **edit 페이지**: `<form>` 안에 `<PageHeader />` + `<PageToolbar right={<Button type="submit">저장</Button>} />` (form 내부 배치로 type="submit" 자연 트리거)
+- `PageHeader.actions` 슬롯은 **legacy** — 신규 사용 금지, `PageToolbar.right` 사용
+
 ### web (정석 FSD)
 
 - features 레이어는 인터랙티브 기능 (검색, 팝업 모달 등)
