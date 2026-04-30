@@ -14,6 +14,8 @@ import { FeedbackFilters } from '@/features/subpage-feedback/ui/FeedbackFilters'
 import { FeedbackListTable } from '@/features/subpage-feedback/ui/FeedbackListTable';
 import { FeedbackStatsSection } from '@/features/subpage-feedback/ui/FeedbackStatsSection';
 import { getQueryClient } from '@/shared/api/queryClient';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 
 type RatingFilter = 'ALL' | 'POSITIVE' | 'NEGATIVE';
 
@@ -68,34 +70,38 @@ export default async function SubpageFeedbackPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">사용자 피드백</h1>
-          <p className="text-muted-foreground">
-            공개 웹 서브페이지에서 수집된 만족도 조사를 분석하고 관리합니다.
-          </p>
-        </div>
-        <FeedbackExport
-          from={filters.list.from ?? null}
-          to={filters.list.to ?? null}
-          rating={filters.list.rating}
-          subpageId={filters.list.subpageId ?? null}
-          q={filters.search}
-        />
-      </div>
+      <PageHeader
+        title="사용자 피드백"
+        description="공개 웹 서브페이지에서 수집된 만족도 조사를 분석하고 관리합니다."
+      />
+      <PageToolbar
+        left={
+          <Suspense>
+            <FeedbackFilters
+              currentRating={filters.list.rating}
+              currentSubpageId={filters.list.subpageId ?? null}
+              currentFrom={filters.list.from ?? null}
+              currentTo={filters.list.to ?? null}
+              currentQ={filters.search}
+              subpageOptions={subpageOptions}
+            />
+          </Suspense>
+        }
+        right={
+          <FeedbackExport
+            from={filters.list.from ?? null}
+            to={filters.list.to ?? null}
+            rating={filters.list.rating}
+            subpageId={filters.list.subpageId ?? null}
+            q={filters.search}
+          />
+        }
+        mobileLeftLabel="필터"
+        mobileRightLabel="내보내기"
+        mobileCollapseRight={false}
+      />
 
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <Suspense>
-          <FeedbackFilters
-            currentRating={filters.list.rating}
-            currentSubpageId={filters.list.subpageId ?? null}
-            currentFrom={filters.list.from ?? null}
-            currentTo={filters.list.to ?? null}
-            currentQ={filters.search}
-            subpageOptions={subpageOptions}
-          />
-        </Suspense>
-
         <FeedbackStatsSection
           from={filters.list.from ?? null}
           to={filters.list.to ?? null}

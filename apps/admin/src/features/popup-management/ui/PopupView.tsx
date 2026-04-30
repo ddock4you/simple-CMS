@@ -14,6 +14,8 @@ import {
 } from '@/shared/ui/shadcn/card';
 import { renderTiptapContentForAdmin } from '@/shared/lib/renderContent';
 import { resolveMediaPreviewUrl } from '@/shared/lib/mediaUrl';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
 import { homePopupDetailOptions } from '../api/popupQueries';
@@ -37,8 +39,8 @@ export function PopupView({ id }: { id: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <PageHeader
+        back={
           <Button
             variant="ghost"
             size="sm"
@@ -48,33 +50,41 @@ export function PopupView({ id }: { id: string }) {
             <ArrowLeft className="size-4" />
             목록으로
           </Button>
-          <h1 className="text-2xl font-bold">{data.title}</h1>
-          <PopupTypeBadge type={data.popupType} />
-          {!data.isVisible && (
-            <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-              숨김
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {canDelete && (
-            <DeletePopupDialog
-              title={data.title}
-              isPending={deleteMutation.isPending}
-              onConfirm={() => deleteMutation.mutate(id)}
-            />
-          )}
-          {canUpdate && (
-            <Button
-              nativeButton={false}
-              render={<Link href={`/home/popups/${id}/edit`} />}
-            >
-              <Pencil className="size-4" />
-              편집
-            </Button>
-          )}
-        </div>
-      </div>
+        }
+        title={
+          <span className="flex items-center gap-2">
+            {data.title}
+            <PopupTypeBadge type={data.popupType} />
+            {!data.isVisible && (
+              <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                숨김
+              </span>
+            )}
+          </span>
+        }
+      />
+      <PageToolbar
+        right={
+          <>
+            {canDelete && (
+              <DeletePopupDialog
+                title={data.title}
+                isPending={deleteMutation.isPending}
+                onConfirm={() => deleteMutation.mutate(id)}
+              />
+            )}
+            {canUpdate && (
+              <Button
+                nativeButton={false}
+                render={<Link href={`/home/popups/${id}/edit`} />}
+              >
+                <Pencil className="size-4" />
+                편집
+              </Button>
+            )}
+          </>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">

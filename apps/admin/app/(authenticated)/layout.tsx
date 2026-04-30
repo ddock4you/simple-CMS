@@ -27,7 +27,7 @@ export default async function AuthenticatedLayout({
       <AppSidebar user={layoutUser} />
       <SidebarInset>
         <AdminHeader user={layoutUser} />
-        <main className="flex-1 p-6">
+        <div className="flex-1 p-6">
           <PermissionProvider
             permissions={(layoutUser.role?.permissions ?? {}) as PermissionMap}
             isSystem={layoutUser.role?.isSystem ?? false}
@@ -35,7 +35,7 @@ export default async function AuthenticatedLayout({
             {children}
             <CommandPalette />
           </PermissionProvider>
-        </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

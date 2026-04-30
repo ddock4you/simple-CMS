@@ -4,6 +4,7 @@ import { prisma } from '@simple-cms/db';
 
 import { ErrorLogDashboardWidget } from '@/features/error-log/ui/ErrorLogDashboardWidget';
 import { StatCard } from '@/shared/ui/layout/StatCard';
+import { PageHeader } from '@/shared/ui/PageHeader';
 
 export default async function DashboardPage() {
   const [subpageCount, publishedSubpageCount, boardCount, postCount, publishedPostCount, pendingUserCount] =
@@ -18,12 +19,10 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">대시보드</h1>
-        <p className="text-muted-foreground">
-          콘텐츠 현황을 한눈에 확인하세요.
-        </p>
-      </div>
+      <PageHeader
+        title="대시보드"
+        description="콘텐츠 현황을 한눈에 확인하세요."
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

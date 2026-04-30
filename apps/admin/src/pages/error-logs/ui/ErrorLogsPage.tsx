@@ -3,6 +3,8 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 
 import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { getQueryClient } from '@/shared/api/queryClient';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { errorLogListOptions } from '@/features/error-log/api/errorLogQueries';
 import type {
   ErrorLevelFilter,
@@ -57,16 +59,12 @@ export default async function ErrorLogsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">에러 로그</h1>
-          <p className="text-muted-foreground">
-            공개 웹에서 발생한 런타임 에러를 조회하고 해결 처리합니다.
-          </p>
-        </div>
-      </div>
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <div className="space-y-4">
+      <PageHeader
+        title="에러 로그"
+        description="공개 웹에서 발생한 런타임 에러를 조회하고 해결 처리합니다."
+      />
+      <PageToolbar
+        left={
           <Suspense>
             <ErrorLogFilters
               currentLevel={filters.level}
@@ -79,8 +77,11 @@ export default async function ErrorLogsPage({
               currentTo={filters.to}
             />
           </Suspense>
-          <ErrorLogTable filters={filters} />
-        </div>
+        }
+        mobileLeftLabel="필터"
+      />
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <ErrorLogTable filters={filters} />
       </HydrationBoundary>
     </div>
   );

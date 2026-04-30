@@ -12,6 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui/shadcn/card';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { getBoardPublicUrl } from '@/shared/lib/siteUrl';
 
@@ -37,8 +39,8 @@ export function BoardView({ id }: BoardViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <PageHeader
+        back={
           <Button
             variant="ghost"
             size="sm"
@@ -48,31 +50,39 @@ export function BoardView({ id }: BoardViewProps) {
             <ArrowLeft className="size-4" />
             목록으로
           </Button>
-          <h1 className="text-2xl font-bold">{data.name}</h1>
-          <BoardVisibilityBadge isPublic={data.isPublic} />
-        </div>
-        <div className="flex items-center gap-2">
-          {data.isPublic && (
-            <ViewLiveButton url={getBoardPublicUrl(data.slug)} />
-          )}
-          {canDelete && (
-            <DeleteBoardDialog
-              name={data.name}
-              isPending={deleteMutation.isPending}
-              onConfirm={() => deleteMutation.mutate(id)}
-            />
-          )}
-          {canUpdate && (
-            <Button
-              nativeButton={false}
-              render={<Link href={`/boards/${id}/edit`} />}
-            >
-              <Pencil className="size-4" />
-              편집
-            </Button>
-          )}
-        </div>
-      </div>
+        }
+        title={
+          <span className="flex items-center gap-2">
+            {data.name}
+            <BoardVisibilityBadge isPublic={data.isPublic} />
+          </span>
+        }
+      />
+      <PageToolbar
+        right={
+          <>
+            {data.isPublic && (
+              <ViewLiveButton url={getBoardPublicUrl(data.slug)} />
+            )}
+            {canDelete && (
+              <DeleteBoardDialog
+                name={data.name}
+                isPending={deleteMutation.isPending}
+                onConfirm={() => deleteMutation.mutate(id)}
+              />
+            )}
+            {canUpdate && (
+              <Button
+                nativeButton={false}
+                render={<Link href={`/boards/${id}/edit`} />}
+              >
+                <Pencil className="size-4" />
+                편집
+              </Button>
+            )}
+          </>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">

@@ -13,6 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui/shadcn/card';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { getPostPublicUrl } from '@/shared/lib/siteUrl';
 
@@ -40,8 +42,8 @@ export function PostView({ id }: PostViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <PageHeader
+        back={
           <Button
             variant="ghost"
             size="sm"
@@ -51,32 +53,40 @@ export function PostView({ id }: PostViewProps) {
             <ArrowLeft className="size-4" />
             목록으로
           </Button>
-          <h1 className="text-2xl font-bold">{data.title}</h1>
-          <PostStatusBadge status={data.status} />
-        </div>
-        <div className="flex items-center gap-2">
-          <PreviewButton entityType="POST" entityId={id} />
-          {data.status === 'PUBLISHED' && (
-            <ViewLiveButton url={getPostPublicUrl(data.boardSlug, data.slug)} />
-          )}
-          {canDelete && (
-            <DeletePostDialog
-              title={data.title}
-              isPending={deleteMutation.isPending}
-              onConfirm={() => deleteMutation.mutate(id)}
-            />
-          )}
-          {canUpdate && (
-            <Button
-              nativeButton={false}
-              render={<Link href={`/posts/${id}/edit`} />}
-            >
-              <Pencil className="size-4" />
-              편집
-            </Button>
-          )}
-        </div>
-      </div>
+        }
+        title={
+          <span className="flex items-center gap-2">
+            {data.title}
+            <PostStatusBadge status={data.status} />
+          </span>
+        }
+      />
+      <PageToolbar
+        right={
+          <>
+            <PreviewButton entityType="POST" entityId={id} />
+            {data.status === 'PUBLISHED' && (
+              <ViewLiveButton url={getPostPublicUrl(data.boardSlug, data.slug)} />
+            )}
+            {canDelete && (
+              <DeletePostDialog
+                title={data.title}
+                isPending={deleteMutation.isPending}
+                onConfirm={() => deleteMutation.mutate(id)}
+              />
+            )}
+            {canUpdate && (
+              <Button
+                nativeButton={false}
+                render={<Link href={`/posts/${id}/edit`} />}
+              >
+                <Pencil className="size-4" />
+                편집
+              </Button>
+            )}
+          </>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">

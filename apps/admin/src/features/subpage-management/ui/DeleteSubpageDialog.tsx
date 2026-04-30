@@ -28,7 +28,7 @@ export function DeleteSubpageDialog({
     <AlertDialog>
       <AlertDialogTrigger
         render={
-          <Button variant="destructive" size="sm" disabled={isPending} />
+          <Button type="button" variant="destructive" size="sm" disabled={isPending} />
         }
       >
         삭제

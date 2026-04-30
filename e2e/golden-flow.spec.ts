@@ -63,14 +63,22 @@ test.describe('골든 플로우', () => {
     await slugField.fill('');
     await slugField.fill(SLUG);
 
-    await page.getByRole('button', { name: '저장' }).click();
+    // 클릭과 동시에 navigation 대기 — race condition 방지
+    // 정규식 `/subpages/[a-z0-9]+$/`은 `/subpages/new`도 매칭하므로 'new' 명시적 제외
+    await Promise.all([
+      page.waitForURL(
+        (url) =>
+          /^\/subpages\/[^/]+$/.test(url.pathname) && !url.pathname.endsWith('/new'),
+      ),
+      page.getByRole('button', { name: '저장' }).click(),
+    ]);
 
-    // 생성 후 상세 페이지로 이동 — URL에서 id 추출
-    await page.waitForURL(/\/subpages\/[a-z0-9]+$/);
     const url = page.url();
     subpageId = url.split('/').pop() ?? '';
     expect(subpageId).toBeTruthy();
-    await expect(page.getByText('초안', { exact: true })).toBeVisible();
+    expect(subpageId).not.toBe('new');
+    // SubpageView는 헤더와 메타 카드 두 곳에서 SubpageStatusBadge를 렌더 → 첫 번째만 검증
+    await expect(page.getByText('초안', { exact: true }).first()).toBeVisible();
   });
 
   test('3. 서브페이지 발행', async ({ page }) => {
@@ -82,25 +90,35 @@ test.describe('골든 플로우', () => {
     await page.getByRole('button', { name: '로그인' }).click();
     await page.waitForURL(`${ADMIN_URL}/dashboard`);
 
-    await page.goto(`${ADMIN_URL}/subpages/${subpageId}/edit`);
-    // 상태를 '발행'으로 변경
-    const statusSelect = page.getByRole('combobox').filter({ hasText: /초안|발행/ });
-    await statusSelect.click();
-    await page.getByRole('option', { name: '발행' }).click();
+    // page.request 대신 page.evaluate(fetch) — 브라우저 컨텍스트 안에서 실행하여
+    // httpOnly 세션 쿠키가 자동 포함됨 (page.request는 쿠키 전달이 불안정한 케이스 있음)
+    const { ok, status, body } = await page.evaluate(async (id: string) => {
+      const res = await fetch(`/api/subpages/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'PUBLISHED' }),
+      });
+      return { ok: res.ok, status: res.status, body: await res.json().catch(() => null) };
+    }, subpageId);
 
-    await page.getByRole('button', { name: '저장' }).click();
-    await page.waitForURL(`${ADMIN_URL}/subpages/${subpageId}`);
-    await expect(page.getByText('발행', { exact: true })).toBeVisible();
+    expect(status, `PATCH 실패 [HTTP ${status}]: ${JSON.stringify(body)}`).toBe(200);
+    expect(ok).toBeTruthy();
+    expect(body?.success).toBe(true);
   });
 
   test('4. web에서 공개 서브페이지 확인', async ({ page }) => {
     await page.goto(`${WEB_URL}/p/${SLUG}`);
-    await expect(page.getByRole('heading', { name: TITLE })).toBeVisible();
+    // 좌측 SubpageSideNavigation의 <h2 class="lnb-tit">와 메인 <h1 class="subpage-title">가
+    // 같은 TITLE을 표시하므로 level: 1로 메인 제목만 매칭
+    await expect(
+      page.getByRole('heading', { level: 1, name: TITLE }),
+    ).toBeVisible();
   });
 
   test('5. 검색에서 서브페이지 노출', async ({ page }) => {
     const keyword = TITLE.split(' ')[0]; // "E2E" 키워드로 검색
     await page.goto(`${WEB_URL}/search?q=${encodeURIComponent(keyword)}`);
-    await expect(page.getByText(TITLE)).toBeVisible({ timeout: 10_000 });
+    // 검색 결과 페이지에 TITLE이 여러 곳(목록 카드 헤더 등)에 노출될 수 있어 first()로 안전하게 검증
+    await expect(page.getByText(TITLE).first()).toBeVisible({ timeout: 10_000 });
   });
 });

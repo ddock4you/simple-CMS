@@ -13,6 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui/shadcn/card';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { getSubpagePublicUrl } from '@/shared/lib/siteUrl';
 import { CCL_TYPE_LABELS } from '@simple-cms/types';
@@ -64,8 +66,8 @@ export function SubpageView({ id }: SubpageViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <PageHeader
+        back={
           <Button
             variant="ghost"
             size="sm"
@@ -75,33 +77,41 @@ export function SubpageView({ id }: SubpageViewProps) {
             <ArrowLeft className="size-4" />
             목록으로
           </Button>
-          <h1 className="text-2xl font-bold">{data.title}</h1>
-          <SubpageStatusBadge status={data.status} />
-        </div>
-        <div className="flex items-center gap-2">
-          <PreviewButton entityType="SUBPAGE" entityId={id} />
-          {data.status === 'PUBLISHED' && (
-            <ViewLiveButton url={getSubpagePublicUrl(data.slug)} />
-          )}
-          {canUpdate && <SaveVersionButton subpageId={id} />}
-          {canDelete && (
-            <DeleteSubpageDialog
-              title={data.title}
-              isPending={deleteMutation.isPending}
-              onConfirm={() => deleteMutation.mutate(id)}
-            />
-          )}
-          {canUpdate && (
-            <Button
-              nativeButton={false}
-              render={<Link href={`/subpages/${id}/edit`} />}
-            >
-              <Pencil className="size-4" />
-              편집
-            </Button>
-          )}
-        </div>
-      </div>
+        }
+        title={
+          <span className="flex items-center gap-2">
+            {data.title}
+            <SubpageStatusBadge status={data.status} />
+          </span>
+        }
+      />
+      <PageToolbar
+        right={
+          <>
+            <PreviewButton entityType="SUBPAGE" entityId={id} />
+            {data.status === 'PUBLISHED' && (
+              <ViewLiveButton url={getSubpagePublicUrl(data.slug)} />
+            )}
+            {canUpdate && <SaveVersionButton subpageId={id} />}
+            {canDelete && (
+              <DeleteSubpageDialog
+                title={data.title}
+                isPending={deleteMutation.isPending}
+                onConfirm={() => deleteMutation.mutate(id)}
+              />
+            )}
+            {canUpdate && (
+              <Button
+                nativeButton={false}
+                render={<Link href={`/subpages/${id}/edit`} />}
+              >
+                <Pencil className="size-4" />
+                편집
+              </Button>
+            )}
+          </>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">

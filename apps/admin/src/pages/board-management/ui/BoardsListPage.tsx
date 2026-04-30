@@ -7,6 +7,8 @@ import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { hasPermission } from '@/entities/auth/lib/checkPermission';
 import { getQueryClient } from '@/shared/api/queryClient';
 import { Button } from '@/shared/ui/shadcn/button';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { boardListOptions } from '@/features/board-management/api/boardQueries';
 import type {
   BoardListFilters,
@@ -40,24 +42,26 @@ export default async function BoardsListPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">게시판</h1>
-          <p className="text-muted-foreground">
-            게시판을 관리합니다.
-          </p>
-        </div>
-        {canCreate && (
-          <Button nativeButton={false} render={<Link href="/boards/new" />}>
-            <Plus className="size-4" />
-            새 게시판
-          </Button>
-        )}
-      </div>
+      <PageHeader title="게시판" description="게시판을 관리합니다." />
+      <PageToolbar
+        left={
+          <Suspense>
+            <VisibilityFilter currentVisibility={filters.visibility} />
+          </Suspense>
+        }
+        right={
+          canCreate ? (
+            <Button nativeButton={false} render={<Link href="/boards/new" />}>
+              <Plus className="size-4" />
+              새 게시판
+            </Button>
+          ) : undefined
+        }
+        mobileLeftLabel="공개 여부"
+        mobileRightLabel="새 게시판"
+        mobileCollapseRight={false}
+      />
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <Suspense>
-          <VisibilityFilter currentVisibility={filters.visibility} />
-        </Suspense>
         <BoardTable filters={filters} />
       </HydrationBoundary>
     </div>

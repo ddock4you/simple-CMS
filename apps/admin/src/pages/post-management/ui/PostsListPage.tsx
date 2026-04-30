@@ -7,6 +7,8 @@ import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { hasPermission } from '@/entities/auth/lib/checkPermission';
 import { getQueryClient } from '@/shared/api/queryClient';
 import { Button } from '@/shared/ui/shadcn/button';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { postListOptions, boardOptionsQuery } from '@/features/post-management/api/postQueries';
 import type {
   PostListFilters,
@@ -45,29 +47,31 @@ export default async function PostsListPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">게시글</h1>
-          <p className="text-muted-foreground">
-            게시글을 관리합니다.
-          </p>
-        </div>
-        {canCreate && (
-          <Button nativeButton={false} render={<Link href="/posts/new" />}>
-            <Plus className="size-4" />
-            새 게시글
-          </Button>
-        )}
-      </div>
+      <PageHeader title="게시글" description="게시글을 관리합니다." />
+      <PageToolbar
+        left={
+          <div className="flex items-center gap-2">
+            <Suspense>
+              <StatusFilter currentStatus={filters.status} />
+            </Suspense>
+            <Suspense>
+              <PostBoardFilter currentBoardId={filters.boardId} />
+            </Suspense>
+          </div>
+        }
+        right={
+          canCreate ? (
+            <Button nativeButton={false} render={<Link href="/posts/new" />}>
+              <Plus className="size-4" />
+              새 게시글
+            </Button>
+          ) : undefined
+        }
+        mobileLeftLabel="상태 · 게시판"
+        mobileRightLabel="새 게시글"
+        mobileCollapseRight={false}
+      />
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <div className="flex items-center gap-4">
-          <Suspense>
-            <StatusFilter currentStatus={filters.status} />
-          </Suspense>
-          <Suspense>
-            <PostBoardFilter currentBoardId={filters.boardId} />
-          </Suspense>
-        </div>
         <PostTable filters={filters} />
       </HydrationBoundary>
     </div>

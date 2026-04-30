@@ -3,6 +3,8 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 
 import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { getQueryClient } from '@/shared/api/queryClient';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import {
   userListOptions,
   roleListOptions,
@@ -41,16 +43,16 @@ export default async function UsersPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">사용자 관리</h1>
-        <p className="text-muted-foreground">
-          사용자 목록 및 상태를 관리합니다.
-        </p>
-      </div>
+      <PageHeader title="사용자 관리" description="사용자 목록 및 상태를 관리합니다." />
+      <PageToolbar
+        left={
+          <Suspense>
+            <StatusFilter currentStatus={filters.status} />
+          </Suspense>
+        }
+        mobileLeftLabel="상태 필터"
+      />
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <Suspense>
-          <StatusFilter currentStatus={filters.status} />
-        </Suspense>
         <UserTable
           filters={filters}
           currentUserId={user.id}
