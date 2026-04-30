@@ -454,7 +454,7 @@ apps/{앱}/
 | 14c | Settings 6탭 PageHeader sticky 통합 | 설정 탭 PageHeader.tabs sticky 동작 | **완료** |
 | 14d | 편집 폼 [저장]/[삭제] PageToolbar 이전 (FormSaveBar 폐기) | PostForm/BoardForm/PopupForm 저장 버튼 toolbar 통합 | **완료** |
 | 14e-1~3 | Dialog size 토큰 + bodyOnlyScroll + 일괄 치환 | Dialog 폭 일관성 + body-only scroll | **완료** |
-| 14f | Boolean/Status Switch 통일 + 리스트 인라인 토글 시각 통일 | 폼 전반 Switch 통일 + InlineStatusSwitchToggle | 대기 |
+| 14f | 리스트 인라인 status 토글 시각 통일 (InlineStatusSwitchToggle) [[상세]](docs/stages/stage-14.md) | SubpageTable/PostTable Switch + 라벨 교체, Boolean Switch 5곳 이연 | **완료** |
 
 ## 명령어
 

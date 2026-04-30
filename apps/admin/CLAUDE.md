@@ -1030,7 +1030,7 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 - 신규 API: `PATCH /api/subpages/[id]/status`, `/api/posts/[id]/status`, `/api/home-popups/[id]/visibility`, `/api/boards/[id]/visibility`
 - 감사 로그: entityTitle에 "(상태 변경)" / "(공개 변경)" suffix로 메타 PATCH와 구분
 - Mutation: optimistic update + onError rollback 패턴
-- UI: `<InlineStatusToggle>` (Select), `<InlineBooleanToggle>` (Switch) 공용 컴포넌트
+- UI: `<InlineStatusSwitchToggle>` (Switch + 라벨, SubpageTable/PostTable — Stage 14f), `<InlineBooleanToggle>` (Switch + 라벨, BoardTable) 공용 컴포넌트. `<InlineStatusToggle>` (Select, legacy — 호출처 0건, multi-option enum용 보존)
 - 권한 없으면 기존 Badge로 fallback
 
 #### 벌크 작업 (Subpage + Post)
@@ -1137,6 +1137,26 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 </form>
 ```
 
+**Dialog size 토큰 (Stage 14e)**: `<DialogContent size="sm|md|lg|xl">` — ad-hoc `max-w-*` className 직접 사용 금지.
+
+| 토큰 | max-width |
+| ---- | --------- |
+| `sm` | max-w-md  |
+| `md` | max-w-lg  |
+| `lg` | max-w-3xl |
+| `xl` | max-w-5xl |
+
+- `bodyOnlyScroll`: 헤더·푸터 고정 + 본문만 스크롤. `<DialogBody>` slot 사용 의무 (`<DialogBody className="px-0">...</DialogBody>`)
+- 새 Dialog 추가 시 `size` 토큰 + `bodyOnlyScroll` + `<DialogBody>` 세트 적용 기본값
+
+**인라인 status 토글 (Stage 14f)**
+
+- SubpageTable/PostTable: `<InlineStatusSwitchToggle value onState="PUBLISHED" offState="DRAFT" onChange isPending>` — Switch + "초안"/"발행" 라벨
+- default `labelOn="발행"` / `labelOff="초안"` 보존 필수 (E2E `getByText('초안')` 의존)
+- 권한 없을 때: `canUpdate ? <InlineStatusSwitchToggle> : <XxxStatusBadge>` 패턴 유지
+- BoardTable: 기존 `<InlineBooleanToggle>` 유지 (boolean type)
+- Boolean Switch 통일 (BoardForm.isPublic / MenuItemDialog.isVisible·openInNewTab / SecuritySettingsForm / PopupForm.isVisible / SubpageForm.feedbackEnabled·cclAi): 각 폼의 다른 변경과 함께 자연 시점에 처리 — Stage 14 범위 외
+
 ### Storybook + Vitest (Stage 7f shell → 7g story 확장)
 
 admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인프라를 shell로 도입하고, Stage 7g에서 story 볼륨을 대폭 확장. 상세 판단 기준/파일 위치는 루트 CLAUDE.md "테스트 전략" 참조.
@@ -1180,7 +1200,7 @@ admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인�
   - 적용 예시: `CreateRoleDialog` Submit Success(`/api/roles` → 201) / SubmitConflict(409), `SectionReorderProbe` Reorder500(`/api/home/reorder` → 500 → `useReorderHomeSections` onError rollback 검증)
 - **Stage 7j 결론 — MSW는 현 시점에 Storybook 통합 불가**: `npm view msw-storybook-addon versions --json`로 latest=2.0.7 (2026-04-08), v2.1 부재(canary/beta/next 모두 v2.0.x). 7h 실패 시점과 동일 버전이라 재시도 가치 없음. addon-vitest Playwright browser mode와의 호환성 수정은 MSW/Storybook 양쪽 upstream에 없음. **fetch stub decorator가 CLAUDE.md 원래 의도("submit 분기 검증")를 infra delta 0에 가까이 달성**. 향후 `msw-storybook-addon` v2.1+ 또는 공식 dual `setupServer` 가이드가 나오면 재평가
 - **Stage 7i 결과**: 커스텀 래퍼 showcase 5개 신규 추가 + LinkTargetInput을 `entities/link-target`으로 승격 + home-management 5개 fields 적용:
-  - Sidebar 카테고리 5개 신규 (`Admin/Shared/Dialog`, `Admin/Shared/AlertDialog`, `Admin/Shared/InlineStatusToggle`, `Admin/Shared/InlineBooleanToggle`, **`Admin/Entities/LinkTarget/LinkTargetInput`**). 총 변동 — admin 17 files / **52 tests** (기존 35 → +17)
+  - Sidebar 카테고리 5개 신규 (`Admin/Shared/Dialog`, `Admin/Shared/AlertDialog`, `Admin/Shared/InlineStatusToggle`, `Admin/Shared/InlineBooleanToggle`, **`Admin/Entities/LinkTarget/LinkTargetInput`**). 총 변동 — admin 17 files / **52 tests** (기존 35 → +17). Stage 14f에서 `Admin/Shared/InlineStatusSwitchToggle` (4 variants) 추가 → 현재 **56 tests**
   - **Dialog `NestedDialog` play 재현 조건**: 자식 Dialog를 부모 Dialog의 children으로 렌더해야 Base-UI가 nested 관계를 인식하고 `data-nested-dialog-open`을 부모 Popup에 부착. sibling으로 두면 미부착 (구현 중 발견). 실사용 예: `MenuItemDialog`가 `<Dialog>`의 children 영역에 `<ConfirmLeaveDialog>`를 sibling으로 렌더
   - **LinkTargetInput 승격 경로**: `features/popup-management/ui/LinkTargetInput.tsx` → `entities/link-target/ui/LinkTargetInput.tsx`. 쿼리도 `homePopupReferencesOptions` → `linkTargetReferencesOptions`로 rename하며 `entities/link-target/api/linkTargetReferencesQueries.ts`로 이동. API endpoint는 Stage 7k-1에서 `/api/link-target/references`로 rename 완료
   - **`allowNone?: boolean` prop 신규** (default true): url이 필수 필드인 CtaFields + ShortcutFields가 `allowNone={false}` 전달해 NONE 옵션 숨김. 빈 value 진입 시 EXTERNAL 모드 default 활성
