@@ -24,6 +24,8 @@ import {
 } from '@/shared/ui/shadcn/select';
 import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 
 import type { BoardDetail } from '../model/boardFilters';
 import {
@@ -95,8 +97,8 @@ export function BoardForm({ mode, initialData }: BoardFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <PageHeader
+        back={
           <Button
             variant="ghost"
             size="sm"
@@ -106,23 +108,25 @@ export function BoardForm({ mode, initialData }: BoardFormProps) {
             <ArrowLeft className="size-4" />
             목록으로
           </Button>
-          <h1 className="text-2xl font-bold">
-            {isCreate ? '새 게시판' : '게시판 편집'}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isCreate && initialData && (
-            <DeleteBoardDialog
-              name={initialData.name}
-              isPending={deleteMutation.isPending}
-              onConfirm={() => deleteMutation.mutate(initialData.id)}
-            />
-          )}
-          <Button type="submit" disabled={isPending || (!isDirty && !isCreate)}>
-            {isPending ? '저장 중...' : '저장'}
-          </Button>
-        </div>
-      </div>
+        }
+        title={isCreate ? '새 게시판' : '게시판 편집'}
+      />
+      <PageToolbar
+        right={
+          <>
+            {!isCreate && initialData && (
+              <DeleteBoardDialog
+                name={initialData.name}
+                isPending={deleteMutation.isPending}
+                onConfirm={() => deleteMutation.mutate(initialData.id)}
+              />
+            )}
+            <Button type="submit" disabled={isPending || (!isDirty && !isCreate)}>
+              {isPending ? '저장 중...' : '저장'}
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">

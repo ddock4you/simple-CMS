@@ -30,6 +30,8 @@ import {
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 
 import {
   popupFormSchema,
@@ -151,8 +153,8 @@ export function PopupForm({ mode, initialData }: PopupFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <PageHeader
+        back={
           <Button
             variant="ghost"
             size="sm"
@@ -162,23 +164,25 @@ export function PopupForm({ mode, initialData }: PopupFormProps) {
             <ArrowLeft className="size-4" />
             목록으로
           </Button>
-          <h1 className="text-2xl font-bold">
-            {isCreate ? '새 메인 팝업' : '메인 팝업 편집'}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isCreate && initialData && canDelete && (
-            <DeletePopupDialog
-              title={initialData.title}
-              isPending={deleteMutation.isPending}
-              onConfirm={() => deleteMutation.mutate(initialData.id)}
-            />
-          )}
-          <Button type="submit" disabled={isPending || (!isDirty && !isCreate)}>
-            {isPending ? '저장 중...' : '저장'}
-          </Button>
-        </div>
-      </div>
+        }
+        title={isCreate ? '새 메인 팝업' : '메인 팝업 편집'}
+      />
+      <PageToolbar
+        right={
+          <>
+            {!isCreate && initialData && canDelete && (
+              <DeletePopupDialog
+                title={initialData.title}
+                isPending={deleteMutation.isPending}
+                onConfirm={() => deleteMutation.mutate(initialData.id)}
+              />
+            )}
+            <Button type="submit" disabled={isPending || (!isDirty && !isCreate)}>
+              {isPending ? '저장 중...' : '저장'}
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
