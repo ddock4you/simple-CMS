@@ -451,7 +451,7 @@ apps/{앱}/
 | 14a-2 | PageToolbar 신설 + sticky 이전 + PageHeader sticky default false 정정 | SubpagesListPage/SubpageForm/DashboardPage 카나리 적용 + 모바일 Sheet collapse | **완료** |
 | 14a-3 | PageToolbar 시각 polish (border-b 제거, sticky bg breakout, button size 통일, Top Sheet) | 스크롤 시 toolbar bg 전체 폭 확장 + drop shadow + 모바일 상단 Sheet | **완료** |
 | 14b | list 10개 + view 4개 PageHeader/PageToolbar 마이그레이션 + e2e selector 안정화 | 전체 목록·상세 페이지 통일된 헤더/툴바 패턴 | **완료** |
-| 14c | Settings 6탭 PageHeader sticky 통합 | 설정 탭 PageHeader.tabs sticky 동작 | 대기 |
+| 14c | Settings 6탭 PageHeader sticky 통합 | 설정 탭 PageHeader.tabs sticky 동작 | **완료** |
 | 14d | 편집 폼 [저장]/[삭제] PageToolbar 이전 (FormSaveBar 폐기) | PostForm/BoardForm/PopupForm 저장 버튼 toolbar 통합 | 대기 |
 | 14e-1~3 | Dialog size 토큰 + bodyOnlyScroll + 일괄 치환 | Dialog 폭 일관성 + body-only scroll | 대기 |
 | 14f | Boolean/Status Switch 통일 + 리스트 인라인 토글 시각 통일 | 폼 전반 Switch 통일 + InlineStatusSwitchToggle | 대기 |
