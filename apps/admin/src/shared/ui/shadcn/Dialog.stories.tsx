@@ -7,6 +7,7 @@ import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,
@@ -206,4 +207,102 @@ function WithFormDemo() {
 
 export const WithForm: Story = {
   render: () => <WithFormDemo />,
+};
+
+function WithSizeLgDemo() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>넓은 Dialog 열기 (size=lg)</Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent size="lg">
+          <DialogHeader>
+            <DialogTitle>크기 토큰 — lg (max-w-3xl)</DialogTitle>
+            <DialogDescription>
+              <code>{`size="lg"`}</code> prop으로 최대 너비를 max-w-3xl(48rem)로
+              확장합니다. sm / md / lg / xl 4단계를 지원하며, prop 미지정 시
+              기존 기본값(sm:max-w-sm)을 유지하여 하위 호환성을 보장합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="rounded border p-3">
+              <p className="font-medium">sm → max-w-md</p>
+              <p className="text-muted-foreground">28rem</p>
+            </div>
+            <div className="rounded border p-3">
+              <p className="font-medium">md → max-w-lg</p>
+              <p className="text-muted-foreground">32rem</p>
+            </div>
+            <div className="rounded border p-3">
+              <p className="font-medium">lg → max-w-3xl</p>
+              <p className="text-muted-foreground">48rem</p>
+            </div>
+            <div className="rounded border p-3">
+              <p className="font-medium">xl → max-w-5xl</p>
+              <p className="text-muted-foreground">64rem</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline">닫기</Button>} />
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+export const WithSizeLg: Story = {
+  render: () => <WithSizeLgDemo />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole('button', { name: /넓은 Dialog 열기/ }));
+
+    const body = within(document.body);
+    const popup = await body.findByRole('dialog');
+    expect(popup.getAttribute('data-size')).toBe('lg');
+  },
+};
+
+function BodyOnlyScrollDemo() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>본문 스크롤 Dialog 열기</Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent bodyOnlyScroll>
+          <DialogHeader>
+            <DialogTitle>본문만 스크롤 (bodyOnlyScroll)</DialogTitle>
+            <DialogDescription>
+              헤더와 푸터는 고정된 채 본문(<code>DialogBody</code>)만 스크롤됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            {Array.from({ length: 20 }).map((_, i) => (
+              <p key={i} className="mb-3 text-sm text-muted-foreground">
+                스크롤 테스트 항목 {i + 1}. 긴 목록이나 폼이 들어올 때 헤더와
+                푸터가 화면에 고정되어 사용자가 항상 액션 버튼에 접근할 수 있습니다.
+              </p>
+            ))}
+          </DialogBody>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline">취소</Button>} />
+            <Button onClick={() => setOpen(false)}>확인</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+export const BodyOnlyScroll: Story = {
+  render: () => <BodyOnlyScrollDemo />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole('button', { name: /본문 스크롤 Dialog 열기/ }));
+
+    const body = within(document.body);
+    await body.findByRole('dialog');
+    const dialogBody = document.querySelector('[data-slot="dialog-body"]');
+    expect(dialogBody).not.toBeNull();
+  },
 };
