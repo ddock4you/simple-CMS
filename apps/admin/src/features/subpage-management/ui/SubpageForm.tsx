@@ -7,6 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft } from 'lucide-react';
 
 import { Button } from '@/shared/ui/shadcn/button';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
@@ -15,7 +17,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/shared/ui/shadcn/card';
@@ -115,8 +116,8 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <PageHeader
+        back={
           <Button
             variant="ghost"
             size="sm"
@@ -126,20 +127,29 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
             <ArrowLeft className="size-4" />
             목록으로
           </Button>
-          <h1 className="text-2xl font-bold">
-            {isCreate ? '새 서브 페이지' : '서브 페이지 편집'}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isCreate && initialData && (
-            <DeleteSubpageDialog
-              title={initialData.title}
-              isPending={deleteMutation.isPending}
-              onConfirm={() => deleteMutation.mutate(initialData.id)}
-            />
-          )}
-        </div>
-      </div>
+        }
+        title={isCreate ? '새 서브 페이지' : '서브 페이지 편집'}
+      />
+      <PageToolbar
+        right={
+          <>
+            {!isCreate && initialData && (
+              <DeleteSubpageDialog
+                title={initialData.title}
+                isPending={deleteMutation.isPending}
+                onConfirm={() => deleteMutation.mutate(initialData.id)}
+              />
+            )}
+            <Button
+              type="submit"
+              disabled={isPending || (!isDirty && !isCreate)}
+            >
+              {isPending ? '저장 중...' : '저장'}
+            </Button>
+          </>
+        }
+        mobileCollapseRight={false}
+      />
 
       <Card>
         <CardHeader>
@@ -334,14 +344,6 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="justify-end gap-2">
-          <Button
-            type="submit"
-            disabled={isPending || (!isDirty && !isCreate)}
-          >
-            {isPending ? '저장 중...' : '저장'}
-          </Button>
-        </CardFooter>
       </Card>
 
       <ConfirmLeaveDialog {...leaveDialogProps} />

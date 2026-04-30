@@ -7,6 +7,8 @@ import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { hasPermission } from '@/entities/auth/lib/checkPermission';
 import { getQueryClient } from '@/shared/api/queryClient';
 import { Button } from '@/shared/ui/shadcn/button';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { subpageListOptions } from '@/features/subpage-management/api/subpageQueries';
 import type {
   SubpageListFilters,
@@ -40,24 +42,29 @@ export default async function SubpagesListPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">서브 페이지</h1>
-          <p className="text-muted-foreground">
-            서브 페이지를 관리합니다.
-          </p>
-        </div>
-        {canCreate && (
-          <Button nativeButton={false} render={<Link href="/subpages/new" />}>
-            <Plus className="size-4" />
-            새 서브 페이지
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title="서브 페이지"
+        description="서브 페이지를 관리합니다."
+      />
+      <PageToolbar
+        left={
+          <Suspense>
+            <StatusFilter currentStatus={filters.status} />
+          </Suspense>
+        }
+        right={
+          canCreate ? (
+            <Button nativeButton={false} render={<Link href="/subpages/new" />}>
+              <Plus className="size-4" />
+              새 서브 페이지
+            </Button>
+          ) : undefined
+        }
+        mobileLeftLabel="상태 필터"
+        mobileRightLabel="새 페이지"
+        mobileCollapseRight={false}
+      />
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <Suspense>
-          <StatusFilter currentStatus={filters.status} />
-        </Suspense>
         <SubpageTable filters={filters} />
       </HydrationBoundary>
     </div>
