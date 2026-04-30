@@ -114,7 +114,7 @@ export function PageToolbar({
                 <SheetHeader>
                   <SheetTitle>{mobileRightLabel}</SheetTitle>
                 </SheetHeader>
-                <div className="flex flex-col gap-3 px-4 pb-6 [&>*]:w-full">{right}</div>
+                <div className="flex flex-col gap-3 px-4 pb-6">{right}</div>
               </SheetContent>
             </Sheet>
           </>
