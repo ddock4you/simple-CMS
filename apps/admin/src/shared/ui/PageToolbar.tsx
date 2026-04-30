@@ -44,6 +44,45 @@ interface PageToolbarProps {
   mobileRightIcon?: ReactNode;
 }
 
+interface ToolbarSlotProps {
+  children: ReactNode;
+  shouldCollapse: boolean;
+  label: string;
+  icon: ReactNode;
+  sheetDataSlot: string;
+  sheetContentClassName: string;
+}
+
+function ToolbarSlot({
+  children,
+  shouldCollapse,
+  label,
+  icon,
+  sheetDataSlot,
+  sheetContentClassName,
+}: ToolbarSlotProps) {
+  if (shouldCollapse) {
+    return (
+      <>
+        <div className="hidden md:flex md:items-center md:gap-2">{children}</div>
+        <Sheet>
+          <SheetTrigger render={<Button variant="outline" className="md:hidden" />}>
+            {icon}
+            {label}
+          </SheetTrigger>
+          <SheetContent side="top" data-slot={sheetDataSlot}>
+            <SheetHeader>
+              <SheetTitle>{label}</SheetTitle>
+            </SheetHeader>
+            <div className={cn('px-4 pb-6', sheetContentClassName)}>{children}</div>
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+  return <div className="flex items-center gap-2">{children}</div>;
+}
+
 export function PageToolbar({
   left,
   right,
@@ -68,59 +107,30 @@ export function PageToolbar({
         sticky && 'sticky top-14 z-20 -mx-6 px-6 shadow-sm',
       )}
     >
-      {/* 좌측 그룹 */}
       <div className="flex items-center gap-2">
-        {left && shouldCollapseLeft && (
-          <>
-            <div className="hidden md:flex md:items-center md:gap-2">{left}</div>
-            <Sheet>
-              <SheetTrigger
-                render={
-                  <Button variant="outline" className="md:hidden" />
-                }
-              >
-                {mobileLeftIcon ?? <Filter className="size-4" />}
-                {mobileLeftLabel}
-              </SheetTrigger>
-              <SheetContent side="top" data-slot="page-toolbar-left-sheet">
-                <SheetHeader>
-                  <SheetTitle>{mobileLeftLabel}</SheetTitle>
-                </SheetHeader>
-                <div className="space-y-3 px-4 pb-6">{left}</div>
-              </SheetContent>
-            </Sheet>
-          </>
-        )}
-        {left && !shouldCollapseLeft && (
-          <div className="flex items-center gap-2">{left}</div>
+        {left && (
+          <ToolbarSlot
+            shouldCollapse={shouldCollapseLeft}
+            label={mobileLeftLabel}
+            icon={mobileLeftIcon ?? <Filter className="size-4" />}
+            sheetDataSlot="page-toolbar-left-sheet"
+            sheetContentClassName="space-y-3"
+          >
+            {left}
+          </ToolbarSlot>
         )}
       </div>
-
-      {/* 우측 그룹 */}
       <div className="flex items-center gap-2">
-        {right && shouldCollapseRight && (
-          <>
-            <div className="hidden md:flex md:items-center md:gap-2">{right}</div>
-            <Sheet>
-              <SheetTrigger
-                render={
-                  <Button variant="outline" className="md:hidden" />
-                }
-              >
-                {mobileRightIcon ?? <MoreHorizontal className="size-4" />}
-                {mobileRightLabel}
-              </SheetTrigger>
-              <SheetContent side="top" data-slot="page-toolbar-right-sheet">
-                <SheetHeader>
-                  <SheetTitle>{mobileRightLabel}</SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-3 px-4 pb-6">{right}</div>
-              </SheetContent>
-            </Sheet>
-          </>
-        )}
-        {right && !shouldCollapseRight && (
-          <div className="flex items-center gap-2">{right}</div>
+        {right && (
+          <ToolbarSlot
+            shouldCollapse={shouldCollapseRight}
+            label={mobileRightLabel}
+            icon={mobileRightIcon ?? <MoreHorizontal className="size-4" />}
+            sheetDataSlot="page-toolbar-right-sheet"
+            sheetContentClassName="flex gap-2"
+          >
+            {right}
+          </ToolbarSlot>
         )}
       </div>
     </div>
