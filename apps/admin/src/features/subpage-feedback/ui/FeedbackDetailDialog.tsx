@@ -55,7 +55,7 @@ export function FeedbackDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>피드백 상세</DialogTitle>
         </DialogHeader>

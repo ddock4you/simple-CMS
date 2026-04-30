@@ -150,7 +150,7 @@ export function VersionDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent size="lg" className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>버전 상세</DialogTitle>
           <DialogDescription>

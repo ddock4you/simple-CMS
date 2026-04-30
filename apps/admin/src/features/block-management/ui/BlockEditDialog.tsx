@@ -138,7 +138,7 @@ export function BlockEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal>
-      <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent size="lg" className="w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {mode === 'create' ? '블록 추가' : '블록 편집'} —{' '}

@@ -71,7 +71,7 @@ export function MediaDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal>
-        <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent size="lg" className="w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>미디어 상세</DialogTitle>
             <DialogDescription>

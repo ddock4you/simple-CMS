@@ -104,7 +104,7 @@ export function SaveVersionButton({
         버전 저장
       </Button>
       <Dialog open={open} onOpenChange={safeOnOpenChange} disablePointerDismissal>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent size="md">
           <DialogHeader>
             <DialogTitle>버전 저장</DialogTitle>
             <DialogDescription>

@@ -32,7 +32,7 @@ export function AuditLogDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>감사 로그 상세</DialogTitle>
         </DialogHeader>
