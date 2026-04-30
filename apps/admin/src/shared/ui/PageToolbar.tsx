@@ -64,8 +64,8 @@ export function PageToolbar({
     <div
       data-testid="page-toolbar"
       className={cn(
-        'flex items-center justify-between gap-2 border-b bg-background py-2',
-        sticky && 'sticky top-14 z-20',
+        'flex items-center justify-between gap-2 bg-background py-2',
+        sticky && 'sticky top-14 z-20 -mx-6 px-6 shadow-sm',
       )}
     >
       {/* 좌측 그룹 */}
@@ -76,13 +76,13 @@ export function PageToolbar({
             <Sheet>
               <SheetTrigger
                 render={
-                  <Button variant="outline" size="sm" className="md:hidden" />
+                  <Button variant="outline" className="md:hidden" />
                 }
               >
                 {mobileLeftIcon ?? <Filter className="size-4" />}
                 {mobileLeftLabel}
               </SheetTrigger>
-              <SheetContent side="bottom" data-slot="page-toolbar-left-sheet">
+              <SheetContent side="top" data-slot="page-toolbar-left-sheet">
                 <SheetHeader>
                   <SheetTitle>{mobileLeftLabel}</SheetTitle>
                 </SheetHeader>
@@ -104,13 +104,13 @@ export function PageToolbar({
             <Sheet>
               <SheetTrigger
                 render={
-                  <Button variant="outline" size="sm" className="md:hidden" />
+                  <Button variant="outline" className="md:hidden" />
                 }
               >
                 {mobileRightIcon ?? <MoreHorizontal className="size-4" />}
                 {mobileRightLabel}
               </SheetTrigger>
-              <SheetContent side="bottom" data-slot="page-toolbar-right-sheet">
+              <SheetContent side="top" data-slot="page-toolbar-right-sheet">
                 <SheetHeader>
                   <SheetTitle>{mobileRightLabel}</SheetTitle>
                 </SheetHeader>
