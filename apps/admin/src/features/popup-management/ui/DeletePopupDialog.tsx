@@ -28,7 +28,7 @@ export function DeletePopupDialog({
     <AlertDialog>
       <AlertDialogTrigger
         render={
-          <Button variant="destructive" size="sm" disabled={isPending} />
+          <Button variant="destructive" size="default" disabled={isPending} />
         }
       >
         삭제
