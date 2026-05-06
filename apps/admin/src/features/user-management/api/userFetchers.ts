@@ -7,6 +7,22 @@ import type {
   RoleListItem,
 } from '@/features/user-management/model/userFilters';
 
+export interface BulkUserBlockedItem {
+  id: string;
+  username: string;
+  reason: string;
+}
+
+export interface BulkUserUpdateResult {
+  updated: string[];
+  blocked: BulkUserBlockedItem[];
+}
+
+export interface BulkUserDeleteResult {
+  deleted: string[];
+  blocked: BulkUserBlockedItem[];
+}
+
 export function getUserList(
   filters: UserListFilters,
 ): Promise<PaginatedResponse<UserListItem>> {
@@ -45,5 +61,40 @@ export function changeUserRole(id: string, roleId: string): Promise<null> {
   return fetchClient<null>(`/api/users/${id}/role`, {
     method: 'PATCH',
     body: JSON.stringify({ roleId }),
+  });
+}
+
+export function bulkApproveUsers(ids: string[]): Promise<BulkUserUpdateResult> {
+  return fetchClient<BulkUserUpdateResult>('/api/users/bulk-approve', {
+    method: 'POST',
+    body: JSON.stringify({ ids }),
+  });
+}
+
+export function bulkRejectUsers(ids: string[]): Promise<BulkUserDeleteResult> {
+  return fetchClient<BulkUserDeleteResult>('/api/users/bulk-reject', {
+    method: 'POST',
+    body: JSON.stringify({ ids }),
+  });
+}
+
+export function bulkSuspendUsers(ids: string[]): Promise<BulkUserUpdateResult> {
+  return fetchClient<BulkUserUpdateResult>('/api/users/bulk-suspend', {
+    method: 'POST',
+    body: JSON.stringify({ ids }),
+  });
+}
+
+export function bulkReactivateUsers(ids: string[]): Promise<BulkUserUpdateResult> {
+  return fetchClient<BulkUserUpdateResult>('/api/users/bulk-reactivate', {
+    method: 'POST',
+    body: JSON.stringify({ ids }),
+  });
+}
+
+export function bulkChangeUserRole(ids: string[], roleId: string): Promise<BulkUserUpdateResult> {
+  return fetchClient<BulkUserUpdateResult>('/api/users/bulk-role', {
+    method: 'POST',
+    body: JSON.stringify({ ids, roleId }),
   });
 }

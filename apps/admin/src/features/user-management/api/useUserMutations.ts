@@ -10,6 +10,15 @@ import {
   suspendUser,
   reactivateUser,
   changeUserRole,
+  bulkApproveUsers,
+  bulkRejectUsers,
+  bulkSuspendUsers,
+  bulkReactivateUsers,
+  bulkChangeUserRole,
+} from '@/features/user-management/api/userFetchers';
+import type {
+  BulkUserUpdateResult,
+  BulkUserDeleteResult,
 } from '@/features/user-management/api/userFetchers';
 import type { FetchError } from '@/shared/api/fetchClient';
 
@@ -77,6 +86,87 @@ export function useChangeUserRole() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       toast.success('역할이 변경되었습니다.');
+    },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useBulkApproveUsers(options?: {
+  onSuccess?: (result: BulkUserUpdateResult) => void;
+}) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) => bulkApproveUsers(ids),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      options?.onSuccess?.(result);
+    },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useBulkRejectUsers(options?: {
+  onSuccess?: (result: BulkUserDeleteResult) => void;
+}) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) => bulkRejectUsers(ids),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      options?.onSuccess?.(result);
+    },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useBulkSuspendUsers(options?: {
+  onSuccess?: (result: BulkUserUpdateResult) => void;
+}) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) => bulkSuspendUsers(ids),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      options?.onSuccess?.(result);
+    },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useBulkReactivateUsers(options?: {
+  onSuccess?: (result: BulkUserUpdateResult) => void;
+}) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) => bulkReactivateUsers(ids),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      options?.onSuccess?.(result);
+    },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useBulkChangeUserRole(options?: {
+  onSuccess?: (result: BulkUserUpdateResult) => void;
+}) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ids, roleId }: { ids: string[]; roleId: string }) =>
+      bulkChangeUserRole(ids, roleId),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      options?.onSuccess?.(result);
     },
     onError: (error: FetchError) => {
       toast.error(error.message);

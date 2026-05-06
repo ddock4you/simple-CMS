@@ -5,6 +5,10 @@ import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
+import {
+  assertNotLastSystemAdmin,
+  LastSystemAdminError,
+} from '@/features/user-management/lib/userGuards';
 
 export async function POST(
   request: Request,
@@ -23,7 +27,10 @@ export async function POST(
       );
     }
 
-    const targetUser = await prisma.user.findUnique({ where: { id } });
+    const targetUser = await prisma.user.findUnique({
+      where: { id },
+      include: { role: true },
+    });
     if (!targetUser) {
       return NextResponse.json(
         { success: false, error: '사용자를 찾을 수 없습니다.' } satisfies ApiResponse<never>,
@@ -38,13 +45,7 @@ export async function POST(
       );
     }
 
-    const activeCount = await prisma.user.count({ where: { status: 'ACTIVE' } });
-    if (activeCount <= 1) {
-      return NextResponse.json(
-        { success: false, error: '마지막 활성 관리자는 정지할 수 없습니다.' } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
-    }
+    await assertNotLastSystemAdmin(targetUser);
 
     await prisma.user.update({
       where: { id },
@@ -72,6 +73,12 @@ export async function POST(
       { success: true, data: null } satisfies ApiResponse<null>,
     );
   } catch (error) {
+    if (error instanceof LastSystemAdminError) {
+      return NextResponse.json(
+        { success: false, error: error.message } satisfies ApiResponse<never>,
+        { status: 400 },
+      );
+    }
     console.error('[Suspend API] Unexpected error:', error);
     return NextResponse.json(
       { success: false, error: '정지 처리에 실패했습니다.' } satisfies ApiResponse<never>,
