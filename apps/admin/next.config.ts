@@ -7,6 +7,15 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@simple-cms/types', '@simple-cms/db'],
+  async redirects() {
+    return [
+      {
+        source: '/home/popups/:path*',
+        destination: '/popups/:path*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

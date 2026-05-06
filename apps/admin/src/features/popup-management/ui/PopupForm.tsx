@@ -159,7 +159,7 @@ export function PopupForm({ mode, initialData }: PopupFormProps) {
             variant="ghost"
             size="sm"
             nativeButton={false}
-            render={<Link href="/home/popups" />}
+            render={<Link href="/popups" />}
           >
             <ArrowLeft className="size-4" />
             목록으로

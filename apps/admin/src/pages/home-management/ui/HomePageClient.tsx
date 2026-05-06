@@ -1,8 +1,17 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
+import { homeKeys } from '@/shared/api/queryKeys';
+import { useStagedOrder } from '@/shared/lib/useStagedOrder';
+import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
+import { OrderActionButtons } from '@/shared/ui/OrderActionButtons';
+import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 import { homeSectionListOptions } from '@/features/home-management/api/homeQueries';
+import { useReorderHomeSections } from '@/features/home-management/api/useHomeMutations';
 import { SectionList } from '@/features/home-management/ui/SectionList';
 
 interface HomePageClientProps {
@@ -10,7 +19,34 @@ interface HomePageClientProps {
 }
 
 export function HomePageClient({ canUpdate }: HomePageClientProps) {
+  const queryClient = useQueryClient();
   const { data: sections, isLoading } = useQuery(homeSectionListOptions());
+  const reorderMutation = useReorderHomeSections();
+
+  const { items, isDirty, dirtyCount, applyDragEnd, getDirtyPayload, reset } =
+    useStagedOrder({
+      data: sections ?? [],
+      mode: 'list',
+      getId: (s) => s.id,
+      getOrder: (s) => s.displayOrder,
+    });
+
+  const { confirmDialogProps } = useDirtyGuard(isDirty && canUpdate);
+
+  const handleSave = useCallback(() => {
+    reorderMutation.mutate(
+      { sections: getDirtyPayload() },
+      {
+        onSuccess: () => {
+          toast.success('순서가 저장되었습니다.');
+          void queryClient.invalidateQueries({ queryKey: homeKeys.all }).then(() => reset());
+        },
+        onError: (error) => {
+          toast.error(error.message);
+        },
+      },
+    );
+  }, [reorderMutation, getDirtyPayload, queryClient, reset]);
 
   if (isLoading) {
     return (
@@ -28,5 +64,27 @@ export function HomePageClient({ canUpdate }: HomePageClientProps) {
     );
   }
 
-  return <SectionList sections={sections} canUpdate={canUpdate} />;
+  return (
+    <>
+      <PageToolbar
+        right={
+          canUpdate ? (
+            <OrderActionButtons
+              dirtyCount={dirtyCount}
+              isSaving={reorderMutation.isPending}
+              onReset={reset}
+              onSave={handleSave}
+            />
+          ) : undefined
+        }
+        mobileCollapseRight={false}
+      />
+      <SectionList
+        canUpdate={canUpdate}
+        items={items}
+        applyDragEnd={applyDragEnd}
+      />
+      <ConfirmLeaveDialog {...confirmDialogProps} />
+    </>
+  );
 }

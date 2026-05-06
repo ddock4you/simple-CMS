@@ -31,7 +31,7 @@ export function useCreateHomePopup() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: popupKeys.all });
       toast.success('메인 팝업이 생성되었습니다.');
-      router.push(`/home/popups/${result.id}`);
+      router.push(`/popups/${result.id}`);
     },
     onError: (error: FetchError) => {
       toast.error(error.message);
@@ -48,7 +48,7 @@ export function useUpdateHomePopup(id: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: popupKeys.all });
       toast.success('메인 팝업이 수정되었습니다.');
-      router.push(`/home/popups/${id}`);
+      router.push(`/popups/${id}`);
     },
     onError: (error: FetchError) => {
       toast.error(error.message);
@@ -65,7 +65,7 @@ export function useDeleteHomePopup() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: popupKeys.lists() });
       toast.success('메인 팝업이 삭제되었습니다.');
-      router.push('/home/popups');
+      router.push('/popups');
     },
     onError: (error: FetchError) => {
       toast.error(error.message);

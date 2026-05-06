@@ -20,38 +20,23 @@ import { toast } from 'sonner';
 
 import type { FetchError } from '@/shared/api/fetchClient';
 import { homeKeys } from '@/shared/api/queryKeys';
-import { useStagedOrder } from '@/shared/lib/useStagedOrder';
-import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
-import { OrderActionButtons } from '@/shared/ui/OrderActionButtons';
-import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 
-import { useReorderHomeSections } from '../api/useHomeMutations';
 import { updateHomeSection } from '../api/homeFetchers';
 import type { HomeSectionListItem } from '../model/home.types';
 import { SortableSectionCard } from './SortableSectionCard';
 import { SectionEditDialog } from './SectionEditDialog';
 
 interface SectionListProps {
-  sections: HomeSectionListItem[];
   canUpdate: boolean;
+  items: HomeSectionListItem[];
+  applyDragEnd: (activeId: string, overId: string) => void;
 }
 
-export function SectionList({ sections, canUpdate }: SectionListProps) {
+export function SectionList({ canUpdate, items, applyDragEnd }: SectionListProps) {
   const queryClient = useQueryClient();
-  const reorderMutation = useReorderHomeSections();
   const [editingSection, setEditingSection] =
     useState<HomeSectionListItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  const { items, isDirty, dirtyCount, applyDragEnd, getDirtyPayload, reset } =
-    useStagedOrder({
-      data: sections,
-      mode: 'list',
-      getId: (s) => s.id,
-      getOrder: (s) => s.displayOrder,
-    });
-
-  const { confirmDialogProps } = useDirtyGuard(isDirty && canUpdate);
 
   // 섹션 수가 6개로 고정되지만, 토글은 단일 mutation에 id를 인자로 주입하여 hook 규칙 준수.
   const toggleMutation = useMutation({
@@ -81,21 +66,6 @@ export function SectionList({ sections, canUpdate }: SectionListProps) {
     [applyDragEnd],
   );
 
-  const handleSave = () => {
-    reorderMutation.mutate(
-      { sections: getDirtyPayload() },
-      {
-        onSuccess: () => {
-          toast.success('순서가 저장되었습니다.');
-          void queryClient.invalidateQueries({ queryKey: homeKeys.all }).then(() => reset());
-        },
-        onError: (error) => {
-          toast.error(error.message);
-        },
-      },
-    );
-  };
-
   const handleEdit = (section: HomeSectionListItem) => {
     setEditingSection(section);
     setDialogOpen(true);
@@ -110,15 +80,6 @@ export function SectionList({ sections, canUpdate }: SectionListProps) {
 
   return (
     <>
-      {canUpdate && (
-        <OrderActionButtons
-          dirtyCount={dirtyCount}
-          isSaving={reorderMutation.isPending}
-          onReset={reset}
-          onSave={handleSave}
-        />
-      )}
-
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -150,8 +111,6 @@ export function SectionList({ sections, canUpdate }: SectionListProps) {
           if (!open) setEditingSection(null);
         }}
       />
-
-      <ConfirmLeaveDialog {...confirmDialogProps} />
     </>
   );
 }

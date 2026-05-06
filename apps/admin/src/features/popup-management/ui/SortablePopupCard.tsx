@@ -67,7 +67,7 @@ export function SortablePopupCard({ popup, canUpdate }: Props) {
         <div className="flex items-center gap-2">
           <PopupTypeBadge type={popup.popupType} />
           <Link
-            href={`/home/popups/${popup.id}`}
+            href={`/popups/${popup.id}`}
             className={`truncate font-medium hover:underline ${
               !popup.isVisible ? 'text-muted-foreground line-through' : ''
             }`}
@@ -102,7 +102,7 @@ export function SortablePopupCard({ popup, canUpdate }: Props) {
             variant="ghost"
             size="sm"
             nativeButton={false}
-            render={<Link href={`/home/popups/${popup.id}/edit`} />}
+            render={<Link href={`/popups/${popup.id}/edit`} />}
             title="편집"
           >
             <Pencil className="size-4" />

@@ -45,7 +45,7 @@ export function PopupView({ id }: { id: string }) {
             variant="ghost"
             size="sm"
             nativeButton={false}
-            render={<Link href="/home/popups" />}
+            render={<Link href="/popups" />}
           >
             <ArrowLeft className="size-4" />
             목록으로
@@ -76,7 +76,7 @@ export function PopupView({ id }: { id: string }) {
             {canUpdate && (
               <Button
                 nativeButton={false}
-                render={<Link href={`/home/popups/${id}/edit`} />}
+                render={<Link href={`/popups/${id}/edit`} />}
               >
                 <Pencil className="size-4" />
                 편집
