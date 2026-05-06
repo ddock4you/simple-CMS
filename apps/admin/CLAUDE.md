@@ -86,12 +86,17 @@ src/
   - `POST /api/auth/logout` — 세션 삭제, 쿠키 제거
   - `POST /api/auth/register` — 회원가입 (PENDING 상태로 생성)
 - 사용자 관리 API Routes:
-  - `GET /api/users` — 목록 (상태 필터 + 서버 사이드 페이지네이션)
+  - `GET /api/users` — 목록 (상태 필터 + 서버 사이드 페이지네이션 + q 검색)
   - `POST /api/users/[id]/approve` — 승인 (PENDING→ACTIVE, 기본 역할 배정)
   - `DELETE /api/users/[id]` — 거절 (PENDING 유저 hard delete)
-  - `POST /api/users/[id]/suspend` — 정지 (ACTIVE→SUSPENDED, 세션 즉시 삭제)
+  - `POST /api/users/[id]/suspend` — 정지 (ACTIVE→SUSPENDED, 세션 즉시 삭제) ← D9 가드: 마지막 총괄 관리자만 차단
   - `POST /api/users/[id]/reactivate` — 해제 (SUSPENDED→ACTIVE)
   - `PATCH /api/users/[id]/role` — 역할 변경
+  - `POST /api/users/bulk-approve` — 일괄 승인 (users:update, 기본 역할 자동 배정)
+  - `POST /api/users/bulk-reject` — 일괄 거절 (users:delete, PENDING만 처리)
+  - `POST /api/users/bulk-suspend` — 일괄 정지 (users:update, assertNotLastSystemAdmin mid-loop)
+  - `POST /api/users/bulk-reactivate` — 일괄 활성화 (users:update, SUSPENDED만 처리)
+  - `POST /api/users/bulk-role` — 일괄 역할 변경 (users:update, isSystem 역할 배정은 403 전체 차단)
   - `GET /api/roles` — 역할 목록 (드롭다운용 + 권한 관리)
 - 역할/권한 관리 API Routes:
   - `GET /api/roles` — 목록 (userCount 포함)
@@ -601,20 +606,28 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 - 라우트: `/users` (최상위 사이드바 메뉴)
 - FSD: `features/user-management/`
 - 목록 컬럼: 아이디, 이름, 역할(뱃지, PENDING은 "미배정"), 상태(뱃지), 가입일, 액션
-- 필터: 상태별 (전체/대기/활성/정지)
+- 필터: 상태별 (전체/대기/활성/정지) + q 검색 (username, name)
 - 서버 사이드 페이지네이션 (기본 20건)
-- 액션:
+- 단건 액션:
   - PENDING → 승인(ACTIVE로 변경) / 거절(hard delete)
   - ACTIVE → 정지(SUSPENDED로 변경 + 세션 즉시 삭제)
   - SUSPENDED → 해제(ACTIVE로 변경)
+- **정지 가드 (D9)**: `features/user-management/lib/userGuards.ts::assertNotLastSystemAdmin`
+  - 이전: `count(status: 'ACTIVE') <= 1` — 마지막 활성 관리자 기준
+  - **현재**: 대상 사용자가 총괄 관리자(`role.isSystem=true`)일 때만 검사 → `count(role: isSystem, status: ACTIVE) <= 1`이면 차단
+  - 단건 suspend + bulk-suspend 모두 동일 헬퍼 재사용 (`LastSystemAdminError`)
 - 자기 자신 정지 불가
-- 마지막 ACTIVE 관리자 정지 불가 (ACTIVE 사용자 수 체크)
 - 승인 시 기본 역할(`isDefault: true`) 자동 배정
 - 역할 변경: 사용자 목록에서 역할 드롭다운으로 변경 (users:update 권한 필요)
 - 총괄 관리자 역할 배정은 총괄 관리자만 가능
 - 마지막 총괄 관리자의 역할 변경 불가
+- **벌크 액션** (체크박스 선택 + BulkActionBar):
+  - 상태별 액션 노출: allPending → [일괄 승인]/[일괄 거절], allActive → [일괄 정지]/[일괄 역할 변경], allSuspended → [일괄 활성화], mixed → 모든 액션 노출
+  - bulk API 응답 패턴: `{ updated/deleted: string[], blocked: [{id, username, reason}][] }` (부분 성공)
+  - BulkChangeUserRoleDialog: Dialog + role Select (isSystem 역할은 총괄 관리자만 표시)
 - 모든 상태 변경 및 역할 변경은 감사 로그 기록 (`entityType: USER`)
-- API Routes: `POST /api/users/[id]/approve`, `DELETE /api/users/[id]`, `POST /api/users/[id]/suspend`, `POST /api/users/[id]/reactivate`, `PATCH /api/users/[id]/role`
+- 단건 API Routes: `POST /api/users/[id]/approve`, `DELETE /api/users/[id]`, `POST /api/users/[id]/suspend`, `POST /api/users/[id]/reactivate`, `PATCH /api/users/[id]/role`
+- 벌크 API Routes: `POST /api/users/bulk-{approve,reject,suspend,reactivate,role}`
 
 ### 내 정보 변경 (프로필)
 
