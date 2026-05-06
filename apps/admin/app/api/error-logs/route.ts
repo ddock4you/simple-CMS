@@ -50,7 +50,6 @@ export async function GET(request: Request): Promise<NextResponse> {
       source,
       resolved,
       urlPattern,
-      search,
       groupByFingerprint,
       from,
       to,
@@ -63,8 +62,12 @@ export async function GET(request: Request): Promise<NextResponse> {
     if (source !== 'ALL') where.source = source;
     if (resolved === 'resolved') where.isResolved = true;
     else if (resolved === 'unresolved') where.isResolved = false;
-    if (urlPattern) where.url = { contains: urlPattern };
-    if (search) where.message = { contains: search, mode: 'insensitive' };
+    if (urlPattern) {
+      where.OR = [
+        { url: { contains: urlPattern } },
+        { message: { contains: urlPattern, mode: 'insensitive' } },
+      ];
+    }
     if (from || to) {
       where.createdAt = {
         ...(from ? { gte: new Date(from) } : {}),

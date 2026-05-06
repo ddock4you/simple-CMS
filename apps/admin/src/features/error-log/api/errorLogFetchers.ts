@@ -15,7 +15,6 @@ export function getErrorLogList(
   if (filters.source !== 'ALL') params.set('source', filters.source);
   if (filters.resolved !== 'all') params.set('resolved', filters.resolved);
   if (filters.urlPattern) params.set('urlPattern', filters.urlPattern);
-  if (filters.search) params.set('search', filters.search);
   if (filters.groupByFingerprint)
     params.set('groupByFingerprint', 'true');
   if (filters.from) params.set('from', filters.from);

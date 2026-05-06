@@ -9,7 +9,6 @@ export interface ErrorLogListFilters {
   source: ErrorSourceFilter;
   resolved: ResolvedFilter;
   urlPattern: string | null;
-  search: string | null;
   groupByFingerprint: boolean;
   from: string | null;
   to: string | null;
@@ -22,7 +21,6 @@ export const DEFAULT_ERROR_LOG_FILTERS: ErrorLogListFilters = {
   source: 'ALL',
   resolved: 'unresolved',
   urlPattern: null,
-  search: null,
   groupByFingerprint: false,
   from: null,
   to: null,

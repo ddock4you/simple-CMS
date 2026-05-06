@@ -37,7 +37,7 @@ export function ListSearchInput({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2">
+    <form key={defaultValue} onSubmit={handleSubmit} className="flex items-center gap-2">
       <Input
         name={name}
         placeholder={placeholder}

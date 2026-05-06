@@ -15,7 +15,6 @@ export const errorLogListQuerySchema = z.object({
     .default('ALL'),
   resolved: z.enum(['all', 'unresolved', 'resolved']).optional().default('all'),
   urlPattern: z.string().optional(),
-  search: z.string().optional(),
   groupByFingerprint: z.coerce.boolean().optional().default(false),
   from: z.string().optional(),
   to: z.string().optional(),

@@ -36,7 +36,6 @@ function parseFilters(
     resolved: ((searchParams.resolved as string) ||
       'unresolved') as ResolvedFilter,
     urlPattern: (searchParams.urlPattern as string) || null,
-    search: (searchParams.search as string) || null,
     groupByFingerprint: searchParams.groupByFingerprint === 'true',
     from: (searchParams.from as string) || defaults.from,
     to: (searchParams.to as string) || defaults.to,
@@ -71,7 +70,6 @@ export default async function ErrorLogsPage({
               currentSource={filters.source}
               currentResolved={filters.resolved}
               currentUrlPattern={filters.urlPattern}
-              currentSearch={filters.search}
               currentGroupByFingerprint={filters.groupByFingerprint}
               currentFrom={filters.from}
               currentTo={filters.to}

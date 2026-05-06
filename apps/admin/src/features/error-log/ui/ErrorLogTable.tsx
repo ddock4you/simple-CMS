@@ -37,6 +37,7 @@ export function ErrorLogTable({ filters }: ErrorLogTableProps) {
 
   return (
     <div className="space-y-4">
+      <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -167,10 +168,7 @@ export function ErrorLogTable({ filters }: ErrorLogTableProps) {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between">
-        <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
-        <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
-      </div>
+      <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
       <ErrorLogDetailDialog
         id={selectedId}
         open={!!selectedId}

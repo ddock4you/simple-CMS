@@ -132,6 +132,11 @@ export function MediaPageClient({ filters, canCreate }: MediaPageClientProps) {
         </div>
       )}
 
+      <ListSummary
+        total={data?.total ?? 0}
+        page={data?.page ?? filters.page}
+        pageSize={data?.pageSize ?? filters.pageSize}
+      />
       <MediaGrid
         items={items}
         isLoading={isLoading}
@@ -140,19 +145,11 @@ export function MediaPageClient({ filters, canCreate }: MediaPageClientProps) {
         selectedIds={selectedIds}
         onToggleSelect={toggleSelect}
       />
-
-      <div className="flex items-center justify-between">
-        <ListSummary
-          total={data?.total ?? 0}
-          page={data?.page ?? filters.page}
-          pageSize={data?.pageSize ?? filters.pageSize}
-        />
-        <ListPagination
-          total={data?.total ?? 0}
-          page={data?.page ?? filters.page}
-          pageSize={data?.pageSize ?? filters.pageSize}
-        />
-      </div>
+      <ListPagination
+        total={data?.total ?? 0}
+        page={data?.page ?? filters.page}
+        pageSize={data?.pageSize ?? filters.pageSize}
+      />
 
       <MediaDetailDialog
         mediaId={detailId}

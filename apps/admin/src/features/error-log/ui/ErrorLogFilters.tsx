@@ -33,7 +33,6 @@ interface ErrorLogFiltersProps {
   currentSource: ErrorSourceFilter;
   currentResolved: ResolvedFilter;
   currentUrlPattern: string | null;
-  currentSearch: string | null;
   currentGroupByFingerprint: boolean;
   currentFrom: string | null;
   currentTo: string | null;
@@ -55,7 +54,6 @@ export function ErrorLogFilters({
   currentSource,
   currentResolved,
   currentUrlPattern,
-  currentSearch,
   currentGroupByFingerprint,
   currentFrom,
   currentTo,
@@ -78,16 +76,10 @@ export function ErrorLogFilters({
     updateParam(key, date ? toKstDateString(date) : null);
   };
 
-  const handleUrlSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    updateParam('urlPattern', String(formData.get('urlPattern') ?? '') || null);
-  };
-
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    updateParam('search', String(formData.get('search') ?? '') || null);
+    updateParam('urlPattern', String(formData.get('urlPattern') ?? '') || null);
   };
 
   return (
@@ -178,21 +170,12 @@ export function ErrorLogFilters({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-          <Input
-            name="search"
-            placeholder="메시지 검색"
-            defaultValue={currentSearch ?? ''}
-            className="w-[240px]"
-          />
-          <Button type="submit" variant="outline" size="sm">검색</Button>
-        </form>
-        <form onSubmit={handleUrlSubmit} className="flex items-center gap-2">
+        <form key={currentUrlPattern ?? ''} onSubmit={handleSearchSubmit} className="flex items-center gap-2">
           <Input
             name="urlPattern"
-            placeholder="URL 포함"
+            placeholder="메시지 · URL 검색"
             defaultValue={currentUrlPattern ?? ''}
-            className="w-[240px]"
+            className="w-[280px]"
           />
           <Button type="submit" variant="outline" size="sm">검색</Button>
         </form>

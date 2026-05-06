@@ -59,44 +59,14 @@ export function UserTable({
     [pageIds, selectedIds],
   );
 
-  const isAllOnPageSelected = pageIds.length > 0 && selectedOnPage.length === pageIds.length;
-  const isIndeterminate = selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length;
-
-  if (!data) return null;
-
-  const toggleAll = (next: boolean) => {
-    setSelectedIds((prev) => {
-      const updated = new Set(prev);
-      for (const id of pageIds) {
-        if (next) updated.add(id);
-        else updated.delete(id);
-      }
-      return updated;
-    });
-  };
-
-  const toggleOne = (id: string, next: boolean) => {
-    setSelectedIds((prev) => {
-      const updated = new Set(prev);
-      if (next) updated.add(id);
-      else updated.delete(id);
-      return updated;
-    });
-  };
-
-  const clearSelection = () => setSelectedIds(new Set());
-  const selectedArray = Array.from(selectedIds);
-
-  const showBulk = canUpdateUsers || canDeleteUsers;
-
   const selectedStatuses = useMemo(() => {
     const statuses = new Set(
-      data.items
+      (data?.items ?? [])
         .filter((u) => selectedIds.has(u.id))
         .map((u) => u.status),
     );
     return statuses;
-  }, [data.items, selectedIds]);
+  }, [data?.items, selectedIds]);
 
   const allPending = selectedStatuses.size === 1 && selectedStatuses.has('PENDING');
   const allActive = selectedStatuses.size === 1 && selectedStatuses.has('ACTIVE');
@@ -153,6 +123,35 @@ export function UserTable({
     return actions;
   }, [selectedIds.size, allPending, allActive, allSuspended, isMixed, canUpdateUsers, canDeleteUsers]);
 
+  if (!data) return null;
+
+  const isAllOnPageSelected = pageIds.length > 0 && selectedOnPage.length === pageIds.length;
+  const isIndeterminate = selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length;
+  const showBulk = canUpdateUsers || canDeleteUsers;
+  const selectedArray = Array.from(selectedIds);
+
+  const toggleAll = (next: boolean) => {
+    setSelectedIds((prev) => {
+      const updated = new Set(prev);
+      for (const id of pageIds) {
+        if (next) updated.add(id);
+        else updated.delete(id);
+      }
+      return updated;
+    });
+  };
+
+  const toggleOne = (id: string, next: boolean) => {
+    setSelectedIds((prev) => {
+      const updated = new Set(prev);
+      if (next) updated.add(id);
+      else updated.delete(id);
+      return updated;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
   return (
     <div className="space-y-4">
       {showBulk && (
@@ -166,6 +165,7 @@ export function UserTable({
           actions={bulkActions}
         />
       )}
+      <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -230,10 +230,7 @@ export function UserTable({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between">
-        <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
-        <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
-      </div>
+      <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
 
       <BulkApproveUserDialog
         ids={selectedArray}

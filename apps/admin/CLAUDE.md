@@ -679,7 +679,7 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 - 컬럼 (개별 뷰): 시간, 레벨 뱃지, 소스 뱃지, 메시지(첫 줄), URL, 해결 상태, 상세 버튼
 - 컬럼 (그룹 뷰): 최근 발생 시각, 레벨, 소스, 메시지, URL, 발생 횟수, 일괄 해결, 대표 상세
-- 필터: 레벨, 소스, 해결 상태, 날짜 범위, URL 부분 일치, 메시지 검색, 그룹/개별 뷰 토글
+- 필터: 레벨, 소스, 해결 상태, 날짜 범위, 메시지·URL 통합 검색(`urlPattern` — OR 조건으로 message + url 동시 검색), 그룹/개별 뷰 토글
 - 기본 정렬: `createdAt DESC`, 기본 필터: `resolved=unresolved`, 날짜=최근 1개월
 - 서버 사이드 페이지네이션 (기본 20건)
 - 그룹 뷰는 Prisma `groupBy` + `_min.isResolved`로 미해결 존재 여부 판정
@@ -1165,9 +1165,9 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 **리스트 공통 컴포넌트 (PR2)**
 
-- `ListSummary({ total, page, pageSize })` — `총 N건 중 a~b건` 표시. **1페이지일 때도 항상 표시** (기존 `if totalPages<=1 return null` 결함 수정)
+- `ListSummary({ total, page, pageSize })` — `총 N건` (전체 건수) 표시. **PageToolbar 바로 아래, 테이블 바로 위**에 배치. `page`/`pageSize` props는 시그니처에 유지되나 현재 표시에는 미사용
 - `ListPagination({ total, page, pageSize, basePath?, onPageChange? })` — shadcn pagination 래퍼. URL `page` query 갱신 또는 onPageChange 콜백
-- `ListSearchInput({ placeholder, defaultValue })` — `<form>` + `<Input>` + `<Button type="submit">검색</Button>`. **Enter 또는 버튼 submit만** — debounce 자동 fetch 금지 (admin 검색 UX D8 정책). 빈 제출 시 `q` 파라미터 제거
+- `ListSearchInput({ placeholder, defaultValue })` — `<form key={defaultValue}>` + `<Input>` + `<Button type="submit">검색</Button>`. **Enter 또는 버튼 submit만** — debounce 자동 fetch 금지 (admin 검색 UX D8 정책). 빈 제출 시 `q` 파라미터 제거. `key={defaultValue}`로 URL 파라미터 변경 시 form remount → Base UI uncontrolled 경고 방지
 
 리스트 페이지 구조 패턴:
 ```tsx

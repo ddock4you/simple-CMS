@@ -129,6 +129,7 @@ export function PostTable({ filters }: PostTableProps) {
           ]}
         />
       )}
+      <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -229,10 +230,7 @@ export function PostTable({ filters }: PostTableProps) {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between">
-        <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
-        <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
-      </div>
+      <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
       <BulkDeletePostDialog
         ids={selectedArray}
         open={bulkDeleteOpen}

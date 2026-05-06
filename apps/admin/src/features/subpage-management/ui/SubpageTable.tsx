@@ -120,6 +120,7 @@ export function SubpageTable({ filters }: SubpageTableProps) {
           ]}
         />
       )}
+      <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -218,10 +219,7 @@ export function SubpageTable({ filters }: SubpageTableProps) {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between">
-        <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
-        <ListPagination page={data.page} pageSize={data.pageSize} total={data.total} />
-      </div>
+      <ListPagination page={data.page} pageSize={data.pageSize} total={data.total} />
       <BulkDeleteSubpageDialog
         ids={selectedArray}
         open={bulkDeleteOpen}
