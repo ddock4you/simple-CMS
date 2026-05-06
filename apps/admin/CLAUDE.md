@@ -1047,6 +1047,7 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 - 통합 검색: `GET /api/quick-search?q=&types=subpage,post,board,menu` — 단순 `contains` 매칭, 도메인별 read 권한 필터
 - FSD: `features/quick-switcher/` — `CommandPalette.tsx`, `CommandPaletteTrigger.tsx`, `quickSearchQueries.ts`
 - 마운트: `(authenticated)/layout.tsx`에 항상 렌더. AdminHeader: [검색 ⌘K] 보조 버튼
+- **검색 UX**: debounce 자동 fetch 아님 — Enter 또는 [검색] 버튼으로 명시적 submit. `submittedQuery` state 기반, 미제출 시 `useQuery` enabled=false. Dialog 닫힘/열림 시 query·submittedQuery 양쪽 reset. Enter 키 분기: 입력값 ≠ submittedQuery면 search 실행, 같으면 cmdk 항목 선택에 위임 (e.stopPropagation으로 cmdk 차단)
 
 #### dnd-kit 낙관적 업데이트
 
@@ -1148,6 +1149,22 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 - `bodyOnlyScroll`: 헤더·푸터 고정 + 본문만 스크롤. `<DialogBody>` slot 사용 의무 (`<DialogBody className="px-0">...</DialogBody>`)
 - 새 Dialog 추가 시 `size` 토큰 + `bodyOnlyScroll` + `<DialogBody>` 세트 적용 기본값
+
+**리스트 공통 컴포넌트 (PR2)**
+
+- `ListSummary({ total, page, pageSize })` — `총 N건 중 a~b건` 표시. **1페이지일 때도 항상 표시** (기존 `if totalPages<=1 return null` 결함 수정)
+- `ListPagination({ total, page, pageSize, basePath?, onPageChange? })` — shadcn pagination 래퍼. URL `page` query 갱신 또는 onPageChange 콜백
+- `ListSearchInput({ placeholder, defaultValue })` — `<form>` + `<Input>` + `<Button type="submit">검색</Button>`. **Enter 또는 버튼 submit만** — debounce 자동 fetch 금지 (admin 검색 UX D8 정책). 빈 제출 시 `q` 파라미터 제거
+
+리스트 페이지 구조 패턴:
+```tsx
+<PageToolbar left={<><DomainFilters /><ListSearchInput placeholder="제목으로 검색" defaultValue={filters.q ?? ''} /></>} right={...} />
+<ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
+<DataTable ... />
+<ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
+```
+
+`entities/media/ui/MediaPagination.tsx`는 유지 — `MediaPicker` Dialog 내부 state 기반 페이지네이션(`onPageChange`)에 사용
 
 **인라인 status 토글 (Stage 14f)**
 

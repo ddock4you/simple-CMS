@@ -297,7 +297,7 @@ apps/{앱}/
 `/boards`, `/boards/new`, `/boards/[id]`, `/boards/[id]/edit`,
 `/posts`, `/posts/new`, `/posts/[id]`, `/posts/[id]/edit`,
 `/navigation`, `/navigation/[menuId]`,
-`/home`, `/home/popups`, `/home/popups/new`, `/home/popups/[id]`, `/home/popups/[id]/edit`,
+`/home`, `/popups`, `/popups/new`, `/popups/[id]`, `/popups/[id]/edit`,
 `/media`, `/users`, `/profile`,
 `/subpage-feedback`,
 `/audit-logs`, `/error-logs`,
