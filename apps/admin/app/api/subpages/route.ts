@@ -22,6 +22,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       status: searchParams.get('status') ?? undefined,
       page: searchParams.get('page') ?? undefined,
       pageSize: searchParams.get('pageSize') ?? undefined,
+      q: searchParams.get('q') ?? undefined,
     });
 
     if (!parsed.success) {
@@ -31,8 +32,17 @@ export async function GET(request: Request): Promise<NextResponse> {
       );
     }
 
-    const { status, page, pageSize } = parsed.data;
-    const where = status === 'ALL' ? {} : { status: status as 'DRAFT' | 'PUBLISHED' };
+    const { status, page, pageSize, q } = parsed.data;
+    const statusWhere = status === 'ALL' ? {} : { status: status as 'DRAFT' | 'PUBLISHED' };
+    const searchWhere = q
+      ? {
+          OR: [
+            { title: { contains: q, mode: 'insensitive' as const } },
+            { slug: { contains: q, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+    const where = { ...statusWhere, ...searchWhere };
 
     const [items, total] = await Promise.all([
       prisma.subpage.findMany({

@@ -17,6 +17,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       status: searchParams.get('status') ?? undefined,
       page: searchParams.get('page') ?? undefined,
       pageSize: searchParams.get('pageSize') ?? undefined,
+      q: searchParams.get('q') ?? undefined,
     });
 
     if (!parsed.success) {
@@ -26,8 +27,17 @@ export async function GET(request: Request): Promise<NextResponse> {
       );
     }
 
-    const { status, page, pageSize } = parsed.data;
-    const where = status === 'ALL' ? {} : { status: status as 'PENDING' | 'ACTIVE' | 'SUSPENDED' };
+    const { status, page, pageSize, q } = parsed.data;
+    const statusWhere = status === 'ALL' ? {} : { status: status as 'PENDING' | 'ACTIVE' | 'SUSPENDED' };
+    const searchWhere = q
+      ? {
+          OR: [
+            { username: { contains: q, mode: 'insensitive' as const } },
+            { name: { contains: q, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+    const where = { ...statusWhere, ...searchWhere };
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({

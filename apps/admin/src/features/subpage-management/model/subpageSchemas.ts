@@ -4,6 +4,7 @@ export const subpageListQuerySchema = z.object({
   status: z.enum(['ALL', 'DRAFT', 'PUBLISHED']).optional().default('ALL'),
   page: z.coerce.number().int().positive().optional().default(1),
   pageSize: z.coerce.number().int().positive().max(100).optional().default(20),
+  q: z.string().trim().min(1).max(200).optional(),
 });
 
 const cclTypeSchema = z

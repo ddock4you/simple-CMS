@@ -16,12 +16,13 @@ import {
 import { Button } from '@/shared/ui/shadcn/button';
 import { Badge } from '@/shared/ui/shadcn/badge';
 
+import { ListSummary } from '@/shared/ui/ListSummary';
+import { ListPagination } from '@/shared/ui/ListPagination';
 import { errorLogListOptions } from '../api/errorLogQueries';
 import type { ErrorLogListFilters } from '../model/errorLogFilters';
 import { BulkResolveButton } from './BulkResolveButton';
 import { ErrorLevelBadge } from './ErrorLevelBadge';
 import { ErrorLogDetailDialog } from './ErrorLogDetailDialog';
-import { ErrorLogPagination } from './ErrorLogPagination';
 import { ErrorSourceBadge } from './ErrorSourceBadge';
 
 interface ErrorLogTableProps {
@@ -166,11 +167,10 @@ export function ErrorLogTable({ filters }: ErrorLogTableProps) {
           </TableBody>
         </Table>
       </div>
-      <ErrorLogPagination
-        page={data.page}
-        pageSize={data.pageSize}
-        total={data.total}
-      />
+      <div className="flex items-center justify-between">
+        <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
+        <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
+      </div>
       <ErrorLogDetailDialog
         id={selectedId}
         open={!!selectedId}

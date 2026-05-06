@@ -9,6 +9,7 @@ import { getQueryClient } from '@/shared/api/queryClient';
 import { Button } from '@/shared/ui/shadcn/button';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
+import { ListSearchInput } from '@/shared/ui/ListSearchInput';
 import { boardListOptions } from '@/features/board-management/api/boardQueries';
 import type {
   BoardListFilters,
@@ -23,8 +24,12 @@ function parseFilters(
   const visibility = (searchParams.visibility as BoardVisibilityFilter) || 'ALL';
   const page = Number(searchParams.page) || 1;
   const pageSize = Number(searchParams.pageSize) || 20;
+  const q =
+    typeof searchParams.q === 'string' && searchParams.q.trim()
+      ? searchParams.q.trim()
+      : undefined;
 
-  return { visibility, page, pageSize };
+  return { visibility, page, pageSize, q };
 }
 
 export default async function BoardsListPage({
@@ -45,9 +50,17 @@ export default async function BoardsListPage({
       <PageHeader title="게시판" description="게시판을 관리합니다." />
       <PageToolbar
         left={
-          <Suspense>
-            <VisibilityFilter currentVisibility={filters.visibility} />
-          </Suspense>
+          <div className="flex items-center gap-2">
+            <Suspense>
+              <VisibilityFilter currentVisibility={filters.visibility} />
+            </Suspense>
+            <Suspense>
+              <ListSearchInput
+                placeholder="이름/슬러그로 검색"
+                defaultValue={filters.q ?? ''}
+              />
+            </Suspense>
+          </div>
         }
         right={
           canCreate ? (

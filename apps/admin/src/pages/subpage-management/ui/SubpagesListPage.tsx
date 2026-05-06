@@ -9,6 +9,7 @@ import { getQueryClient } from '@/shared/api/queryClient';
 import { Button } from '@/shared/ui/shadcn/button';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
+import { ListSearchInput } from '@/shared/ui/ListSearchInput';
 import { subpageListOptions } from '@/features/subpage-management/api/subpageQueries';
 import type {
   SubpageListFilters,
@@ -23,8 +24,9 @@ function parseFilters(
   const status = (searchParams.status as SubpageStatusFilter) || 'ALL';
   const page = Number(searchParams.page) || 1;
   const pageSize = Number(searchParams.pageSize) || 20;
+  const q = typeof searchParams.q === 'string' && searchParams.q.trim() ? searchParams.q.trim() : undefined;
 
-  return { status, page, pageSize };
+  return { status, page, pageSize, q };
 }
 
 export default async function SubpagesListPage({
@@ -49,7 +51,13 @@ export default async function SubpagesListPage({
       <PageToolbar
         left={
           <Suspense>
-            <StatusFilter currentStatus={filters.status} />
+            <div className="flex flex-wrap items-center gap-3">
+              <ListSearchInput
+                placeholder="제목/슬러그로 검색"
+                defaultValue={filters.q ?? ''}
+              />
+              <StatusFilter currentStatus={filters.status} />
+            </div>
           </Suspense>
         }
         right={
@@ -60,7 +68,7 @@ export default async function SubpagesListPage({
             </Button>
           ) : undefined
         }
-        mobileLeftLabel="상태 필터"
+        mobileLeftLabel="검색/필터"
         mobileRightLabel="새 페이지"
         mobileCollapseRight={false}
       />

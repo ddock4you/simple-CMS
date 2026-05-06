@@ -17,12 +17,14 @@ import { Button } from '@/shared/ui/shadcn/button';
 import { InlineBooleanToggle } from '@/shared/ui/InlineBooleanToggle';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
+import { ListSummary } from '@/shared/ui/ListSummary';
+import { ListPagination } from '@/shared/ui/ListPagination';
+
 import type { BoardListFilters } from '../model/boardFilters';
 import { boardListOptions } from '../api/boardQueries';
 import { useToggleBoardVisibility } from '../api/useBoardMutations';
 import { BoardSkinTypeBadge } from './BoardSkinTypeBadge';
 import { BoardVisibilityBadge } from './BoardVisibilityBadge';
-import { BoardPagination } from './BoardPagination';
 
 interface BoardTableProps {
   filters: BoardListFilters;
@@ -126,11 +128,10 @@ export function BoardTable({ filters }: BoardTableProps) {
           </TableBody>
         </Table>
       </div>
-      <BoardPagination
-        page={data.page}
-        pageSize={data.pageSize}
-        total={data.total}
-      />
+      <div className="flex items-center justify-between">
+        <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
+        <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
+      </div>
     </div>
   );
 }

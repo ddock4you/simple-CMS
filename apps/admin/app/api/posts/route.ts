@@ -23,6 +23,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       boardId: searchParams.get('boardId') ?? undefined,
       page: searchParams.get('page') ?? undefined,
       pageSize: searchParams.get('pageSize') ?? undefined,
+      q: searchParams.get('q') ?? undefined,
     });
 
     if (!parsed.success) {
@@ -32,10 +33,11 @@ export async function GET(request: Request): Promise<NextResponse> {
       );
     }
 
-    const { status, boardId, page, pageSize } = parsed.data;
+    const { status, boardId, page, pageSize, q } = parsed.data;
     const where = {
       ...(status !== 'ALL' ? { status: status as 'DRAFT' | 'PUBLISHED' } : {}),
       ...(boardId ? { boardId } : {}),
+      ...(q ? { title: { contains: q, mode: 'insensitive' as const } } : {}),
     };
 
     const [items, total] = await Promise.all([

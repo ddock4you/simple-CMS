@@ -5,6 +5,7 @@ export const postListQuerySchema = z.object({
   boardId: z.string().optional(),
   page: z.coerce.number().int().positive().optional().default(1),
   pageSize: z.coerce.number().int().positive().max(100).optional().default(20),
+  q: z.string().trim().min(1).max(200).optional(),
 });
 
 export const createPostSchema = z.object({

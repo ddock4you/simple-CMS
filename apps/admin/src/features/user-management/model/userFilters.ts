@@ -6,12 +6,14 @@ export interface UserListFilters {
   status: UserStatusFilter;
   page: number;
   pageSize: number;
+  q?: string;
 }
 
 export const DEFAULT_USER_FILTERS: UserListFilters = {
   status: 'ALL',
   page: 1,
   pageSize: 20,
+  q: undefined,
 };
 
 export interface UserListItem {

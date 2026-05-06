@@ -1,8 +1,10 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Search } from 'lucide-react';
 
 import { Input } from '@/shared/ui/shadcn/input';
+import { Button } from '@/shared/ui/shadcn/button';
 import {
   Select,
   SelectContent,
@@ -67,6 +69,10 @@ export function MediaFilters({
           defaultValue={currentQ ?? ''}
           className="w-[260px]"
         />
+        <Button type="submit" variant="outline" size="sm">
+          <Search className="size-4" />
+          검색
+        </Button>
       </form>
 
       <Select

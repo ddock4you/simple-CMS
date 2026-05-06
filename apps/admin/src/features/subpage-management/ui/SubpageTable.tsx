@@ -18,13 +18,14 @@ import { Button } from '@/shared/ui/shadcn/button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import { InlineStatusSwitchToggle } from '@/shared/ui/InlineStatusSwitchToggle';
 import { BulkActionBar } from '@/shared/ui/BulkActionBar';
+import { ListSummary } from '@/shared/ui/ListSummary';
+import { ListPagination } from '@/shared/ui/ListPagination';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
 import type { SubpageListFilters } from '../model/subpageFilters';
 import { subpageListOptions } from '../api/subpageQueries';
 import { useToggleSubpageStatus } from '../api/useSubpageMutations';
 import { SubpageStatusBadge } from './SubpageStatusBadge';
-import { SubpagePagination } from './SubpagePagination';
 import { BulkDeleteSubpageDialog } from './BulkDeleteSubpageDialog';
 import { BulkStatusSubpageDialog } from './BulkStatusSubpageDialog';
 
@@ -217,11 +218,10 @@ export function SubpageTable({ filters }: SubpageTableProps) {
           </TableBody>
         </Table>
       </div>
-      <SubpagePagination
-        page={data.page}
-        pageSize={data.pageSize}
-        total={data.total}
-      />
+      <div className="flex items-center justify-between">
+        <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
+        <ListPagination page={data.page} pageSize={data.pageSize} total={data.total} />
+      </div>
       <BulkDeleteSubpageDialog
         ids={selectedArray}
         open={bulkDeleteOpen}

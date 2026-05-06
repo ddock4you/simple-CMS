@@ -7,6 +7,7 @@ export interface PostListFilters {
   boardId: string | null;
   page: number;
   pageSize: number;
+  q?: string;
 }
 
 export const DEFAULT_POST_FILTERS: PostListFilters = {

@@ -10,10 +10,11 @@ import { Button } from '@/shared/ui/shadcn/button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
+import { ListSummary } from '@/shared/ui/ListSummary';
+import { ListPagination } from '@/shared/ui/ListPagination';
 import { mediaListOptions } from '@/entities/media/api/mediaQueries';
 import { MediaFilters } from '@/entities/media/ui/MediaFilters';
 import { MediaGrid } from '@/entities/media/ui/MediaGrid';
-import { MediaPagination } from '@/entities/media/ui/MediaPagination';
 import { MediaUploadButton } from '@/entities/media/ui/MediaUploadButton';
 import { BulkDeleteMediaDialog } from '@/features/media-management/ui/BulkDeleteMediaDialog';
 import { MediaDetailDialog } from '@/features/media-management/ui/MediaDetailDialog';
@@ -140,11 +141,18 @@ export function MediaPageClient({ filters, canCreate }: MediaPageClientProps) {
         onToggleSelect={toggleSelect}
       />
 
-      <MediaPagination
-        page={data?.page ?? filters.page}
-        pageSize={data?.pageSize ?? filters.pageSize}
-        total={data?.total ?? 0}
-      />
+      <div className="flex items-center justify-between">
+        <ListSummary
+          total={data?.total ?? 0}
+          page={data?.page ?? filters.page}
+          pageSize={data?.pageSize ?? filters.pageSize}
+        />
+        <ListPagination
+          total={data?.total ?? 0}
+          page={data?.page ?? filters.page}
+          pageSize={data?.pageSize ?? filters.pageSize}
+        />
+      </div>
 
       <MediaDetailDialog
         mediaId={detailId}

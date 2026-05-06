@@ -10,6 +10,7 @@ export interface AuditLogListFilters {
   to: string | null;
   page: number;
   pageSize: number;
+  q?: string;
 }
 
 export const DEFAULT_AUDIT_LOG_FILTERS: AuditLogListFilters = {
@@ -20,6 +21,7 @@ export const DEFAULT_AUDIT_LOG_FILTERS: AuditLogListFilters = {
   to: null,
   page: 1,
   pageSize: 20,
+  q: undefined,
 };
 
 export interface AuditLogListItem {

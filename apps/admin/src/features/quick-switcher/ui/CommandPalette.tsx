@@ -2,9 +2,8 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, FolderOpen, Layout, ListTree } from 'lucide-react';
+import { FileText, FolderOpen, Layout, ListTree, Search } from 'lucide-react';
 
 import {
   Command,
@@ -15,6 +14,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/shared/ui/shadcn/command';
+import { Button } from '@/shared/ui/shadcn/button';
 import { useKeyboardShortcut } from '@/shared/lib/useKeyboardShortcut';
 
 import { quickSearchOptions } from '../api/quickSearchQueries';
@@ -44,16 +44,22 @@ export function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const debouncedQuery = useDebouncedValue(query, 200);
+  const [submittedQuery, setSubmittedQuery] = useState('');
 
   useKeyboardShortcut('mod+k', () => setOpen((prev) => !prev));
 
   const handleOpenChange = useCallback((next: boolean) => {
     setOpen(next);
-    if (!next) setQuery('');
+    if (!next) {
+      setQuery('');
+      setSubmittedQuery('');
+    }
   }, []);
 
-  const { data, isFetching } = useQuery(quickSearchOptions(debouncedQuery));
+  const { data, isFetching } = useQuery({
+    ...quickSearchOptions(submittedQuery),
+    enabled: submittedQuery.trim().length > 0,
+  });
 
   const grouped = useMemo(() => {
     const map = new Map<QuickSearchType, QuickSearchResult[]>();
@@ -68,13 +74,31 @@ export function CommandPalette() {
     }));
   }, [data]);
 
+  const handleSubmit = useCallback(() => {
+    setSubmittedQuery(query.trim());
+  }, [query]);
+
   const handleSelect = useCallback(
     (href: string) => {
       setOpen(false);
       setQuery('');
+      setSubmittedQuery('');
       router.push(href);
     },
     [router],
+  );
+
+  // Enter 키 분기: 입력값이 마지막 검색어와 다를 때만 검색 실행
+  // 같을 때는 cmdk 기본 동작(항목 선택)에 위임
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && query.trim() !== submittedQuery) {
+        e.preventDefault();
+        e.stopPropagation();
+        setSubmittedQuery(query.trim());
+      }
+    },
+    [query, submittedQuery],
   );
 
   return (
@@ -84,12 +108,25 @@ export function CommandPalette() {
           placeholder="검색어를 입력하세요..."
           value={query}
           onValueChange={setQuery}
+          onKeyDown={handleKeyDown}
         />
+        <div className="flex items-center justify-end border-b px-3 py-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleSubmit}
+            className="h-7 text-xs"
+          >
+            <Search className="size-3.5" />
+            검색
+          </Button>
+        </div>
         <CommandList>
-          {debouncedQuery.trim().length === 0 ? (
+          {submittedQuery.trim().length === 0 ? (
             <div className="space-y-3 px-3 py-6">
               <p className="text-xs text-muted-foreground">
-                제목 또는 slug를 입력하세요. 다음 항목을 한 번에 검색합니다.
+                제목 또는 slug를 입력하고 Enter 또는 [검색]을 누르세요.
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {TYPE_ORDER.map((type) => {

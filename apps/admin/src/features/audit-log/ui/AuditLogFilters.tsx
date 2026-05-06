@@ -12,6 +12,7 @@ import {
 } from '@/shared/ui/shadcn/select';
 
 import { toKstDateString } from '@/shared/lib/kstDate';
+import { ListSearchInput } from '@/shared/ui/ListSearchInput';
 import { userOptionsQuery } from '../api/auditLogQueries';
 import { ACTION_LABELS, ENTITY_TYPE_LABELS } from '../model/auditLogFilters';
 import type { AuditActionFilter } from '../model/auditLogFilters';
@@ -23,6 +24,7 @@ interface AuditLogFiltersProps {
   currentUserId: string | null;
   currentFrom: string | null;
   currentTo: string | null;
+  currentQ: string;
 }
 
 export function AuditLogFilters({
@@ -31,6 +33,7 @@ export function AuditLogFilters({
   currentUserId,
   currentFrom,
   currentTo,
+  currentQ,
 }: AuditLogFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -121,6 +124,11 @@ export function AuditLogFilters({
           ))}
         </SelectContent>
       </Select>
+
+      <ListSearchInput
+        placeholder="대상 제목으로 검색"
+        defaultValue={currentQ}
+      />
     </div>
   );
 }

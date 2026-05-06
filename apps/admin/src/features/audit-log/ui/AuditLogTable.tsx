@@ -15,11 +15,12 @@ import {
 } from '@/shared/ui/shadcn/table';
 import { Button } from '@/shared/ui/shadcn/button';
 
+import { ListSummary } from '@/shared/ui/ListSummary';
+import { ListPagination } from '@/shared/ui/ListPagination';
 import type { AuditLogListFilters, AuditLogListItem } from '../model/auditLogFilters';
 import { auditLogListOptions } from '../api/auditLogQueries';
 import { AuditActionBadge } from './AuditActionBadge';
 import { AuditEntityTypeBadge } from './AuditEntityTypeBadge';
-import { AuditLogPagination } from './AuditLogPagination';
 import { AuditLogDetailDialog } from './AuditLogDetailDialog';
 
 interface AuditLogTableProps {
@@ -94,11 +95,10 @@ export function AuditLogTable({ filters }: AuditLogTableProps) {
           </TableBody>
         </Table>
       </div>
-      <AuditLogPagination
-        page={data.page}
-        pageSize={data.pageSize}
-        total={data.total}
-      />
+      <div className="flex items-center justify-between">
+        <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
+        <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
+      </div>
       <AuditLogDetailDialog
         item={selectedItem}
         open={!!selectedItem}

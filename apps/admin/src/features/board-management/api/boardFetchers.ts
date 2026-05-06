@@ -15,6 +15,7 @@ export function getBoardList(
   if (filters.visibility !== 'ALL') params.set('visibility', filters.visibility);
   params.set('page', String(filters.page));
   params.set('pageSize', String(filters.pageSize));
+  if (filters.q) params.set('q', filters.q);
 
   return fetchClient<PaginatedResponse<BoardListItem>>(
     `/api/boards?${params.toString()}`,

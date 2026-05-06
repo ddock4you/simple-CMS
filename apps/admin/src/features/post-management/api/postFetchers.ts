@@ -18,6 +18,7 @@ export function getPostList(
   if (filters.boardId) params.set('boardId', filters.boardId);
   params.set('page', String(filters.page));
   params.set('pageSize', String(filters.pageSize));
+  if (filters.q) params.set('q', filters.q);
 
   return fetchClient<PaginatedResponse<PostListItem>>(
     `/api/posts?${params.toString()}`,

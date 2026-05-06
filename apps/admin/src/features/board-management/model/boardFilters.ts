@@ -6,12 +6,14 @@ export interface BoardListFilters {
   visibility: BoardVisibilityFilter;
   page: number;
   pageSize: number;
+  q?: string;
 }
 
 export const DEFAULT_BOARD_FILTERS: BoardListFilters = {
   visibility: 'ALL',
   page: 1,
   pageSize: 20,
+  q: undefined,
 };
 
 export interface BoardListItem {

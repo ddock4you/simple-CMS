@@ -5,6 +5,7 @@ import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { getQueryClient } from '@/shared/api/queryClient';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
+import { ListSearchInput } from '@/shared/ui/ListSearchInput';
 import {
   userListOptions,
   roleListOptions,
@@ -22,8 +23,12 @@ function parseFilters(
   const status = (searchParams.status as UserStatusFilter) || 'ALL';
   const page = Number(searchParams.page) || 1;
   const pageSize = Number(searchParams.pageSize) || 20;
+  const q =
+    typeof searchParams.q === 'string' && searchParams.q.trim()
+      ? searchParams.q.trim()
+      : undefined;
 
-  return { status, page, pageSize };
+  return { status, page, pageSize, q };
 }
 
 export default async function UsersPage({
@@ -46,11 +51,19 @@ export default async function UsersPage({
       <PageHeader title="사용자 관리" description="사용자 목록 및 상태를 관리합니다." />
       <PageToolbar
         left={
-          <Suspense>
-            <StatusFilter currentStatus={filters.status} />
-          </Suspense>
+          <div className="flex items-center gap-2">
+            <Suspense>
+              <StatusFilter currentStatus={filters.status} />
+            </Suspense>
+            <Suspense>
+              <ListSearchInput
+                placeholder="사용자명·이름으로 검색"
+                defaultValue={filters.q ?? ''}
+              />
+            </Suspense>
+          </div>
         }
-        mobileLeftLabel="상태 필터"
+        mobileLeftLabel="상태 · 검색"
       />
       <HydrationBoundary state={dehydrate(queryClient)}>
         <UserTable

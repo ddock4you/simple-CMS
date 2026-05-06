@@ -22,6 +22,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       visibility: searchParams.get('visibility') ?? undefined,
       page: searchParams.get('page') ?? undefined,
       pageSize: searchParams.get('pageSize') ?? undefined,
+      q: searchParams.get('q') ?? undefined,
     });
 
     if (!parsed.success) {
@@ -31,11 +32,18 @@ export async function GET(request: Request): Promise<NextResponse> {
       );
     }
 
-    const { visibility, page, pageSize } = parsed.data;
-    const where =
-      visibility === 'ALL'
-        ? {}
-        : { isPublic: visibility === 'PUBLIC' };
+    const { visibility, page, pageSize, q } = parsed.data;
+    const visibilityWhere =
+      visibility === 'ALL' ? {} : { isPublic: visibility === 'PUBLIC' };
+    const searchWhere = q
+      ? {
+          OR: [
+            { name: { contains: q, mode: 'insensitive' as const } },
+            { slug: { contains: q, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+    const where = { ...visibilityWhere, ...searchWhere };
 
     const [items, total] = await Promise.all([
       prisma.board.findMany({

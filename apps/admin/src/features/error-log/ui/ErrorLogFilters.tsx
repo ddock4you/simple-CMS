@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { ErrorLevel, ErrorSource } from '@simple-cms/db';
 
 import { Input } from '@/shared/ui/shadcn/input';
+import { Button } from '@/shared/ui/shadcn/button';
 import {
   Select,
   SelectContent,
@@ -184,6 +185,7 @@ export function ErrorLogFilters({
             defaultValue={currentSearch ?? ''}
             className="w-[240px]"
           />
+          <Button type="submit" variant="outline" size="sm">검색</Button>
         </form>
         <form onSubmit={handleUrlSubmit} className="flex items-center gap-2">
           <Input
@@ -192,6 +194,7 @@ export function ErrorLogFilters({
             defaultValue={currentUrlPattern ?? ''}
             className="w-[240px]"
           />
+          <Button type="submit" variant="outline" size="sm">검색</Button>
         </form>
       </div>
     </div>

@@ -37,6 +37,10 @@ function parseFilters(
     to: (searchParams.to as string) || defaults.to,
     page: Number(searchParams.page) || 1,
     pageSize: Number(searchParams.pageSize) || 20,
+    q:
+      typeof searchParams.q === 'string' && searchParams.q.trim()
+        ? searchParams.q.trim()
+        : undefined,
   };
 }
 
@@ -67,6 +71,7 @@ export default async function AuditLogsPage({
               currentUserId={filters.userId}
               currentFrom={filters.from}
               currentTo={filters.to}
+              currentQ={filters.q ?? ''}
             />
           </Suspense>
         }

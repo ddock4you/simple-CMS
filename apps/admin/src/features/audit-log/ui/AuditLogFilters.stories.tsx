@@ -30,6 +30,7 @@ const meta = {
     currentUserId: null,
     currentFrom: null,
     currentTo: null,
+    currentQ: '',
   },
 } satisfies Meta<typeof AuditLogFilters>;
 

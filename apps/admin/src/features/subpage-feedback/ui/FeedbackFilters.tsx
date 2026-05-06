@@ -6,6 +6,7 @@ import { FEEDBACK_RATING_LABELS } from '@simple-cms/types';
 
 import { DatePicker } from '@/shared/ui/DatePicker';
 import { Input } from '@/shared/ui/shadcn/input';
+import { Button } from '@/shared/ui/shadcn/button';
 import {
   Select,
   SelectContent,
@@ -130,6 +131,7 @@ export function FeedbackFilters({
           defaultValue={currentQ ?? ''}
           className="w-[280px]"
         />
+        <Button type="submit" variant="outline" size="sm">검색</Button>
       </form>
     </div>
   );

@@ -20,11 +20,13 @@ import { InlineStatusSwitchToggle } from '@/shared/ui/InlineStatusSwitchToggle';
 import { BulkActionBar } from '@/shared/ui/BulkActionBar';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
+import { ListSummary } from '@/shared/ui/ListSummary';
+import { ListPagination } from '@/shared/ui/ListPagination';
+
 import type { PostListFilters } from '../model/postFilters';
 import { postListOptions } from '../api/postQueries';
 import { useTogglePostStatus } from '../api/usePostMutations';
 import { PostStatusBadge } from './PostStatusBadge';
-import { PostPagination } from './PostPagination';
 import { BulkDeletePostDialog } from './BulkDeletePostDialog';
 import { BulkStatusPostDialog } from './BulkStatusPostDialog';
 import { BulkMovePostDialog } from './BulkMovePostDialog';
@@ -227,11 +229,10 @@ export function PostTable({ filters }: PostTableProps) {
           </TableBody>
         </Table>
       </div>
-      <PostPagination
-        page={data.page}
-        pageSize={data.pageSize}
-        total={data.total}
-      />
+      <div className="flex items-center justify-between">
+        <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
+        <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
+      </div>
       <BulkDeletePostDialog
         ids={selectedArray}
         open={bulkDeleteOpen}

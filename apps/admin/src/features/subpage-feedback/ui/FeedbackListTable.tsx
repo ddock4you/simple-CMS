@@ -24,8 +24,9 @@ import {
 import { subpageFeedbackListOptions } from '../api/feedbackQueries';
 import type { FeedbackListQuery } from '../model/feedbackFilters';
 
+import { ListSummary } from '@/shared/ui/ListSummary';
+import { ListPagination } from '@/shared/ui/ListPagination';
 import { FeedbackDetailDialog } from './FeedbackDetailDialog';
-import { FeedbackPagination } from './FeedbackPagination';
 import { RatingBadge } from './RatingBadge';
 
 interface FeedbackListTableProps {
@@ -126,11 +127,10 @@ export function FeedbackListTable({ filters }: FeedbackListTableProps) {
           </TableBody>
         </Table>
       </div>
-      <FeedbackPagination
-        page={data.page}
-        pageSize={data.pageSize}
-        total={data.total}
-      />
+      <div className="flex items-center justify-between">
+        <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
+        <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
+      </div>
       <FeedbackDetailDialog
         feedback={selected}
         open={!!selected}

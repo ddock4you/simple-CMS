@@ -9,6 +9,7 @@ import { getQueryClient } from '@/shared/api/queryClient';
 import { Button } from '@/shared/ui/shadcn/button';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
+import { ListSearchInput } from '@/shared/ui/ListSearchInput';
 import { postListOptions, boardOptionsQuery } from '@/features/post-management/api/postQueries';
 import type {
   PostListFilters,
@@ -25,8 +26,12 @@ function parseFilters(
   const boardId = (searchParams.boardId as string) || null;
   const page = Number(searchParams.page) || 1;
   const pageSize = Number(searchParams.pageSize) || 20;
+  const q =
+    typeof searchParams.q === 'string' && searchParams.q.trim()
+      ? searchParams.q.trim()
+      : undefined;
 
-  return { status, boardId, page, pageSize };
+  return { status, boardId, page, pageSize, q };
 }
 
 export default async function PostsListPage({
@@ -56,6 +61,12 @@ export default async function PostsListPage({
             </Suspense>
             <Suspense>
               <PostBoardFilter currentBoardId={filters.boardId} />
+            </Suspense>
+            <Suspense>
+              <ListSearchInput
+                placeholder="제목으로 검색"
+                defaultValue={filters.q ?? ''}
+              />
             </Suspense>
           </div>
         }

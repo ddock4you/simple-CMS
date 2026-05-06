@@ -12,13 +12,14 @@ import {
   TableRow,
 } from '@/shared/ui/shadcn/table';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { ListSummary } from '@/shared/ui/ListSummary';
+import { ListPagination } from '@/shared/ui/ListPagination';
 import type { UserListFilters } from '@/features/user-management/model/userFilters';
 import { userListOptions } from '@/features/user-management/api/userQueries';
 import { UserStatusBadge } from '@/features/user-management/ui/UserStatusBadge';
 import { UserRoleBadge } from '@/features/user-management/ui/UserRoleBadge';
 import { UserActionButtons } from '@/features/user-management/ui/UserActionButtons';
 import { UserRoleSelect } from '@/features/user-management/ui/UserRoleSelect';
-import { UserPagination } from '@/features/user-management/ui/UserPagination';
 
 interface UserTableProps {
   filters: UserListFilters;
@@ -92,11 +93,10 @@ export function UserTable({
           </TableBody>
         </Table>
       </div>
-      <UserPagination
-        page={data.page}
-        pageSize={data.pageSize}
-        total={data.total}
-      />
+      <div className="flex items-center justify-between">
+        <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
+        <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
+      </div>
     </div>
   );
 }

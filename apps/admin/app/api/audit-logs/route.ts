@@ -21,6 +21,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       to: searchParams.get('to') ?? undefined,
       page: searchParams.get('page') ?? undefined,
       pageSize: searchParams.get('pageSize') ?? undefined,
+      q: searchParams.get('q') ?? undefined,
     });
 
     if (!parsed.success) {
@@ -30,7 +31,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       );
     }
 
-    const { action, entityType, userId, from, to, page, pageSize } = parsed.data;
+    const { action, entityType, userId, from, to, page, pageSize, q } = parsed.data;
 
     const where: Record<string, unknown> = {};
     if (action !== 'ALL') where.action = action;
@@ -42,6 +43,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         ...(to ? { lte: new Date(`${to}T23:59:59.999Z`) } : {}),
       };
     }
+    if (q) where.entityTitle = { contains: q, mode: 'insensitive' };
 
     const [items, total] = await Promise.all([
       prisma.auditLog.findMany({

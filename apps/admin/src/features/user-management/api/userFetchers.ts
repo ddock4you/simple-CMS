@@ -14,6 +14,7 @@ export function getUserList(
   if (filters.status !== 'ALL') params.set('status', filters.status);
   params.set('page', String(filters.page));
   params.set('pageSize', String(filters.pageSize));
+  if (filters.q) params.set('q', filters.q);
 
   return fetchClient<PaginatedResponse<UserListItem>>(
     `/api/users?${params.toString()}`,

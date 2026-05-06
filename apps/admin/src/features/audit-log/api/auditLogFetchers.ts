@@ -18,6 +18,7 @@ export function getAuditLogList(
   if (filters.to) params.set('to', filters.to);
   params.set('page', String(filters.page));
   params.set('pageSize', String(filters.pageSize));
+  if (filters.q) params.set('q', filters.q);
 
   return fetchClient<PaginatedResponse<AuditLogListItem>>(
     `/api/audit-logs?${params.toString()}`,
