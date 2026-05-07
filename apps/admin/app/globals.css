@@ -47,6 +47,11 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+    --shadow-card: var(--shadow-card-value);
+    --shadow-toolbar: var(--shadow-toolbar-value);
+    --shadow-popover: var(--shadow-popover-value);
+    --spacing-page-x: 24px;
+    --spacing-card: 24px;
 }
 
 :root {
@@ -82,6 +87,9 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    --shadow-card-value: 0 1px 2px oklch(0 0 0 / 4%);
+    --shadow-toolbar-value: 0 2px 8px oklch(0 0 0 / 6%);
+    --shadow-popover-value: 0 4px 24px oklch(0 0 0 / 8%), 0 2px 8px oklch(0 0 0 / 4%);
 }
 
 .dark {
@@ -116,6 +124,9 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+    --shadow-card-value: 0 1px 3px oklch(0 0 0 / 20%);
+    --shadow-toolbar-value: 0 2px 8px oklch(0 0 0 / 20%);
+    --shadow-popover-value: 0 4px 24px oklch(0 0 0 / 30%), 0 2px 8px oklch(0 0 0 / 20%);
 }
 
 @layer base {
@@ -128,4 +139,8 @@
   html {
     @apply font-sans;
     }
+  [data-slot="button"]:not(:disabled):not([aria-haspopup]):active {
+    scale: 0.98;
+    transition: scale 80ms ease-out;
+  }
 }

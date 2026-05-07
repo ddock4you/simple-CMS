@@ -9,7 +9,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 
 import { toKstDateString } from '@/shared/lib/kstDate';
 import { ListSearchInput } from '@/shared/ui/ListSearchInput';

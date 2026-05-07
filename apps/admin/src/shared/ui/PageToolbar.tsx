@@ -11,7 +11,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/shared/ui/shadcn/sheet';
+} from '@/shared/ui/Sheet';
 
 interface PageToolbarProps {
   /** 좌측 슬롯 — Read 기능 (필터, 검색) */
@@ -104,7 +104,7 @@ export function PageToolbar({
       data-testid="page-toolbar"
       className={cn(
         'flex items-center justify-between gap-2 bg-background py-2',
-        sticky && 'sticky top-14 z-20 -mx-6 px-6 shadow-sm',
+        sticky && 'sticky top-14 z-20 -mx-6 px-6 shadow-toolbar',
       )}
     >
       <div className="flex items-center gap-2">

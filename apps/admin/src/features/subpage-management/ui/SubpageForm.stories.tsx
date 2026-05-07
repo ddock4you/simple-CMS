@@ -47,16 +47,20 @@ export const Empty: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    const aiCheckbox = canvas.getByLabelText('AI 학습·활용 가능 표시');
+    // getByLabelText는 Base UI Switch의 hidden input과 switch role이 동시에
+    // label에 연결되어 "multiple elements" 오류 발생. role='switch' + name으로 조회.
+    const aiSwitch = canvas.getByRole('switch', { name: 'AI 학습·활용 가능 표시' });
 
-    // 1. 초기: cclType=null → AI 체크박스 disabled
-    expect(aiCheckbox).toBeDisabled();
+    // 1. 초기: cclType=null → AI Switch disabled
+    // Base UI Switch는 aria-disabled="true" 사용 (HTML disabled 아님).
+    // 브라우저 모드 toBeDisabled()가 aria-disabled를 인식 못하므로 직접 확인.
+    expect(aiSwitch).toHaveAttribute('aria-disabled', 'true');
 
     // 2. "제1유형" 라디오 선택 → cclType=TYPE_1
     await userEvent.click(canvas.getByLabelText('제1유형'));
 
-    // 3. AI 체크박스 활성화(disabled 해제) 확인
-    expect(aiCheckbox).not.toBeDisabled();
+    // 3. AI Switch 활성화(disabled 해제) 확인
+    expect(aiSwitch).not.toHaveAttribute('aria-disabled', 'true');
   },
 };
 

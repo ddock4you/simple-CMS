@@ -19,7 +19,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 
 import { useBulkUpdateSubpageStatus } from '../api/useSubpageMutations';
 

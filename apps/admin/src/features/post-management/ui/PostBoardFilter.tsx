@@ -8,7 +8,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 
 import { boardOptionsQuery } from '../api/postQueries';
 

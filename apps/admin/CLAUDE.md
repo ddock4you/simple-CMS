@@ -1,3 +1,5 @@
+@design.md
+
 # apps/admin — 관리자 CMS
 
 내부 운영자용 CMS 애플리케이션. 모든 콘텐츠의 생성/수정/삭제를 담당하며, API/BFF 역할도 수행한다.
@@ -200,12 +202,12 @@ src/
 
 #### 지원 블록 타입
 
-| 블록 타입 | configJson 스키마 | 편집기 | 렌더 |
-| -------- | ----------------- | ------ | ---- |
-| **RICH_TEXT** | `{ contentJson: object }` Tiptap ProseMirror JSON | 기존 `TiptapEditor` 재사용 (검색용 plain text는 블록 CUD 시 `recalculateSubpageContent`가 재집계) | `renderTiptapContent` + `TiptapContent` 공유 컴포넌트 |
-| **HTML**   | `{ html: string, css?: string \| null }` (각 max 100,000자) — Stage 7b-Option B에서 css 필드 추가 | `@monaco-editor/react` language=html/css (SSR 비호환 → `next/dynamic` with `ssr: false`), shadcn Tabs 2탭 | 서버 DOMPurify sanitize(`sanitizeCustomHtml`, iframe 등 의미론 태그 허용) + iframe src 호스트 재검증 + css는 `scopeCustomCss(css, subpageId)` → `<style>` 페이지 스코프 |
-| **IMAGE**  | `{ imageUrl, imageAlt(필수), imageMediaId?, caption?, linkUrl? }` | `ImageUrlInput`(entities/media) + alt + 캡션 + 링크 | `<figure><img alt><figcaption></figure>`, optional `<a>` 래핑 |
-| **IFRAME** | `{ src, title(필수/접근성), aspectRatio: '16:9'\|'4:3'\|'1:1', allowFullscreen }` | URL + 제목 + 비율 + 전체 화면 | aspect-ratio wrapper + iframe, 허용 호스트 **서버+클라이언트 2중 검증** |
+| 블록 타입     | configJson 스키마                                                                                 | 편집기                                                                                                    | 렌더                                                                                                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RICH_TEXT** | `{ contentJson: object }` Tiptap ProseMirror JSON                                                 | 기존 `TiptapEditor` 재사용 (검색용 plain text는 블록 CUD 시 `recalculateSubpageContent`가 재집계)         | `renderTiptapContent` + `TiptapContent` 공유 컴포넌트                                                                                                                   |
+| **HTML**      | `{ html: string, css?: string \| null }` (각 max 100,000자) — Stage 7b-Option B에서 css 필드 추가 | `@monaco-editor/react` language=html/css (SSR 비호환 → `next/dynamic` with `ssr: false`), shadcn Tabs 2탭 | 서버 DOMPurify sanitize(`sanitizeCustomHtml`, iframe 등 의미론 태그 허용) + iframe src 호스트 재검증 + css는 `scopeCustomCss(css, subpageId)` → `<style>` 페이지 스코프 |
+| **IMAGE**     | `{ imageUrl, imageAlt(필수), imageMediaId?, caption?, linkUrl? }`                                 | `ImageUrlInput`(entities/media) + alt + 캡션 + 링크                                                       | `<figure><img alt><figcaption></figure>`, optional `<a>` 래핑                                                                                                           |
+| **IFRAME**    | `{ src, title(필수/접근성), aspectRatio: '16:9'\|'4:3'\|'1:1', allowFullscreen }`                 | URL + 제목 + 비율 + 전체 화면                                                                             | aspect-ratio wrapper + iframe, 허용 호스트 **서버+클라이언트 2중 검증**                                                                                                 |
 
 #### 본문 → 블록 변환 (Stage 6 마이그레이션)
 
@@ -232,14 +234,14 @@ src/
 
 #### API Routes
 
-| Method | Route | 권한 | 용도 |
-| ------ | ----- | ---- | ---- |
-| GET    | `/api/subpages/[id]/blocks`            | subpages:read   | 목록 |
-| POST   | `/api/subpages/[id]/blocks`            | subpages:update | 생성 (50개 상한 검사 + displayOrder 자동 + RICH_TEXT 시 content 재집계) |
-| GET    | `/api/subpages/[id]/blocks/[blockId]`  | subpages:read   | 단건 |
-| PATCH  | `/api/subpages/[id]/blocks/[blockId]`  | subpages:update | 수정 (blockType 불변 — safeParse drop, RICH_TEXT configJson 변경 시 content 재집계) |
-| DELETE | `/api/subpages/[id]/blocks/[blockId]`  | subpages:update | 삭제 + displayOrder 정규화 + RICH_TEXT 시 content 재집계 |
-| PATCH  | `/api/subpages/[id]/blocks/reorder`    | subpages:update | 순서 일괄 변경 (트랜잭션) + content 재집계 |
+| Method | Route                                 | 권한            | 용도                                                                                |
+| ------ | ------------------------------------- | --------------- | ----------------------------------------------------------------------------------- |
+| GET    | `/api/subpages/[id]/blocks`           | subpages:read   | 목록                                                                                |
+| POST   | `/api/subpages/[id]/blocks`           | subpages:update | 생성 (50개 상한 검사 + displayOrder 자동 + RICH_TEXT 시 content 재집계)             |
+| GET    | `/api/subpages/[id]/blocks/[blockId]` | subpages:read   | 단건                                                                                |
+| PATCH  | `/api/subpages/[id]/blocks/[blockId]` | subpages:update | 수정 (blockType 불변 — safeParse drop, RICH_TEXT configJson 변경 시 content 재집계) |
+| DELETE | `/api/subpages/[id]/blocks/[blockId]` | subpages:update | 삭제 + displayOrder 정규화 + RICH_TEXT 시 content 재집계                            |
+| PATCH  | `/api/subpages/[id]/blocks/reorder`   | subpages:update | 순서 일괄 변경 (트랜잭션) + content 재집계                                          |
 
 `recalculateSubpageContent(subpageId)` 헬퍼: `apps/admin/src/shared/lib/blockContentRecalculation.ts` — RICH_TEXT 블록들의 `configJson.contentJson`을 displayOrder 순으로 모아 `extractTextFromTiptap`으로 `Subpage.content` 갱신. PGroonga 검색 인덱스 최신 상태 유지.
 
@@ -262,10 +264,10 @@ src/
 
 #### 저장 트리거 (의미 있는 체크포인트만)
 
-| 트리거 | sourceAction | 생성 주체 |
-|--------|--------------|-----------|
-| 편집 페이지 [버전 저장] 버튼 | `MANUAL` | 운영자 명시적 |
-| `Subpage` PATCH 중 DRAFT → PUBLISHED 전환 | `AUTO_PUBLISH` | 서버 자동 (try/catch, 주 액션 차단 안 함) |
+| 트리거                                    | sourceAction   | 생성 주체                                  |
+| ----------------------------------------- | -------------- | ------------------------------------------ |
+| 편집 페이지 [버전 저장] 버튼              | `MANUAL`       | 운영자 명시적                              |
+| `Subpage` PATCH 중 DRAFT → PUBLISHED 전환 | `AUTO_PUBLISH` | 서버 자동 (try/catch, 주 액션 차단 안 함)  |
 | `restoreSubpageFromVersion` 트랜잭션 내부 | `PRE_ROLLBACK` | 롤백 직전 현재 상태 자동 백업 (label=null) |
 
 - **블록 reorder 및 블록 CUD는 개별 버전을 만들지 않음** — 노이즈 폭증 방지. 운영자가 의미 있는 지점에만 [버전 저장]을 명시적으로 누르는 흐름
@@ -292,6 +294,7 @@ src/
 #### 롤백 정책 (소프트 롤백)
 
 `restoreSubpageFromVersion` 트랜잭션:
+
 1. revision 낙관 락 검사 (불일치 시 `RevisionMismatchError` → 409)
 2. 현재 상태를 `PRE_ROLLBACK` 버전으로 자동 백업
 3. slug 충돌 검사 (다른 Subpage가 이미 차지 시 `SubpageVersionSlugConflictError` → 409 + `VERSION_SLUG_CONFLICT` code)
@@ -305,6 +308,7 @@ src/
 #### Media 참조 추적 (advisor option 2)
 
 `findMediaReferences()` 확장 **안 함** — 확장 시 장기 운영 Subpage의 Media 삭제가 사실상 불가능해짐. 대신 `findDanglingMediaIds(snapshot)` 헬퍼로 롤백 시점에 누락된 Media ID 감지:
+
 - IMAGE 블록의 `configJson.imageMediaId`
 - RICH_TEXT 블록 Tiptap JSON 내 `image` 노드의 `attrs.mediaId` (재귀 수집)
 - 차집합 = dangling → UI에 경고 + 체크박스 "누락된 이미지를 인지했습니다" ack 후 롤백 허용
@@ -318,14 +322,14 @@ src/
 
 #### API Routes (6개)
 
-| Method | Route | 권한 | 용도 |
-|--------|-------|------|------|
-| GET    | `/api/subpages/[id]/versions` | subpages:read | 목록 (filter: authorId, from, to, pinnedOnly, source) + 페이지네이션 |
-| POST   | `/api/subpages/[id]/versions` | subpages:update | 수동 저장 (body: `{ label? }`, sourceAction=MANUAL) |
-| GET    | `/api/subpages/[id]/versions/[versionId]` | subpages:read | 상세 (snapshot + danglingMediaIds) |
+| Method | Route                                              | 권한            | 용도                                                                       |
+| ------ | -------------------------------------------------- | --------------- | -------------------------------------------------------------------------- |
+| GET    | `/api/subpages/[id]/versions`                      | subpages:read   | 목록 (filter: authorId, from, to, pinnedOnly, source) + 페이지네이션       |
+| POST   | `/api/subpages/[id]/versions`                      | subpages:update | 수동 저장 (body: `{ label? }`, sourceAction=MANUAL)                        |
+| GET    | `/api/subpages/[id]/versions/[versionId]`          | subpages:read   | 상세 (snapshot + danglingMediaIds)                                         |
 | POST   | `/api/subpages/[id]/versions/[versionId]/rollback` | subpages:update | 복원 (body: `{ expectedRevision, statusStrategy?, acknowledgeDangling? }`) |
-| PATCH  | `/api/subpages/[id]/versions/[versionId]` | subpages:update | `isPinned` 토글 |
-| DELETE | `/api/subpages/[id]/versions/[versionId]` | subpages:update | 삭제 (pinned는 400) |
+| PATCH  | `/api/subpages/[id]/versions/[versionId]`          | subpages:update | `isPinned` 토글                                                            |
+| DELETE | `/api/subpages/[id]/versions/[versionId]`          | subpages:update | 삭제 (pinned는 400)                                                        |
 
 **권한은 `subpages:update` 재사용** — 별도 리소스 신설 안 함 (seed/role migration 부담 회피)
 
@@ -478,15 +482,15 @@ src/
 
 #### API Routes
 
-| Method | Route | 필요 권한 | 용도 |
-| ------ | ----- | --------- | ---- |
-| GET    | `/api/home-popups`            | home-popups:read   | 목록 (모든 상태 포함)         |
-| POST   | `/api/home-popups`            | home-popups:create | 생성 + displayOrder 자동 배정 |
-| GET    | `/api/home-popups/[id]`       | home-popups:read   | 상세                          |
-| PATCH  | `/api/home-popups/[id]`       | home-popups:update | 수정 (타입 전환 시 반대 필드 초기화) |
-| DELETE | `/api/home-popups/[id]`       | home-popups:delete | 삭제 + displayOrder 정규화    |
-| PATCH  | `/api/home-popups/reorder`    | home-popups:update | 순서 일괄 변경                |
-| GET    | `/api/link-target/references` | home-popups:read   | LinkTargetInput 드롭다운용 (Stage 7k-1 rename, 권한은 home-popups:read 유지)    |
+| Method | Route                         | 필요 권한          | 용도                                                                         |
+| ------ | ----------------------------- | ------------------ | ---------------------------------------------------------------------------- |
+| GET    | `/api/home-popups`            | home-popups:read   | 목록 (모든 상태 포함)                                                        |
+| POST   | `/api/home-popups`            | home-popups:create | 생성 + displayOrder 자동 배정                                                |
+| GET    | `/api/home-popups/[id]`       | home-popups:read   | 상세                                                                         |
+| PATCH  | `/api/home-popups/[id]`       | home-popups:update | 수정 (타입 전환 시 반대 필드 초기화)                                         |
+| DELETE | `/api/home-popups/[id]`       | home-popups:delete | 삭제 + displayOrder 정규화                                                   |
+| PATCH  | `/api/home-popups/reorder`    | home-popups:update | 순서 일괄 변경                                                               |
+| GET    | `/api/link-target/references` | home-popups:read   | LinkTargetInput 드롭다운용 (Stage 7k-1 rename, 권한은 home-popups:read 유지) |
 
 #### 감사 로그
 
@@ -534,7 +538,9 @@ src/
   <ImageUrlInput
     value={value.imageUrl}
     mediaId={value.imageMediaId ?? null}
-    onChange={(next) => onChange({ ...value, imageUrl: next.url, imageMediaId: next.mediaId })}
+    onChange={(next) =>
+      onChange({ ...value, imageUrl: next.url, imageMediaId: next.mediaId })
+    }
   />
   ```
 - **react-hook-form**으로 필드별 관리(home-management, popup-management): setValue를 필드별로 호출 (RHF 내부 상태가 필드별 독립이라 순차 호출 안전)
@@ -557,15 +563,15 @@ src/
 
 #### API Routes
 
-| Method | Route | 권한 | 용도 |
-| ------ | ----- | ---- | ---- |
-| POST | `/api/media/upload` | 인증 (역할 불문) | 업로드 (SHA-256 중복 방지, `reused` 플래그) |
-| GET | `/api/media` | media:read | 목록 + 필터 + 페이지네이션 |
-| GET | `/api/media/[id]` | media:read | 상세 |
-| PATCH | `/api/media/[id]` | media:update | alt 편집 (감사 로그 UPDATE) |
-| DELETE | `/api/media/[id]` | media:delete | 삭제 (참조 시 409, 물리 파일 + DB 삭제) |
-| GET | `/api/media/[id]/references` | media:read | 사용처 목록 |
-| POST | `/api/media/bulk-delete` | media:delete | 일괄 삭제 (참조 있는 건 skip, 응답에 `deleted[]` + `blocked[]` 분리) |
+| Method | Route                        | 권한             | 용도                                                                 |
+| ------ | ---------------------------- | ---------------- | -------------------------------------------------------------------- |
+| POST   | `/api/media/upload`          | 인증 (역할 불문) | 업로드 (SHA-256 중복 방지, `reused` 플래그)                          |
+| GET    | `/api/media`                 | media:read       | 목록 + 필터 + 페이지네이션                                           |
+| GET    | `/api/media/[id]`            | media:read       | 상세                                                                 |
+| PATCH  | `/api/media/[id]`            | media:update     | alt 편집 (감사 로그 UPDATE)                                          |
+| DELETE | `/api/media/[id]`            | media:delete     | 삭제 (참조 시 409, 물리 파일 + DB 삭제)                              |
+| GET    | `/api/media/[id]/references` | media:read       | 사용처 목록                                                          |
+| POST   | `/api/media/bulk-delete`     | media:delete     | 일괄 삭제 (참조 있는 건 skip, 응답에 `deleted[]` + `blocked[]` 분리) |
 
 #### 일괄 삭제 정책
 
@@ -668,12 +674,12 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 #### API Routes
 
-| Method | Route                              | 필요 권한           | 용도                    |
-| ------ | ---------------------------------- | ------------------- | ----------------------- |
-| GET    | `/api/error-logs`                  | errorLogs:read      | 목록 (개별/그룹 뷰)     |
-| GET    | `/api/error-logs/[id]`             | errorLogs:read      | 상세                    |
-| PATCH  | `/api/error-logs/[id]`             | errorLogs:update    | 개별 해결/미해결 토글   |
-| POST   | `/api/error-logs/bulk-resolve`     | errorLogs:update    | fingerprint 일괄 처리   |
+| Method | Route                          | 필요 권한        | 용도                  |
+| ------ | ------------------------------ | ---------------- | --------------------- |
+| GET    | `/api/error-logs`              | errorLogs:read   | 목록 (개별/그룹 뷰)   |
+| GET    | `/api/error-logs/[id]`         | errorLogs:read   | 상세                  |
+| PATCH  | `/api/error-logs/[id]`         | errorLogs:update | 개별 해결/미해결 토글 |
+| POST   | `/api/error-logs/bulk-resolve` | errorLogs:update | fingerprint 일괄 처리 |
 
 #### 목록 (`/error-logs`)
 
@@ -825,21 +831,21 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 #### 리소스 레지스트리 (RESOURCE_ACTIONS)
 
-| 리소스 키    | 표시명      | 지원 액션                    |
-| ------------ | ----------- | ---------------------------- |
-| `dashboard`    | 대시보드    | read                         |
-| `subpages`     | 서브 페이지 | create, read, update, delete |
-| `boards`       | 게시판      | create, read, update, delete |
-| `posts`        | 게시글      | create, read, update, delete |
-| `navigation`   | 메뉴 관리   | create, read, update, delete |
-| `home`         | 메인 페이지 | create, read, update, delete |
-| `home-popups`  | 메인 팝업   | create, read, update, delete |
-| `media`        | 미디어 라이브러리 | create, read, update, delete |
-| `users`      | 사용자 관리 | create, read, update, delete |
-| `roles`      | 권한 관리   | create, read, update, delete |
-| `auditLogs`  | 감사 로그   | read                         |
-| `errorLogs`  | 에러 로그   | read, update                 |
-| `settings`   | 사이트 설정 | read, update                 |
+| 리소스 키     | 표시명            | 지원 액션                    |
+| ------------- | ----------------- | ---------------------------- |
+| `dashboard`   | 대시보드          | read                         |
+| `subpages`    | 서브 페이지       | create, read, update, delete |
+| `boards`      | 게시판            | create, read, update, delete |
+| `posts`       | 게시글            | create, read, update, delete |
+| `navigation`  | 메뉴 관리         | create, read, update, delete |
+| `home`        | 메인 페이지       | create, read, update, delete |
+| `home-popups` | 메인 팝업         | create, read, update, delete |
+| `media`       | 미디어 라이브러리 | create, read, update, delete |
+| `users`       | 사용자 관리       | create, read, update, delete |
+| `roles`       | 권한 관리         | create, read, update, delete |
+| `auditLogs`   | 감사 로그         | read                         |
+| `errorLogs`   | 에러 로그         | read, update                 |
+| `settings`    | 사이트 설정       | read, update                 |
 
 #### API Routes
 
@@ -872,34 +878,34 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 #### SiteSettings 키 (6개)
 
-| 키                       | 값             | 설명                                       |
-| ------------------------ | -------------- | ------------------------------------------ |
-| `SITE_NAME`              | string         | 헤더 폴백, metadata title, 푸터 copyright |
-| `SITE_DESCRIPTION`       | string (≤200) | metadata description                       |
-| `SITE_LOGO_MEDIA_ID`     | Media.id       | 헤더 로고                                  |
-| `SITE_LOGO_ALT`          | string (≤120) | 로고 sr-only (비우면 SITE_NAME 폴백)       |
-| `SITE_FAVICON_MEDIA_ID`  | Media.id       | 브라우저 탭 favicon                        |
-| `SITE_OG_IMAGE_MEDIA_ID` | Media.id       | OG 카드 미리보기 (1200x630 권장)           |
+| 키                       | 값            | 설명                                      |
+| ------------------------ | ------------- | ----------------------------------------- |
+| `SITE_NAME`              | string        | 헤더 폴백, metadata title, 푸터 copyright |
+| `SITE_DESCRIPTION`       | string (≤200) | metadata description                      |
+| `SITE_LOGO_MEDIA_ID`     | Media.id      | 헤더 로고                                 |
+| `SITE_LOGO_ALT`          | string (≤120) | 로고 sr-only (비우면 SITE_NAME 폴백)      |
+| `SITE_FAVICON_MEDIA_ID`  | Media.id      | 브라우저 탭 favicon                       |
+| `SITE_OG_IMAGE_MEDIA_ID` | Media.id      | OG 카드 미리보기 (1200x630 권장)          |
 
 - mediaId만 저장 + Media join. URL은 별도 키로 저장하지 않음 (단일 출처 + Media 삭제 시 자동 일관성)
 - DB 마이그레이션 0 — SiteSettings 키-값 6개 추가만
 
 #### API Routes
 
-| Method | Route                          | 권한              | 용도                                              |
-| ------ | ------------------------------ | ----------------- | ------------------------------------------------- |
-| GET    | `/api/settings/branding`       | settings:read     | 6키 + 3 Media url join 응답                       |
-| PATCH  | `/api/settings/branding`       | settings:update   | 6키 일괄 저장 + 키별 MIME 게이트 + 변경된 키만 audit |
-| DELETE | `/api/settings/branding?kind=` | settings:update   | 단일 자산 제거 (`logo`/`favicon`/`og`)            |
-| POST   | `/api/media/branding-upload`   | 인증 (역할 불문)  | branding 전용 업로드 (SVG 차단, ICO 허용)         |
+| Method | Route                          | 권한             | 용도                                                 |
+| ------ | ------------------------------ | ---------------- | ---------------------------------------------------- |
+| GET    | `/api/settings/branding`       | settings:read    | 6키 + 3 Media url join 응답                          |
+| PATCH  | `/api/settings/branding`       | settings:update  | 6키 일괄 저장 + 키별 MIME 게이트 + 변경된 키만 audit |
+| DELETE | `/api/settings/branding?kind=` | settings:update  | 단일 자산 제거 (`logo`/`favicon`/`og`)               |
+| POST   | `/api/media/branding-upload`   | 인증 (역할 불문) | branding 전용 업로드 (SVG 차단, ICO 허용)            |
 
 #### 키별 MIME 화이트리스트 (PATCH server gate)
 
-| 필드             | 허용 MIME                                                                |
-| ---------------- | ------------------------------------------------------------------------ |
-| `logoMediaId`    | image/jpeg, image/png, image/webp                                        |
-| `faviconMediaId` | image/png, image/webp, image/x-icon, image/vnd.microsoft.icon            |
-| `ogImageMediaId` | image/jpeg, image/png, image/webp                                        |
+| 필드             | 허용 MIME                                                     |
+| ---------------- | ------------------------------------------------------------- |
+| `logoMediaId`    | image/jpeg, image/png, image/webp                             |
+| `faviconMediaId` | image/png, image/webp, image/x-icon, image/vnd.microsoft.icon |
+| `ogImageMediaId` | image/jpeg, image/png, image/webp                             |
 
 `application/octet-stream`은 의도적 제외 — 일부 브라우저가 valid ICO를 octet-stream으로 보고하지만 임의 바이너리도 같은 MIME이라 스푸핑 위험. 거부 시 PNG 변환 안내.
 
@@ -941,19 +947,19 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 #### SiteSettings 키
 
-| 키                          | 값 형식          | 기본값    | 설명                                         |
-| --------------------------- | ---------------- | --------- | -------------------------------------------- |
-| `ROBOTS_ADDITIONAL_DISALLOW` | JSON 배열 문자열 | `[]`      | robots.txt에 `/api/` 외로 추가할 Disallow 경로 |
+| 키                           | 값 형식          | 기본값 | 설명                                           |
+| ---------------------------- | ---------------- | ------ | ---------------------------------------------- |
+| `ROBOTS_ADDITIONAL_DISALLOW` | JSON 배열 문자열 | `[]`   | robots.txt에 `/api/` 외로 추가할 Disallow 경로 |
 
 - 공개 URL + sitemap URL 표시는 SiteSettings.SITE_DOMAIN에서 파생 (읽기 전용 안내)
 - `/api/`는 robots.ts가 항상 기본 Disallow로 포함 → 관리자 입력에서 중복 시 서버에서 제거
 
 #### API Routes
 
-| Method | Route                 | 권한              | 용도                                                                  |
-| ------ | --------------------- | ----------------- | --------------------------------------------------------------------- |
-| GET    | `/api/settings/seo`   | settings:read     | `{ robotsAdditionalDisallow, baseUrl, sitemapUrl }` 응답 (baseUrl/sitemapUrl 파생) |
-| PATCH  | `/api/settings/seo`   | settings:update   | `robotsAdditionalDisallow` 저장 + dedupe + 정렬 비교 no-op short-circuit + audit |
+| Method | Route               | 권한            | 용도                                                                               |
+| ------ | ------------------- | --------------- | ---------------------------------------------------------------------------------- |
+| GET    | `/api/settings/seo` | settings:read   | `{ robotsAdditionalDisallow, baseUrl, sitemapUrl }` 응답 (baseUrl/sitemapUrl 파생) |
+| PATCH  | `/api/settings/seo` | settings:update | `robotsAdditionalDisallow` 저장 + dedupe + 정렬 비교 no-op short-circuit + audit   |
 
 #### Zod 검증 (`updateSeoSchema`)
 
@@ -1105,14 +1111,23 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 ## UI 전략
 
+**문서 분담**: `@design.md`가 시각 결정의 진실원 (색·타이포·간격·primitives). CLAUDE.md(이 파일)는 운영 정책·아키텍처 담당. `.storybook/`은 실물 컴포넌트 검증 담당.
+
 - KRDS 미사용
-- 디자이너 Figma 시안 기준으로 관리자 전용 UI 구현
-- **1차: shadcn/ui로 임시 구현** → Figma 시안 확정 후 커스텀 UI로 전환
+- 디자이너 부재로 **`@design.md` 기반 자체 UI 개편** 방향으로 전환 (Stage 15a). 이전 계획(Figma 시안 확정 후 커스텀 UI 전환)에서 변경. shadcn/ui 계속 사용하되 design.md 토큰과 정합성 관리
 - shadcn/ui는 Tailwind CSS + Radix UI 기반이므로 기존 스타일링과 충돌 없음
 - shadcn/ui 내장 패턴 활용: Data Table (TanStack Table), Form (react-hook-form + zod), Toast (sonner), Dialog, etc.
-- **shadcn/ui 컴포넌트는 `shared/ui/shadcn/`에서 별도 관리** — 직접 코드 수정 금지, 향후 커스텀 UI와 분리
+- **shadcn/ui 컴포넌트는 `shared/ui/shadcn/`에서 별도 관리** — 직접 코드 수정 금지, design.md 기반 UI 개편과 분리
   - `components.json`의 `ui` alias가 `@/shared/ui/shadcn`을 가리킴 → `npx shadcn add` 시 자동으로 해당 폴더에 설치
   - 커스텀 공통 UI는 `shared/ui/` 루트 또는 `shared/ui/layout/` 등 별도 위치에 배치
+- **shadow 토큰 wrapper 패턴 (Stage 15c-2)**: Popover/Select/DropdownMenu/Sheet는 shadcn 원본을 직접 import 금지, 반드시 wrapper를 경유
+  - Wrapper 위치: `shared/ui/{Popover,Select,DropdownMenu,Sheet}.tsx` — `Content`류에 `cn('shadow-popover', className)` 1줄 주입
+  - ESLint `no-restricted-imports`로 shadcn 원본 4개 직접 import 자동 차단 (wrapper 자신·shadcn 디렉토리 내부는 예외)
+  - 신규 컴포넌트 추가 시 반드시 wrapper 경유
+- **Boolean Switch 폼 패턴 (Stage 15c-2)**: boolean 토글 필드는 `BooleanSwitchField` 사용 (`shared/ui/BooleanSwitchField.tsx`)
+  - RHF `Controller + Switch + label/description/error` 통합 컴포넌트
+  - 목록 인라인 토글은 기존 `InlineBooleanToggle` / `InlineStatusSwitchToggle` 유지 (책임 분리)
+  - 적용 폼: SubpageForm(cclAi·feedbackEnabled), BoardForm(isPublic), MenuItemDialog(isVisible·openInNewTab), PopupForm(isVisible). SecuritySettingsForm은 RHF 미사용이라 직접 Switch + controlled AlertDialog 패턴
 - UI 컴포넌트/폼 패턴은 `apps/admin` 내부 레이어에서 관리
 - 운영 효율 + 데이터 입력 흐름 우선
 - 반복 패턴 충분히 생기면 내부 공용 컴포넌트 정리 → 이후에만 분리 검토
@@ -1120,10 +1135,12 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 ### 페이지 레이아웃 공통 컴포넌트 (Stage 14a/14a-2)
 
 **PageHeader** (`shared/ui/PageHeader.tsx`): 페이지 제목 영역. **sticky 아님** (default `false`).
+
 - 슬롯: `back`, `title`, `description`, `tabs`
 - `actions` 슬롯은 **legacy — 신규 사용 금지** (PageToolbar.right로 대체)
 
 **PageToolbar** (`shared/ui/PageToolbar.tsx`): 필터·CUD 액션 one-row toolbar. **`sticky top-14 z-20`** (AdminHeader 바로 아래 고정).
+
 - 슬롯: `left` (Read — 필터/검색), `right` (CUD — 추가/편집/삭제/저장)
 - 모바일(`<md`): 각 슬롯을 버튼으로 collapse → 클릭 시 Top Sheet 펼침
 - 단일 자식 그룹은 `mobileCollapseLeft={false}` / `mobileCollapseRight={false}` opt-out
@@ -1170,6 +1187,7 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 - `ListSearchInput({ placeholder, defaultValue })` — `<form key={defaultValue}>` + `<Input>` + `<Button type="submit">검색</Button>`. **Enter 또는 버튼 submit만** — debounce 자동 fetch 금지 (admin 검색 UX D8 정책). 빈 제출 시 `q` 파라미터 제거. `key={defaultValue}`로 URL 파라미터 변경 시 form remount → Base UI uncontrolled 경고 방지
 
 리스트 페이지 구조 패턴:
+
 ```tsx
 <PageToolbar left={<><DomainFilters /><ListSearchInput placeholder="제목으로 검색" defaultValue={filters.q ?? ''} /></>} right={...} />
 <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
@@ -1299,13 +1317,13 @@ entities → shared                   ✅
 
 슬라이스 내부 디렉토리는 다음 5개만 사용한다:
 
-| 세그먼트 | 역할 | 예시 |
-|----------|------|------|
-| `ui/` | React 컴포넌트 (Server/Client) | `UserTable.tsx`, `ProfileForm.tsx` |
-| `api/` | fetch 함수, queryOptions, useMutation 훅 | `userFetchers.ts`, `useUserMutations.ts` |
-| `model/` | 타입, Zod 스키마, 상수, 필터 정의 | `userFilters.ts`, `loginSchema.ts` |
-| `config/` | 설정 상수 (navigation 등) | `navigation.ts` |
-| `lib/` | 유틸리티 함수, 헬퍼 | `checkPermission.ts`, `cookies.ts` |
+| 세그먼트  | 역할                                     | 예시                                     |
+| --------- | ---------------------------------------- | ---------------------------------------- |
+| `ui/`     | React 컴포넌트 (Server/Client)           | `UserTable.tsx`, `ProfileForm.tsx`       |
+| `api/`    | fetch 함수, queryOptions, useMutation 훅 | `userFetchers.ts`, `useUserMutations.ts` |
+| `model/`  | 타입, Zod 스키마, 상수, 필터 정의        | `userFilters.ts`, `loginSchema.ts`       |
+| `config/` | 설정 상수 (navigation 등)                | `navigation.ts`                          |
+| `lib/`    | 유틸리티 함수, 헬퍼                      | `checkPermission.ts`, `cookies.ts`       |
 
 금지: `schemas/`, `hooks/`, `types/`, `utils/` 등 비표준 세그먼트
 예외: `shared/hooks/`는 shadcn/ui 생성 훅으로 허용

@@ -11,7 +11,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import { Label } from '@/shared/ui/shadcn/label';
 import { DatePicker } from '@/shared/ui/DatePicker';

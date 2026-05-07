@@ -10,13 +10,13 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/shared/ui/shadcn/popover';
+} from '@/shared/ui/Popover';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 import { cn } from '@/shared/lib/utils';
 
 interface DatePickerProps {

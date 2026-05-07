@@ -25,7 +25,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 import { Switch } from '@/shared/ui/shadcn/switch';
 import {
   Table,

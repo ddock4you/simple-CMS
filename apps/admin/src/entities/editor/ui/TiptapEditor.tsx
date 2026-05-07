@@ -388,7 +388,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
             tooltip="이미지"
           />
           {openPopup === 'image' && (
-            <div className="absolute top-full left-0 z-50 mt-1 flex w-44 flex-col rounded-md border bg-popover p-1 shadow-md">
+            <div className="absolute top-full left-0 z-50 mt-1 flex w-44 flex-col rounded-md border bg-popover p-1 shadow-popover">
               <button
                 type="button"
                 className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-accent"
@@ -560,7 +560,7 @@ function ColorPalette({
   onReset: () => void;
 }) {
   return (
-    <div className="absolute top-full left-0 z-50 mt-1 rounded-md border bg-popover p-2 shadow-md w-max">
+    <div className="absolute top-full left-0 z-50 mt-1 rounded-md border bg-popover p-2 shadow-popover w-max">
       <div className="grid grid-cols-6 gap-1">
         {colors.map((color) => (
           <button
@@ -593,7 +593,7 @@ function TableGridPicker({
   const [hover, setHover] = useState({ row: 0, col: 0 });
 
   return (
-    <div className="absolute top-full left-0 z-50 mt-1 rounded-md border bg-popover p-2 shadow-md w-max">
+    <div className="absolute top-full left-0 z-50 mt-1 rounded-md border bg-popover p-2 shadow-popover w-max">
       <div className="grid gap-0.5" style={{ gridTemplateColumns: `repeat(${maxCols}, 1fr)` }}>
         {Array.from({ length: maxRows * maxCols }, (_, i) => {
           const row = Math.floor(i / maxCols) + 1;

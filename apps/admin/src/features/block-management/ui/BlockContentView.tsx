@@ -269,7 +269,7 @@ export function BlockContentView({ blocks }: BlockContentViewProps) {
         return (
           <section
             key={block.id}
-            className={`overflow-hidden rounded-lg border bg-card shadow-sm ${
+            className={`overflow-hidden rounded-lg border bg-card shadow-card ${
               isHidden ? 'opacity-60' : ''
             }`}
           >

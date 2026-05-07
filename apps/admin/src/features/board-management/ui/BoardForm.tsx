@@ -21,7 +21,8 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
+import { BooleanSwitchField } from '@/shared/ui/BooleanSwitchField';
 import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 import { PageHeader } from '@/shared/ui/PageHeader';
@@ -205,27 +206,11 @@ export function BoardForm({ mode, initialData }: BoardFormProps) {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>공개 여부</Label>
-                <Controller
-                  name="isPublic"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value ? 'true' : 'false'}
-                      onValueChange={(v) => field.onChange(v === 'true')}
-                    >
-                      <SelectTrigger>
-                        <span>{field.value ? '공개' : '비공개'}</span>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="true">공개</SelectItem>
-                        <SelectItem value="false">비공개</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
+              <BooleanSwitchField
+                control={control}
+                name="isPublic"
+                label="공개 여부"
+              />
             </CardContent>
           </Card>
         </div>

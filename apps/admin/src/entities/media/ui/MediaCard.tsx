@@ -58,7 +58,7 @@ export function MediaCard({
     >
       {selectable && !disabled && (
         <div
-          className={`absolute right-2 top-2 z-10 flex size-6 items-center justify-center rounded-md border bg-background/90 shadow-sm backdrop-blur transition-opacity ${
+          className={`absolute right-2 top-2 z-10 flex size-6 items-center justify-center rounded-md border bg-background/90 shadow-card backdrop-blur transition-opacity ${
             checked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
           }`}
           onClick={(e) => e.stopPropagation()}

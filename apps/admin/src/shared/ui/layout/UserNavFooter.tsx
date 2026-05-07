@@ -14,7 +14,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/shared/ui/shadcn/dropdown-menu';
+} from '@/shared/ui/DropdownMenu';
 import {
   SidebarMenu,
   SidebarMenuButton,

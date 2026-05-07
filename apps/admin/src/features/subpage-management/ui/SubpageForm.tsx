@@ -12,7 +12,7 @@ import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
-import { Checkbox } from '@/shared/ui/shadcn/checkbox';
+import { BooleanSwitchField } from '@/shared/ui/BooleanSwitchField';
 import {
   Card,
   CardContent,
@@ -25,7 +25,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 import { CCL_TYPE_LABELS, type CclType } from '@simple-cms/types';
@@ -288,57 +288,23 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
                     </div>
                   )}
                 />
-                <Controller
-                  name="cclAi"
+                <BooleanSwitchField
                   control={control}
-                  render={({ field }) => {
-                    const disabled = cclType === null;
-                    const checked = disabled ? false : !!field.value;
-                    return (
-                      <label className="flex items-center gap-2 pt-1 text-sm">
-                        <Checkbox
-                          checked={checked}
-                          disabled={disabled}
-                          onCheckedChange={(next) => field.onChange(next === true)}
-                        />
-                        <span className={disabled ? 'text-muted-foreground' : ''}>
-                          AI 학습·활용 가능 표시
-                        </span>
-                      </label>
-                    );
-                  }}
+                  name="cclAi"
+                  label="AI 학습·활용 가능 표시"
+                  disabled={cclType === null}
                 />
-                {errors.cclAi && (
-                  <p className="text-sm text-destructive">
-                    {errors.cclAi.message as string}
-                  </p>
-                )}
               </section>
 
               <section className="space-y-2">
                 <h3 className="text-sm font-semibold text-muted-foreground">
                   공개 옵션
                 </h3>
-                <Controller
-                  name="feedbackEnabled"
+                <BooleanSwitchField
                   control={control}
-                  render={({ field }) => (
-                    <label className="flex items-start gap-2 pt-1 text-sm">
-                      <Checkbox
-                        checked={!!field.value}
-                        onCheckedChange={(next) =>
-                          field.onChange(next === true)
-                        }
-                      />
-                      <span className="space-y-0.5">
-                        <span className="block">사용자 피드백 UI 표시</span>
-                        <span className="block text-xs text-muted-foreground">
-                          공개 웹 서브페이지 하단에 만족도 조사를 노출합니다.
-                          비공개(초안)인 페이지에는 표시되지 않습니다.
-                        </span>
-                      </span>
-                    </label>
-                  )}
+                  name="feedbackEnabled"
+                  label="사용자 피드백 UI 표시"
+                  description="공개 웹 서브페이지 하단에 만족도 조사를 노출합니다. 비공개(초안)인 페이지에는 표시되지 않습니다."
                 />
               </section>
             </div>

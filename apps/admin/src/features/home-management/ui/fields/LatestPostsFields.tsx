@@ -16,7 +16,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 
 import { homeReferencesOptions } from '../../api/homeQueries';
 import type { LatestPostsConfigData } from '../../model/homeSchemas';

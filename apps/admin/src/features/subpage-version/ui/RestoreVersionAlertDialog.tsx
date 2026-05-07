@@ -22,7 +22,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 
 import { subpageVersionDetailOptions } from '../api/versionQueries';
 import {

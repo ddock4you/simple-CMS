@@ -7,7 +7,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 import { roleListOptions } from '@/features/user-management/api/userQueries';
 import { useChangeUserRole } from '@/features/user-management/api/useUserMutations';
 

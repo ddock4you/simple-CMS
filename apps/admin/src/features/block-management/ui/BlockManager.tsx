@@ -35,7 +35,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/shared/ui/shadcn/dropdown-menu';
+} from '@/shared/ui/DropdownMenu';
 import { OrderActionButtons } from '@/shared/ui/OrderActionButtons';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 

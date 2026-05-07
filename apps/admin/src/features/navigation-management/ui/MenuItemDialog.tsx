@@ -20,7 +20,8 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
+import { BooleanSwitchField } from '@/shared/ui/BooleanSwitchField';
 import { useDialogDirtyGuard } from '@/shared/lib/useDialogDirtyGuard';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 
@@ -251,48 +252,16 @@ export function MenuItemDialog({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>공개 여부</Label>
-                <Controller
-                  name="isVisible"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value ? 'true' : 'false'}
-                      onValueChange={(v) => field.onChange(v === 'true')}
-                    >
-                      <SelectTrigger>
-                        <span>{field.value ? '공개' : '비공개'}</span>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="true">공개</SelectItem>
-                        <SelectItem value="false">비공개</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>새 탭</Label>
-                <Controller
-                  name="openInNewTab"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value ? 'true' : 'false'}
-                      onValueChange={(v) => field.onChange(v === 'true')}
-                    >
-                      <SelectTrigger>
-                        <span>{field.value ? '새 탭' : '현재 탭'}</span>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="false">현재 탭</SelectItem>
-                        <SelectItem value="true">새 탭</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
+              <BooleanSwitchField
+                control={control}
+                name="isVisible"
+                label="공개"
+              />
+              <BooleanSwitchField
+                control={control}
+                name="openInNewTab"
+                label="새 탭에서 열기"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

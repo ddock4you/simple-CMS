@@ -9,7 +9,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 
 import type { IframeBlockConfigData } from '../../model/blockSchemas';
 import { IFRAME_ALLOWED_HOSTS } from '../../model/blockLabels';

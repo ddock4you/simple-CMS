@@ -14,7 +14,7 @@ import type {
 import { Button } from '@/shared/ui/shadcn/button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
-import { Checkbox } from '@/shared/ui/shadcn/checkbox';
+import { BooleanSwitchField } from '@/shared/ui/BooleanSwitchField';
 import {
   Card,
   CardContent,
@@ -26,7 +26,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
@@ -262,18 +262,10 @@ export function PopupForm({ mode, initialData }: PopupFormProps) {
               <CardTitle>노출 설정</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Controller
-                name="isVisible"
+              <BooleanSwitchField
                 control={control}
-                render={({ field }) => (
-                  <label className="flex items-center gap-2">
-                    <Checkbox
-                      checked={field.value ?? true}
-                      onCheckedChange={(c) => field.onChange(c === true)}
-                    />
-                    <span className="text-sm">공개 웹에 노출</span>
-                  </label>
-                )}
+                name="isVisible"
+                label="공개 웹에 노출"
               />
 
               <div className="space-y-2">

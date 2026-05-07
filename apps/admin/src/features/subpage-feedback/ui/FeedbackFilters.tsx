@@ -12,7 +12,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/shared/ui/shadcn/select';
+} from '@/shared/ui/Select';
 
 type RatingFilter = 'ALL' | 'POSITIVE' | 'NEGATIVE';
 

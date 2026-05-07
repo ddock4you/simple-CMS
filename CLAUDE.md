@@ -456,6 +456,15 @@ apps/{앱}/
 | 14e-1~3 | Dialog size 토큰 + bodyOnlyScroll + 일괄 치환 | Dialog 폭 일관성 + body-only scroll | **완료** |
 | 14f | 리스트 인라인 status 토글 시각 통일 (InlineStatusSwitchToggle) [[상세]](docs/stages/stage-14.md) | SubpageTable/PostTable Switch + 라벨 교체, Boolean Switch 5곳 이연 | **완료** |
 
+### Stage 15 — admin 디자인 시스템 도입
+
+| 단계 | 내용 | 확인 가능한 것 | 상태 |
+| ---- | ---- | -------------- | ---- |
+| 15a | `apps/admin/design.md` 전면 재작성 (Stitch DESIGN.md 사양, 한글 8섹션) + 루트 CLAUDE.md Stage 15 추가 + admin CLAUDE.md UI 전략 갱신. 코드 변경 0건 | `npx @google/design.md lint` broken-ref 0건 확인 | **완료** |
+| 15b | `globals.css`에 shadow 토큰 3개 추가 (`--shadow-card/toolbar/popover`, light/dark 페어). `@theme inline` + `:root` + `.dark`. 기존 shadcn 토큰 무변경 | Storybook smoke 56 tests 회귀 0건 확인 | **완료** |
+| 15c-1 | shadow 토큰 실 컴포넌트 적용 3파일 5건: PageToolbar `shadow-toolbar`, BlockContentView `shadow-card`, TiptapEditor 팝업 3곳 `shadow-popover`. design.md toolbar 설명 정정 [[상세]](docs/stages/stage-15c.md) | `pnpm --filter @simple-cms/admin build` 통과 | **완료** |
+| 15c-2 | shadow wrapper 4개(Popover/Select/DropdownMenu/Sheet) + 27파일 swap + BooleanSwitchField + 5폼 통일 + spacing/scale 토큰 + PageHeader typography fix + ESLint 가드 [[상세]](docs/stages/stage-15c-2.md) | typecheck·lint·build 통과 | **완료** |
+
 ## 명령어
 
 ```bash

@@ -15,7 +15,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/shared/ui/shadcn/dropdown-menu';
+} from '@/shared/ui/DropdownMenu';
 
 interface UserNavProps {
   user: {
