@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 
 interface MediaPaginationProps {
   page: number;

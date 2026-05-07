@@ -2,7 +2,7 @@
 
 import { Loader2, RotateCcw, Save } from 'lucide-react';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 
 interface OrderActionButtonsProps {
   dirtyCount: number;

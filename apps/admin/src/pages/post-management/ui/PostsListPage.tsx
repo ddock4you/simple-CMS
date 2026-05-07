@@ -6,7 +6,7 @@ import { Plus } from 'lucide-react';
 import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { hasPermission } from '@/entities/auth/lib/checkPermission';
 import { getQueryClient } from '@/shared/api/queryClient';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { ListSearchInput } from '@/shared/ui/ListSearchInput';

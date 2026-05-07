@@ -4,37 +4,45 @@ import { useState } from 'react';
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { Button } from '@/shared/ui/Button';
 
-import { DatePicker } from '@/shared/ui/DatePicker';
-import { toKstDateString } from '@/shared/lib/kstDate';
-
-function getDefaultDateRange() {
-  const to = new Date();
-  const from = new Date();
-  from.setMonth(from.getMonth() - 1);
-  return { from, to };
+interface AuditLogExportProps {
+  action?: string;
+  entityType?: string | null;
+  userId?: string | null;
+  from?: string | null;
+  to?: string | null;
+  q?: string;
 }
 
-export function AuditLogExport() {
-  const defaults = getDefaultDateRange();
-  const [from, setFrom] = useState<Date | undefined>(defaults.from);
-  const [to, setTo] = useState<Date | undefined>(defaults.to);
+export function AuditLogExport({
+  action,
+  entityType,
+  userId,
+  from,
+  to,
+  q,
+}: AuditLogExportProps) {
+  const canExport = usePermission('auditLogs', 'read');
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleExport = async () => {
-    if (!from || !to) {
-      toast.error('내보내기할 날짜 범위를 선택해주세요.');
-      return;
-    }
+  if (!canExport) return null;
 
+  const handleExport = async () => {
     setIsExporting(true);
     try {
-      const fromStr = toKstDateString(from);
-      const toStr = toKstDateString(to);
+      const params = new URLSearchParams();
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      if (action && action !== 'ALL') params.set('action', action);
+      if (entityType) params.set('entityType', entityType);
+      if (userId) params.set('userId', userId);
+      if (q) params.set('q', q);
 
+      const qs = params.toString();
       const response = await fetch(
-        `/api/audit-logs/export?from=${fromStr}&to=${toStr}`,
+        qs ? `/api/audit-logs/export?${qs}` : '/api/audit-logs/export',
       );
 
       if (!response.ok) {
@@ -42,14 +50,24 @@ export function AuditLogExport() {
         throw new Error(data.error || '내보내기에 실패했습니다.');
       }
 
+      const filename = parseFilenameFromHeader(
+        response.headers.get('Content-Disposition'),
+      );
+      const rowCount = Number(response.headers.get('X-Row-Count') ?? '0');
+
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `audit-logs-${fromStr}-${toStr}.xlsx`;
+      a.download = filename ?? 'audit-logs.xlsx';
       a.click();
       URL.revokeObjectURL(url);
-      toast.success('감사 로그가 다운로드되었습니다.');
+
+      if (rowCount === 0) {
+        toast.info('선택한 기간에 감사 로그가 없습니다. 빈 파일이 다운로드되었습니다.');
+      } else {
+        toast.success(`감사 로그 ${rowCount}건이 다운로드되었습니다.`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '내보내기에 실패했습니다.');
     } finally {
@@ -58,19 +76,20 @@ export function AuditLogExport() {
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <DatePicker value={from} onChange={setFrom} placeholder="시작일" />
-      <span className="text-muted-foreground">~</span>
-      <DatePicker value={to} onChange={setTo} placeholder="종료일" />
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleExport}
-        disabled={isExporting || !from || !to}
-      >
-        <Download className="size-4" />
-        {isExporting ? '내보내기 중...' : 'Excel'}
-      </Button>
-    </div>
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleExport}
+      disabled={isExporting}
+    >
+      <Download className="size-4" />
+      {isExporting ? '내보내기 중...' : 'Excel 다운로드'}
+    </Button>
   );
+}
+
+function parseFilenameFromHeader(header: string | null): string | null {
+  if (!header) return null;
+  const match = header.match(/filename="?([^";]+)"?/i);
+  return match ? match[1] : null;
 }

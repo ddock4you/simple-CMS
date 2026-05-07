@@ -3,7 +3,7 @@
 import { Check, Undo2 } from 'lucide-react';
 
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 
 import { useSetErrorLogResolved } from '../api/useErrorLogMutations';
 

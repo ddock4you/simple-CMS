@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { ChevronRight } from 'lucide-react';
 
 import { Badge } from '@/shared/ui/shadcn/badge';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import {
   Card,
   CardContent,

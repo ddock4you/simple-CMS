@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/shared/ui/shadcn/table';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { InlineBooleanToggle } from '@/shared/ui/InlineBooleanToggle';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 

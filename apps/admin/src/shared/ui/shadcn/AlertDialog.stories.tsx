@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { fn } from 'storybook/test';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import {
   AlertDialog,
   AlertDialogAction,

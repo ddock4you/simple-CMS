@@ -6,7 +6,7 @@ import { Eye, EyeOff, GripVertical, Pencil } from 'lucide-react';
 
 import type { PageBlockListItem } from '@simple-cms/types';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 
 import { BlockTypeBadge } from './BlockTypeBadge';
 

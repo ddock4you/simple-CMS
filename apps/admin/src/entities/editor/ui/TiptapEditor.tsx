@@ -48,7 +48,7 @@ import { toast } from 'sonner';
 
 import type { ApiResponse, UploadMediaResponse } from '@simple-cms/types';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { resolveMediaPreviewUrl } from '@/shared/lib/mediaUrl';
 import {
   postprocessTiptapForSave,

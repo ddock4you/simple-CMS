@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 
 import { logout } from '@/shared/api/authHelpers';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 
 export function LogoutButton() {
   const router = useRouter();

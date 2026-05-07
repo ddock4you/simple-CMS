@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Image as ImageIcon, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import {
   Card,
   CardContent,

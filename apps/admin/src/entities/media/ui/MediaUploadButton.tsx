@@ -5,7 +5,7 @@ import { Upload } from 'lucide-react';
 
 import type { UploadMediaResponse } from '@simple-cms/types';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 
 import { useUploadMedia } from '../api/useUploadMedia';
 

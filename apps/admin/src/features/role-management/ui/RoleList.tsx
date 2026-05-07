@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Trash2, Star } from 'lucide-react';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import {
   AlertDialog,
   AlertDialogAction,

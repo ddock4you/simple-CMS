@@ -28,6 +28,10 @@ export default [
               name: '@/shared/ui/shadcn/alert-dialog',
               message: 'wrapper(@/shared/ui/AlertDialog) 경유 사용. 직접 import 금지.',
             },
+            {
+              name: '@/shared/ui/shadcn/button',
+              message: '"@/shared/ui/Button" wrapper를 사용하세요 (shadcn/button 직접 import는 wrapper와 shadcn 디렉토리에서만 허용).',
+            },
           ],
         },
       ],
@@ -41,6 +45,7 @@ export default [
       'src/shared/ui/Select.tsx',
       'src/shared/ui/Sheet.tsx',
       'src/shared/ui/AlertDialog.tsx',
+      'src/shared/ui/Button.tsx',
       'src/shared/ui/shadcn/**',
     ],
     rules: {

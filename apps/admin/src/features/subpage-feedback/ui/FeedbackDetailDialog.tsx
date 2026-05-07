@@ -10,7 +10,7 @@ import {
 
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { Badge } from '@/shared/ui/shadcn/badge';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import {
   Dialog,
   DialogContent,

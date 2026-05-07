@@ -91,6 +91,7 @@ enum AuditEntityType {
   SITE_SETTINGS
   ERROR_LOG
   MEDIA
+  AUDIT_LOG
 }
 
 enum FeedbackRating {

@@ -2,7 +2,7 @@
 
 import { type ReactNode } from 'react';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 
 interface BulkAction {

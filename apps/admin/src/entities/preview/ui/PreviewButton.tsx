@@ -4,7 +4,7 @@ import { Eye, Loader2 } from 'lucide-react';
 
 import type { PreviewEntityType } from '@simple-cms/types';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 
 import { useIssuePreviewToken } from '../api/usePreviewMutations';
 

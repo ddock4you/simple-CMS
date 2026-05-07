@@ -59,6 +59,7 @@ import { pageSchema } from '@/features/{domain}/model/page.schema';
 - **view 페이지**: `<PageHeader back={뒤로가기} title={...} />` + `<PageToolbar right={삭제/편집버튼} />`
 - **edit 페이지**: `<form>` 안에 `<PageHeader />` + `<PageToolbar right={<Button type="submit">저장</Button>} />` (form 내부 배치로 type="submit" 자연 트리거)
 - `PageHeader.actions` 슬롯은 **legacy** — 신규 사용 금지, `PageToolbar.right` 사용
+- 폼 컨트롤은 default size 유지 (design.md §4.5 폼 컨트롤 height 기준)
 
 ### web (정석 FSD)
 

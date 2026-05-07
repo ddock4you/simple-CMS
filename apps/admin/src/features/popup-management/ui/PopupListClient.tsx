@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { popupKeys } from '@/shared/api/queryKeys';
 import { useStagedOrder } from '@/shared/lib/useStagedOrder';
 import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { OrderActionButtons } from '@/shared/ui/OrderActionButtons';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';

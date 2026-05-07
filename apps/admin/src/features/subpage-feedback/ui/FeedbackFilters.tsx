@@ -6,7 +6,7 @@ import { FEEDBACK_RATING_LABELS } from '@simple-cms/types';
 
 import { DatePicker } from '@/shared/ui/DatePicker';
 import { Input } from '@/shared/ui/shadcn/input';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import {
   Select,
   SelectContent,

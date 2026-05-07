@@ -260,6 +260,27 @@ PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
 | `{spacing.page-x}` | 24px | 페이지 좌우 padding |
 | `{spacing.card}` | 24px | Card 내부 padding |
 
+### 4.5 폼 컨트롤 baseline height
+
+PageToolbar/Dialog 내부 모든 폼 컨트롤은 **32px (2rem) 단일 baseline**에 맞춘다.
+
+| CSS 토큰 | 값 | 의미 |
+|---|---|---|
+| `--control-h-default` | 2rem (32px) | 기본 높이 — Input, Select, Button default |
+| `--control-h-sm` | 2rem (32px) | sm size도 동일 높이 (padding/font/rounded만 차별) |
+| `--control-h-xs` | 1.5rem (24px) | 컴팩트 케이스 (아이콘 버튼 등) |
+| `--control-h-lg` | 2.25rem (36px) | 큰 액션 버튼 |
+
+**정책 요약**:
+- Button의 `default` / `sm` size 모두 h-8 (32px). sm은 `px-2.5 · text-[0.8rem]`으로 시각 차별
+- `h-{n}` className 직접 override 금지 — size variant로 표현
+- Button은 반드시 `@/shared/ui/Button` wrapper 경유 (`@/shared/ui/shadcn/button` 직접 import 금지)
+- `Input`의 `text-base md:text-sm` 분기는 유지 — iOS Safari zoom 방지 의도된 정책
+
+**영구 예외** (design.md 부록 B에 등록):
+- 테이블 행 인라인 토글 (`InlineStatusSwitchToggle` / `InlineBooleanToggle`) — 행 높이 따름
+- Table thead `h-10`, Sidebar nav lg `h-12`, Input `file:h-6`
+
 ---
 
 ## 5. Elevation & Depth
@@ -330,15 +351,15 @@ PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
 
 ### YAML primitives (시각 토큰 명세)
 
-| 컴포넌트 | backgroundColor | textColor | rounded | padding |
-|---|---|---|---|---|
-| `{components.button-primary}` | `{colors.primary}` | `{colors.primary-foreground}` | `{rounded.md}` | 8px 16px |
-| `{components.button-secondary}` | `{colors.secondary}` | `{colors.secondary-foreground}` | `{rounded.md}` | 8px 16px |
-| `{components.button-destructive}` | `{colors.destructive}` | `{colors.primary-foreground}` | `{rounded.md}` | 8px 16px |
-| `{components.card}` | `{colors.card}` | `{colors.card-foreground}` | `{rounded.lg}` | 24px |
-| `{components.dialog}` | `{colors.popover}` | `{colors.popover-foreground}` | `{rounded.lg}` | 24px |
-| `{components.badge}` | `{colors.secondary}` | `{colors.secondary-foreground}` | `{rounded.sm}` | 2px 8px |
-| `{components.input}` | `{colors.background}` | `{colors.foreground}` | `{rounded.md}` | 8px 12px |
+| 컴포넌트 | backgroundColor | textColor | rounded | padding | height |
+|---|---|---|---|---|---|
+| `{components.button-primary}` | `{colors.primary}` | `{colors.primary-foreground}` | `{rounded.md}` | 8px 16px | 2rem |
+| `{components.button-secondary}` | `{colors.secondary}` | `{colors.secondary-foreground}` | `{rounded.md}` | 8px 16px | 2rem |
+| `{components.button-destructive}` | `{colors.destructive}` | `{colors.primary-foreground}` | `{rounded.md}` | 8px 16px | 2rem |
+| `{components.card}` | `{colors.card}` | `{colors.card-foreground}` | `{rounded.lg}` | 24px | auto |
+| `{components.dialog}` | `{colors.popover}` | `{colors.popover-foreground}` | `{rounded.lg}` | 24px | auto |
+| `{components.badge}` | `{colors.secondary}` | `{colors.secondary-foreground}` | `{rounded.sm}` | 2px 8px | auto |
+| `{components.input}` | `{colors.background}` | `{colors.foreground}` | `{rounded.md}` | 8px 12px | 2rem |
 
 ### 합성 컴포넌트 가이드
 
@@ -404,10 +425,11 @@ PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
 
 #### 인터랙션·피드백
 
-**Button** (`src/shared/ui/shadcn/button.tsx`)
+**Button** (`src/shared/ui/Button.tsx` wrapper → `shadcn/button.tsx`)
 - Storybook: `Admin/Shadcn/Button`
 - 토큰: `{components.button-primary}` / `{components.button-secondary}` / `{components.button-destructive}`
 - 규칙: hover `scale(0.98)` micro-interaction. 폼 외부 버튼에 `type="button"` 명시 필수
+- **wrapper 정책**: `@/shared/ui/Button` 경유 필수. `@/shared/ui/shadcn/button` 직접 import 금지 (ESLint `no-restricted-imports`로 자동 차단). sm size h-7 → h-8 override로 32px baseline 정렬. `buttonVariants` re-export로 cva 호출처 호환 유지
 
 **Dialog** (`src/shared/ui/shadcn/dialog.tsx`)
 - Storybook: `Admin/Shared/Dialog`
@@ -471,6 +493,7 @@ PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
 5. Dialog에 입력 폼이 있으면 `disablePointerDismissal` + `useDialogDirtyGuard` 함께 적용
 6. 편집 폼의 [저장]/[삭제] 버튼은 PageToolbar.right에 배치
 7. `{colors.muted-foreground}`는 hint·보조 설명·placeholder에만 사용 (AA 통과이나 필수 정보 라벨에 사용 금지)
+8. 폼 컨트롤은 `default` / `sm` size variant 사용 (둘 다 32px baseline). Button은 `@/shared/ui/Button` wrapper 경유
 
 ### Don't ❌
 
@@ -480,6 +503,7 @@ PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
 4. YAML `components:` 에 합성 컴포넌트(PageHeader, PageToolbar, BulkActionBar 등) 추가 금지 — 슬롯·동작·다크 분기는 Storybook + markdown이 담당
 5. `{colors.muted-foreground}`를 에러 메시지·필드 라벨 등 필수 정보에 사용 금지
 6. debounce 자동 검색 사용 금지 (검색은 form submit 기반 — 서버 부담 정책)
+7. `h-{n}` className 직접 override 금지 (size variant로 표현). `@/shared/ui/shadcn/button` 직접 import 금지 (wrapper 경유)
 
 ---
 
@@ -517,12 +541,27 @@ PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
 
 ---
 
-## 부록 B. 토큰 외 색 허용 예외
+## 부록 B. 영구 예외 등록부
 
-아래 위치는 design.md 토큰 시스템 밖의 직접 색 지정이 허용된다. 신규 케이스 추가 시 이 표에 1줄 등록.
+신규 케이스 추가 시 반드시 이 표에 1줄 등록. 등록 없이 임의 예외 사용 금지.
+
+### 색 허용 예외
+
+아래 위치는 design.md 토큰 시스템 밖의 직접 색 지정이 허용된다.
 
 | 위치 | 사유 | 영구/일시 |
 |---|---|---|
 | `app/global-error.tsx` | Tailwind 미해석 환경(error boundary fallback). inline style 강제 | 영구 |
 | `**/*.stories.tsx` (DirtyGuardProbe 등) | 테스트 fixture 색 — 디자인 토큰 아님 | 영구 |
 | `shared/ui/TiptapEditor` color picker 팔레트 | 사용자 콘텐츠 색 데이터 — 디자인 토큰 아님 | 영구 |
+
+### 폼 컨트롤 height 영구 예외 (§4.5 기준)
+
+아래 컨텍스트는 32px baseline 정책에서 제외된다.
+
+| 위치 | 사유 | 영구/일시 |
+|---|---|---|
+| `InlineStatusSwitchToggle` / `InlineBooleanToggle` | 테이블 행 인라인 토글 — 행 밀도(density) 유지 목적. 행 높이를 따름 | 영구 |
+| Table thead (`h-10`) | 테이블 헤더 고유 높이 — 컬럼 라벨 영역, PageToolbar와 무관 | 영구 |
+| Sidebar nav 항목 (`h-12` 등) | 사이드바 전용 토큰(`--sidebar-*`) 사용 영역, PageToolbar 외부 | 영구 |
+| Input `file:h-6` | 파일 입력 내부 pseudo element — OS 렌더 제약 | 영구 |

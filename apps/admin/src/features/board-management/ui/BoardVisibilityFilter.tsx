@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import type { BoardVisibilityFilter as VisibilityFilterType } from '../model/boardFilters';
 
 const FILTER_OPTIONS: { value: VisibilityFilterType; label: string }[] = [

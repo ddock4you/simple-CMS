@@ -56,6 +56,10 @@
     --shadow-popover: var(--shadow-popover-value);
     --spacing-page-x: 24px;
     --spacing-card: 24px;
+    --control-h-default: 2rem;
+    --control-h-sm: 2rem;
+    --control-h-xs: 1.5rem;
+    --control-h-lg: 2.25rem;
 }
 
 :root {

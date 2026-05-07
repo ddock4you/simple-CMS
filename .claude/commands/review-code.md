@@ -63,6 +63,10 @@ admin에 새 URL 입력 필드를 추가할 때:
   - (C) 부모에서 `<Dialog key={...} />`로 매번 새 마운트
 - [ ] **중첩 흐림 자동 적용 확인**: 공용 `shared/ui/shadcn/dialog.tsx`/`alert-dialog.tsx`를 그대로 사용했는지 (개별 className 오버라이드로 `data-[nested-dialog-open]:*` 룰을 지우지 말 것)
 
+### 폼 컨트롤 height (Stage 15c-3f — apps/admin)
+
+- [ ] **폼 컨트롤 height**: design.md §4.5 baseline 준수 — `default` / `sm` size variant 사용 (둘 다 32px). `h-{n}` className 직접 override 금지
+
 ### 테스트
 
 - [ ] **테스트 파일 존재**: 새로 작성한 유틸/로직에 대응하는 테스트 파일 존재 여부

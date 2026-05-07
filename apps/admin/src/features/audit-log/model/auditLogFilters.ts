@@ -67,4 +67,5 @@ export const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   SITE_SETTINGS: '사이트 설정',
   ERROR_LOG: '에러 로그',
   MEDIA: '미디어',
+  AUDIT_LOG: '감사 로그',
 };

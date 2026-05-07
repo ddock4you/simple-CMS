@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { CheckCheck } from 'lucide-react';
 
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import {
   AlertDialog,
   AlertDialogAction,

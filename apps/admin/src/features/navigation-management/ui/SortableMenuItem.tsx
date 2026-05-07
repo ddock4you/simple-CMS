@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Eye, EyeOff, Pencil, Trash2, Plus, ExternalLink } from 'lucide-react';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 
 import type { MenuItemNode } from '../model/navigationFilters';
 import { MenuItemTypeBadge } from './MenuItemTypeBadge';

@@ -10,7 +10,7 @@ import type {
   UpdatePageBlockDto,
 } from '@simple-cms/types';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import {
   Dialog,

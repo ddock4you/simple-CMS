@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import { Search } from 'lucide-react';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 
 const noopSubscribe = () => () => {};
 const getIsMacSnapshot = () =>

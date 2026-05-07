@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { Calendar } from '@/shared/ui/shadcn/calendar';
 import {
   Popover,
@@ -72,7 +72,7 @@ export function DatePicker({ value, onChange, placeholder = '날짜 선택' }: D
             value={String(month.getFullYear())}
             onValueChange={handleYearChange}
           >
-            <SelectTrigger className="h-8 w-[80px]">
+            <SelectTrigger className="w-[80px]">
               <span>{month.getFullYear()}년</span>
             </SelectTrigger>
             <SelectContent>
@@ -87,7 +87,7 @@ export function DatePicker({ value, onChange, placeholder = '날짜 선택' }: D
             value={String(month.getMonth())}
             onValueChange={handleMonthChange}
           >
-            <SelectTrigger className="h-8 w-[70px]">
+            <SelectTrigger className="w-[70px]">
               <span>{MONTHS[month.getMonth()]}</span>
             </SelectTrigger>
             <SelectContent>

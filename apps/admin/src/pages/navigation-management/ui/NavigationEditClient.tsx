@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 
 import { Badge } from '@/shared/ui/shadcn/badge';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { PageHeader } from '@/shared/ui/PageHeader';
 

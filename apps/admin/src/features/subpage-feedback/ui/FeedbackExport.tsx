@@ -5,7 +5,7 @@ import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 
 type RatingFilter = 'ALL' | 'POSITIVE' | 'NEGATIVE';
 

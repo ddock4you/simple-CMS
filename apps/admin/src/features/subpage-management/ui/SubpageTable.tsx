@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/shared/ui/shadcn/table';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import { InlineStatusSwitchToggle } from '@/shared/ui/InlineStatusSwitchToggle';
 import { BulkActionBar } from '@/shared/ui/BulkActionBar';

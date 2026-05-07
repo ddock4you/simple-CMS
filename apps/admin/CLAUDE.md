@@ -1146,6 +1146,15 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 - **design.md SSOT 검증 (Stage 15c-3a)**: globals.css oklch ↔ design.md YAML hex 간 ΔE 감지
   - `pnpm --filter @simple-cms/admin design:verify` 로 수동 실행 (ΔE > 1.5 시 exit 1)
   - globals.css가 runtime 권위 — ΔE 실패 시 design.md hex를 css→hex 값으로 보정
+- **Button wrapper (Stage 15c-3f)**: `shared/ui/Button.tsx` — shadcn 원본(`shared/ui/shadcn/button`) 직접 import 금지, wrapper 경유 필수
+  - sm size에 `cn('h-8', className)` override 주입 — 32px baseline 정렬 (shadcn sm 기본 h-7 → h-8)
+  - `default`(h-8) / `lg`(h-9) / `xs`(h-6) / `icon` variant는 그대로 통과
+  - `buttonVariants` re-export — `cn(buttonVariants({...}))` 패턴 호출처 호환 유지
+  - ESLint `no-restricted-imports`로 shadcn 원본 직접 import 자동 차단 (wrapper · shadcn 디렉토리 내부는 예외)
+- **폼 컨트롤 height 통일 (Stage 15c-3f)**: PageToolbar/Dialog 내부 모든 폼 컨트롤은 32px baseline (design.md §4.5 참조)
+  - `default` / `sm` size 모두 h-8 (32px) — sm은 padding/font/rounded만 차별
+  - 영구 예외: 테이블 행 인라인 토글(`InlineStatusSwitchToggle`/`InlineBooleanToggle`), Table thead h-10, Sidebar lg h-12, Input file:h-6
+  - `h-{n}` className 직접 override 금지 (size variant로 표현)
 - UI 컴포넌트/폼 패턴은 `apps/admin` 내부 레이어에서 관리
 - 운영 효율 + 데이터 입력 흐름 우선
 - 반복 패턴 충분히 생기면 내부 공용 컴포넌트 정리 → 이후에만 분리 검토

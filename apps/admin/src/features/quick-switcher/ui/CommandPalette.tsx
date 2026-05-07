@@ -14,7 +14,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/shared/ui/shadcn/command';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { useKeyboardShortcut } from '@/shared/lib/useKeyboardShortcut';
 
 import { quickSearchOptions } from '../api/quickSearchQueries';

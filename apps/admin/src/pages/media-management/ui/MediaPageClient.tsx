@@ -6,7 +6,7 @@ import { Trash2 } from 'lucide-react';
 
 import type { MediaListFilters, MediaListItem } from '@simple-cms/types';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 

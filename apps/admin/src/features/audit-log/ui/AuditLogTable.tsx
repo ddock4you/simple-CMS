@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/shared/ui/shadcn/table';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 
 import { ListSummary } from '@/shared/ui/ListSummary';
 import { ListPagination } from '@/shared/ui/ListPagination';

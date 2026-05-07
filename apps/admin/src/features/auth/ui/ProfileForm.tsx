@@ -11,7 +11,7 @@ import { updateProfile } from '@/features/auth/api/authFetchers';
 
 import { FetchError } from '@/shared/api/fetchClient';
 import { userKeys } from '@/shared/api/queryKeys';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import {

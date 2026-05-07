@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
 import { Badge } from '@/shared/ui/shadcn/badge';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { Separator } from '@/shared/ui/shadcn/separator';
 
 import { errorLogDetailOptions } from '../api/errorLogQueries';

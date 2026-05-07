@@ -11,7 +11,7 @@ import {
 } from '@simple-cms/types';
 
 import { Badge } from '@/shared/ui/shadcn/badge';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import {
   Table,
   TableBody,

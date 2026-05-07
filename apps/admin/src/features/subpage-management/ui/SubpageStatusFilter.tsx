@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import type { SubpageStatusFilter as StatusFilterType } from '@/features/subpage-management/model/subpageFilters';
 
 const FILTER_OPTIONS: { value: StatusFilterType; label: string }[] = [

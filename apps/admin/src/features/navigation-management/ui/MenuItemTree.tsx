@@ -23,7 +23,7 @@ import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { navigationKeys } from '@/shared/api/queryKeys';
 import { useStagedOrder } from '@/shared/lib/useStagedOrder';
 import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { OrderActionButtons } from '@/shared/ui/OrderActionButtons';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 

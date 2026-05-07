@@ -75,7 +75,16 @@ export default async function AuditLogsPage({
             />
           </Suspense>
         }
-        right={<AuditLogExport />}
+        right={
+          <AuditLogExport
+            action={filters.action}
+            entityType={filters.entityType}
+            userId={filters.userId}
+            from={filters.from}
+            to={filters.to}
+            q={filters.q}
+          />
+        }
         mobileLeftLabel="필터"
         mobileRightLabel="내보내기"
         mobileCollapseRight={false}

@@ -11,7 +11,7 @@ import type {
   CreateHomePopupDto,
 } from '@simple-cms/types';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { BooleanSwitchField } from '@/shared/ui/BooleanSwitchField';

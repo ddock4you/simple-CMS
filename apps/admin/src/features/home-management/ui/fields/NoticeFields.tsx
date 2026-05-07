@@ -8,7 +8,7 @@ import type {
 import { Controller, useFieldArray } from 'react-hook-form';
 import { Plus, Trash2 } from 'lucide-react';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';

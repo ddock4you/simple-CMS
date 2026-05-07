@@ -29,7 +29,7 @@ import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { blockKeys } from '@/shared/api/queryKeys';
 import { useStagedOrder } from '@/shared/lib/useStagedOrder';
 import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import {
   DropdownMenu,
   DropdownMenuContent,

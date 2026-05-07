@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { RESOURCE_ACTIONS } from '@simple-cms/types';
 import type { ResourceKey, Action } from '@simple-cms/types';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import { useUpdatePermissions } from '@/features/role-management/api/useRoleMutations';
 

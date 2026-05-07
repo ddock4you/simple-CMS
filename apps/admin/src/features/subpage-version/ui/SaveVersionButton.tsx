@@ -7,7 +7,7 @@ import { History } from 'lucide-react';
 
 import { SUBPAGE_VERSION_LABEL_MAX_LENGTH } from '@simple-cms/types';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import {
   Dialog,
   DialogContent,

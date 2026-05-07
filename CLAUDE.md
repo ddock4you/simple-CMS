@@ -469,6 +469,7 @@ apps/{앱}/
 | 15c-3c | AlertDialog wrapper(단순 re-export, size 미도입) + ESLint 가드 + 24 호출처 import 경로 swap + PageHeader 2곳 정정(ProfilePage·NavigationEditClient) [[상세]](docs/stages/stage-15c-3c.md) | typecheck·lint·build 통과 | **완료** |
 | 15c-3d | Card baseline 보정 (rounded-xl→lg, py-4→py-6, px-4→px-6, CardTitle text-base→text-lg semibold, CardDescription text-sm→text-xs) + StatCard/Auth 예외 유지 + text-base override 4곳 제거 [[상세]](docs/stages/stage-15c-3d.md) | typecheck·lint·build 통과 | **완료** |
 | 15c-3e | AlertDialog size 토큰 3-tier (confirm/default/wide) + shadcn type 확장 + AlertDialog.tsx wrapper 함수화 + 10 호출처 size prop 마이그레이션 (8 BulkXxx→wide, DeleteMedia→default, RestoreVersion className 제거) [[상세]](docs/stages/stage-15c-3e.md) | typecheck·lint·build 통과 | **완료** |
+| 15c-3f | 폼 컨트롤 height 통일 (32px baseline) — Button wrapper 신설 + sm h-8 override + ESLint 가드 + 92 imports 마이그레이션 (shadcn/button.tsx 무수정) + audit-logs Excel 패턴 정렬 (화면 필터 그대로 사용) + design.md height 토큰 신설 + AUDIT_LOG enum [[상세]](docs/stages/stage-15c-3f.md) | typecheck·lint·build 통과 + audit-logs Excel이 화면 필터 반영 | **완료** |
 
 ## 명령어
 

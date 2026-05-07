@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { UserStatus } from '@simple-cms/db';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import {
   AlertDialog,

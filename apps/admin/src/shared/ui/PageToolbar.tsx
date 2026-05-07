@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { Filter, MoreHorizontal } from 'lucide-react';
 
 import { cn } from '@/shared/lib/utils';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import {
   Sheet,
   SheetContent,

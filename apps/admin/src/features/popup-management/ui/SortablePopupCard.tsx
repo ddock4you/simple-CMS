@@ -8,7 +8,7 @@ import { GripVertical, Pencil } from 'lucide-react';
 
 import type { HomePopupListItem } from '@simple-cms/types';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import { InlineBooleanToggle } from '@/shared/ui/InlineBooleanToggle';
 
 import { useToggleHomePopupVisibility } from '../api/usePopupMutations';

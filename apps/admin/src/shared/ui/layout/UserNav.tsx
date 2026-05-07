@@ -6,7 +6,7 @@ import { LogOut, User } from 'lucide-react';
 
 import { logout } from '@/shared/api/authHelpers';
 import { Avatar, AvatarFallback } from '@/shared/ui/shadcn/avatar';
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 import {
   DropdownMenu,
   DropdownMenuContent,

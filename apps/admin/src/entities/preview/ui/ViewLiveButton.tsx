@@ -2,7 +2,7 @@
 
 import { ExternalLink } from 'lucide-react';
 
-import { Button } from '@/shared/ui/shadcn/button';
+import { Button } from '@/shared/ui/Button';
 
 interface ViewLiveButtonProps {
   url: string;
