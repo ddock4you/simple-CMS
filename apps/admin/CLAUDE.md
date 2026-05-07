@@ -1128,9 +1128,16 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
   - RHF `Controller + Switch + label/description/error` 통합 컴포넌트
   - 목록 인라인 토글은 기존 `InlineBooleanToggle` / `InlineStatusSwitchToggle` 유지 (책임 분리)
   - 적용 폼: SubpageForm(cclAi·feedbackEnabled), BoardForm(isPublic), MenuItemDialog(isVisible·openInNewTab), PopupForm(isVisible). SecuritySettingsForm은 RHF 미사용이라 직접 Switch + controlled AlertDialog 패턴
-- **success/warning 시맨틱 토큰 (Stage 15c-3a)**: destructive와 동일 위계의 시맨틱 피드백 색
-  - `bg-success` / `text-success` / `bg-success/10` 등 Tailwind utility 사용. raw `green-*`/`amber-*`/`emerald-*` 직접 사용 금지 → Stage 15c-3b에서 일괄 정리
+- **success/warning 시맨틱 토큰 (Stage 15c-3a/3b)**: destructive와 동일 위계의 시맨틱 피드백 색
+  - `bg-success` / `text-success` / `bg-success/10` 등 Tailwind utility 사용. raw `green-*`/`amber-*`/`emerald-*` 직접 사용 금지
   - 사용처: 긍정 평가·DNS 정상·성공(success) / pin·DNS pending·slug 경고(warning)
+- **Badge wrapper (Stage 15c-3b)**: `shared/ui/Badge.tsx` — success/warning variant 추가. `shared/ui/shadcn/badge` 직접 import 대신 wrapper 사용(신규 호출처에서 자연 채택; 기존은 점진 swap)
+  - `<Badge variant="success">` / `<Badge variant="warning">` 사용
+  - 기존 shadcn variant(default/secondary/destructive/outline 등)도 동일 인터페이스로 통과
+- **chartColors helper (Stage 15c-3b)**: `shared/lib/chartColors.ts` — Recharts `fill`/`stroke`에 CSS 토큰 전달
+  - `getChartColors()` — mount 시 `getComputedStyle(document.documentElement)`에서 `--success`/`--destructive`/`--warning`/`--muted-foreground`/`--border`/`--chart-{1-5}` 읽어 반환
+  - Recharts는 CSS color 문자열(`oklch(...)`) 모두 허용하므로 변환 불필요
+  - fallback: globals.css hex 근사값 (SSR/테스트 환경용)
 - **design.md SSOT 검증 (Stage 15c-3a)**: globals.css oklch ↔ design.md YAML hex 간 ΔE 감지
   - `pnpm --filter @simple-cms/admin design:verify` 로 수동 실행 (ΔE > 1.5 시 exit 1)
   - globals.css가 runtime 권위 — ΔE 실패 시 design.md hex를 css→hex 값으로 보정

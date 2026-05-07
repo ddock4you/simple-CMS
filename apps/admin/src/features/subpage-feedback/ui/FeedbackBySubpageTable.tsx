@@ -93,17 +93,17 @@ export function FeedbackBySubpageTable({
                     <TableCell className="text-right tabular-nums">
                       {item.total}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-green-700">
+                    <TableCell className="text-right tabular-nums text-success">
                       {item.positive}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-red-700">
+                    <TableCell className="text-right tabular-nums text-destructive">
                       {item.negative}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted">
                           <div
-                            className="absolute inset-y-0 left-0 bg-green-600"
+                            className="absolute inset-y-0 left-0 bg-success"
                             style={{ width: `${positivePercent}%` }}
                           />
                         </div>

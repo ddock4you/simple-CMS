@@ -66,12 +66,12 @@ export function DomainSettingsForm() {
           {data?.domain && (
             <div className="flex items-center gap-2 text-sm">
               {data.verified ? (
-                <span className="flex items-center gap-1 text-green-600">
+                <span className="flex items-center gap-1 text-success">
                   <CheckCircle className="size-4" />
                   DNS 검증됨
                 </span>
               ) : (
-                <span className="flex items-center gap-1 text-amber-600">
+                <span className="flex items-center gap-1 text-warning">
                   <XCircle className="size-4" />
                   DNS 미검증
                 </span>

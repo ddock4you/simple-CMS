@@ -91,7 +91,7 @@ export function RecentVersionsCard({
                       {SUBPAGE_VERSION_SOURCE_LABELS[item.sourceAction]}
                     </Badge>
                     {item.isPinned && (
-                      <Pin className="size-3 text-amber-600" aria-hidden />
+                      <Pin className="size-3 text-warning" aria-hidden />
                     )}
                   </div>
                   <p

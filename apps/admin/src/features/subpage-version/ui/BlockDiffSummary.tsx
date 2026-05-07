@@ -1,4 +1,4 @@
-import { Badge } from '@/shared/ui/shadcn/badge';
+import { Badge } from '@/shared/ui/Badge';
 
 import type { BlockDiffSummary as Summary } from '../lib/summarizeBlockDiff';
 
@@ -17,7 +17,7 @@ export function BlockDiffSummary({ summary }: { summary: Summary }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-xs">
       {summary.added > 0 && (
-        <Badge className="bg-emerald-600 hover:bg-emerald-600/90">
+        <Badge variant="success">
           +추가 {summary.added}
         </Badge>
       )}
@@ -25,7 +25,7 @@ export function BlockDiffSummary({ summary }: { summary: Summary }) {
         <Badge variant="destructive">-삭제 {summary.removed}</Badge>
       )}
       {summary.modified > 0 && (
-        <Badge className="bg-amber-600 hover:bg-amber-600/90">
+        <Badge variant="warning">
           ~수정 {summary.modified}
         </Badge>
       )}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   Bar,
   BarChart,
@@ -22,16 +23,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui/shadcn/card';
+import { getChartColors } from '@/shared/lib/chartColors';
 
 interface FeedbackPositiveReasonsChartProps {
   reasons: FeedbackPositiveReasonStat[];
 }
 
-const BAR_COLORS = ['#2563eb', '#16a34a', '#f59e0b'];
-
 export function FeedbackPositiveReasonsChart({
   reasons,
 }: FeedbackPositiveReasonsChartProps) {
+  const colors = useMemo(() => getChartColors(), []);
   const data = reasons.map((r) => ({
     label: FEEDBACK_POSITIVE_REASONS[r.code],
     count: r.count,
@@ -52,32 +53,32 @@ export function FeedbackPositiveReasonsChart({
                 layout="vertical"
                 margin={{ top: 8, right: 24, left: 16, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
                 <XAxis
                   type="number"
                   fontSize={12}
-                  tick={{ fill: '#6b7280' }}
+                  tick={{ fill: colors.muted }}
                   allowDecimals={false}
                 />
                 <YAxis
                   type="category"
                   dataKey="label"
                   fontSize={12}
-                  tick={{ fill: '#6b7280' }}
+                  tick={{ fill: colors.muted }}
                   width={140}
                 />
                 <Tooltip
                   contentStyle={{
                     fontSize: 12,
                     borderRadius: 6,
-                    border: '1px solid #e5e7eb',
+                    border: `1px solid ${colors.border}`,
                   }}
                 />
                 <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                   {data.map((entry, index) => (
                     <Cell
                       key={entry.code}
-                      fill={BAR_COLORS[index % BAR_COLORS.length]}
+                      fill={colors.palette[index % colors.palette.length]}
                     />
                   ))}
                 </Bar>

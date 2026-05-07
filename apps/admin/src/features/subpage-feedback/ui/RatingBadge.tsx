@@ -5,7 +5,7 @@ import {
   type FeedbackRating,
 } from '@simple-cms/types';
 
-import { Badge } from '@/shared/ui/shadcn/badge';
+import { Badge } from '@/shared/ui/Badge';
 
 interface RatingBadgeProps {
   rating: FeedbackRating;
@@ -14,14 +14,14 @@ interface RatingBadgeProps {
 export function RatingBadge({ rating }: RatingBadgeProps) {
   if (rating === 'POSITIVE') {
     return (
-      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+      <Badge variant="success">
         <ThumbsUp className="mr-1 size-3" />
         {FEEDBACK_RATING_LABELS.POSITIVE}
       </Badge>
     );
   }
   return (
-    <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
+    <Badge variant="destructive">
       <ThumbsDown className="mr-1 size-3" />
       {FEEDBACK_RATING_LABELS.NEGATIVE}
     </Badge>

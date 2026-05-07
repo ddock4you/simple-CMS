@@ -299,7 +299,7 @@ export function VersionHistoryDialog({
                           </Badge>
                           {item.isPinned && (
                             <Pin
-                              className="ml-1 inline size-3 text-amber-600"
+                              className="ml-1 inline size-3 text-warning"
                               aria-hidden
                             />
                           )}

@@ -79,8 +79,8 @@ export function AuditLogDetailDialog({
               <h4 className="text-sm font-semibold">변경 내용</h4>
 
               {before && (
-                <div className="rounded-md bg-red-50 p-3 dark:bg-red-950/20">
-                  <span className="text-xs font-medium text-red-600 dark:text-red-400">이전</span>
+                <div className="rounded-md bg-destructive/10 p-3">
+                  <span className="text-xs font-medium text-destructive">이전</span>
                   <div className="mt-1 space-y-1">
                     {Object.entries(before).map(([key, value]) => (
                       <div key={key} className="flex gap-2 text-sm">
@@ -93,8 +93,8 @@ export function AuditLogDetailDialog({
               )}
 
               {after && (
-                <div className="rounded-md bg-green-50 p-3 dark:bg-green-950/20">
-                  <span className="text-xs font-medium text-green-600 dark:text-green-400">이후</span>
+                <div className="rounded-md bg-success/10 p-3">
+                  <span className="text-xs font-medium text-success">이후</span>
                   <div className="mt-1 space-y-1">
                     {Object.entries(after).map(([key, value]) => (
                       <div key={key} className="flex gap-2 text-sm">

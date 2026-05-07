@@ -253,10 +253,10 @@ export function VersionDetailDialog({
                           <td className="p-2 text-muted-foreground">
                             {META_LABELS[row.field] ?? row.field}
                           </td>
-                          <td className="bg-red-50/60 p-2 dark:bg-red-900/20">
+                          <td className="bg-destructive/10 p-2">
                             {formatMetaValue(row.before)}
                           </td>
-                          <td className="bg-emerald-50/60 p-2 dark:bg-emerald-900/20">
+                          <td className="bg-success/10 p-2">
                             {formatMetaValue(row.after)}
                           </td>
                         </tr>

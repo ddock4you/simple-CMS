@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -19,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui/shadcn/card';
+import { getChartColors } from '@/shared/lib/chartColors';
 
 interface FeedbackTimelineChartProps {
   daily: FeedbackDailyPoint[];
@@ -30,6 +32,7 @@ function formatDateLabel(date: string): string {
 }
 
 export function FeedbackTimelineChart({ daily }: FeedbackTimelineChartProps) {
+  const colors = useMemo(() => getChartColors(), []);
   const data = daily.map((d) => ({
     ...d,
     label: formatDateLabel(d.date),
@@ -50,18 +53,18 @@ export function FeedbackTimelineChart({ daily }: FeedbackTimelineChartProps) {
                 data={data}
                 margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
                 <XAxis
                   dataKey="label"
                   fontSize={12}
-                  tick={{ fill: '#6b7280' }}
+                  tick={{ fill: colors.muted }}
                 />
-                <YAxis fontSize={12} tick={{ fill: '#6b7280' }} allowDecimals={false} />
+                <YAxis fontSize={12} tick={{ fill: colors.muted }} allowDecimals={false} />
                 <Tooltip
                   contentStyle={{
                     fontSize: 12,
                     borderRadius: 6,
-                    border: '1px solid #e5e7eb',
+                    border: `1px solid ${colors.border}`,
                   }}
                 />
                 <Legend
@@ -72,14 +75,14 @@ export function FeedbackTimelineChart({ daily }: FeedbackTimelineChartProps) {
                   dataKey="positive"
                   name="긍정"
                   stackId="rating"
-                  fill="#16a34a"
+                  fill={colors.positive}
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar
                   dataKey="negative"
                   name="부정"
                   stackId="rating"
-                  fill="#dc2626"
+                  fill={colors.negative}
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>

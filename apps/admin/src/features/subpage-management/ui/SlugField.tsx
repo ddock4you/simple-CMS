@@ -51,7 +51,7 @@ export function SlugField({
         placeholder="url-friendly-slug"
       />
       {showWarning && (
-        <p className="flex items-center gap-1 text-sm text-amber-600">
+        <p className="flex items-center gap-1 text-sm text-warning">
           <AlertTriangle className="size-4" />
           발행된 서브 페이지의 slug를 변경하면 기존 URL이 작동하지 않을 수 있습니다.
         </p>
