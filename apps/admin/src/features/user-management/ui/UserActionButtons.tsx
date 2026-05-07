@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/shared/ui/shadcn/alert-dialog';
+} from '@/shared/ui/AlertDialog';
 import {
   useApproveUser,
   useRejectUser,

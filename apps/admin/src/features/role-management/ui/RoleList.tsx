@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/shared/ui/shadcn/alert-dialog';
+} from '@/shared/ui/AlertDialog';
 
 import { roleListFullOptions } from '@/features/role-management/api/roleQueries';
 import {

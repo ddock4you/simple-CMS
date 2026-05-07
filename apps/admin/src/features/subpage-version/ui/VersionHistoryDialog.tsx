@@ -45,7 +45,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/shared/ui/shadcn/alert-dialog';
+} from '@/shared/ui/AlertDialog';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
 import { subpageVersionListOptions } from '../api/versionQueries';

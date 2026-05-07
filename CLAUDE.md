@@ -466,6 +466,7 @@ apps/{앱}/
 | 15c-2 | shadow wrapper 4개(Popover/Select/DropdownMenu/Sheet) + 27파일 swap + BooleanSwitchField + 5폼 통일 + spacing/scale 토큰 + PageHeader typography fix + ESLint 가드 [[상세]](docs/stages/stage-15c-2.md) | typecheck·lint·build 통과 | **완료** |
 | 15c-3a | verify-design-tokens.mjs(ΔE2000 22토큰 검증) + success/warning 토큰 신설 + design.md YAML 22토큰 보정 + 부록B + CLAUDE.md 갱신 [[상세]](docs/stages/stage-15c-3a.md) | `pnpm design:verify` 22 tokens pass (max ΔE 1.29) + typecheck·lint·build 통과 | **완료** |
 | 15c-3b | Badge wrapper(success/warning variant) + 14곳 raw green/amber/emerald → 토큰 swap + chartColors helper + 2개 차트 적용 [[상세]](docs/stages/stage-15c-3b.md) | typecheck·lint·build 통과 | **완료** |
+| 15c-3c | AlertDialog wrapper(단순 re-export, size 미도입) + ESLint 가드 + 24 호출처 import 경로 swap + PageHeader 2곳 정정(ProfilePage·NavigationEditClient) [[상세]](docs/stages/stage-15c-3c.md) | typecheck·lint·build 통과 | **완료** |
 
 ## 명령어
 

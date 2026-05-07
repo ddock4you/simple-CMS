@@ -24,6 +24,10 @@ export default [
               name: '@/shared/ui/shadcn/sheet',
               message: 'wrapper(@/shared/ui/Sheet) 경유 사용. 직접 import 금지.',
             },
+            {
+              name: '@/shared/ui/shadcn/alert-dialog',
+              message: 'wrapper(@/shared/ui/AlertDialog) 경유 사용. 직접 import 금지.',
+            },
           ],
         },
       ],
@@ -36,6 +40,7 @@ export default [
       'src/shared/ui/DropdownMenu.tsx',
       'src/shared/ui/Select.tsx',
       'src/shared/ui/Sheet.tsx',
+      'src/shared/ui/AlertDialog.tsx',
       'src/shared/ui/shadcn/**',
     ],
     rules: {

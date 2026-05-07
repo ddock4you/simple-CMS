@@ -11,7 +11,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/shared/ui/shadcn/alert-dialog';
+} from '@/shared/ui/AlertDialog';
 
 import { useBulkApproveUsers } from '../api/useUserMutations';
 import type { BulkUserUpdateResult } from '../api/userFetchers';

@@ -1124,6 +1124,10 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
   - Wrapper 위치: `shared/ui/{Popover,Select,DropdownMenu,Sheet}.tsx` — `Content`류에 `cn('shadow-popover', className)` 1줄 주입
   - ESLint `no-restricted-imports`로 shadcn 원본 4개 직접 import 자동 차단 (wrapper 자신·shadcn 디렉토리 내부는 예외)
   - 신규 컴포넌트 추가 시 반드시 wrapper 경유
+- **AlertDialog wrapper (Stage 15c-3c)**: AlertDialog도 shadcn 원본(`shared/ui/shadcn/alert-dialog`) 직접 import 금지
+  - Wrapper 위치: `shared/ui/AlertDialog.tsx` — 현재는 단순 re-export (size 토큰 미도입). 향후 15c-3e에서 `AlertDialogContent`만 교체하여 size 적용
+  - ESLint `no-restricted-imports`로 차단 (wrapper 자신·shadcn 디렉토리 내부는 예외)
+  - 이 wrapper는 `shadow-popover`를 **주입하지 않음** — AlertDialog는 `ring-1 ring-foreground/10` 사용 (design.md §5 표에 미포함)
 - **Boolean Switch 폼 패턴 (Stage 15c-2)**: boolean 토글 필드는 `BooleanSwitchField` 사용 (`shared/ui/BooleanSwitchField.tsx`)
   - RHF `Controller + Switch + label/description/error` 통합 컴포넌트
   - 목록 인라인 토글은 기존 `InlineBooleanToggle` / `InlineStatusSwitchToggle` 유지 (책임 분리)

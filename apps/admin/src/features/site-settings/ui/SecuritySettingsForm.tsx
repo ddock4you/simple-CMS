@@ -20,7 +20,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/shared/ui/shadcn/alert-dialog';
+} from '@/shared/ui/AlertDialog';
 
 import { securitySettingsOptions } from '../api/settingsQueries';
 import { useUpdateSecurity } from '../api/useSettingsMutations';
