@@ -409,10 +409,22 @@ PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
 - 토큰: `{components.button-primary}` / `{components.button-secondary}` / `{components.button-destructive}`
 - 규칙: hover `scale(0.98)` micro-interaction. 폼 외부 버튼에 `type="button"` 명시 필수
 
-**Dialog / AlertDialog** (`src/shared/ui/shadcn/dialog.tsx`, `alert-dialog.tsx`)
-- Storybook: `Admin/Shared/Dialog`, `Admin/Shared/AlertDialog`
+**Dialog** (`src/shared/ui/shadcn/dialog.tsx`)
+- Storybook: `Admin/Shared/Dialog`
 - 토큰: `{components.dialog}`, size 토큰 (`sm` / `md` / `lg` / `xl`)
 - 규칙: 입력 폼이 있는 Dialog는 `disablePointerDismissal` + Dirty 가드 필수
+
+**AlertDialog** (`src/shared/ui/AlertDialog.tsx` wrapper → `shadcn/alert-dialog.tsx`)
+- Storybook: `Admin/Shared/AlertDialog`
+- 토큰: `{components.dialog}`, size 토큰 3-tier
+
+| size 토큰 | max-width | 사용 의도 | 기본값 |
+|---|---|---|---|
+| `confirm` | `max-w-xs sm:max-w-sm` | 단순 확인/거절 (1~2줄 메시지) | ✅ |
+| `default` | `max-w-md` | 설명 필요 또는 소량 동적 콘텐츠 (DeleteMedia, RestoreVersion 등) | — |
+| `wide` | `max-w-xl` | 참조 목록 등 동적 콘텐츠 (BulkXxx 8개) | — |
+
+- 규칙: `<AlertDialogContent size="wide">` 방식 사용. ad-hoc `max-w-*` className 직접 지정 금지 (ESLint 가드 미설정, docs로 안내)
 
 **Badge** (`src/shared/ui/shadcn/badge.tsx`)
 - 토큰: `{components.badge}` 기본, variant로 outline/destructive 분기

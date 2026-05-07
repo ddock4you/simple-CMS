@@ -67,7 +67,7 @@ export function BulkDeleteSubpageDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogContent className="max-w-xl">
+      <AlertDialogContent size="wide">
         {phase.kind === 'confirm' ? (
           <>
             <AlertDialogHeader>

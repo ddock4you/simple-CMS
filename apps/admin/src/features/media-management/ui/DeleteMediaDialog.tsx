@@ -55,7 +55,7 @@ export function DeleteMediaDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-lg">
+      <AlertDialogContent size="default">
         <AlertDialogHeader>
           <AlertDialogTitle>미디어 삭제</AlertDialogTitle>
           <AlertDialogDescription>

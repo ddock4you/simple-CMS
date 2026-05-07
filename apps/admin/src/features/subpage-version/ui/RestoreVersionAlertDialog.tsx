@@ -95,7 +95,7 @@ export function RestoreVersionAlertDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-md">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>이전 버전으로 복원</AlertDialogTitle>
           <AlertDialogDescription>

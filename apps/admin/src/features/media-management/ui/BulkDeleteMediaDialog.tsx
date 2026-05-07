@@ -71,7 +71,7 @@ export function BulkDeleteMediaDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogContent className="max-w-xl">
+      <AlertDialogContent size="wide">
         {phase.kind === 'confirm' ? (
           <>
             <AlertDialogHeader>

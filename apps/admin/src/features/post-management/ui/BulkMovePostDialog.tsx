@@ -74,7 +74,7 @@ export function BulkMovePostDialog({
         if (!next && !bulkMove.isPending) handleClose();
       }}
     >
-      <AlertDialogContent className="max-w-xl">
+      <AlertDialogContent size="wide">
         {phase.kind === 'confirm' ? (
           <>
             <AlertDialogHeader>
