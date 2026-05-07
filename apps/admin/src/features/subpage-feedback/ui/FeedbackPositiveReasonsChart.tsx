@@ -42,7 +42,7 @@ export function FeedbackPositiveReasonsChart({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">긍정 이유 TOP</CardTitle>
+        <CardTitle>긍정 이유 TOP</CardTitle>
       </CardHeader>
       <CardContent>
         {data.length > 0 ? (

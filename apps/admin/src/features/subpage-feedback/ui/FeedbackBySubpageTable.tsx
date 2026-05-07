@@ -51,7 +51,7 @@ export function FeedbackBySubpageTable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">서브페이지별 피드백</CardTitle>
+        <CardTitle>서브페이지별 피드백</CardTitle>
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (

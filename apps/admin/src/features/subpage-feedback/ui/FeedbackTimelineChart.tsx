@@ -43,7 +43,7 @@ export function FeedbackTimelineChart({ daily }: FeedbackTimelineChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">일별 피드백 추이</CardTitle>
+        <CardTitle>일별 피드백 추이</CardTitle>
       </CardHeader>
       <CardContent>
         {hasData ? (

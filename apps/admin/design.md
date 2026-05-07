@@ -391,6 +391,7 @@ PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
 - 토큰: `{components.card}` — `{spacing.card}` padding, `{rounded.lg}` 라운드
 - 규칙: 폼 섹션을 Card로 묶어 시각 그룹화. CardHeader(제목) + CardContent(필드)
 - **Auth 페이지 예외**: `LoginForm` / `RegisterForm`은 빈 배경 중앙 카드 패턴(시각적으로 분리). CardTitle = `text-xl`, 의도적 deviation. `{typography.section-title}`(`text-lg`) 미적용.
+- **StatCard 예외**: `src/shared/ui/layout/StatCard.tsx` CardTitle은 `text-sm font-medium` — 대시보드 수치 라벨 형식의 의도된 deviation.
 
 **ImageUrlInput** (`src/entities/media/ui/ImageUrlInput.tsx`)
 - Storybook: `Admin/Entities/Media/ImageUrlInput`
