@@ -5,23 +5,27 @@ description: 내부 운영자용 CMS 관리자 앱 디자인 시스템 — 데�
 
 colors:
   background: "#ffffff"
-  foreground: "#252525"
-  primary: "#343434"
+  foreground: "#0a0a0a"
+  primary: "#171717"
   primary-foreground: "#fafafa"
   secondary: "#f5f5f5"
-  secondary-foreground: "#343434"
+  secondary-foreground: "#171717"
   muted: "#f5f5f5"
-  muted-foreground: "#8e8e8e"
+  muted-foreground: "#737373"
   accent: "#f5f5f5"
-  accent-foreground: "#343434"
-  destructive: "#dc2626"
+  accent-foreground: "#171717"
+  destructive: "#e7000b"
   border: "#ebebeb"
   input: "#ebebeb"
-  ring: "#b5b5b5"
+  ring: "#a1a1a1"
   card: "#ffffff"
-  card-foreground: "#252525"
+  card-foreground: "#0a0a0a"
   popover: "#ffffff"
-  popover-foreground: "#252525"
+  popover-foreground: "#0a0a0a"
+  success: "#00801a"
+  success-foreground: "#fafafa"
+  warning: "#ed9800"
+  warning-foreground: "#171717"
 
 typography:
   page-title:
@@ -132,6 +136,7 @@ components:
 
 ```bash
 npx --yes @google/design.md lint apps/admin/design.md
+pnpm --filter @simple-cms/admin design:verify   # oklch ↔ hex ΔE 검증 (ΔE > 1.5 시 exit 1)
 ```
 
 > **경고**: `npx @google/design.md export css-tailwind` 실행 금지 — globals.css의 oklch · light/dark 페어 · radius calc() 구조를 덮어써 shadcn 28개 컴포넌트를 파괴한다.
@@ -140,22 +145,26 @@ npx --yes @google/design.md lint apps/admin/design.md
 
 ## 2. Colors
 
-`{colors.primary}` (#343434)는 admin의 **유일한 액션 색**이다. 저장·추가·발행·승인 등 모든 주 CTA에 이 색만 사용한다. 두 번째 brand color를 추가하면 "어디를 클릭해야 하는가"라는 신호가 흐려진다.
+`{colors.primary}` (#171717)는 admin의 **유일한 액션 색**이다. 저장·추가·발행·승인 등 모든 주 CTA에 이 색만 사용한다. 두 번째 brand color를 추가하면 "어디를 클릭해야 하는가"라는 신호가 흐려진다.
 
 ### shadcn 토큰 의미 매핑
 
 | 토큰 | 사용처 |
 |---|---|
-| `{colors.primary}` (#343434) | 주 CTA — 저장·추가·발행·승인 |
+| `{colors.primary}` (#171717) | 주 CTA — 저장·추가·발행·승인 |
 | `{colors.primary-foreground}` (#fafafa) | primary 버튼 위 텍스트 |
 | `{colors.secondary}` (#f5f5f5) | 보조 액션 — 취소·닫기·편집 진입 |
-| `{colors.secondary-foreground}` (#343434) | secondary 버튼 위 텍스트 |
-| `{colors.destructive}` (#dc2626) | 삭제·거절·정지·비활성 |
-| `{colors.muted-foreground}` (#8e8e8e) | 보조 설명·placeholder·hint |
+| `{colors.secondary-foreground}` (#171717) | secondary 버튼 위 텍스트 |
+| `{colors.destructive}` (#e7000b) | 삭제·거절·정지·비활성 |
+| `{colors.success}` (#00801a) | diff add · 긍정 평가(POSITIVE) · DNS 정상 · 성공 |
+| `{colors.success-foreground}` (#fafafa) | success 배경 위 텍스트 |
+| `{colors.warning}` (#ed9800) | pin 표시 · DNS pending · slug 경고 · 비파괴 주의 |
+| `{colors.warning-foreground}` (#171717) | warning 배경 위 텍스트 |
+| `{colors.muted-foreground}` (#737373) | 보조 설명·placeholder·hint |
 | `{colors.border}` (#ebebeb) | 카드·패널·입력 경계 |
 | `{colors.card}` / `{colors.card-foreground}` | 카드 배경·텍스트 |
 | `{colors.popover}` / `{colors.popover-foreground}` | Dialog·Tooltip 배경·텍스트 |
-| `{colors.ring}` (#b5b5b5) | focus ring |
+| `{colors.ring}` (#a1a1a1) | focus ring |
 | `--sidebar-*` (globals.css 전용) | AppSidebar 전용 — YAML 제외 |
 | `--chart-1..5` (globals.css 전용) | recharts 시각화 전용 — YAML 제외 |
 
@@ -165,26 +174,30 @@ Stitch DESIGN.md는 단일 토큰 세트만 표현한다. 아래 표는 light/da
 
 | 토큰 | light | dark | 비고 |
 |---|---|---|---|
-| background | #ffffff | #252525 | oklch L: 1 → 0.145 |
-| foreground | #252525 | #fafafa | 명도 반전 |
-| primary | #343434 | #ebebeb | oklch L: 0.205 → 0.922 |
-| primary-foreground | #fafafa | #343434 | 명도 반전 |
-| card | #ffffff | #343434 | oklch L: 1 → 0.205 |
-| secondary | #f5f5f5 | #444444 | oklch L: 0.97 → 0.269 |
+| background | #ffffff | #0a0a0a | oklch L: 1 → 0.145 |
+| foreground | #0a0a0a | #fafafa | 명도 반전 |
+| primary | #171717 | #e5e5e5 | oklch L: 0.205 → 0.922 |
+| primary-foreground | #fafafa | #171717 | 명도 반전 |
+| card | #ffffff | #171717 | oklch L: 1 → 0.205 |
+| secondary | #f5f5f5 | #262626 | oklch L: 0.97 → 0.269 |
 | border | #ebebeb | rgba(255,255,255,0.10) | dark는 alpha 기반 |
-| muted-foreground | #8e8e8e | #b5b5b5 | 보조 텍스트 명도 올림 |
+| muted-foreground | #737373 | #a1a1a1 | 보조 텍스트 명도 올림 |
+| success | #00801a | #57b75e | oklch L: 0.52 → 0.7 |
+| warning | #ed9800 | #ffb330 | oklch L: 0.745 → 0.82 |
 
 ### WCAG AA 대비율 (기준 4.5:1)
 
 | 조합 | 대비율 | 결과 |
 |---|---|---|
-| `{colors.foreground}` on `{colors.background}` | ~11.9:1 | ✅ AAA |
-| `{colors.primary-foreground}` on `{colors.primary}` | ~11.4:1 | ✅ AAA |
-| `{colors.destructive}` on `{colors.background}` | ~5.7:1 | ✅ AA |
-| `{colors.secondary-foreground}` on `{colors.secondary}` | ~11.0:1 | ✅ AAA |
-| `{colors.muted-foreground}` on `{colors.background}` | ~3.5:1 | ⚠️ AA 미달 — hint/장식 전용 |
+| `{colors.foreground}` on `{colors.background}` | ~19.8:1 | ✅ AAA |
+| `{colors.primary-foreground}` on `{colors.primary}` | ~17.2:1 | ✅ AAA |
+| `{colors.destructive}` on `{colors.background}` | ~4.8:1 | ✅ AA |
+| `{colors.secondary-foreground}` on `{colors.secondary}` | ~16.4:1 | ✅ AAA |
+| `{colors.muted-foreground}` on `{colors.background}` | ~4.8:1 | ✅ AA — hint/장식 전용 |
+| `{colors.success-foreground}` on `{colors.success}` | ~4.9:1 | ✅ AA |
+| `{colors.warning-foreground}` on `{colors.warning}` | ~7.8:1 | ✅ AAA |
 
-> `{colors.muted-foreground}`는 에러 메시지·필드 라벨 등 필수 정보에 사용 금지. placeholder·보조 안내·테이블 secondary 텍스트에만 허용.
+> `{colors.muted-foreground}`는 에러 메시지·필드 라벨 등 필수 정보에 사용 금지. placeholder·보조 안내·테이블 secondary 텍스트에만 허용. `{colors.warning}` (#ed9800)을 텍스트 색으로 직접 사용 시 white 배경 대비율 ~2.3:1 — 배경 색 또는 `{colors.warning-foreground}` 위 텍스트로만 사용.
 
 ---
 
@@ -377,6 +390,7 @@ PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
 **Card + Field 패턴** (`src/shared/ui/shadcn/card.tsx`)
 - 토큰: `{components.card}` — `{spacing.card}` padding, `{rounded.lg}` 라운드
 - 규칙: 폼 섹션을 Card로 묶어 시각 그룹화. CardHeader(제목) + CardContent(필드)
+- **Auth 페이지 예외**: `LoginForm` / `RegisterForm`은 빈 배경 중앙 카드 패턴(시각적으로 분리). CardTitle = `text-xl`, 의도적 deviation. `{typography.section-title}`(`text-lg`) 미적용.
 
 **ImageUrlInput** (`src/entities/media/ui/ImageUrlInput.tsx`)
 - Storybook: `Admin/Entities/Media/ImageUrlInput`
@@ -437,18 +451,18 @@ PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
 
 ### Do ✅
 
-1. `{colors.primary}` (#343434)를 모든 주 CTA(저장·추가·발행·승인)에 **일관되게** 사용. 두 번째 액션 색 신설 금지
+1. `{colors.primary}` (#171717)를 모든 주 CTA(저장·추가·발행·승인)에 **일관되게** 사용. 두 번째 액션 색 신설 금지
 2. 압력(press) 상태에 `transform: scale(0.98)` micro-interaction 적용
 3. 페이지 제목은 `{typography.page-title}` (`text-2xl font-semibold tracking-tight`) 사용
 4. 신규 토큰 추가 시 globals.css에 **`:root` + `.dark` 페어** 정의 필수
 5. Dialog에 입력 폼이 있으면 `disablePointerDismissal` + `useDialogDirtyGuard` 함께 적용
 6. 편집 폼의 [저장]/[삭제] 버튼은 PageToolbar.right에 배치
-7. `{colors.muted-foreground}`는 hint·보조 설명·placeholder에만 사용 (WCAG AA 미달)
+7. `{colors.muted-foreground}`는 hint·보조 설명·placeholder에만 사용 (AA 통과이나 필수 정보 라벨에 사용 금지)
 
 ### Don't ❌
 
 1. `npx @google/design.md export css-tailwind` 실행 금지 — globals.css 덮어쓰기로 shadcn 28개 파괴
-2. 신규 brand color 신설 금지 (디자이너 합류 전까지)
+2. 신규 brand color 신설 금지 (디자이너 합류 전까지). 단, `destructive`/`success`/`warning` 같은 시맨틱 피드백 색은 brand가 아닌 functional 토큰이며 신설 가능
 3. shadcn 표준 토큰(`--primary`, `--ring`, `--background` 등) 이름·값 변경 금지 — 28개 컴포넌트 의존
 4. YAML `components:` 에 합성 컴포넌트(PageHeader, PageToolbar, BulkActionBar 등) 추가 금지 — 슬롯·동작·다크 분기는 Storybook + markdown이 담당
 5. `{colors.muted-foreground}`를 에러 메시지·필드 라벨 등 필수 정보에 사용 금지
@@ -464,7 +478,7 @@ PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
 
 | Apple 원칙 | admin 적용 | 비고 |
 |---|---|---|
-| 단일 액션 색 (Action Blue #0066cc) | `{colors.primary}` (#343434) 단일 색 | 색은 다르지만 "단일 액션 색" 원칙 채택 |
+| 단일 액션 색 (Action Blue #0066cc) | `{colors.primary}` (#171717) 단일 색 | 색은 다르지만 "단일 액션 색" 원칙 채택 |
 | hover 대신 `scale(0.95)` press interaction | `scale(0.98)` (더 절제된 수준) | 운영 도구는 더 미세하게 |
 | weight ladder: 300/400/600/700 (500 부재) | 400/600 주 사용, 700 제한 | admin은 300 미사용 |
 | 그림자는 product imagery에만 | 카드 그림자 최소화 | 명도 계조로 elevation 표현 |
@@ -487,3 +501,15 @@ PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
 - **그라디언트**: 없음 (사이트 전체에 걸쳐 CSS 그라디언트 토큰 0개)
 
 이 철학(단일 색, 단일 shadow, 0 gradient, 단순 weight ladder)이 admin 디자인 원칙의 토대에 영향을 주었다.
+
+---
+
+## 부록 B. 토큰 외 색 허용 예외
+
+아래 위치는 design.md 토큰 시스템 밖의 직접 색 지정이 허용된다. 신규 케이스 추가 시 이 표에 1줄 등록.
+
+| 위치 | 사유 | 영구/일시 |
+|---|---|---|
+| `app/global-error.tsx` | Tailwind 미해석 환경(error boundary fallback). inline style 강제 | 영구 |
+| `**/*.stories.tsx` (DirtyGuardProbe 등) | 테스트 fixture 색 — 디자인 토큰 아님 | 영구 |
+| `shared/ui/TiptapEditor` color picker 팔레트 | 사용자 콘텐츠 색 데이터 — 디자인 토큰 아님 | 영구 |

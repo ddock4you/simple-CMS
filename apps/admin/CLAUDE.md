@@ -1128,6 +1128,12 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
   - RHF `Controller + Switch + label/description/error` 통합 컴포넌트
   - 목록 인라인 토글은 기존 `InlineBooleanToggle` / `InlineStatusSwitchToggle` 유지 (책임 분리)
   - 적용 폼: SubpageForm(cclAi·feedbackEnabled), BoardForm(isPublic), MenuItemDialog(isVisible·openInNewTab), PopupForm(isVisible). SecuritySettingsForm은 RHF 미사용이라 직접 Switch + controlled AlertDialog 패턴
+- **success/warning 시맨틱 토큰 (Stage 15c-3a)**: destructive와 동일 위계의 시맨틱 피드백 색
+  - `bg-success` / `text-success` / `bg-success/10` 등 Tailwind utility 사용. raw `green-*`/`amber-*`/`emerald-*` 직접 사용 금지 → Stage 15c-3b에서 일괄 정리
+  - 사용처: 긍정 평가·DNS 정상·성공(success) / pin·DNS pending·slug 경고(warning)
+- **design.md SSOT 검증 (Stage 15c-3a)**: globals.css oklch ↔ design.md YAML hex 간 ΔE 감지
+  - `pnpm --filter @simple-cms/admin design:verify` 로 수동 실행 (ΔE > 1.5 시 exit 1)
+  - globals.css가 runtime 권위 — ΔE 실패 시 design.md hex를 css→hex 값으로 보정
 - UI 컴포넌트/폼 패턴은 `apps/admin` 내부 레이어에서 관리
 - 운영 효율 + 데이터 입력 흐름 우선
 - 반복 패턴 충분히 생기면 내부 공용 컴포넌트 정리 → 이후에만 분리 검토
