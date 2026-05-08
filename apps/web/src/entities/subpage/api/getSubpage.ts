@@ -93,7 +93,7 @@ export const getPublishedSubpage = cache(
  */
 export const getSubpageForPreview = cache(
   async (slug: string): Promise<PreviewSubpage | null> => {
-    return prisma.subpage.findUnique({
+    return prisma.subpage.findFirst({
       where: { slug },
       select: {
         id: true,

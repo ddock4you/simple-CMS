@@ -64,8 +64,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       if (post.boardId === boardId) continue;
 
       // slug 충돌 검사 (대상 게시판에서 같은 slug 존재 여부)
-      const existing = await prisma.post.findUnique({
-        where: { boardId_slug: { boardId, slug: post.slug } },
+      const existing = await prisma.post.findFirst({
+        where: { boardId, slug: post.slug },
       });
       if (existing) {
         failed.push({

@@ -30,7 +30,7 @@ export async function PATCH(request: Request): Promise<NextResponse> {
     const { name, email } = parsed.data;
 
     if (email && email !== currentUser.email) {
-      const existingEmail = await prisma.user.findUnique({
+      const existingEmail = await prisma.user.findFirst({
         where: { email },
       });
       if (existingEmail && existingEmail.id !== currentUser.id) {

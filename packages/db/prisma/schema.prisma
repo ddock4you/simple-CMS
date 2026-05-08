@@ -125,13 +125,18 @@ enum SubpageVersionSource {
 
 // ─── Models ──────────────────────────────────────────────
 //
-// 시연 모드(DEMO_MODE) 멀티테넌시: 17개 주요 모델에 nullable `sessionId` 컬럼이 있다.
-// 운영 환경에선 항상 null로 사용. 시연에선 Prisma extension이 자동 주입 + cleanup이
-// 만료 sessionId를 코드에서 deleteMany로 정리한다 (FK relation 정의 없음 — 운영 schema 단순화).
+// 시연 모드(DEMO_MODE) 멀티테넌시: 17개 주요 모델에 NOT NULL `sessionId` 컬럼이 있다.
+// 운영 환경에선 sentinel 값 '__PROD__'으로 채워지고, 시연에선 Prisma extension이
+// 자동 주입한다 (cleanup은 코드의 deleteMany로 정리, FK relation 정의 없음 — 운영 schema 단순화).
+//
+// 격리는 8개 모델의 composite unique로 보장:
+//   - "key-as-lookup" 4개: SiteSettings.key, Role.name, NavigationMenu.name, Media.contentHash
+//   - "slug" 4개: Subpage.slug, Board.slug, Post.(boardId, slug), User.(username | email)
+// Session.sessionToken과 PreviewToken.token은 인증 인프라라 글로벌 @unique 유지.
 
 model Role {
   id          String   @id @default(cuid())
-  name        String   @unique
+  name        String
   description String?
   permissions Json     @default("{}")
   isSystem    Boolean  @default(false)
@@ -141,17 +146,18 @@ model Role {
 
   users User[]
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
+  @@unique([sessionId, name])
   @@index([isDefault])
   @@index([sessionId])
 }
 
 model User {
   id        String     @id @default(cuid())
-  username  String     @unique
+  username  String
   password  String
-  email     String?    @unique
+  email     String?
   name      String
   status    UserStatus @default(PENDING)
   roleId    String?
@@ -166,8 +172,10 @@ model User {
   previewTokens   PreviewToken[]
   subpageVersions SubpageVersion[] @relation("SubpageVersionAuthor")
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
+  @@unique([sessionId, username])
+  @@unique([sessionId, email])
   @@index([roleId])
   @@index([status])
   @@index([sessionId])
@@ -199,7 +207,7 @@ model PreviewToken {
 
   issuedBy User @relation(fields: [issuedById], references: [id], onDelete: Cascade)
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
   @@index([expires])
   @@index([issuedById])
@@ -209,7 +217,7 @@ model PreviewToken {
 model Subpage {
   id              String        @id @default(cuid())
   title           String
-  slug            String        @unique
+  slug            String
   seoTitle        String?
   seoDescription  String?
   // 본문은 PageBlock(RICH_TEXT) 블록으로 표현 (Stage 6 — 통합 블록 모델)
@@ -232,8 +240,9 @@ model Subpage {
   versions            SubpageVersion[]
   feedbacks           SubpageFeedback[]
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
+  @@unique([sessionId, slug])
   @@index([sessionId])
 }
 
@@ -249,7 +258,7 @@ model SubpageFeedback {
 
   subpage Subpage @relation(fields: [subpageId], references: [id], onDelete: Cascade)
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
   @@index([subpageId, createdAt])
   @@index([subpageId, rating])
@@ -271,7 +280,7 @@ model SubpageVersion {
   subpage   Subpage @relation(fields: [subpageId], references: [id], onDelete: Cascade)
   createdBy User?   @relation("SubpageVersionAuthor", fields: [createdById], references: [id], onDelete: SetNull)
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
   @@index([subpageId, createdAt])
   @@index([createdById])
@@ -282,7 +291,7 @@ model SubpageVersion {
 model Board {
   id           String        @id @default(cuid())
   name         String
-  slug         String        @unique
+  slug         String
   description  String?
   skinType     BoardSkinType @default(LIST)
   isPublic     Boolean       @default(true)
@@ -293,8 +302,9 @@ model Board {
   posts               Post[]
   navigationMenuItems NavigationMenuItem[] @relation("BoardMenuItems")
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
+  @@unique([sessionId, slug])
   @@index([sessionId])
 }
 
@@ -319,9 +329,9 @@ model Post {
   author        User?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
   featuredImage Media? @relation(fields: [featuredImageId], references: [id], onDelete: SetNull)
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
-  @@unique([boardId, slug])
+  @@unique([sessionId, boardId, slug])
   @@index([boardId])
   @@index([authorId])
   @@index([sessionId])
@@ -337,7 +347,7 @@ model HomeSection {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
   @@index([sessionId])
 }
@@ -362,7 +372,7 @@ model HomePopup {
 
   imageMedia Media? @relation("HomePopupImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
   @@index([imageMediaId])
   @@index([sessionId])
@@ -380,7 +390,7 @@ model PageBlock {
 
   subpage Subpage @relation(fields: [subpageId], references: [id], onDelete: Cascade)
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
   @@index([subpageId])
   @@index([sessionId])
@@ -394,7 +404,7 @@ model Media {
   size             Int
   url              String
   alt              String?
-  contentHash      String?  @unique
+  contentHash      String?
   uploadedById     String?
   createdAt        DateTime @default(now())
 
@@ -403,15 +413,16 @@ model Media {
   posts           Post[]
   homePopupImages HomePopup[] @relation("HomePopupImage")
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
+  @@unique([sessionId, contentHash])
   @@index([uploadedById])
   @@index([sessionId])
 }
 
 model NavigationMenu {
   id          String               @id @default(cuid())
-  name        String               @unique
+  name        String
   description String?
   slots       NavigationMenuSlot[] @default([])
   createdAt   DateTime             @default(now())
@@ -419,8 +430,9 @@ model NavigationMenu {
 
   items NavigationMenuItem[]
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
+  @@unique([sessionId, name])
   @@index([sessionId])
 }
 
@@ -447,7 +459,7 @@ model NavigationMenuItem {
   subpage  Subpage?            @relation("SubpageMenuItems", fields: [subpageId], references: [id], onDelete: SetNull)
   board    Board?              @relation("BoardMenuItems", fields: [boardId], references: [id], onDelete: SetNull)
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
   @@index([menuId])
   @@index([parentId])
@@ -468,7 +480,7 @@ model AuditLog {
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
   @@index([userId])
   @@index([action])
@@ -479,14 +491,15 @@ model AuditLog {
 
 model SiteSettings {
   id          String   @id @default(cuid())
-  key         String   @unique
+  key         String
   value       String
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
+  @@unique([sessionId, key])
   @@index([sessionId])
 }
 
@@ -510,7 +523,7 @@ model ErrorLog {
   resolvedBy String?
   createdAt  DateTime    @default(now())
 
-  sessionId String?
+  sessionId String @default("__PROD__")
 
   @@index([createdAt])
   @@index([level])

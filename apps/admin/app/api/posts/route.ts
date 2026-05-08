@@ -123,8 +123,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const existing = await prisma.post.findUnique({
-      where: { boardId_slug: { boardId, slug } },
+    const existing = await prisma.post.findFirst({
+      where: { boardId, slug },
     });
     if (existing) {
       return NextResponse.json(

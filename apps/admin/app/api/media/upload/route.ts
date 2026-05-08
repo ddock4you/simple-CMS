@@ -96,7 +96,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const contentHash = createHash('sha256').update(buffer).digest('hex');
 
     // 중복 방지: 같은 contentHash가 있으면 기존 Media 재사용 (파일 저장 + 레코드 생성 skip)
-    const existing = await prisma.media.findUnique({
+    const existing = await prisma.media.findFirst({
       where: { contentHash },
       include: {
         uploadedBy: { select: { id: true, name: true, username: true } },

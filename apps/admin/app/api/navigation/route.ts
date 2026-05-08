@@ -63,7 +63,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const { name, description, slots } = parsed.data;
 
-    const existing = await prisma.navigationMenu.findUnique({ where: { name } });
+    const existing = await prisma.navigationMenu.findFirst({ where: { name } });
     if (existing) {
       return NextResponse.json(
         { success: false, error: '이미 사용 중인 메뉴 이름입니다.' } satisfies ApiResponse<never>,

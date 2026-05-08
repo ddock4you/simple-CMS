@@ -199,7 +199,7 @@ export async function restoreSubpageFromVersion(
 
     // 2. slug 충돌 검사
     if (targetSnapshot.meta.slug !== current.slug) {
-      const existing = await tx.subpage.findUnique({
+      const existing = await tx.subpage.findFirst({
         where: { slug: targetSnapshot.meta.slug },
       });
       if (existing && existing.id !== subpageId) {

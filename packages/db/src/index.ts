@@ -1,5 +1,7 @@
 export { prisma } from './client';
 
+export * as demo from './demo';
+
 export {
   createSession,
   validateSession,

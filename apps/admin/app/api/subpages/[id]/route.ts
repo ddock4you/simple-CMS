@@ -95,7 +95,7 @@ export async function PATCH(
     } = parsed.data;
 
     if (slug && slug !== subpage.slug) {
-      const existing = await prisma.subpage.findUnique({ where: { slug } });
+      const existing = await prisma.subpage.findFirst({ where: { slug } });
       if (existing) {
         return NextResponse.json(
           { success: false, error: '이미 사용 중인 slug입니다.' } satisfies ApiResponse<never>,

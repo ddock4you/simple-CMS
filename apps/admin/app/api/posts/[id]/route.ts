@@ -109,8 +109,8 @@ export async function PATCH(
     const targetBoardId = boardId ?? post.boardId;
     const targetSlug = slug ?? post.slug;
     if (targetBoardId !== post.boardId || targetSlug !== post.slug) {
-      const existing = await prisma.post.findUnique({
-        where: { boardId_slug: { boardId: targetBoardId, slug: targetSlug } },
+      const existing = await prisma.post.findFirst({
+        where: { boardId: targetBoardId, slug: targetSlug },
       });
       if (existing && existing.id !== id) {
         return NextResponse.json(

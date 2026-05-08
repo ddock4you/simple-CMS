@@ -39,7 +39,7 @@ const itemsSelect = {
 } as const;
 
 export const getMenuByName = cache(async (name: string) => {
-  const menu = await prisma.navigationMenu.findUnique({
+  const menu = await prisma.navigationMenu.findFirst({
     where: { name },
     select: {
       id: true,

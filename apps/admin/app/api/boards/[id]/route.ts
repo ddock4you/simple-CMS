@@ -85,7 +85,7 @@ export async function PATCH(
     const { name, slug, description, skinType, isPublic } = parsed.data;
 
     if (slug && slug !== board.slug) {
-      const existing = await prisma.board.findUnique({ where: { slug } });
+      const existing = await prisma.board.findFirst({ where: { slug } });
       if (existing) {
         return NextResponse.json(
           { success: false, error: '이미 사용 중인 slug입니다.' } satisfies ApiResponse<never>,

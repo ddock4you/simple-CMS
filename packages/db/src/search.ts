@@ -1,4 +1,5 @@
 import { prisma } from './client';
+import { getCurrentSessionId } from './demo/sessionContext';
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_QUERY_LENGTH = 200;
@@ -36,6 +37,11 @@ export async function searchContent(
 
   const offset = (page - 1) * pageSize;
 
+  // 시연 모드(DEMO_MODE) 격리: $queryRaw는 Prisma extension의 query hook을 거치지 않으므로
+  // 여기서 명시적으로 sessionId WHERE를 추가한다. 운영 환경은 모두 '__PROD__'라 동작 동일.
+  // Subpage·Post·Board JOIN 양쪽 모두 같은 sessionId여야 cross-tenant 누설 차단.
+  const sessionId = getCurrentSessionId();
+
   try {
     const [items, countResult] = await Promise.all([
       prisma.$queryRaw<SearchResult[]>`
@@ -52,6 +58,7 @@ export async function searchContent(
             NULL::text AS "boardSlug"
           FROM "Subpage" s
           WHERE s.status = 'PUBLISHED'
+            AND s."sessionId" = ${sessionId}
             AND (s.title &@~ ${trimmed} OR s.content &@~ ${trimmed})
         )
         UNION ALL
@@ -67,9 +74,10 @@ export async function searchContent(
             b.name AS "boardName",
             b.slug AS "boardSlug"
           FROM "Post" p
-          JOIN "Board" b ON b.id = p."boardId"
+          JOIN "Board" b ON b.id = p."boardId" AND b."sessionId" = ${sessionId}
           WHERE p.status = 'PUBLISHED'
             AND b."isPublic" = true
+            AND p."sessionId" = ${sessionId}
             AND (p.title &@~ ${trimmed} OR p.content &@~ ${trimmed})
         )
         ORDER BY score DESC, "publishedAt" DESC NULLS LAST
@@ -80,12 +88,14 @@ export async function searchContent(
           (
             SELECT COUNT(*) FROM "Subpage" s
             WHERE s.status = 'PUBLISHED'
+              AND s."sessionId" = ${sessionId}
               AND (s.title &@~ ${trimmed} OR s.content &@~ ${trimmed})
           ) + (
             SELECT COUNT(*) FROM "Post" p
-            JOIN "Board" b ON b.id = p."boardId"
+            JOIN "Board" b ON b.id = p."boardId" AND b."sessionId" = ${sessionId}
             WHERE p.status = 'PUBLISHED'
               AND b."isPublic" = true
+              AND p."sessionId" = ${sessionId}
               AND (p.title &@~ ${trimmed} OR p.content &@~ ${trimmed})
           ) AS total
       `,

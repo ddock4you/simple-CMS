@@ -29,7 +29,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findFirst({
       where: { username },
       include: { role: true },
     });
@@ -76,7 +76,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const concurrentSetting = await prisma.siteSettings.findUnique({
+    const concurrentSetting = await prisma.siteSettings.findFirst({
       where: { key: 'CONCURRENT_LOGIN_ENABLED' },
     });
     if (concurrentSetting?.value === 'false') {

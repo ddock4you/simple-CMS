@@ -1,4 +1,4 @@
-import { prisma } from '@simple-cms/db';
+import { prisma, demo } from '@simple-cms/db';
 import type { MediaReference } from '@simple-cms/types';
 
 import {
@@ -81,11 +81,14 @@ export async function findMediaReferences(
     sectionType: string;
     title: string;
   };
+  // 시연 모드 격리: $queryRaw는 extension query hook을 우회하므로 sessionId 필터를 명시.
+  const sessionId = demo.getCurrentSessionId();
   const homeSectionMatches = await prisma.$queryRaw<HomeSectionRaw[]>`
     SELECT id, "sectionType", title
     FROM "HomeSection"
-    WHERE ("configJson" -> 'slides') @> ${JSON.stringify([{ mediaId }])}::jsonb
-       OR ("configJson" -> 'items') @> ${JSON.stringify([{ mediaId }])}::jsonb
+    WHERE "sessionId" = ${sessionId}
+      AND (("configJson" -> 'slides') @> ${JSON.stringify([{ mediaId }])}::jsonb
+        OR ("configJson" -> 'items') @> ${JSON.stringify([{ mediaId }])}::jsonb)
   `;
   for (const sec of homeSectionMatches) {
     references.push({
@@ -139,11 +142,13 @@ export async function findMediaReferences(
     id: string;
     subpageTitle: string;
   };
+  // 시연 모드 격리: PageBlock + Subpage JOIN 양쪽 모두 sessionId 일치 검증
   const blockMatches = await prisma.$queryRaw<PageBlockRaw[]>`
     SELECT pb.id, sp.title AS "subpageTitle"
     FROM "PageBlock" pb
-    JOIN "Subpage" sp ON sp.id = pb."subpageId"
-    WHERE pb."blockType" = 'IMAGE'
+    JOIN "Subpage" sp ON sp.id = pb."subpageId" AND sp."sessionId" = ${sessionId}
+    WHERE pb."sessionId" = ${sessionId}
+      AND pb."blockType" = 'IMAGE'
       AND pb."configJson" @> ${JSON.stringify({ imageMediaId: mediaId })}::jsonb
   `;
   for (const b of blockMatches) {

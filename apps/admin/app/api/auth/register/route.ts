@@ -25,7 +25,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const { username, email, password, name } = result.data;
 
-    const existingUsername = await prisma.user.findUnique({
+    const existingUsername = await prisma.user.findFirst({
       where: { username },
     });
     if (existingUsername) {
@@ -39,7 +39,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     if (email) {
-      const existingEmail = await prisma.user.findUnique({
+      const existingEmail = await prisma.user.findFirst({
         where: { email },
       });
       if (existingEmail) {

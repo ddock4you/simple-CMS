@@ -62,7 +62,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const { name, description, permissions } = parsed.data;
 
-    const existing = await prisma.role.findUnique({ where: { name } });
+    const existing = await prisma.role.findFirst({ where: { name } });
     if (existing) {
       return NextResponse.json(
         { success: false, error: '이미 사용 중인 역할명입니다.' } satisfies ApiResponse<never>,
