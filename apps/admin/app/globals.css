@@ -102,6 +102,9 @@
     --shadow-card-value: 0 1px 2px oklch(0 0 0 / 4%);
     --shadow-toolbar-value: 0 2px 8px oklch(0 0 0 / 6%);
     --shadow-popover-value: 0 4px 24px oklch(0 0 0 / 8%), 0 2px 8px oklch(0 0 0 / 4%);
+    /* DEMO_MODE 시 layout이 inline style로 2.25rem(=h-9) override.
+       AdminHeader/PageToolbar의 sticky top 계산에 사용. */
+    --demo-banner-h: 0px;
 }
 
 .dark {

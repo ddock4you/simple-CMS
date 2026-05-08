@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 
+import { demo } from '@simple-cms/db';
 import { createClient } from '@supabase/supabase-js';
 
 import type {
@@ -45,7 +46,16 @@ export class SupabaseStorageAdapter implements StorageAdapter {
     const ext = path.extname(originalFilename).toLowerCase();
     const safeExt = ext.replace(/[^a-z0-9.]/gi, '');
     const filename = `${Date.now()}-${randomUUID()}${safeExt}`;
-    const storageKey = `${safeCategory}/${filename}`;
+
+    // DEMO_MODE에서 visitor cuid 또는 '__SEED__' 컨텍스트면 sessionId prefix 추가.
+    // cleanup이 sessionId 폴더 단위로 list/remove 가능 + visitor 간 격리.
+    // 운영(__PROD__) 또는 비시연 환경은 prefix 없이 기존 동작.
+    const sessionId = demo.getCurrentSessionId();
+    const isolated =
+      process.env.DEMO_MODE === 'true' && sessionId !== demo.PROD_SENTINEL;
+    const storageKey = isolated
+      ? `${sessionId}/${safeCategory}/${filename}`
+      : `${safeCategory}/${filename}`;
 
     const { error } = await this.client.storage
       .from(this.bucket)
@@ -70,6 +80,18 @@ export class SupabaseStorageAdapter implements StorageAdapter {
   }
 
   async delete(storageKey: string): Promise<void> {
+    // 시드 파일(__SEED__/...)은 visitor 액션으로 삭제 불가 — 모든 시연 visitor가
+    // cloneSeedToSession으로 받은 Media.url이 __SEED__/... 경로를 그대로 가리키므로
+    // 한 visitor가 라이브러리에서 시드 이미지를 [삭제]하면 모든 다른 visitor의 시드
+    // 이미지가 깨진다. 어댑터 단일 게이트로 미디어 DELETE / bulk-delete /
+    // bootstrap rollback 등 모든 경로 자동 보호.
+    if (
+      process.env.DEMO_MODE === 'true' &&
+      storageKey.startsWith(`${demo.SEED_SENTINEL}/`)
+    ) {
+      return;
+    }
+
     const { error } = await this.client.storage
       .from(this.bucket)
       .remove([storageKey]);
@@ -79,6 +101,85 @@ export class SupabaseStorageAdapter implements StorageAdapter {
         error,
       );
     }
+  }
+
+  /**
+   * 시연 모드 cleanup용: sessionId 폴더의 모든 파일 일괄 삭제.
+   *
+   * Supabase Storage `list()`는 1-depth만 반환하므로 2-pass:
+   *   sessionId/ → category 폴더 목록 → 각 폴더 안의 파일 → remove(paths)
+   *
+   * `__SEED__` / `__PROD__`는 호출자 책임으로 미리 제외해야 한다 (RESERVED_SESSION_IDS).
+   * 이중 방어: sessionId가 RESERVED면 즉시 return.
+   */
+  async cleanupSessionFolder(
+    sessionId: string,
+  ): Promise<{ filesDeleted: number; errors: string[] }> {
+    const errors: string[] = [];
+    let filesDeleted = 0;
+
+    if (
+      sessionId === '__PROD__' ||
+      sessionId === '__SEED__' ||
+      !sessionId
+    ) {
+      return { filesDeleted: 0, errors: [] };
+    }
+
+    try {
+      // 1-pass: sessionId 폴더 안의 카테고리 목록
+      const { data: categories, error: listErr } = await this.client.storage
+        .from(this.bucket)
+        .list(sessionId, { limit: 1000 });
+
+      if (listErr) {
+        errors.push(`list(${sessionId}): ${listErr.message}`);
+        return { filesDeleted, errors };
+      }
+      if (!categories || categories.length === 0) {
+        return { filesDeleted, errors };
+      }
+
+      // 2-pass: 각 카테고리 폴더 안의 파일
+      for (const cat of categories) {
+        // Supabase: 폴더는 id가 null, 파일은 id 존재. 폴더만 처리
+        if (cat.id !== null) continue;
+
+        const prefix = `${sessionId}/${cat.name}`;
+        const { data: files, error: filesErr } = await this.client.storage
+          .from(this.bucket)
+          .list(prefix, { limit: 1000 });
+
+        if (filesErr) {
+          errors.push(`list(${prefix}): ${filesErr.message}`);
+          continue;
+        }
+        if (!files || files.length === 0) continue;
+
+        const paths = files
+          .filter((f) => f.id !== null)
+          .map((f) => `${prefix}/${f.name}`);
+        if (paths.length === 0) continue;
+
+        // chunk 1000 (Supabase remove 한도)
+        for (let i = 0; i < paths.length; i += 1000) {
+          const chunk = paths.slice(i, i + 1000);
+          const { error: rmErr } = await this.client.storage
+            .from(this.bucket)
+            .remove(chunk);
+          if (rmErr) {
+            errors.push(`remove(${prefix}): ${rmErr.message}`);
+          } else {
+            filesDeleted += chunk.length;
+          }
+        }
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      errors.push(msg);
+    }
+
+    return { filesDeleted, errors };
   }
 
   urlToStorageKey(url: string): string | null {

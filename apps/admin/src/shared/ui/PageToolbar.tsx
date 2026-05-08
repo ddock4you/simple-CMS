@@ -104,7 +104,10 @@ export function PageToolbar({
       data-testid="page-toolbar"
       className={cn(
         'flex items-center justify-between gap-2 bg-background py-2',
-        sticky && 'sticky top-14 z-20 -mx-6 px-6 shadow-toolbar',
+        // 시연 모드 DemoBanner가 있으면 `--demo-banner-h`(2.25rem)이 layout에서 주입됨.
+        // 일반 모드는 default 0이라 기존 top-14와 동일.
+        sticky &&
+          'sticky top-[calc(3.5rem+var(--demo-banner-h,0px))] z-20 -mx-6 px-6 shadow-toolbar',
       )}
     >
       <div className="flex items-center gap-2">

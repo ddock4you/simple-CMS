@@ -337,6 +337,21 @@ apps/{앱}/
 - `apps/admin/app/(auth)/{login,register}/page.tsx` — DEMO_MODE 시 즉시 `/dashboard` redirect (자동 진입과 일관성)
 - `apps/admin/src/shared/lib/cookies.ts` + `packages/db/src/sessionHelper.ts` — `SESSION_MAX_AGE` / `SESSION_MAX_AGE_MS`를 DEMO_MODE에서 1시간으로 단축 (양쪽 동시 분기)
 
+**Storage 격리 + 자동 정리 + Banner UX (PR5)**
+- `apps/admin/src/shared/lib/storage/supabaseAdapter.ts` — `upload()`에 `getCurrentSessionId()` 기반 prefix(`<sessionId>/<category>/<filename>`, `__PROD__`/비DEMO는 prefix 없이 기존 동작) + `delete()`에 `__SEED__/` 가드 (visitor가 라이브러리에서 시드 이미지 [삭제] 시도해도 DB row만 삭제되고 Supabase 파일은 보존 — 모든 visitor 시드 공유 보호) + `cleanupSessionFolder(sessionId)` 메소드 (cron이 사용하는 2-pass list/remove)
+- `packages/db/src/demo/sessionContext.ts` — `RESERVED_SESSION_IDS` Set export (PROD_SENTINEL + SEED_SENTINEL 단일 출처)
+- `packages/db/src/demo/cleanupSessions.ts` — `cleanupExpiredSessions({ now?, cleanupStorage?, forceSessionIds? })`. `runWithBypass` 자동 wrap, 17 모델 deleteMany 자식→부모 순서, Storage cleanup callback 패턴(packages/db는 supabase 의존성 없음), 단계별 try/catch로 부분 실패 허용
+- `apps/admin/app/api/demo/cleanup/route.ts` — GET/POST. `Authorization: Bearer ${CRON_SECRET}` timing-safe 검증, DEMO_MODE 미활성화 503, Supabase 어댑터 cleanup 콜백 주입
+- `apps/admin/app/api/demo/reset/route.ts` — POST. visitor 즉시 초기화. `forceSessionIds: [user.sessionId]`로 cleanup + clearSessionCookie + `redirectTo: '/demo-bootstrap'` 응답
+- `apps/admin/vercel.json` — `crons: [{ path: '/api/demo/cleanup', schedule: '0 3 * * *' }]` (Vercel Hobby plan, daily, KST 12:00)
+- `apps/{admin,web}/src/shared/lib/ensureDemoSession.ts` — 반환 type `Promise<{sessionId, expiresAt} | null>`. 5% 확률로 `after()` 후크에서 `cleanupExpiredSessions()` lazy 트리거 (응답 송신 후 실행 → visitor latency 0, Storage는 cron이 처리 — lazy는 DB만)
+- `apps/admin/src/shared/ui/DemoBanner.tsx` — Client. `sticky top-0 z-50 h-9`. Badge(warning) + 카운트다운(setInterval 1s) + AlertDialog confirm → POST `/_cms/admin/api/demo/reset` → `router.replace`. fetch endpoint 명시 prefix(`/_cms/admin/...`) — Next.js fetch는 basePath 자동 prepend 안 함
+- `apps/web/src/shared/ui/DemoBanner.tsx` — admin과 동일 동작, native `window.confirm` 사용(KRDS shadcn 미사용 일관성), inline style(KRDS Tailwind utility 외 hex 직접 색)
+- `apps/admin/app/(authenticated)/layout.tsx` + `apps/web/app/layout.tsx` — `ensureDemoSession` 결과를 prop으로 받아 DemoBanner 마운트. admin은 `<SidebarProvider style={{'--demo-banner-h': '2.25rem'}}>` 으로 CSS 변수 주입
+- `apps/admin/app/globals.css` — `:root`에 `--demo-banner-h: 0px` 기본값 추가
+- `apps/admin/src/widgets/admin-header/ui/AdminHeader.tsx` — `top-0` → `top-[var(--demo-banner-h,0px)]` (banner 마운트 시 자동 36px 보정)
+- `apps/admin/src/shared/ui/PageToolbar.tsx` — `top-14` → `top-[calc(3.5rem+var(--demo-banner-h,0px))]` (sticky chain 자동 보정, 비DEMO 영향 0)
+
 ### master 브랜치 단일 스택 운영
 
 - master 한 곳에 운영·시연 코드가 공존 — `DEMO_MODE` 환경변수로 분기
@@ -352,7 +367,8 @@ apps/{앱}/
 | 2 | Step 2 | 17개 모델 sessionId 컬럼 + Prisma directUrl | **완료** (1c9eab7) |
 | 3 | Step 3 | Prisma extension + AsyncLocalStorage + composite unique 전환 + raw SQL 격리 | **완료** (59c1adc) |
 | 4 | Step 4 + 5 + 7(부분) | demo-seed.ts + cloneSeedToSession + bootstrap API + admin/web layout gate + login/register 우회 + cookie/Session 1h TTL | **완료** (b7afa51 / b56cc0a / 30901d6) |
-| 5+ | Step 6, 7(cleanup), 8~11 | Supabase Storage prefix / cleanup cron / UI 배너 / 스냅샷 export·import | 대기 |
+| 5 | Step 6 + 7(cleanup) + 8 | supabaseAdapter sessionId prefix + `__SEED__` delete 가드 + `cleanupExpiredSessions` 헬퍼 + `/api/demo/cleanup`(Vercel Hobby cron `0 3 * * *`) + `/api/demo/reset` + lazy cleanup 5%(`after()`) + DemoBanner(admin AlertDialog / web native confirm) + sticky chain(`--demo-banner-h` CSS 변수) | **완료** |
+| 6+ | Step 9~11 | snapshot export 백엔드(17모델 + Media base64 + Tiptap walker + sharp 1600px) / Admin UI / CLI(demo-export·demo-import) | 대기 |
 
 **PR4 visitor 진입 흐름** (시크릿 창 첫 방문):
 1. `http://demo.example.com/` 또는 `/_cms/admin/dashboard` 접근 → cookie `session-token` 없음

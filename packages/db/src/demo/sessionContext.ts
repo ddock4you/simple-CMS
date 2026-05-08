@@ -24,6 +24,15 @@ export const SEED_SENTINEL = '__SEED__';
 /** runWithBypass 내부에서만 사용되는 마커. 일반 쿼리 매칭에 쓰지 말 것. */
 const BYPASS_MARKER = '__BYPASS__';
 
+/**
+ * cleanup/reset에서 절대 삭제하면 안 되는 sessionId 집합.
+ * cron 실수나 visitor의 시드 이미지 DELETE 가드에 단일 출처로 사용.
+ */
+export const RESERVED_SESSION_IDS: ReadonlySet<string> = new Set([
+  PROD_SENTINEL,
+  SEED_SENTINEL,
+]);
+
 const storage = new AsyncLocalStorage<DemoContext>();
 
 /**

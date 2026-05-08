@@ -11,6 +11,7 @@ export {
   isBypassed,
   PROD_SENTINEL,
   SEED_SENTINEL,
+  RESERVED_SESSION_IDS,
 } from './sessionContext';
 export type { DemoContext } from './sessionContext';
 
@@ -23,3 +24,11 @@ export {
 export type { CloneStats, CloneResult } from './cloneSeedToSession';
 
 export { SeedNotFoundError } from './SeedNotFoundError';
+
+export { cleanupExpiredSessions } from './cleanupSessions';
+export type {
+  CleanupOptions,
+  CleanupResult,
+  StorageCleanupFn,
+  StorageCleanupResult,
+} from './cleanupSessions';

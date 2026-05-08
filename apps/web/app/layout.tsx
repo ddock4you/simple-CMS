@@ -12,6 +12,7 @@ import {
   buildWebSiteJsonLd,
   serializeJsonLd,
 } from '@/shared/lib/structuredData';
+import { DemoBanner } from '@/shared/ui/DemoBanner';
 import { ErrorReporterMount } from '@/shared/ui/ErrorReporterMount';
 import { PageLayout } from '@/widgets/layout/ui/PageLayout';
 
@@ -69,9 +70,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   // 시연 모드: cookie 검증 + sessionId 부착, 없으면 splash로 redirect.
-  // 운영 모드(DEMO_MODE 미설정): no-op. /demo-bootstrap 자체는 self-loop 회피로 통과.
+  // 운영 모드(DEMO_MODE 미설정): no-op + null 반환.
   const currentPath = await getCurrentPathname();
-  await ensureDemoSession(currentPath);
+  const demoSession = await ensureDemoSession(currentPath);
 
   const [headerMenu, footerMenu, sidebarMenu, branding, baseUrl] = await Promise.all([
     getMenuBySlot('HEADER'),
@@ -110,6 +111,7 @@ export default async function RootLayout({
         />
       </head>
       <body>
+        {demoSession && <DemoBanner expiresAt={demoSession.expiresAt} />}
         <ErrorReporterMount />
         <PageLayout
           headerMenuItems={headerMenu?.items ?? []}
