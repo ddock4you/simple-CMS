@@ -289,6 +289,67 @@ pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
 - 업로드 처리 Server Action에서 파일 저장 전 `validateFileUpload()` 호출
 - 클라이언트에서는 Server Component가 `getUploadRestrictions()` 결과를 props로 전달하여 파일 선택 시 사전 필터링
 
+## 시연 모드(DEMO_MODE) 격리 인프라
+
+루트 CLAUDE.md "시연 모드 격리 인프라" 섹션이 정책의 단일 출처. 본 섹션은 packages/db 내부 구현 세부.
+
+### sessionId sentinel 패턴
+
+- 17 모델에 `sessionId String @default("__PROD__")` — NOT NULL + sentinel
+- 운영 환경(`DEMO_MODE` 미설정): 모든 row가 `'__PROD__'`. composite unique가 글로벌 unique와 동일 동작
+- 시연 환경(`DEMO_MODE=true`): visitor cuid 또는 `'__SEED__'`(seed 원본)가 sessionId로 저장
+- 호환 보호: 신규 기존 운영 DB는 `prisma/backfill-session-id.ts` 1회 실행으로 NULL → '__PROD__' 백필 (멱등)
+
+### composite unique 8개 모델
+
+- key-as-lookup: `SiteSettings([sessionId, key])`, `Role([sessionId, name])`, `NavigationMenu([sessionId, name])`, `Media([sessionId, contentHash])`
+- slug-as-lookup: `Subpage([sessionId, slug])`, `Board([sessionId, slug])`, `Post([sessionId, boardId, slug])`, `User([sessionId, username])` + `User([sessionId, email])`
+- 글로벌 @unique 유지: `Session.sessionToken`, `PreviewToken.token` (인증 인프라, 토큰 자체가 전역 식별자)
+
+### `demo` namespace API
+
+`import { demo } from '@simple-cms/db'`로 진입.
+
+| 함수 | 시그니처 | 용도 |
+|---|---|---|
+| `demo.runWith(ctx, fn)` | `(ctx: DemoContext, fn: () => Promise<T>) => Promise<T>` | 콜백 스코프 안에서만 sessionId 활성화. cron / 스크립트 / 특수 경로용 |
+| `demo.runWithBypass(fn)` | `(fn: () => Promise<T>) => Promise<T>` | extension의 sessionId 주입을 skip. 인증 부트스트랩 / seed / cron cleanup 용도 |
+| `demo.enterWith(ctx)` | `(ctx: DemoContext) => void` | 현재 async 컨텍스트에 즉시 부착. layout 진입부에서만 사용 (이후 모든 await 적용) |
+| `demo.getCurrentSessionId()` | `() => string` | 컨텍스트 미진입 시 `'__PROD__'` fallback. raw SQL WHERE 절에 사용 |
+| `demo.isBypassed()` | `() => boolean` | extension 자체 분기에 사용 |
+| `demo.PROD_SENTINEL` / `demo.SEED_SENTINEL` | `const string` | `'__PROD__'` / `'__SEED__'` 문자열 상수 |
+
+### Prisma extension 동작 (`DEMO_MODE=true`만)
+
+`packages/db/src/demo/clientExtension.ts`의 `processOperation` named export로 구현. `Prisma.defineExtension({ query: { $allModels: { $allOperations } } })`이 모든 모델·작업을 가로챈다.
+
+| Operation | 동작 |
+|---|---|
+| `findMany`/`findFirst`/`count`/`aggregate`/`groupBy`/`updateMany`/`deleteMany` | `args.where`에 `AND: [원래where, { sessionId }]` 추가 |
+| `create` | `args.data`에 `sessionId` 자동 주입 |
+| `createMany`/`createManyAndReturn` | `args.data` 배열 각 element에 `sessionId` 주입 |
+| `findUnique`/`findUniqueOrThrow` | id 등 글로벌 unique 통과 → result hook에서 `result.sessionId` 검증. **`select`에서 sessionId 빠뜨려도 강제 추가 후 응답에서 strip** (cross-tenant 차단 + 호출자 contract 보존) |
+| `update`/`delete` | 사전 `findFirst`로 sessionId 일치 검증 → 일치 시 원래 query 진행, 불일치 시 P2025 throw (cross-tenant write 차단) |
+| `upsert` | `console.warn` + 그대로 통과. helper에서 `findFirst → update | create`로 명시 분기하는 것이 표준 |
+| **EXCLUDED_MODELS**: `Session` / `PreviewToken` | extension 격리 적용 안 됨 — 인증 인프라 (글로벌 token unique) |
+
+### 호출 측 관습 (master 단일 스택)
+
+| 패턴 | 코드 |
+|---|---|
+| 단일 필드 unique lookup | `findFirst({ where: { slug } })` (extension이 sessionId 자동 추가) |
+| `id` 기반 lookup | `findUnique({ where: { id } })` 그대로 (extension result hook 검증) |
+| upsert | helper에서 `findFirst → update | create` 명시 분기 (`siteSettings.ts` 패턴 참조) |
+| Raw SQL | `WHERE "sessionId" = ${demo.getCurrentSessionId()}` 명시 추가 (`$queryRaw`는 extension hook 우회) |
+| 인증 부트스트랩 | `demo.runWithBypass(() => getSessionUser(token))` |
+| Seed / 일회성 스크립트 | composite where 명시 (`{ sessionId_key: { sessionId: '__PROD__', key } }`) |
+
+### 단위 테스트
+
+- `packages/db/src/demo/sessionContext.test.ts` (11건): AsyncLocalStorage 동작 (runWith / runWithBypass / 중첩 / 비동기 chain)
+- `packages/db/src/demo/clientExtension.test.ts` (17건): `processOperation` 직접 호출로 args 변환 검증 (DB 무관). `findMany`/`create`/`createMany`/`updateMany`/`findUnique` post-filter / select 빠짐 회귀 / EXCLUDED 모델 / upsert 경고
+- 통합 smoke: `DEMO_TEST_DB_URL` 환경 변수 있을 때만 실행 (PR4 seed 구현 후 시나리오 추가)
+
 ## 주의사항
 
 - `schema.prisma` 변경 후 반드시 `db:generate` 실행

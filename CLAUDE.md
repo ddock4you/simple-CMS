@@ -288,6 +288,60 @@ apps/{앱}/
 - 최초 관리자: `prisma/seed.ts`로 `.env`의 초기 계정을 ACTIVE 상태로 생성
 - 가입 거절 시 PENDING 유저 레코드 hard delete (1차 삭제 정책과 동일)
 
+## 시연 모드 (DEMO_MODE) 격리 인프라
+
+`DEMO_MODE=true` 환경에서 같은 DB·코드 베이스로 여러 방문자에게 격리된 시연 세션을 제공한다. 운영(`DEMO_MODE` 미설정)과 시연이 **단일 스택을 공유**하며, master 브랜치 한 곳에서 양쪽이 모두 동작하도록 설계한다.
+
+### 핵심 원리
+
+- **17개 모델에 `sessionId String @default("__PROD__")` sentinel 컬럼**: 운영은 모두 `'__PROD__'`, 시연 세션은 각 visitor의 cuid 값
+- **8개 모델 composite unique**: 같은 slug/key/name이 세션마다 1건씩 가능
+  - SiteSettings(`[sessionId, key]`), Role(`[sessionId, name]`), NavigationMenu(`[sessionId, name]`), Media(`[sessionId, contentHash]`)
+  - Subpage(`[sessionId, slug]`), Board(`[sessionId, slug]`), Post(`[sessionId, boardId, slug]`), User(`[sessionId, username]` + `[sessionId, email]`)
+  - Session.sessionToken / PreviewToken.token은 글로벌 `@unique` 유지 (인증 인프라)
+- **Prisma extension**: `packages/db/src/demo/clientExtension.ts`가 `DEMO_MODE=true`일 때 자동 sessionId 주입 + cross-tenant 차단. 운영에서는 `$extends` 미적용, 0 cost
+- **AsyncLocalStorage**: `packages/db/src/demo/sessionContext.ts`가 한 요청에 sessionId를 묶어 모든 await 체인에 전파
+- **운영 영향 0**: 모든 운영 데이터는 sessionId='__PROD__'라 composite unique가 글로벌 unique와 동일하게 동작. extension 미적용 환경에서는 sentinel만 schema default로 채워짐
+
+### 새 코드 작성 시 따라야 할 관습 (master 브랜치 기본값)
+
+| 패턴 | Before (격리 도입 전) | After (현재) |
+|---|---|---|
+| 단일 필드 unique lookup | `prisma.x.findUnique({ where: { slug } })` | `prisma.x.findFirst({ where: { slug } })` — extension이 sessionId 자동 주입 |
+| upsert | `prisma.x.upsert({ where: { key }, ... })` | `findFirst → update | create` 명시 분기 (extension은 upsert에서 cross-tenant 안전 처리 어려움 → 경고 출력) |
+| Raw SQL | `WHERE status = 'PUBLISHED'` | `WHERE status = 'PUBLISHED' AND "sessionId" = ${getCurrentSessionId()}` (`$queryRaw`는 extension hook 우회) |
+| 인증 부트스트랩 | `getSessionUser(token)` | `demo.runWithBypass(() => getSessionUser(token))` — Session+User+Role include 체인 안전망 |
+| Seed / 일회성 스크립트 | 일반 PrismaClient 사용 | composite where 명시 (`where: { sessionId_key: { sessionId: '__PROD__', key } }`) — seed는 운영 시드라 sentinel 직접 사용 |
+| `id` 기반 lookup | `findUnique({ where: { id } })` | 그대로 — extension이 result hook에서 sessionId 검증 (`select` 빠뜨려도 자동 주입 후 응답에서 strip) |
+
+### Critical files
+
+- `packages/db/prisma/schema.prisma` — 17 모델 sentinel + 8 composite unique
+- `packages/db/src/demo/sessionContext.ts` — AsyncLocalStorage + `runWith` / `runWithBypass` / `getCurrentSessionId` / `isBypassed`
+- `packages/db/src/demo/clientExtension.ts` — `Prisma.defineExtension` + `processOperation` (테스트 가능 named export)
+- `packages/db/src/demo/index.ts` — `import { demo } from '@simple-cms/db'` 진입점
+- `packages/db/src/client.ts` — `DEMO_MODE === 'true'`일 때만 `$extends` 적용
+- `packages/db/prisma/backfill-session-id.ts` — NULL → '__PROD__' 멱등 백필 (PR3 schema 적용 시 1회 실행)
+
+### master 브랜치 단일 스택 운영
+
+- master 한 곳에 운영·시연 코드가 공존 — `DEMO_MODE` 환경변수로 분기
+- 운영 Vercel 프로젝트: `DEMO_MODE` 미설정 → extension 미적용, sentinel만 schema default로 채워짐
+- 시연 Vercel 프로젝트: `DEMO_MODE=true` + 별도 Supabase DB → seed clone + 격리 활성화
+- 새 기능 개발 시 위 "관습" 표를 따르면 양쪽 자동 호환
+
+### 진행 단계 (시연 모드 구현 로드맵)
+
+| PR | 단계 | 내용 | 상태 |
+|---|---|---|---|
+| 1 | Step 1 | 단일 도메인 rewrites + admin basePath | **완료** (ede5365) |
+| 2 | Step 2 | 17개 모델 sessionId 컬럼 + Prisma directUrl | **완료** (1c9eab7) |
+| 3 | Step 3 | Prisma extension + AsyncLocalStorage + composite unique 전환 + raw SQL 격리 | **완료** (59c1adc) |
+| 4 | Step 4 | 자동 세션 발급 + seed (`__SEED__` row + INSERT...SELECT 복제 + bootstrap API + layout gate) | 대기 |
+| 5+ | Step 5~11 | 로그인 우회 / Storage 활성화 / TTL+cleanup / UI 배너 / 스냅샷 export·import | 대기 |
+
+상세 명세: `C:\Users\ddock\.claude\plans\cms-purrfect-lerdorf.md`
+
 ## 라우팅
 
 ### admin

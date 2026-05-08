@@ -9,6 +9,11 @@ import { hash } from 'bcryptjs';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
+// 시연 모드(DEMO_MODE) 격리 인프라 도입 후 — 17개 모델은 sessionId NOT NULL,
+// 운영 환경 row는 모두 sentinel '__PROD__'. seed는 운영 시드라 명시적으로 sentinel을 사용한다.
+// (소스 의존성 회피를 위해 packages/db/src/demo/sessionContext의 PROD_SENTINEL 상수와 값을 동기화)
+const PROD_SENTINEL = '__PROD__';
+
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
 });
@@ -42,8 +47,9 @@ const DEFAULT_PERMISSIONS = {
 
 async function main() {
   // 1. System role (총괄 관리자) — permissions는 항상 FULL로 동기화 (새 리소스 추가 시 반영)
+  // composite @@unique([sessionId, name]) 사용 — sentinel '__PROD__'로 명시 (운영 시드)
   const systemRole = await prisma.role.upsert({
-    where: { name: '총괄 관리자' },
+    where: { sessionId_name: { sessionId: PROD_SENTINEL, name: '총괄 관리자' } },
     update: { permissions: FULL_PERMISSIONS },
     create: {
       name: '총괄 관리자',
@@ -57,7 +63,7 @@ async function main() {
 
   // 2. Default role (일반 관리자)
   const defaultRole = await prisma.role.upsert({
-    where: { name: '일반 관리자' },
+    where: { sessionId_name: { sessionId: PROD_SENTINEL, name: '일반 관리자' } },
     update: {},
     create: {
       name: '일반 관리자',
@@ -75,7 +81,7 @@ async function main() {
   const username = process.env.INITIAL_ADMIN_USERNAME ?? 'admin';
   const password = process.env.INITIAL_ADMIN_PASSWORD ?? 'changeme123';
 
-  const existingUser = await prisma.user.findUnique({ where: { username } });
+  const existingUser = await prisma.user.findFirst({ where: { username } });
 
   if (existingUser) {
     console.log(`✓ User: "${username}" already exists, skipping`);
@@ -95,7 +101,9 @@ async function main() {
 
   // 4. Initial SiteSettings
   await prisma.siteSettings.upsert({
-    where: { key: 'CONCURRENT_LOGIN_ENABLED' },
+    where: {
+      sessionId_key: { sessionId: PROD_SENTINEL, key: 'CONCURRENT_LOGIN_ENABLED' },
+    },
     update: {},
     create: {
       key: 'CONCURRENT_LOGIN_ENABLED',
@@ -106,15 +114,19 @@ async function main() {
   console.log('✓ SiteSettings: CONCURRENT_LOGIN_ENABLED = true');
 
   // 5. Default NavigationMenu sets
-  const menuSets = [
-    { name: 'Header Main', description: '헤더 메인 네비게이션', slots: ['HEADER' as const] },
-    { name: 'Footer', description: '푸터 네비게이션', slots: ['FOOTER' as const] },
-    { name: 'Quick Links', description: '빠른 링크 모음', slots: [] as const },
+  const menuSets: Array<{
+    name: string;
+    description: string;
+    slots: ('HEADER' | 'FOOTER' | 'SIDEBAR')[];
+  }> = [
+    { name: 'Header Main', description: '헤더 메인 네비게이션', slots: ['HEADER'] },
+    { name: 'Footer', description: '푸터 네비게이션', slots: ['FOOTER'] },
+    { name: 'Quick Links', description: '빠른 링크 모음', slots: [] },
   ];
 
   for (const menu of menuSets) {
     const created = await prisma.navigationMenu.upsert({
-      where: { name: menu.name },
+      where: { sessionId_name: { sessionId: PROD_SENTINEL, name: menu.name } },
       update: { slots: menu.slots },
       create: menu,
     });
