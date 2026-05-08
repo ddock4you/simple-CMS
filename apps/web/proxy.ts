@@ -5,25 +5,36 @@ import { logWebError } from '@simple-cms/db';
 
 import { getCachedDomain } from '@/shared/lib/domainCache';
 
+/**
+ * 모든 NextResponse.next() 응답에 `x-pathname` 헤더를 주입.
+ * RootLayout이 `headers().get('x-pathname')`로 현재 경로를 읽어 DEMO_MODE
+ * splash redirect URL의 `next` 파라미터를 정확히 구성할 수 있도록 한다.
+ */
+function nextWithPathname(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', request.nextUrl.pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 export async function proxy(request: NextRequest) {
   try {
     // 개발 모드에서는 localhost 항상 허용
     if (process.env.NODE_ENV === 'development') {
-      return NextResponse.next();
+      return nextWithPathname(request);
     }
 
     const siteDomain = await getCachedDomain();
 
     // 도메인 미설정 시 리다이렉트 안 함
     if (!siteDomain) {
-      return NextResponse.next();
+      return nextWithPathname(request);
     }
 
     const hostname = request.nextUrl.hostname;
 
     // 설정 도메인과 일치하면 통과
     if (hostname === siteDomain) {
-      return NextResponse.next();
+      return nextWithPathname(request);
     }
 
     // 불일치 시 301 리다이렉트 (경로 + 쿼리스트링 유지)
@@ -48,7 +59,7 @@ export async function proxy(request: NextRequest) {
         request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null,
       referer: request.headers.get('referer'),
     });
-    return NextResponse.next();
+    return nextWithPathname(request);
   }
 }
 

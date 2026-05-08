@@ -4,6 +4,8 @@ import 'krds-react/dist/index.css';
 
 import { getMenuBySlot } from '@/entities/navigation/api/getNavigation';
 import { getCachedBranding } from '@/shared/lib/brandingCache';
+import { ensureDemoSession } from '@/shared/lib/ensureDemoSession';
+import { getCurrentPathname } from '@/shared/lib/getCurrentPathname';
 import { getSiteUrl } from '@/shared/lib/siteUrl';
 import {
   buildOrganizationJsonLd,
@@ -66,6 +68,11 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // 시연 모드: cookie 검증 + sessionId 부착, 없으면 splash로 redirect.
+  // 운영 모드(DEMO_MODE 미설정): no-op. /demo-bootstrap 자체는 self-loop 회피로 통과.
+  const currentPath = await getCurrentPathname();
+  await ensureDemoSession(currentPath);
+
   const [headerMenu, footerMenu, sidebarMenu, branding, baseUrl] = await Promise.all([
     getMenuBySlot('HEADER'),
     getMenuBySlot('FOOTER'),
