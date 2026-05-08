@@ -124,6 +124,10 @@ enum SubpageVersionSource {
 }
 
 // ─── Models ──────────────────────────────────────────────
+//
+// 시연 모드(DEMO_MODE) 멀티테넌시: 17개 주요 모델에 nullable `sessionId` 컬럼이 있다.
+// 운영 환경에선 항상 null로 사용. 시연에선 Prisma extension이 자동 주입 + cleanup이
+// 만료 sessionId를 코드에서 deleteMany로 정리한다 (FK relation 정의 없음 — 운영 schema 단순화).
 
 model Role {
   id          String   @id @default(cuid())
@@ -137,7 +141,10 @@ model Role {
 
   users User[]
 
+  sessionId String?
+
   @@index([isDefault])
+  @@index([sessionId])
 }
 
 model User {
@@ -159,8 +166,11 @@ model User {
   previewTokens   PreviewToken[]
   subpageVersions SubpageVersion[] @relation("SubpageVersionAuthor")
 
+  sessionId String?
+
   @@index([roleId])
   @@index([status])
+  @@index([sessionId])
 }
 
 model Session {
@@ -189,8 +199,11 @@ model PreviewToken {
 
   issuedBy User @relation(fields: [issuedById], references: [id], onDelete: Cascade)
 
+  sessionId String?
+
   @@index([expires])
   @@index([issuedById])
+  @@index([sessionId])
 }
 
 model Subpage {
@@ -218,6 +231,10 @@ model Subpage {
   navigationMenuItems NavigationMenuItem[] @relation("SubpageMenuItems")
   versions            SubpageVersion[]
   feedbacks           SubpageFeedback[]
+
+  sessionId String?
+
+  @@index([sessionId])
 }
 
 model SubpageFeedback {
@@ -232,10 +249,13 @@ model SubpageFeedback {
 
   subpage Subpage @relation(fields: [subpageId], references: [id], onDelete: Cascade)
 
+  sessionId String?
+
   @@index([subpageId, createdAt])
   @@index([subpageId, rating])
   @@index([ipAddressHash, subpageId, createdAt])
   @@index([createdAt])
+  @@index([sessionId])
 }
 
 model SubpageVersion {
@@ -251,9 +271,12 @@ model SubpageVersion {
   subpage   Subpage @relation(fields: [subpageId], references: [id], onDelete: Cascade)
   createdBy User?   @relation("SubpageVersionAuthor", fields: [createdById], references: [id], onDelete: SetNull)
 
+  sessionId String?
+
   @@index([subpageId, createdAt])
   @@index([createdById])
   @@index([isPinned])
+  @@index([sessionId])
 }
 
 model Board {
@@ -269,6 +292,10 @@ model Board {
 
   posts               Post[]
   navigationMenuItems NavigationMenuItem[] @relation("BoardMenuItems")
+
+  sessionId String?
+
+  @@index([sessionId])
 }
 
 model Post {
@@ -292,9 +319,12 @@ model Post {
   author        User?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
   featuredImage Media? @relation(fields: [featuredImageId], references: [id], onDelete: SetNull)
 
+  sessionId String?
+
   @@unique([boardId, slug])
   @@index([boardId])
   @@index([authorId])
+  @@index([sessionId])
 }
 
 model HomeSection {
@@ -306,6 +336,10 @@ model HomeSection {
   displayOrder Int             @default(0)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
+
+  sessionId String?
+
+  @@index([sessionId])
 }
 
 model HomePopup {
@@ -328,7 +362,10 @@ model HomePopup {
 
   imageMedia Media? @relation("HomePopupImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
 
+  sessionId String?
+
   @@index([imageMediaId])
+  @@index([sessionId])
 }
 
 model PageBlock {
@@ -343,7 +380,10 @@ model PageBlock {
 
   subpage Subpage @relation(fields: [subpageId], references: [id], onDelete: Cascade)
 
+  sessionId String?
+
   @@index([subpageId])
+  @@index([sessionId])
 }
 
 model Media {
@@ -363,7 +403,10 @@ model Media {
   posts           Post[]
   homePopupImages HomePopup[] @relation("HomePopupImage")
 
+  sessionId String?
+
   @@index([uploadedById])
+  @@index([sessionId])
 }
 
 model NavigationMenu {
@@ -375,6 +418,10 @@ model NavigationMenu {
   updatedAt   DateTime             @updatedAt
 
   items NavigationMenuItem[]
+
+  sessionId String?
+
+  @@index([sessionId])
 }
 
 model NavigationMenuItem {
@@ -400,8 +447,11 @@ model NavigationMenuItem {
   subpage  Subpage?            @relation("SubpageMenuItems", fields: [subpageId], references: [id], onDelete: SetNull)
   board    Board?              @relation("BoardMenuItems", fields: [boardId], references: [id], onDelete: SetNull)
 
+  sessionId String?
+
   @@index([menuId])
   @@index([parentId])
+  @@index([sessionId])
 }
 
 model AuditLog {
@@ -418,10 +468,13 @@ model AuditLog {
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
+  sessionId String?
+
   @@index([userId])
   @@index([action])
   @@index([entityType])
   @@index([createdAt])
+  @@index([sessionId])
 }
 
 model SiteSettings {
@@ -431,6 +484,10 @@ model SiteSettings {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  sessionId String?
+
+  @@index([sessionId])
 }
 
 model ErrorLog {
@@ -453,10 +510,13 @@ model ErrorLog {
   resolvedBy String?
   createdAt  DateTime    @default(now())
 
+  sessionId String?
+
   @@index([createdAt])
   @@index([level])
   @@index([source])
   @@index([fingerprint])
   @@index([isResolved, createdAt])
   @@index([url])
+  @@index([sessionId])
 }
