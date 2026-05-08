@@ -344,11 +344,47 @@ pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
 | 인증 부트스트랩 | `demo.runWithBypass(() => getSessionUser(token))` |
 | Seed / 일회성 스크립트 | composite where 명시 (`{ sessionId_key: { sessionId: '__PROD__', key } }`) |
 
+### 시연 자동 진입 — `__SEED__` prefill + clone (PR4)
+
+PR4가 도입한 두 진입점. 세부 동작은 루트 CLAUDE.md "PR4 visitor 진입 흐름" 참조.
+
+| 함수 | 위치 | 역할 |
+|---|---|---|
+| `cloneSeedToSession(newSessionId)` | `packages/db/src/demo/cloneSeedToSession.ts` | `__SEED__` row 14모델을 새 sessionId로 in-memory remap 클론. `prisma.$transaction(timeout 30s)` 안에서 `findMany → cuid2 사전 생성 → createMany` 순서. NavigationMenuItem.parentId는 2-pass(1차 null, 2차 update). 호출자는 반드시 `demo.runWithBypass(...)`로 감싸야 함. 반환: `{ stats, demoAdminId }` |
+| `SeedNotFoundError` | `packages/db/src/demo/SeedNotFoundError.ts` | `code: 'SEED_NOT_FOUND'`. `__SEED__` Role 0건 또는 `demo_admin` User 부재 시 throw. bootstrap API가 503으로 변환 |
+| `DEMO_ADMIN_USERNAME = 'demo_admin'` | 동일 | demo-seed.ts와 cloneSeedToSession이 공유하는 username 상수 |
+
+**clone 대상 14모델 의존성 순서**: Role → User → Media → SiteSettings → NavigationMenu → Board → HomeSection → Subpage → Post → PageBlock → HomePopup → NavigationMenuItem → SubpageVersion → SubpageFeedback. `Session` / `PreviewToken`은 EXCLUDED. `AuditLog` / `ErrorLog`는 누적 로그라 클론 의미 왜곡으로 제외.
+
+**알려진 한계**: SubpageVersion.snapshot Json 내부 mediaId/blockId, HomeSection.configJson 내부 boardId, RICH_TEXT 블록 Tiptap image 노드의 `attrs.mediaId`는 walker 미적용 → `__SEED__`-era id 잔존. PR9/11 snapshot export walker가 같은 데이터 구조 처리 시 일괄 도입.
+
+### `__SEED__` prefill 스크립트 (`prisma/demo-seed.ts`)
+
+`pnpm db:demo-seed` 실행 시 sessionId='__SEED__'로 22 row 멱등 생성:
+- Role x2 (`총괄 관리자` / `일반 관리자`)
+- User x1 (`demo_admin` / `demo_password` ACTIVE 총괄)
+- SiteSettings x6 (CONCURRENT_LOGIN_ENABLED, SITE_NAME='시연 CMS', SITE_DESCRIPTION, UPLOAD_*)
+- NavigationMenu x2 (Header Main + Footer)
+- Board x1 (`notice`)
+- Subpage x1 (`about`, PUBLISHED)
+- PageBlock x1 (about Subpage RICH_TEXT)
+- HomeSection x6 (HERO/RECOMMENDED/SHORTCUT/LATEST_POSTS/CTA/NOTICE)
+- NavigationMenuItem x2 (about 링크 Header + Footer)
+
+운영 seed.ts와 별개 — 자체 PrismaClient + PrismaPg 어댑터 사용 (extension 미적용). 모든 query에 `sessionId: SEED_SENTINEL` 명시 + `findFirst → update | create` (upsert 회피 룰 일관).
+
+### 1시간 TTL 분기 (PR4)
+
+- `packages/db/src/sessionHelper.ts::SESSION_MAX_AGE_MS` — `process.env.DEMO_MODE === 'true' ? 3600 * 1000 : 30 * 24 * 60 * 60 * 1000`
+- `apps/admin/src/shared/lib/cookies.ts::SESSION_MAX_AGE` — 동일 분기 (초 단위)
+- 한쪽만 변경하면 cookie ↔ DB 만료 불일치 (브라우저는 cookie 살아있는데 validateSession이 만료 처리). 후속 PR에서 단일 상수화 검토 가능
+
 ### 단위 테스트
 
 - `packages/db/src/demo/sessionContext.test.ts` (11건): AsyncLocalStorage 동작 (runWith / runWithBypass / 중첩 / 비동기 chain)
 - `packages/db/src/demo/clientExtension.test.ts` (17건): `processOperation` 직접 호출로 args 변환 검증 (DB 무관). `findMany`/`create`/`createMany`/`updateMany`/`findUnique` post-filter / select 빠짐 회귀 / EXCLUDED 모델 / upsert 경고
-- 통합 smoke: `DEMO_TEST_DB_URL` 환경 변수 있을 때만 실행 (PR4 seed 구현 후 시나리오 추가)
+- `packages/db/src/demo/cloneSeedToSession.test.ts` (4건, PR4): `SeedNotFoundError` 시그니처 + `DEMO_ADMIN_USERNAME` 상수 + `cloneSeedToSession` async 시그니처
+- 통합 smoke: `DEMO_TEST_DB_URL` 환경 변수 있을 때만 실행 (시나리오 미구현 — PR4 후속에서 추가)
 
 ## 주의사항
 

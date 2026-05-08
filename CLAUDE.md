@@ -316,12 +316,26 @@ apps/{앱}/
 
 ### Critical files
 
+**격리 인프라 (PR3)**
 - `packages/db/prisma/schema.prisma` — 17 모델 sentinel + 8 composite unique
-- `packages/db/src/demo/sessionContext.ts` — AsyncLocalStorage + `runWith` / `runWithBypass` / `getCurrentSessionId` / `isBypassed`
+- `packages/db/src/demo/sessionContext.ts` — AsyncLocalStorage + `enterWith` / `runWith` / `runWithBypass` / `getCurrentSessionId` / `isBypassed`
 - `packages/db/src/demo/clientExtension.ts` — `Prisma.defineExtension` + `processOperation` (테스트 가능 named export)
 - `packages/db/src/demo/index.ts` — `import { demo } from '@simple-cms/db'` 진입점
 - `packages/db/src/client.ts` — `DEMO_MODE === 'true'`일 때만 `$extends` 적용
 - `packages/db/prisma/backfill-session-id.ts` — NULL → '__PROD__' 멱등 백필 (PR3 schema 적용 시 1회 실행)
+
+**자동 진입 흐름 (PR4)**
+- `packages/db/prisma/demo-seed.ts` — `__SEED__` row prefill (Role x2 / User `demo_admin` / SiteSettings x6 / NavigationMenu x2 / Board / Subpage `about` PUBLISHED / PageBlock RICH_TEXT / HomeSection x6 / NavigationMenuItem x2 = 22 row 멱등). `pnpm db:demo-seed`
+- `packages/db/src/demo/cloneSeedToSession.ts` — 14모델 in-memory remap 클론 (cuid2 사전 생성 + `createMany` bulk insert + NavigationMenuItem `parentId` 2-pass + 30s transaction). 호출자는 `demo.runWithBypass`로 감쌈
+- `packages/db/src/demo/SeedNotFoundError.ts` — `code: 'SEED_NOT_FOUND'` 에러 (bootstrap API 503 분기)
+- `apps/admin/app/api/demo/bootstrap/route.ts` — POST `/_cms/admin/api/demo/bootstrap`. 새 sessionId 발급 → 클론 → demo admin User로 Session 생성 → Set-Cookie. 503/500 분기
+- `apps/{admin,web}/app/demo-bootstrap/{page,DemoBootstrapClient}.tsx` — splash UI 양쪽 동일 (admin basePath 자동 prepend로 admin layout redirect는 admin origin splash로 향함)
+- `apps/{admin,web}/src/shared/lib/ensureDemoSession.ts` — layout gate. cookie 검증 → `enterWith({sessionId})` 부착 또는 splash redirect. self-loop 회피 (`/demo-bootstrap` prefix skip)
+- `apps/{admin,web}/src/shared/lib/getCurrentPathname.ts` — `headers().get('x-pathname')` (proxy.ts 주입)
+- `apps/{admin,web}/proxy.ts` — `x-pathname` 헤더 주입 (admin 신규, web 기존 도메인 redirect 위에 추가)
+- `apps/admin/app/(authenticated)/layout.tsx` + `apps/web/app/layout.tsx` — `requireAuth()` / 데이터 fetch 직전에 `ensureDemoSession(currentPath)` 호출
+- `apps/admin/app/(auth)/{login,register}/page.tsx` — DEMO_MODE 시 즉시 `/dashboard` redirect (자동 진입과 일관성)
+- `apps/admin/src/shared/lib/cookies.ts` + `packages/db/src/sessionHelper.ts` — `SESSION_MAX_AGE` / `SESSION_MAX_AGE_MS`를 DEMO_MODE에서 1시간으로 단축 (양쪽 동시 분기)
 
 ### master 브랜치 단일 스택 운영
 
@@ -337,8 +351,16 @@ apps/{앱}/
 | 1 | Step 1 | 단일 도메인 rewrites + admin basePath | **완료** (ede5365) |
 | 2 | Step 2 | 17개 모델 sessionId 컬럼 + Prisma directUrl | **완료** (1c9eab7) |
 | 3 | Step 3 | Prisma extension + AsyncLocalStorage + composite unique 전환 + raw SQL 격리 | **완료** (59c1adc) |
-| 4 | Step 4 | 자동 세션 발급 + seed (`__SEED__` row + INSERT...SELECT 복제 + bootstrap API + layout gate) | 대기 |
-| 5+ | Step 5~11 | 로그인 우회 / Storage 활성화 / TTL+cleanup / UI 배너 / 스냅샷 export·import | 대기 |
+| 4 | Step 4 + 5 + 7(부분) | demo-seed.ts + cloneSeedToSession + bootstrap API + admin/web layout gate + login/register 우회 + cookie/Session 1h TTL | **완료** (b7afa51 / b56cc0a / 30901d6) |
+| 5+ | Step 6, 7(cleanup), 8~11 | Supabase Storage prefix / cleanup cron / UI 배너 / 스냅샷 export·import | 대기 |
+
+**PR4 visitor 진입 흐름** (시크릿 창 첫 방문):
+1. `http://demo.example.com/` 또는 `/_cms/admin/dashboard` 접근 → cookie `session-token` 없음
+2. layout gate(ensureDemoSession)가 `/demo-bootstrap?next=...`로 redirect — admin basePath 자동 prepend 때문에 admin/web 양쪽에 동일 splash 라우트 존재
+3. splash가 `POST /_cms/admin/api/demo/bootstrap` 호출 → 새 cuid sessionId 발급 → `cloneSeedToSession`으로 14모델 row를 `__SEED__`에서 visitor sessionId로 클론 → demo_admin User로 Session 생성 → `Set-Cookie: session-token=...; HttpOnly; Max-Age=3600`
+4. splash가 `next` 경로로 router.replace → 이번엔 cookie 통과 → layout이 `enterWith({sessionId})` 부착 → 모든 후속 쿼리 격리
+
+**`__SEED__` 미존재 시**: cloneSeedToSession이 `SeedNotFoundError` throw → bootstrap API 503 + `{code:'SEED_NOT_FOUND'}` → splash가 운영자 안내 + [다시 시도] 표시. 운영자가 `pnpm db:demo-seed` 실행 후 재시도.
 
 상세 명세: `C:\Users\ddock\.claude\plans\cms-purrfect-lerdorf.md`
 
