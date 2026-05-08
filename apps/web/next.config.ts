@@ -5,6 +5,9 @@ import type { NextConfig } from 'next';
 // 모노레포 루트의 .env를 로드
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
+const isDemoMode = process.env.DEMO_MODE === 'true';
+const adminRewriteUrl = process.env.NEXT_PUBLIC_ADMIN_REWRITE_URL;
+
 const nextConfig: NextConfig = {
   transpilePackages: ['@simple-cms/types', '@simple-cms/db', '@simple-cms/editor'],
   // dev 서버를 LAN IP(예: 모바일 디바이스에서 192.168.x.x)로 접속할 때 chunk/HMR이
@@ -17,6 +20,20 @@ const nextConfig: NextConfig = {
     '10.*.*.*',
     '*.local',
   ],
+  // 시연 모드: admin을 단일 도메인(/_cms/admin/*)에 프록시.
+  // emdashcms.com 패턴과 동일하게 단일 origin을 유지해 세션 쿠키(Path=/)를 admin/web 양쪽에서 공유.
+  ...(isDemoMode && adminRewriteUrl
+    ? {
+        async rewrites() {
+          return [
+            {
+              source: '/_cms/admin/:path*',
+              destination: `${adminRewriteUrl}/_cms/admin/:path*`,
+            },
+          ];
+        },
+      }
+    : {}),
 };
 
 export default nextConfig;
