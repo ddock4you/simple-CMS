@@ -2,7 +2,14 @@ import { randomUUID } from 'node:crypto';
 
 import { prisma } from './client';
 
-const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+// 시연 모드: 1시간 TTL — visitor 만료 시 layout gate가 splash로 보내 새 세션 발급.
+// 운영: 30일.
+// admin/src/shared/lib/cookies.ts의 SESSION_MAX_AGE와 동일 분기 — 한쪽만 바꾸면
+// cookie ↔ DB 만료 불일치 (브라우저는 cookie 살아있는데 DB validateSession이 만료 처리).
+const SESSION_MAX_AGE_MS =
+  process.env.DEMO_MODE === 'true'
+    ? 60 * 60 * 1000
+    : 30 * 24 * 60 * 60 * 1000;
 
 export async function createSession(
   userId: string,

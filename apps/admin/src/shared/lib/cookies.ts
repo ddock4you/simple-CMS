@@ -1,7 +1,11 @@
 import { cookies } from 'next/headers';
 
 const SESSION_COOKIE_NAME = 'session-token';
-const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days in seconds
+// 시연 모드: 1시간 TTL — visitor 만료 시 layout gate가 splash로 보내 새 세션 발급.
+// 운영: 30일.
+// sessionHelper.ts의 SESSION_MAX_AGE_MS와 동일 분기 — 한쪽만 바꾸면 cookie ↔ DB 만료 불일치.
+const SESSION_MAX_AGE =
+  process.env.DEMO_MODE === 'true' ? 60 * 60 : 30 * 24 * 60 * 60;
 
 export async function setSessionCookie(sessionToken: string): Promise<void> {
   const cookieStore = await cookies();
