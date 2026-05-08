@@ -15,3 +15,11 @@ export {
 export type { DemoContext } from './sessionContext';
 
 export { demoExtension } from './clientExtension';
+
+export {
+  cloneSeedToSession,
+  DEMO_ADMIN_USERNAME,
+} from './cloneSeedToSession';
+export type { CloneStats, CloneResult } from './cloneSeedToSession';
+
+export { SeedNotFoundError } from './SeedNotFoundError';

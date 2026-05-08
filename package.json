@@ -20,6 +20,7 @@
     "db:migrate": "pnpm --filter @simple-cms/db migrate",
     "db:studio": "pnpm --filter @simple-cms/db studio",
     "db:seed": "pnpm --filter @simple-cms/db seed",
+    "db:demo-seed": "pnpm --filter @simple-cms/db demo-seed",
     "db:pgroonga": "pnpm --filter @simple-cms/db pgroonga:setup",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
