@@ -15,6 +15,8 @@
     "studio": "prisma studio",
     "seed": "prisma db seed",
     "demo-seed": "tsx prisma/demo-seed.ts",
+    "demo-export": "tsx --env-file=../../.env scripts/demo-export.ts",
+    "demo-import": "tsx --env-file=../../.env scripts/demo-import.ts",
     "pgroonga:setup": "tsx prisma/pgroonga-setup.ts"
   },
   "prisma": {
@@ -32,6 +34,8 @@
     "@prisma/client": "^7.7.0",
     "@prisma/client-runtime-utils": "^7.7.0",
     "bcryptjs": "^3.0.3",
-    "dotenv": "^17.4.1"
+    "dotenv": "^17.4.1",
+    "sharp": "^0.34.5",
+    "zod": "^3.25.76"
   }
 }

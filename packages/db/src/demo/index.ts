@@ -32,3 +32,35 @@ export type {
   StorageCleanupFn,
   StorageCleanupResult,
 } from './cleanupSessions';
+
+// PR6 — snapshot export/import
+export { exportSnapshot } from './exportSnapshot';
+export type { ExportOptions } from './exportSnapshot';
+
+export { importSnapshotToSeed } from './importSnapshot';
+export type { ImportOptions, ImportStats } from './importSnapshot';
+
+export { resetSeedData } from './resetSeedData';
+export type {
+  ResetSeedDataOptions,
+  ResetSeedDataResult,
+} from './resetSeedData';
+
+export {
+  processMediaForExport,
+  createLocalMediaDownloader,
+  createSupabaseMediaDownloader,
+  extractStorageKeyFromUrl,
+} from './exportMedia';
+export type {
+  ProcessedMediaResult,
+  SupabaseDownloader,
+} from './exportMedia';
+
+export { walkSnapshotForRemap } from './snapshotWalker';
+
+export {
+  snapshotPayloadSchema,
+  SNAPSHOT_SCHEMA_VERSION,
+} from './snapshot.types';
+export type { SnapshotPayload } from './snapshot.types';

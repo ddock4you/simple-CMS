@@ -2,12 +2,21 @@ export { prisma } from './client';
 
 export * as demo from './demo';
 
-// 시연 모드 클론 + 에러 + cleanup — 자주 쓰이는 진입점이라 top-level에도 노출
+// 시연 모드 클론 + 에러 + cleanup + snapshot — 자주 쓰이는 진입점이라 top-level에도 노출
 export {
   cloneSeedToSession,
   DEMO_ADMIN_USERNAME,
   SeedNotFoundError,
   cleanupExpiredSessions,
+  exportSnapshot,
+  importSnapshotToSeed,
+  resetSeedData,
+  snapshotPayloadSchema,
+  SNAPSHOT_SCHEMA_VERSION,
+  createLocalMediaDownloader,
+  createSupabaseMediaDownloader,
+  extractStorageKeyFromUrl,
+  processMediaForExport,
 } from './demo';
 export type {
   CloneStats,
@@ -16,6 +25,10 @@ export type {
   CleanupResult,
   StorageCleanupFn,
   StorageCleanupResult,
+  ExportOptions,
+  ImportOptions,
+  ImportStats,
+  SnapshotPayload,
 } from './demo';
 
 export {
