@@ -34,6 +34,7 @@ const FULL_PERMISSIONS = {
   auditLogs: { read: true },
   errorLogs: { read: true, update: true },
   settings: { read: true, update: true },
+  'demo-snapshot': { read: true, create: true, update: true },
 };
 
 const DEFAULT_PERMISSIONS = {

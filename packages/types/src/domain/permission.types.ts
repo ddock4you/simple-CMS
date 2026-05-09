@@ -12,7 +12,8 @@ export type ResourceKey =
   | 'roles'
   | 'auditLogs'
   | 'errorLogs'
-  | 'settings';
+  | 'settings'
+  | 'demo-snapshot';
 
 export type Action = 'create' | 'read' | 'update' | 'delete';
 
@@ -54,6 +55,10 @@ export const RESOURCE_ACTIONS: Record<ResourceKey, ResourceAction> = {
   auditLogs: { name: '감사 로그', actions: ['read'] },
   errorLogs: { name: '에러 로그', actions: ['read', 'update'] },
   settings: { name: '사이트 설정', actions: ['read', 'update'] },
+  'demo-snapshot': {
+    name: '시연 스냅샷',
+    actions: ['read', 'create', 'update'],
+  },
 };
 
 export type PermissionMap = {
