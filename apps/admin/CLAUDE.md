@@ -147,6 +147,7 @@ src/
 /settings/roles         # 권한 관리 (역할 목록 + 메뉴별 CRUD 매트릭스)
 /settings/branding      # 사이트 브랜딩 + SEO 메타데이터 (Stage 7l — 로고/favicon/OG/사이트명·설명)
 /settings/seo           # SEO 설정 (Stage 9 — sitemap URL 안내 + robots.txt 추가 Disallow)
+/settings/demo-snapshot # 시연 스냅샷 (시연 PR7 — export/import 미리보기 통계 + 다운로드 + 즉시 적용)
 ```
 
 ## 기능별 상세 스펙

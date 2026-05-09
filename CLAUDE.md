@@ -387,7 +387,7 @@ apps/{앱}/
 | 4 | Step 4 + 5 + 7(부분) | demo-seed.ts + cloneSeedToSession + bootstrap API + admin/web layout gate + login/register 우회 + cookie/Session 1h TTL | **완료** (b7afa51 / b56cc0a / 30901d6) |
 | 5 | Step 6 + 7(cleanup) + 8 | supabaseAdapter sessionId prefix + `__SEED__` delete 가드 + `cleanupExpiredSessions` 헬퍼 + `/api/demo/cleanup`(Vercel Hobby cron `0 3 * * *`) + `/api/demo/reset` + lazy cleanup 5%(`after()`) + DemoBanner(admin AlertDialog / web native confirm) + sticky chain(`--demo-banner-h` CSS 변수) | **완료** |
 | 6 | Step 9 + 11 + CLI | snapshot export/import 코어 + walker(mediaId/boardId 위치별 분기 — HERO/RECOMMENDED `slides[].mediaId` / IMAGE `imageMediaId` / RICH_TEXT Tiptap recursion / SubpageVersion.snapshot) + sharp 1600px 리사이즈 + `__SEED__` 단일 출처 무결성(`cleanupSeedFolder()` + `resetSeedData()`) + cuid 재생성 + `uploadedById = null` anonymization + Phase 1(트랜잭션 밖 upload)/Phase 2($transaction) 분리 + `/api/demo/snapshot/{export,import}` + CLI `pnpm demo:export` / `pnpm demo:import` + `demo-snapshot` 권한 리소스 신규 | **완료** |
-| 7 | Step 10 | snapshot Admin UI (`/settings/demo-snapshot` 패널 + SettingsNav 7번째 탭 + 미리보기 통계 + 다운로드 버튼 + 즉시 적용 AlertDialog) | 대기 |
+| 7 | Step 10 | snapshot Admin UI (`/settings/demo-snapshot` Server Page + 14모델 row count + Media size StatCard + DemoSnapshotForm Client + [내보내기] blob download + [Supabase 즉시 적용] file input + AlertDialog confirm + SettingsNav 7번째 탭 권한 게이팅) | **완료** |
 
 **PR4 visitor 진입 흐름** (시크릿 창 첫 방문):
 1. `http://demo.example.com/` 또는 `/_cms/admin/dashboard` 접근 → cookie `session-token` 없음
