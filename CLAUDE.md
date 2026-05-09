@@ -352,6 +352,24 @@ apps/{앱}/
 - `apps/admin/src/widgets/admin-header/ui/AdminHeader.tsx` — `top-0` → `top-[var(--demo-banner-h,0px)]` (banner 마운트 시 자동 36px 보정)
 - `apps/admin/src/shared/ui/PageToolbar.tsx` — `top-14` → `top-[calc(3.5rem+var(--demo-banner-h,0px))]` (sticky chain 자동 보정, 비DEMO 영향 0)
 
+**Snapshot Export/Import + CLI (PR6)**
+- `packages/db/src/demo/snapshot.types.ts` — Zod `snapshotPayloadSchema` v1 + 14모델 row 타입(SnapshotRoleRow, SnapshotMediaRow, ...). User.password 의도적 제외, Media.uploadedById null로 anonymize, Media에 `base64Data` 첨부
+- `packages/db/src/demo/snapshotWalker.ts` — `walkSnapshotForRemap(payload, idMap, kind)` in-place mediaId/boardId 재매핑. 위치별 field name 분기(HERO/RECOMMENDED `slides[].mediaId` / IMAGE `imageMediaId` / RICH_TEXT Tiptap recursion / SubpageVersion.snapshot meta+blocks / HomePopup CONTENT). Tiptap image 노드 `attrs.mediaId` 재귀
+- `packages/db/src/demo/exportMedia.ts` — sharp 1600px 리사이즈(`withoutEnlargement`) + JPEG quality 80 (image/jpeg|png|webp만 — SVG/GIF/PDF 원본 유지) + provider별 downloader factory(`createLocalMediaDownloader` / `createSupabaseMediaDownloader`) + `extractStorageKeyFromUrl`
+- `packages/db/src/demo/exportSnapshot.ts` — `exportSnapshot({sourceSessionId, downloadMedia, urlToStorageKey, concurrency=4})`. 14모델 findMany + Media binary 처리 (`p-limit`-style worker pool) + `runWithBypass` 자동 wrap
+- `packages/db/src/demo/resetSeedData.ts` — `cleanupExpiredSessions`와 분리된 별도 헬퍼. `__SEED__` row 14모델 deleteMany 자식→부모 순 + cleanupStorage 콜백 위임. RESERVED 가드 우회를 명시적 진입점으로 격리
+- `packages/db/src/demo/importSnapshot.ts` — `importSnapshotToSeed(rawPayload, {uploadMedia, cleanupStorage})`. Phase 0(Zod) → Phase 1(트랜잭션 밖: resetSeedData + Media upload + URL/idMap 빌드 + walker remap) → Phase 2(`prisma.$transaction(60s)`: 14모델 createMany + NavigationMenuItem 2-pass parentId + uploadedById 일괄 null + User.password placeholder hash). cuid 사전 생성 — source DB id 보존 X (디버깅 깨끗한 provenance)
+- `apps/admin/src/shared/lib/storage/supabaseAdapter.ts` — PR5 가드 우회 진입점 2개 신규: `cleanupSeedFolder()` (2-pass list/remove `__SEED__/`만), `uploadToSeed(key, buffer, mime)` (`__SEED__/` 경로만 허용 + 안전장치). 기존 `delete()`의 silent 가드와 분리 — visitor 액션 경로는 import 금지
+- `apps/admin/app/api/demo/snapshot/export/route.ts` — GET. `requirePermission('demo-snapshot', 'create')`. provider별 downloader 콜백 구성 + `Content-Disposition: attachment; filename=demo-snapshot-{ISO}.json`. 감사 로그 `entityType: 'SITE_SETTINGS'` 재사용 + `entityId: 'DEMO_SNAPSHOT_EXPORT'`(schema migration 회피)
+- `apps/admin/app/api/demo/snapshot/import/route.ts` — POST. `DEMO_MODE !== 'true'` → 503 강제 (운영 import 차단), `requirePermission('demo-snapshot', 'update')`, 50MB 한도, Supabase 어댑터 검증. 감사 로그 `entityId: 'DEMO_SNAPSHOT_IMPORT'`
+- `packages/db/scripts/demo-export.ts` + `demo-import.ts` — CLI. demo-import는 `DEMO_MODE === 'true'` + `STORAGE_PROVIDER=supabase` 강제 가드 (운영 DB 사고 차단). dotenv 로드 + 자체 PrismaClient + Supabase 클라이언트 inline upload/cleanup 콜백
+- `packages/db/package.json` + 루트 `package.json` — `pnpm demo:export <out>` / `pnpm demo:import <in>` 스크립트 등록
+- `packages/types/src/domain/permission.types.ts` — `'demo-snapshot'` ResourceKey + RESOURCE_ACTIONS({read, create, update}). 일반 관리자 DEFAULT_PERMISSIONS 미추가 — 운영자 전용 (총괄 관리자만 자동 부여)
+- `packages/db/prisma/seed.ts` + `demo-seed.ts` — FULL_PERMISSIONS에 `demo-snapshot` 추가
+- `packages/db/src/demo/snapshotWalker.test.ts` — 14건 단위 테스트 (HERO/RECOMMENDED/LATEST_POSTS/IMAGE/RICH_TEXT/HomePopup/SubpageVersion/Post/edge case)
+
+**의존성 추가**: `packages/db`에 `sharp ^0.34.5` + `zod ^3.25.76`
+
 ### master 브랜치 단일 스택 운영
 
 - master 한 곳에 운영·시연 코드가 공존 — `DEMO_MODE` 환경변수로 분기
@@ -368,7 +386,8 @@ apps/{앱}/
 | 3 | Step 3 | Prisma extension + AsyncLocalStorage + composite unique 전환 + raw SQL 격리 | **완료** (59c1adc) |
 | 4 | Step 4 + 5 + 7(부분) | demo-seed.ts + cloneSeedToSession + bootstrap API + admin/web layout gate + login/register 우회 + cookie/Session 1h TTL | **완료** (b7afa51 / b56cc0a / 30901d6) |
 | 5 | Step 6 + 7(cleanup) + 8 | supabaseAdapter sessionId prefix + `__SEED__` delete 가드 + `cleanupExpiredSessions` 헬퍼 + `/api/demo/cleanup`(Vercel Hobby cron `0 3 * * *`) + `/api/demo/reset` + lazy cleanup 5%(`after()`) + DemoBanner(admin AlertDialog / web native confirm) + sticky chain(`--demo-banner-h` CSS 변수) | **완료** |
-| 6+ | Step 9~11 | snapshot export 백엔드(17모델 + Media base64 + Tiptap walker + sharp 1600px) / Admin UI / CLI(demo-export·demo-import) | 대기 |
+| 6 | Step 9 + 11 + CLI | snapshot export/import 코어 + walker(mediaId/boardId 위치별 분기 — HERO/RECOMMENDED `slides[].mediaId` / IMAGE `imageMediaId` / RICH_TEXT Tiptap recursion / SubpageVersion.snapshot) + sharp 1600px 리사이즈 + `__SEED__` 단일 출처 무결성(`cleanupSeedFolder()` + `resetSeedData()`) + cuid 재생성 + `uploadedById = null` anonymization + Phase 1(트랜잭션 밖 upload)/Phase 2($transaction) 분리 + `/api/demo/snapshot/{export,import}` + CLI `pnpm demo:export` / `pnpm demo:import` + `demo-snapshot` 권한 리소스 신규 | **완료** |
+| 7 | Step 10 | snapshot Admin UI (`/settings/demo-snapshot` 패널 + SettingsNav 7번째 탭 + 미리보기 통계 + 다운로드 버튼 + 즉시 적용 AlertDialog) | 대기 |
 
 **PR4 visitor 진입 흐름** (시크릿 창 첫 방문):
 1. `http://demo.example.com/` 또는 `/_cms/admin/dashboard` 접근 → cookie `session-token` 없음
@@ -820,3 +839,4 @@ shared/lib/
 - `react-cms-개발-설계-해설서.md` — 설계 판단의 "왜"
 - `react-cms-README-요약본.md` — 프로젝트 요약
 - `react-cms-커스텀-도메인-명세서.md` — 커스텀 도메인 설정 기능 명세
+- `react-cms-시연모드-배포-가이드.md` — 시연 모드 Vercel + Supabase 일괄 배포 절차 (환경변수 마스터 리스트, DB 초기화, 시드 적재, cron 검증, 문제 해결)
