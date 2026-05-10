@@ -514,7 +514,7 @@ apps/{앱}/
 | 7k-3 | addon-vitest 30s cold start 탐사 (measure-first) [[상세]](docs/stages/stage-7k-3.md) | primary source 확인(`storybookScript`는 watch 전용, `disableAddonDocs` 기본 true) + `browser.isolate: false` 시도 결과 10초 기준 미달로 revert. Stage 8+ 이연 | **완료 (findings only)** |
 | 7l   | 사이트 브랜딩 + SEO 메타데이터 (로고/favicon/OG/사이트명·설명) [[상세]](docs/stages/stage-7l.md) | admin `/settings/branding` 5번째 탭에서 6키 통합 관리 + web 헤더 동적 로고 + `generateMetadata`로 title/description/icons/openGraph 자동 반영 | **완료** |
 | 7m   | 서브페이지 버전 관리 (이력 / 롤백 / 작성자 필터 · admin 미리보기) [[상세]](docs/stages/stage-7m.md) | `SubpageVersion` 단일 JSON 스냅샷 + 명시적 [버전 저장] + DRAFT→PUBLISHED AUTO_PUBLISH + 소프트 롤백 (PRE_ROLLBACK 자동 백업) + 깃 스타일 메모 + 낙관 동시성(`Subpage.revision`) + 보존 30개 lazy cleanup | **완료** |
-| 8    | Docker + CI/CD + 문서화                                             | `docker compose up`으로 전체 실행                                                           | 대기     |
+| 8    | Docker + CI/CD + 문서화 ([Stage 8 사전 계획](#stage-8-사전-계획-다음-컨텍스트-핸드오프)) | sub-stage 4분할 — 8a(Docker compose 통합) / 8b(GitHub Actions CI matrix) / 8c(Playwright E2E CI + 시연 keepalive) / 8d(운영 self-host 배포 가이드). 시연 모드 PR1~7 인프라 + Stage 11e e2e + Stage 12j RBAC matrix 위에서 자동화 | 대기 |
 | 9    | SEO 기반 구축 (sitemap + robots + 페이지별 SEO + Schema.org JSON-LD) [[상세]](docs/stages/stage-9.md) | `/sitemap.xml`·`/robots.txt` 자동 생성 + Post에 seoTitle/seoDescription + Article/BreadcrumbList/Organization/WebSite JSON-LD + admin `/settings/seo` 탭에서 robots 추가 Disallow 관리 | **완료** |
 | 10   | 사용자 피드백 (서브페이지 만족도 조사 + admin 통계/차트) [[상세]](docs/stages/stage-10.md) | KRDS 가이드 + Figma 시안 기반 네/아니오 + 긍정 이유 3개 + 자유 텍스트 / SubpageForm `feedbackEnabled` 토글(opt-in) / `/api/feedback` 익명 수집(IP 해싱 + 24h rate limit + preview 차단) / admin `/subpage-feedback`에서 recharts 통계 + 목록 + 삭제 / SubpageVersion 스냅샷에 `feedbackEnabled` 포함 | **완료** |
 
@@ -581,6 +581,66 @@ apps/{앱}/
 | 15c-3d | Card baseline 보정 (rounded-xl→lg, py-4→py-6, px-4→px-6, CardTitle text-base→text-lg semibold, CardDescription text-sm→text-xs) + StatCard/Auth 예외 유지 + text-base override 4곳 제거 [[상세]](docs/stages/stage-15c-3d.md) | typecheck·lint·build 통과 | **완료** |
 | 15c-3e | AlertDialog size 토큰 3-tier (confirm/default/wide) + shadcn type 확장 + AlertDialog.tsx wrapper 함수화 + 10 호출처 size prop 마이그레이션 (8 BulkXxx→wide, DeleteMedia→default, RestoreVersion className 제거) [[상세]](docs/stages/stage-15c-3e.md) | typecheck·lint·build 통과 | **완료** |
 | 15c-3f | 폼 컨트롤 height 통일 (32px baseline) — Button wrapper 신설 + sm h-8 override + ESLint 가드 + 92 imports 마이그레이션 (shadcn/button.tsx 무수정) + audit-logs Excel 패턴 정렬 (화면 필터 그대로 사용) + design.md height 토큰 신설 + AUDIT_LOG enum [[상세]](docs/stages/stage-15c-3f.md) | typecheck·lint·build 통과 + audit-logs Excel이 화면 필터 반영 | **완료** |
+
+## Stage 8 사전 계획 (다음 컨텍스트 핸드오프)
+
+> **다음 컨텍스트에서 "Stage 8 진행" 요청을 받으면 이 섹션을 먼저 읽고 시작.**
+> 이 섹션은 컨텍스트 단절을 넘어 작업이 즉시 이어지도록 정해진 결정과 진입점을 기록한다.
+
+### 진행 방식 (PR4~7 패턴 일관)
+
+1. **plan 단계로 시작** — `claude /plan` 또는 plan mode 진입. 사용자가 명시적으로 plan을 요청하지 않더라도 큰 Stage라 plan 작성이 안전
+2. Explore agent 1~2개로 현재 인프라 파악:
+   - `docker/docker-compose.yml`(이미 PGroonga 컨테이너 존재) + `apps/{admin,web}/Dockerfile` 유무
+   - `.github/workflows/` 디렉토리 (Stage 7j에서 만든 admin/web × {lint, typecheck, test} 6 job — 이미 있는지 확인)
+   - `playwright.config.ts` + `e2e/` (Stage 11e + Stage 12j 결과물 — 그대로 활용)
+3. advisor 호출로 sub-stage 우선순위 / Dockerfile multi-stage build 전략 / CI 캐싱 전략 검증
+4. AskUserQuestion으로 결정 — Hobby vs Pro Vercel plan 영향 / self-host 시연 옵션 포함 여부 / e2e CI 시 시연 모드 환경 mock 여부
+5. plan 파일 작성 → ExitPlanMode → 4개 sub-PR로 분할 commit
+
+### Sub-stage 분할
+
+| Sub | 핵심 변경 | 재사용 가능 자산 | 의존성 |
+|---|---|---|---|
+| **8a** Docker Compose 통합 | `docker/docker-compose.yml` 확장(PG + admin + web) + `apps/admin/Dockerfile` + `apps/web/Dockerfile` (multi-stage build, pnpm workspace 인식) + `.dockerignore` + `docker compose up`으로 전체 실행 검증 | 기존 PGroonga 컨테이너(`groonga/pgroonga`) + 모노레포 pnpm workspace 구조 + `pnpm db:push` / `pnpm db:pgroonga` | 없음 |
+| **8b** GitHub Actions CI matrix | `.github/workflows/ci.yml` — admin/web × {lint, typecheck, unit test, storybook test, build} 매트릭스. Stage 7j에서 만든 6 job을 push/PR 자동 트리거로 정착. pnpm cache + Turbo cache | Stage 7j의 `test.dependsOn` 정리 + Stage 12 단위 테스트 + storybook play function | 8a 무관 |
+| **8c** Playwright E2E + 시연 keepalive | `.github/workflows/e2e.yml` (workflow_dispatch + nightly cron). Stage 11e e2e + Stage 12j RBAC matrix를 CI에서 실행. 8a Docker compose로 e2e 환경 구성. 시연 모드 keepalive(`docs/react-cms-시연모드-배포-가이드.md` 7장 참조)도 같은 workflow 인프라 | Stage 11e `e2e/` 골든 플로우 5단계 + Stage 12j RBAC 매트릭스 | 8a 의존 |
+| **8d** 운영 self-host 배포 가이드 | `docs/react-cms-운영-배포-가이드.md` 신규(시연 가이드와 별도). Docker self-host + Supabase prod 옵션 + 환경변수 마스터 + 백업/복원 + PGroonga 인덱스 재구축. 운영 미마이그레이션(`pnpm db:push` 1회) 절차 | 시연 가이드(`docs/react-cms-시연모드-배포-가이드.md`) 형식 차용 | 8a~c 권장 (검증된 인프라 기반 가이드) |
+
+총 예상 4.5일 (1인 풀타임) / 1주~1.5주 (파트 타임).
+
+### 알려진 의존성 / 함정
+
+1. **Stage 11e `e2e/` 폴더는 이미 존재** — Stage 11e CLAUDE.md 노트에 "CI 통합은 Stage 8(Docker) 이후"로 명시. 8c가 그 약속을 이행
+2. **시연 모드 인프라는 Vercel 배포 전용** — Stage 8은 운영 self-host 옵션도 다룸. 두 트랙 분리 명확화 필요
+3. **Stage 7j addon-vitest cold start** — `node_modules/.cache/storybook` + `.vite` 캐시 이슈가 CI에서도 재현될 가능성. 8b에서 cache restore 전략 결정 필요 (Stage 7j 사전학습 문서 참조)
+4. **Stage 7k-3 미적용 항목** — `browser.isolate: false` 시도가 측정 미달로 revert됐고 "Stage 8+ 이연"으로 표시. 8b에서 재평가 가능
+5. **Hobby plan cron 슬롯 2개** — 시연 cleanup 1개 사용 중. 8c에서 keepalive 추가하면 1개 더. 운영 healthcheck 같은 추가 cron 도입 시 plan upgrade 필요
+6. **PostgreSQL + PGroonga Docker 이미지** — `groonga/pgroonga`가 이미 사용 중. admin/web Dockerfile에서 sharp + Prisma binary가 alpine 호환성 이슈 가능성 (검증 필요)
+7. **모노레포 pnpm workspace** — Dockerfile에서 workspace 의존성 해석은 `pnpm fetch` + `pnpm install --offline` 패턴 권장. multi-stage build에서 deps 캐싱 정확도가 빌드 속도에 직결
+
+### Stage 8 시작 시 첫 명령
+
+```bash
+# 1. plan mode 진입
+claude /plan
+
+# 2. 현재 Docker 인프라 파악 (Explore agent에 위임 권장)
+ls docker/
+cat docker/docker-compose.yml
+ls apps/admin/Dockerfile apps/web/Dockerfile 2>/dev/null
+ls .github/workflows/
+
+# 3. plan 파일 작성 후 ExitPlanMode → 8a부터 구현
+```
+
+### Stage 8 시점에 확인할 컨텍스트
+
+- 루트 CLAUDE.md "시연 모드 격리 인프라" 섹션 — Stage 8c keepalive와 시너지
+- `docs/react-cms-시연모드-배포-가이드.md` — Stage 8d 운영 가이드 형식 참조
+- Stage 7j 학습 문서(있다면) — addon-vitest CI 함정 + cache 전략
+- Stage 11e 학습 문서 — e2e 골든 플로우 시나리오
+- Stage 12j 학습 문서 — RBAC matrix e2e
 
 ## 명령어
 
