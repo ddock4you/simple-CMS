@@ -47,8 +47,12 @@ docker/data/
 *.log
 *.tsbuildinfo
 
-# docs/
-docs/learning
+docs/
+next-env.d.ts
+settings.local.json
+
+# 시연 모드 PR6 dev 산출물 (snapshot export 검증용 임시 파일)
+packages/db/*snapshot*.json
 
 # Next.js dev 서버 자체 서명 인증서 (--experimental-https로 자동 생성)
 apps/web/certificates/
