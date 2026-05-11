@@ -1,0 +1,103 @@
+name: Demo Keepalive
+
+# Supabase Free plan은 일정 기간 미사용 시 DB가 dormant 상태로 전환된다.
+# 시연 URL을 주기적으로 ping하여 dormant 진입을 방지한다.
+#
+# 운영자 사전 설정 (Settings → Secrets and variables → Actions → Variables):
+#   - DEMO_URL: 시연 사이트 base URL (예: https://demo.example.com)
+#     미설정 시 워크플로우가 명확한 에러 메시지와 함께 즉시 실패.
+#
+# Vercel cron 슬롯과 무관 — GitHub Actions cron이므로 Hobby plan에 영향 없음.
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # 6시간마다 (UTC 00/06/12/18시). Supabase 7일 dormant 회피 + 안전 margin
+  workflow_dispatch:
+
+concurrency:
+  group: demo-keepalive
+  cancel-in-progress: true  # 이전 ping이 hang이면 새 ping이 인계
+
+jobs:
+  ping:
+    name: Ping demo URL
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify DEMO_URL is configured
+        env:
+          DEMO_URL: ${{ vars.DEMO_URL }}
+        run: |
+          if [ -z "$DEMO_URL" ]; then
+            echo "::error::DEMO_URL repo variable not set. Settings → Secrets and variables → Actions → Variables 에서 DEMO_URL 등록 필요."
+            exit 1
+          fi
+          echo "Target: $DEMO_URL"
+
+      - name: Ping demo URL
+        id: ping
+        env:
+          DEMO_URL: ${{ vars.DEMO_URL }}
+        run: |
+          # -fSL: HTTP 4xx/5xx 시 fail + redirect 따라가기 + 에러 출력
+          # --max-time 60: 1분 timeout (dormant wake-up 여유)
+          # -o /dev/null + -w: body 버리고 status code만 출력
+          status=$(curl -sSL --max-time 60 -o /dev/null -w "%{http_code}" "$DEMO_URL" || echo "000")
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
+            echo "::notice::Demo URL OK (HTTP $status)"
+          else
+            echo "::error::Demo URL ping failed (HTTP $status)"
+            exit 1
+          fi
+
+      # 실패 시 GitHub issue 자동 생성 (중복 방지: 같은 제목의 open issue 있으면 comment 추가)
+      - name: Create issue on failure
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        env:
+          DEMO_URL: ${{ vars.DEMO_URL }}
+        with:
+          script: |
+            const title = '[demo-keepalive] 시연 URL ping 실패';
+            const body = [
+              '## 자동 keepalive 실패',
+              '',
+              `- Demo URL: ${process.env.DEMO_URL || '(unset)'}`,
+              `- 실패 시각: ${new Date().toISOString()}`,
+              `- Workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              '## 점검 절차',
+              '1. Vercel 배포 상태 확인 (admin/web 빌드 실패 여부)',
+              '2. Supabase 프로젝트 상태 확인 (dormant 진입 시 Dashboard에서 wake-up)',
+              '3. DEMO_URL repo variable 값 검증',
+              '',
+              '같은 제목의 open issue가 이미 있다면 이 message는 comment로 추가됩니다.',
+            ].join('\n');
+
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'demo-keepalive',
+            });
+
+            const existing = openIssues.find((i) => i.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+              core.notice(`Commented on existing issue #${existing.number}`);
+            } else {
+              const { data: created } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['demo-keepalive'],
+              });
+              core.notice(`Created issue #${created.number}`);
+            }

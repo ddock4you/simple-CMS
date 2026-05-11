@@ -1,0 +1,115 @@
+name: E2E
+
+# Playwright E2E 골든 플로우 + admin/web spec + RBAC matrix 정착 워크플로우.
+# 기존 ci.yml의 e2e job을 분리해 nightly cron + manual dispatch로 운영한다.
+#
+# 실행 조건:
+#   1. nightly cron — UTC 17:00 = KST 02:00 (트래픽 낮은 시간대)
+#   2. workflow_dispatch — 수동 트리거 (PR 머지 직후 회귀 확인 등)
+#   3. push to main — main 브랜치 머지 직후 자동 회귀 검증
+#
+# Secrets (Settings → Secrets and variables → Actions):
+#   - E2E_ADMIN_PASSWORD (선택): seed 기본 'changeme123' 외 패스워드 사용 시 등록.
+#     미설정 시 INITIAL_ADMIN_PASSWORD env → seed 기본값 폴백.
+#   - INITIAL_ADMIN_USERNAME / INITIAL_ADMIN_PASSWORD (선택): seed 시점 admin 계정 커스터마이즈.
+
+on:
+  schedule:
+    - cron: '0 17 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: false  # nightly + push 중첩 시 둘 다 완료 보장 (cancel 시 불완전 cleanup 위험)
+
+jobs:
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: groonga/pgroonga:latest-alpine-17-slim
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: simple_cms_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/simple_cms_e2e
+      SESSION_SECRET: ci-test-session-secret-not-for-production
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      WEB_BASE_URL: http://localhost:3000
+      FEEDBACK_IP_SALT: ci-test-feedback-salt
+      INITIAL_ADMIN_USERNAME: ${{ secrets.INITIAL_ADMIN_USERNAME || 'admin' }}
+      INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD || 'changeme123' }}
+      E2E_ADMIN_USERNAME: ${{ secrets.INITIAL_ADMIN_USERNAME || 'admin' }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD || secrets.INITIAL_ADMIN_PASSWORD || 'changeme123' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Setup database (push + pgroonga + seed)
+        run: |
+          pnpm db:generate
+          pnpm db:push
+          pnpm db:pgroonga
+          pnpm db:seed
+
+      - name: Build admin + web
+        run: |
+          pnpm --filter @simple-cms/admin build
+          pnpm --filter @simple-cms/web build
+
+      - name: Start admin + web (background)
+        run: |
+          pnpm --filter @simple-cms/admin start > admin.log 2>&1 &
+          pnpm --filter @simple-cms/web start > web.log 2>&1 &
+
+      - name: Wait for servers
+        run: |
+          npx wait-on http://localhost:3001/login http://localhost:3000 \
+            --timeout 60000 --interval 2000
+
+      - name: Run E2E
+        run: pnpm e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload server logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-logs
+          path: |
+            admin.log
+            web.log
+          retention-days: 7

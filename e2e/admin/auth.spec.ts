@@ -11,10 +11,11 @@ const ADMIN_CREDS = {
     process.env.E2E_ADMIN_USERNAME ??
     process.env.INITIAL_ADMIN_USERNAME ??
     'admin',
+  // seed.ts 기본값과 일치 — CI는 E2E_ADMIN_PASSWORD secret 또는 INITIAL_ADMIN_PASSWORD env 주입
   password:
     process.env.E2E_ADMIN_PASSWORD ??
     process.env.INITIAL_ADMIN_PASSWORD ??
-    'tmdgus123!',
+    'changeme123',
 };
 
 // ── 헬퍼 ────────────────────────────────────────────────────────────────────
