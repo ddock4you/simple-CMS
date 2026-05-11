@@ -6,11 +6,6 @@ on:
   push:
     branches: [main, 'feature/**']
   workflow_dispatch:
-    inputs:
-      run_e2e:
-        description: 'E2E 테스트 실행 (postgres + 서버 필요)'
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -29,8 +24,33 @@ jobs:
       - name: FSD 아키텍처 검사
         run: node scripts/check-fsd.mjs
 
-  # ── 앱별 lint / typecheck / test (unit + storybook) ──────────────────────────
+  # ── packages/* 직접 typecheck ─────────────────────────────────────────────────
+  # admin/web typecheck로 transitively 검증되지만, packages만 변경하는 PR에서
+  # turbo 캐시로 admin/web typecheck가 skip될 수 있어 직접 job으로 보장.
+  packages-typecheck:
+    name: packages / typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run packages typecheck
+        run: pnpm --filter "./packages/*" typecheck
+
+  # ── 앱별 lint / typecheck / test / build ─────────────────────────────────────
   # test 태스크는 Vitest 2-track(unit jsdom + storybook Playwright Chromium)을 실행한다.
+  # build 태스크는 Dockerfile/Vercel 빌드 회귀 PR 차단용. .next/cache로 인크리멘털 빌드 가속.
   test:
     name: ${{ matrix.app }} / ${{ matrix.task }}
     runs-on: ubuntu-latest
@@ -38,7 +58,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [admin, web]
-        task: [lint, typecheck, test]
+        task: [lint, typecheck, test, build]
     steps:
       - uses: actions/checkout@v4
 
@@ -59,98 +79,41 @@ jobs:
         if: matrix.task == 'test'
         run: pnpm exec playwright install --with-deps chromium
 
+      # Storybook addon-vitest cold start 가속용 캐시 (Stage 7k-3 보류 항목 — measure-first)
+      # 효과 측정 후 keep/revert 결정. 캐시 hit 없으면 skip되므로 안전
+      - name: Cache Storybook addon-vitest deps
+        if: matrix.task == 'test'
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/${{ matrix.app }}/node_modules/.cache/storybook
+            apps/${{ matrix.app }}/node_modules/.vite
+          key: storybook-${{ matrix.app }}-${{ hashFiles('pnpm-lock.yaml', 'apps/${{ matrix.app }}/.storybook/**') }}
+          restore-keys: |
+            storybook-${{ matrix.app }}-
+
+      # build 태스크: Next.js incremental build 캐시
+      - name: Cache .next/cache
+        if: matrix.task == 'build'
+        uses: actions/cache@v4
+        with:
+          path: apps/${{ matrix.app }}/.next/cache
+          key: next-cache-${{ matrix.app }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/${{ matrix.app }}/**/*.{ts,tsx,js,jsx}') }}
+          restore-keys: |
+            next-cache-${{ matrix.app }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            next-cache-${{ matrix.app }}-
+
+      # build에서 prisma client 필요 (admin/web 모두 @simple-cms/db import)
+      - name: Generate Prisma client
+        if: matrix.task == 'build'
+        run: pnpm --filter @simple-cms/db generate
+
       - name: Run ${{ matrix.task }}
+        env:
+          # build 시 schema 파싱 + Next.js 빌드용 placeholder. 실 값은 runtime 주입
+          DATABASE_URL: ${{ matrix.task == 'build' && 'postgresql://placeholder:placeholder@placeholder:5432/placeholder' || '' }}
         run: pnpm --filter @simple-cms/${{ matrix.app }} ${{ matrix.task }}
 
-  # ── E2E (Playwright) — Stage 8 Docker + CI/CD 완료 후 자동 활성화 예정 ─────────
-  #
-  # 현재 실행 조건:
-  #   - workflow_dispatch 로 수동 트리거 시 run_e2e=true 로 설정
-  #   - 또는 저장소 Variables에 CI_E2E=true 설정 (로컬 self-hosted runner 등)
-  #
-  # 필요 환경:
-  #   - PostgreSQL (groonga/pgroonga 이미지)
-  #   - pnpm db:generate + db:push + db:seed + db:pgroonga
-  #   - admin(3001) + web(3000) 빌드 & 기동
-  #   - GitHub Secrets: DATABASE_URL, INITIAL_ADMIN_USERNAME, INITIAL_ADMIN_PASSWORD,
-  #     FEEDBACK_IP_SALT, NEXTAUTH_SECRET (또는 각 앱 필수 env)
-  e2e:
-    name: E2E / Playwright
-    runs-on: ubuntu-latest
-    if: |
-      (github.event_name == 'workflow_dispatch' && inputs.run_e2e == true) ||
-      vars.CI_E2E == 'true'
-    services:
-      postgres:
-        image: groonga/pgroonga:latest-alpine-16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: simple_cms_e2e
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/simple_cms_e2e
-      NEXTAUTH_SECRET: ci-test-secret-not-for-production
-      NEXTAUTH_URL: http://localhost:3001
-      NEXT_PUBLIC_SITE_URL: http://localhost:3000
-      FEEDBACK_IP_SALT: ci-test-salt
-      INITIAL_ADMIN_USERNAME: ${{ secrets.INITIAL_ADMIN_USERNAME || 'admin' }}
-      INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD || 'changeme123' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Setup database
-        run: |
-          pnpm db:generate
-          pnpm db:push
-          pnpm db:pgroonga
-          pnpm db:seed
-
-      - name: Build admin
-        run: pnpm --filter @simple-cms/admin build
-
-      - name: Build web
-        run: pnpm --filter @simple-cms/web build
-
-      - name: Start admin server
-        run: pnpm --filter @simple-cms/admin start &
-
-      - name: Start web server
-        run: pnpm --filter @simple-cms/web start &
-
-      - name: Wait for servers
-        run: |
-          npx wait-on http://localhost:3001/login http://localhost:3000 \
-            --timeout 60000 --interval 2000
-
-      - name: Run E2E tests
-        run: pnpm e2e
-
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
+  # ── E2E (Playwright) ──────────────────────────────────────────────────────────
+  # Stage 8c부터 .github/workflows/e2e.yml로 이관됨.
+  # nightly cron (UTC 17:00 = KST 02:00) + workflow_dispatch + main push 트리거.

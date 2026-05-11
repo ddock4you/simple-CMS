@@ -46,7 +46,7 @@ describe('walkSnapshotForRemap — HomeSection', () => {
     payload.models.HomeSection.push({
       id: 'sec-1',
       sectionType: 'HERO',
-      title: null,
+      title: 'test-section',
       configJson: {
         slides: [
           { imageUrl: '/u/a.jpg', imageAlt: 'a', title: 'A', mediaId: 'old-1' },
@@ -76,7 +76,7 @@ describe('walkSnapshotForRemap — HomeSection', () => {
     payload.models.HomeSection.push({
       id: 'sec-2',
       sectionType: 'RECOMMENDED',
-      title: null,
+      title: 'test-section',
       configJson: {
         heading: 'Picks',
         items: [{ imageUrl: '/u/c.jpg', imageAlt: 'c', title: 'C', mediaId: 'm-3' }],
@@ -99,7 +99,7 @@ describe('walkSnapshotForRemap — HomeSection', () => {
     payload.models.HomeSection.push({
       id: 'sec-3',
       sectionType: 'LATEST_POSTS',
-      title: null,
+      title: 'test-section',
       configJson: {
         heading: '최신 공지',
         boardId: 'board-old',
@@ -126,7 +126,7 @@ describe('walkSnapshotForRemap — HomeSection', () => {
     payload.models.HomeSection.push({
       id: 'sec-4',
       sectionType: 'LATEST_POSTS',
-      title: null,
+      title: 'test-section',
       configJson: { heading: 't', boardId: 'board-old', limit: 5 },
       isVisible: true,
       displayOrder: 3,
@@ -148,7 +148,7 @@ describe('walkSnapshotForRemap — HomeSection', () => {
     payload.models.HomeSection.push({
       id: 'sec-5',
       sectionType: 'HERO',
-      title: null,
+      title: 'test-section',
       configJson: {
         slides: [{ imageUrl: '/u/x.jpg', imageAlt: 'x', title: 'X', mediaId: 'unknown' }],
         slideOptions: {},
@@ -312,7 +312,7 @@ describe('walkSnapshotForRemap — HomePopup', () => {
     payload.models.HomePopup.push({
       id: 'pop-2',
       popupType: 'IMAGE',
-      title: null,
+      title: 'test-section',
       contentJson: tiptapLike,
       content: null,
       imageUrl: '/u/p.jpg',
@@ -455,7 +455,7 @@ describe('walkSnapshotForRemap — edge', () => {
     payload.models.HomeSection.push({
       id: 'sec-empty',
       sectionType: 'HERO',
-      title: null,
+      title: 'test-section',
       configJson: {
         slides: [{ imageUrl: 'x', imageAlt: 'x', title: 'X', mediaId: 'm1' }],
         slideOptions: {},

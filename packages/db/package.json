@@ -9,6 +9,7 @@
   },
   "scripts": {
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "generate": "prisma generate",
     "push": "prisma db push",
     "migrate": "prisma migrate dev",
@@ -23,6 +24,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "devDependencies": {
+    "@simple-cms/config": "workspace:*",
     "@types/bcryptjs": "^3.0.0",
     "prisma": "^7.7.0",
     "tsx": "^4.21.0",
