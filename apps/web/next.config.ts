@@ -10,6 +10,10 @@ const adminRewriteUrl = process.env.NEXT_PUBLIC_ADMIN_REWRITE_URL;
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@simple-cms/types', '@simple-cms/db', '@simple-cms/editor'],
+  // Docker self-host: standalone 산출물 + 모노레포 workspace deps tracing.
+  // outputFileTracingRoot가 없으면 .next/standalone에 @simple-cms/* 패키지가 빠짐.
+  output: 'standalone',
+  outputFileTracingRoot: path.resolve(__dirname, '../../'),
   // dev 서버를 LAN IP(예: 모바일 디바이스에서 192.168.x.x)로 접속할 때 chunk/HMR이
   // cross-origin으로 차단되어 hydration이 실패하는 문제를 해결.
   // Next.js 15.2+ top-level 옵션. wildcard 지원.

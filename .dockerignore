@@ -1,0 +1,34 @@
+# monorepo 중첩 디렉토리를 잡으려면 **/ 접두 필수
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/coverage
+
+# git/CI 잔재
+.git
+.github
+
+# 테스트 산출물
+e2e/test-results
+playwright-report
+test-results
+
+# IDE/에디터/로컬 도구 잔재
+.claude
+.vscode
+.idea
+*.log
+
+# 환경/시크릿 — 컨텍스트에 절대 포함 금지
+.env
+.env.*
+!.env.example
+
+# 도커 메타 파일 자체도 제외 (자기 자신 포함 방지)
+Dockerfile.probe
+.dockerignore
+
+# 문서/이미지 등 빌드와 무관한 무거운 자산
+docs
+*.md

@@ -10,6 +10,72 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ddock4you} -d ${POSTGRES_DB:-simple_cms}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  admin:
+    container_name: simple-cms-admin
+    build:
+      context: ..
+      dockerfile: apps/admin/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      # DB — compose 내부 네트워크에서 host=db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ddock4you}:${POSTGRES_PASSWORD:-tmdgus123!}@db:5432/${POSTGRES_DB:-simple_cms}
+      # 인증/세션
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-in-production}
+      INITIAL_ADMIN_USERNAME: ${INITIAL_ADMIN_USERNAME:-admin}
+      INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD:-changeme123}
+      # 피드백 IP 해싱 salt (운영 배포 전 강한 랜덤으로 교체)
+      FEEDBACK_IP_SALT: ${FEEDBACK_IP_SALT:-replace-me-with-strong-random-hex}
+      # 미디어 스토리지 — local provider가 web public dir에 직접 저장.
+      # WORKDIR 의존을 회피하기 위해 explicit override (advisor option b).
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      LOCAL_STORAGE_PUBLIC_DIR: /app/apps/web/public
+      # 공개 웹 base URL — preview/SEO 메타에 사용 (compose 내부 서비스명)
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      WEB_BASE_URL: ${WEB_BASE_URL:-http://web:3000}
+      # 시연 모드 (운영은 미설정)
+      DEMO_MODE: ${DEMO_MODE:-}
+      NEXT_PUBLIC_ADMIN_REWRITE_URL: ${NEXT_PUBLIC_ADMIN_REWRITE_URL:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+    ports:
+      - "3001:3001"
+    volumes:
+      # admin이 업로드한 파일을 web 컨테이너가 즉시 볼 수 있도록 양쪽 동일 경로 공유
+      - uploads_data:/app/apps/web/public/uploads
+    restart: unless-stopped
+
+  web:
+    container_name: simple-cms-web
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ddock4you}:${POSTGRES_PASSWORD:-tmdgus123!}@db:5432/${POSTGRES_DB:-simple_cms}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      FEEDBACK_IP_SALT: ${FEEDBACK_IP_SALT:-replace-me-with-strong-random-hex}
+      # 시연 모드 admin proxy (운영은 미설정)
+      DEMO_MODE: ${DEMO_MODE:-}
+      NEXT_PUBLIC_ADMIN_REWRITE_URL: ${NEXT_PUBLIC_ADMIN_REWRITE_URL:-}
+    ports:
+      - "3000:3000"
+    volumes:
+      # /uploads/* 정적 서빙용 — admin이 쓰는 동일 named volume read-only로 마운트
+      - uploads_data:/app/apps/web/public/uploads:ro
+    restart: unless-stopped
 
 volumes:
   pgdata:
+  uploads_data:
