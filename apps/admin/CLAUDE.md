@@ -1389,3 +1389,33 @@ entities → shared                   ✅
 - 시스템 역할(총괄 관리자) 삭제/권한 수정 불가
 - 마지막 총괄 관리자의 역할 변경 불가
 - 기본 역할 미설정 상태에서 가입 승인 불가
+
+## Docker 배포 (Stage 8a)
+
+운영 self-host 절차서: [`docs/react-cms-운영-배포-가이드.md`](../../docs/react-cms-운영-배포-가이드.md). 시연 모드(Vercel + Supabase)는 별도 트랙.
+
+### `apps/admin/Dockerfile` 구조
+
+Multi-stage build (4 stage): `base → deps → builder → runner`. 빌드 컨텍스트는 모노레포 root.
+
+- **base**: `node:22-bookworm-slim` + `corepack enable` (pnpm 10.33.0 고정)
+  - alpine 미선택 이유: Prisma binary(`debian-openssl-3.0.x`)와 `sharp` prebuilt 호환성 + 추가 binaryTarget 불필요
+- **deps**: package.json 7개 + lockfile만 먼저 복사 → `pnpm install --frozen-lockfile`. lockfile 변경 없으면 이 layer 재사용
+- **builder**: 소스 전체 + `pnpm db:generate` + `pnpm --filter @simple-cms/admin build`
+  - 빌드 시 `DATABASE_URL` placeholder 주입 (schema parse만 필요, 실제 연결 X)
+- **runner**: `.next/standalone` + `.next/static`만 복사 — admin은 `public/` 디렉토리 없음
+- 최종 image: ~426MB disk / ~100MB content. EXPOSE 3001, non-root `nextjs:1001`
+
+### `apps/admin/next.config.ts` Docker 핵심 옵션
+
+- `output: 'standalone'` — Next.js가 `.next/standalone/`에 최소 실행 산출물 + 필요 node_modules 트리만 분리
+- `outputFileTracingRoot: path.resolve(__dirname, '../../')` — **monorepo 필수**. 없으면 standalone tracer가 `@simple-cms/db|types|editor` 같은 workspace deps를 못 찾아 런타임 `Cannot find module` 발생
+- demo basePath/redirects 등 기존 옵션은 무영향
+
+### Storage 어댑터 — Docker 환경 분기
+
+`apps/admin/src/shared/lib/storage/index.ts`는 `LOCAL_STORAGE_PUBLIC_DIR` env로 publicDir override를 지원. 미설정 시 `process.cwd() + '../web/public'` 폴백.
+
+- **Docker compose 환경**: `LOCAL_STORAGE_PUBLIC_DIR=/app/apps/web/public` 명시 주입 — WORKDIR 변경 회귀 방어
+- **named volume**: `uploads_data:/app/apps/web/public/uploads` — admin(read-write) + web(read-only) 양쪽 동일 경로 공유
+- **Supabase 모드**: `STORAGE_PROVIDER=supabase`이면 volume mount는 마운트되지만 코드가 무시 (해롭지 않음)

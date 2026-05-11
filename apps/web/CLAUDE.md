@@ -586,3 +586,38 @@ entities → shared                            ✅
 - 모달: 포커스 트랩, ESC 닫기, 배경 스크롤 방지
 - 색상 대비: WCAG AA 수준 (4.5:1) 목표
 - 스크린 리더 테스트: 주요 흐름(메뉴 → 콘텐츠 → 검색) 확인
+
+## Docker 배포 (Stage 8a)
+
+운영 self-host 절차서: [`docs/react-cms-운영-배포-가이드.md`](../../docs/react-cms-운영-배포-가이드.md).
+
+### `apps/web/Dockerfile` 구조
+
+admin과 동일 4-stage 패턴 (`base → deps → builder → runner`). 차이점은 **`public/` 디렉토리 COPY가 필수**라는 것.
+
+- **base**: `node:22-bookworm-slim` + corepack
+- **deps**: 모노레포 lockfile 기반 `pnpm install --frozen-lockfile`
+- **builder**: `pnpm db:generate` (web도 `@simple-cms/db` 직접 import) + `pnpm --filter @simple-cms/web build`
+- **runner**: 3개 디렉토리 COPY 필수:
+  - `.next/standalone` — Next.js 최소 실행 산출물
+  - `.next/static` — chunked JS/CSS (standalone은 자동 복사 안 함)
+  - `public/` — favicon / KOGL 마크 / 정적 이미지 (standalone은 자동 복사 안 함)
+- 최종 image: ~430MB disk / ~101MB content. EXPOSE 3000, non-root `nextjs:1001`
+
+### `apps/web/next.config.ts` Docker 핵심 옵션
+
+- `output: 'standalone'`
+- `outputFileTracingRoot: path.resolve(__dirname, '../../')` — admin과 동일 이유. `@simple-cms/{db,types,editor}` workspace deps tracing
+- 기존 `transpilePackages` + `allowedDevOrigins` + demo rewrites는 무영향
+
+### `/uploads/*` 정적 서빙
+
+- compose가 `uploads_data` named volume을 `/app/apps/web/public/uploads:ro` (read-only)로 마운트
+- admin 컨테이너가 업로드한 파일을 web이 즉시 정적 서빙 — Next.js의 public/ 자동 서빙 동작
+- Supabase Storage 모드(`STORAGE_PROVIDER=supabase`)에선 `Media.url`이 절대 URL이라 web의 정적 서빙 경로 무관
+
+### web의 DB 접근 독립성 유지
+
+- web Dockerfile에도 `DATABASE_URL`이 build 시 placeholder + runtime 실제 값으로 주입됨
+- web은 `@simple-cms/db`로 Prisma 직접 접근 — admin BFF 의존 X
+- compose `depends_on: db (healthy)`로 db 부팅 완료 대기. admin/web 양쪽 동일
