@@ -9,6 +9,8 @@ export interface PaginatedResponse<T> {
   pageSize: number;
 }
 
+export type ListSnapshot<T> = PaginatedResponse<T>;
+
 export interface PaginationParams {
   page?: number;
   pageSize?: number;

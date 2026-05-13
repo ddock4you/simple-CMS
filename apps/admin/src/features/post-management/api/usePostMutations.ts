@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import type { ContentStatus } from '@simple-cms/db';
+import type { ListSnapshot } from '@simple-cms/types';
 
 import type { FetchError } from '@/shared/api/fetchClient';
 import { postKeys } from '@/shared/api/queryKeys';
@@ -73,13 +74,6 @@ export function useDeletePost() {
       toast.error(error.message);
     },
   });
-}
-
-interface ListSnapshot<T> {
-  items: T[];
-  page: number;
-  pageSize: number;
-  total: number;
 }
 
 export function useTogglePostStatus() {

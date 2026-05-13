@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import type { ListSnapshot } from '@simple-cms/types';
+
 import type { FetchError } from '@/shared/api/fetchClient';
 import { boardKeys } from '@/shared/api/queryKeys';
 import type { CreateBoardData, UpdateBoardData } from '../model/boardSchemas';
@@ -65,13 +67,6 @@ export function useDeleteBoard() {
       toast.error(error.message);
     },
   });
-}
-
-interface ListSnapshot<T> {
-  items: T[];
-  page: number;
-  pageSize: number;
-  total: number;
 }
 
 export function useToggleBoardVisibility() {
