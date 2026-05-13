@@ -1131,6 +1131,16 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
   - size 3-tier: `confirm` (max-w-xs sm:max-w-sm, 기본값) / `default` (max-w-md) / `wide` (max-w-xl). ad-hoc `max-w-*` className 직접 지정 금지
   - ESLint `no-restricted-imports`로 shadcn 원본 직접 import 차단 (wrapper 자신·shadcn 디렉토리 내부는 예외)
   - 이 wrapper는 `shadow-popover`를 **주입하지 않음** — AlertDialog는 `ring-1 ring-foreground/10` 사용 (design.md §5 표에 미포함)
+- **ConfirmDeleteDialog (Stage 16d)**: 단일 엔티티 삭제 확인용 공용 컴포넌트 (`shared/ui/ConfirmDeleteDialog.tsx`)
+  - 4개 도메인(Subpage/Board/Post/Popup) 삭제 다이얼로그의 공통 쉘. `DeleteXxxDialog`는 이 컴포넌트를 얇게 감싸는 도메인 wrapper
+  - Props: `entityName` (따옴표 안에 표시), `dialogTitle`, `isPending`, `onConfirm`
+  - 트리거 버튼: `variant="destructive" size="default"`. 이 모양이 아닌 경우(BlockDialog의 `size="sm"`, MenuSetDialog의 `variant="ghost"` 등)는 별도 dialog 유지
+  - 기본 설명: `"{entityName}"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`
+- **BulkDeleteDialog (Stage 16d)**: 일괄 삭제 2-phase 공용 컴포넌트 (`shared/ui/BulkDeleteDialog.tsx`)
+  - 3개 도메인(Subpage/Post/Media) 일괄 삭제 다이얼로그의 공통 쉘. `BulkDeleteXxxDialog`는 도메인 wrapper
+  - Phase machine(`confirm → result`)·`handleClose`·`handleOpenChange`·AlertDialog 쉘 공유, 텍스트와 blocked 항목 렌더링만 도메인별 커스텀
+  - 핵심 prop: `useDeleteHook` (도메인 mutation 훅 팩토리), `renderBlockedItem` (blocked 항목 렌더 prop)
+  - BulkStatus/BulkMove 같은 도메인 특이 액션은 이 컴포넌트 범위 밖 — 기존 inline Dialog 유지
 - **Boolean Switch 폼 패턴 (Stage 15c-2)**: boolean 토글 필드는 `BooleanSwitchField` 사용 (`shared/ui/BooleanSwitchField.tsx`)
   - RHF `Controller + Switch + label/description/error` 통합 컴포넌트
   - 목록 인라인 토글은 기존 `InlineBooleanToggle` / `InlineStatusSwitchToggle` 유지 (책임 분리)
