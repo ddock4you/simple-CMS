@@ -1,18 +1,13 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import type {
-  CreateHomePopupDto,
-  UpdateHomePopupDto,
-  ReorderHomePopupsDto,
-  HomePopupListItem,
-} from '@simple-cms/types';
+import type { HomePopupListItem, CreateHomePopupDto, UpdateHomePopupDto, ReorderHomePopupsDto } from '@simple-cms/types';
 
 import type { FetchError } from '@/shared/api/fetchClient';
 import { popupKeys } from '@/shared/api/queryKeys';
+import { createCrudMutations } from '@/shared/api/crudMutations';
 
 import {
   createHomePopup,
@@ -22,56 +17,28 @@ import {
   toggleHomePopupVisibility,
 } from './popupFetchers';
 
-export function useCreateHomePopup() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: CreateHomePopupDto) => createHomePopup(data),
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: popupKeys.all });
-      toast.success('메인 팝업이 생성되었습니다.');
-      router.push(`/popups/${result.id}`);
-    },
-    onError: (error: FetchError) => {
-      toast.error(error.message);
-    },
-  });
-}
-
-export function useUpdateHomePopup(id: string) {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: UpdateHomePopupDto) => updateHomePopup(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: popupKeys.all });
-      toast.success('메인 팝업이 수정되었습니다.');
-      router.push(`/popups/${id}`);
-    },
-    onError: (error: FetchError) => {
-      toast.error(error.message);
-    },
-  });
-}
-
-export function useDeleteHomePopup() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => deleteHomePopup(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: popupKeys.lists() });
-      toast.success('메인 팝업이 삭제되었습니다.');
-      router.push('/popups');
-    },
-    onError: (error: FetchError) => {
-      toast.error(error.message);
-    },
-  });
-}
+const {
+  useCreate: useCreateHomePopup,
+  useUpdate: useUpdateHomePopup,
+  useDelete: useDeleteHomePopup,
+} = createCrudMutations<CreateHomePopupDto, UpdateHomePopupDto, { id: string }>({
+  keys: popupKeys,
+  endpoints: {
+    create: createHomePopup,
+    update: updateHomePopup,
+    delete: deleteHomePopup,
+  },
+  messages: {
+    create: '메인 팝업이 생성되었습니다.',
+    update: '메인 팝업이 수정되었습니다.',
+    delete: '메인 팝업이 삭제되었습니다.',
+  },
+  routerPaths: {
+    afterCreate: (result) => `/popups/${result.id}`,
+    afterUpdate: (id) => `/popups/${id}`,
+    afterDelete: '/popups',
+  },
+});
 
 export function useReorderHomePopups() {
   return useMutation({
@@ -92,12 +59,7 @@ export function useToggleHomePopupVisibility() {
       });
       queryClient.setQueriesData<HomePopupListItem[]>(
         { queryKey: popupKeys.lists() },
-        (old) =>
-          old
-            ? old.map((item) =>
-                item.id === id ? { ...item, isVisible } : item,
-              )
-            : old,
+        (old) => old ? old.map((item) => item.id === id ? { ...item, isVisible } : item) : old,
       );
       return { previousLists };
     },
@@ -118,3 +80,5 @@ export function useToggleHomePopupVisibility() {
     },
   });
 }
+
+export { useCreateHomePopup, useUpdateHomePopup, useDeleteHomePopup };

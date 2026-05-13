@@ -3,13 +3,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import type {
-  BulkDeleteMediaResponse,
-  UpdateMediaDto,
-} from '@simple-cms/types';
+import type { BulkDeleteMediaResponse, UpdateMediaDto } from '@simple-cms/types';
 
 import type { FetchError } from '@/shared/api/fetchClient';
 import { mediaKeys } from '@/shared/api/queryKeys';
+import { createBulkDeleteMutation } from '@/shared/api/bulkDeleteMutation';
 
 import { bulkDeleteMedia, deleteMedia, updateMedia } from '@/entities/media/api/mediaFetchers';
 
@@ -40,41 +38,19 @@ export function useDeleteMedia() {
     },
     onError: (error: FetchError) => {
       // 409(참조 차단)는 호출자가 직접 처리하므로 토스트는 호출자에 위임 가능.
-      // 기본 동작으로 메시지 노출.
       toast.error(error.message);
     },
   });
 }
 
-/**
- * 일괄 삭제 — 응답에 `deleted`와 `blocked`가 함께 오므로 토스트를 분기 표시.
- * blocked 세부 내용은 호출자(Dialog)가 표시.
- */
-export function useBulkDeleteMedia(options?: {
-  onSuccess?: (data: BulkDeleteMediaResponse) => void;
-}) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (ids: string[]) => bulkDeleteMedia(ids),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: mediaKeys.lists() });
-      if (data.deleted.length > 0 && data.blocked.length === 0) {
-        toast.success(`${data.deleted.length}개 미디어가 삭제되었습니다.`);
-      } else if (data.deleted.length > 0 && data.blocked.length > 0) {
-        toast.warning(
-          `${data.deleted.length}개 삭제, ${data.blocked.length}개는 사용 중이라 제외되었습니다.`,
-        );
-      } else if (data.blocked.length > 0) {
-        toast.error(
-          `선택한 ${data.blocked.length}개 모두 사용 중이라 삭제할 수 없습니다.`,
-        );
-      }
-      options?.onSuccess?.(data);
-    },
-    onError: (error: FetchError) => {
-      toast.error(error.message);
-    },
-  });
-}
-
+// blocked 세부 내용은 호출자(Dialog)가 표시.
+export const useBulkDeleteMedia = createBulkDeleteMutation<BulkDeleteMediaResponse>({
+  keys: mediaKeys,
+  mutationFn: bulkDeleteMedia,
+  messages: {
+    allSuccess: (count) => `${count}개 미디어가 삭제되었습니다.`,
+    partial: (deleted, blocked) =>
+      `${deleted}개 삭제, ${blocked}개는 사용 중이라 제외되었습니다.`,
+    allBlocked: (count) => `선택한 ${count}개 모두 사용 중이라 삭제할 수 없습니다.`,
+  },
+});

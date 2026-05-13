@@ -1,15 +1,15 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-
+import type { QueryKey, UseMutationResult } from '@tanstack/react-query';
 import type { ContentStatus } from '@simple-cms/db';
 import type { ListSnapshot } from '@simple-cms/types';
 
-import type { FetchError } from '@/shared/api/fetchClient';
 import { subpageKeys } from '@/shared/api/queryKeys';
-
+import type { FetchError } from '@/shared/api/fetchClient';
+import { createCrudMutations } from '@/shared/api/crudMutations';
+import { createToggleMutation } from '@/shared/api/toggleMutation';
+import { createBulkDeleteMutation } from '@/shared/api/bulkDeleteMutation';
+import { createBulkStatusMutation } from '@/shared/api/bulkStatusMutation';
 import type { CreateSubpageData, UpdateSubpageData } from '../model/subpageSchemas';
 import type { SubpageListItem } from '../model/subpageFilters';
 import {
@@ -23,152 +23,66 @@ import {
   type BulkStatusSubpageResponse,
 } from './subpageFetchers';
 
-export function useCreateSubpage() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
+const {
+  useCreate: useCreateSubpage,
+  useUpdate: useUpdateSubpage,
+  useDelete: useDeleteSubpage,
+} = createCrudMutations<CreateSubpageData, UpdateSubpageData, { id: string }>({
+  keys: subpageKeys,
+  endpoints: {
+    create: createSubpage,
+    update: updateSubpage,
+    delete: deleteSubpage,
+  },
+  messages: {
+    create: '서브 페이지가 생성되었습니다.',
+    update: '기본 정보가 저장되었습니다.',
+    delete: '서브 페이지가 삭제되었습니다.',
+  },
+  routerPaths: {
+    afterCreate: (result) => `/subpages/${result.id}`,
+    afterUpdate: (id) => `/subpages/${id}`,
+    afterDelete: '/subpages',
+  },
+});
 
-  return useMutation({
-    mutationFn: (data: CreateSubpageData) => createSubpage(data),
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: subpageKeys.lists() });
-      toast.success('서브 페이지가 생성되었습니다.');
-      router.push(`/subpages/${result.id}`);
-    },
-    onError: (error: FetchError) => {
-      toast.error(error.message);
-    },
-  });
+const _useToggleSubpageStatus = createToggleMutation<SubpageListItem, 'status', ContentStatus>({
+  keys: subpageKeys,
+  field: 'status',
+  mutationFn: toggleSubpageStatus,
+  successMessage: (status) =>
+    status === 'PUBLISHED' ? '발행되었습니다.' : '초안으로 변경되었습니다.',
+});
+
+export function useToggleSubpageStatus(): UseMutationResult<
+  unknown,
+  FetchError,
+  { id: string; status: ContentStatus },
+  { previousLists: [QueryKey, ListSnapshot<SubpageListItem> | undefined][] }
+> {
+  return _useToggleSubpageStatus();
 }
 
-export function useUpdateSubpage(id: string) {
-  const router = useRouter();
-  const queryClient = useQueryClient();
+const useBulkDeleteSubpages = createBulkDeleteMutation<BulkDeleteSubpageResponse>({
+  keys: subpageKeys,
+  mutationFn: bulkDeleteSubpages,
+  messages: {
+    allSuccess: (count) => `${count}개 서브 페이지가 삭제되었습니다.`,
+    partial: (deleted, blocked) =>
+      `${deleted}개 삭제, ${blocked}개는 참조 중이라 제외되었습니다.`,
+    allBlocked: (count) => `선택한 ${count}개 모두 참조 중이라 삭제할 수 없습니다.`,
+  },
+});
 
-  return useMutation({
-    mutationFn: (data: UpdateSubpageData) => updateSubpage(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: subpageKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: subpageKeys.detail(id) });
-      toast.success('기본 정보가 저장되었습니다.');
-      router.push(`/subpages/${id}`);
-    },
-    onError: (error: FetchError) => {
-      toast.error(error.message);
-    },
-  });
-}
+const useBulkUpdateSubpageStatus = createBulkStatusMutation<BulkStatusSubpageResponse>({
+  keys: subpageKeys,
+  mutationFn: bulkUpdateSubpageStatus,
+});
 
-export function useDeleteSubpage() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => deleteSubpage(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: subpageKeys.lists() });
-      toast.success('서브 페이지가 삭제되었습니다.');
-      router.push('/subpages');
-    },
-    onError: (error: FetchError) => {
-      toast.error(error.message);
-    },
-  });
-}
-
-export function useToggleSubpageStatus() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: ContentStatus }) =>
-      toggleSubpageStatus(id, status),
-    onMutate: async ({ id, status }) => {
-      await queryClient.cancelQueries({ queryKey: subpageKeys.lists() });
-      const previousLists = queryClient.getQueriesData<ListSnapshot<SubpageListItem>>({
-        queryKey: subpageKeys.lists(),
-      });
-      queryClient.setQueriesData<ListSnapshot<SubpageListItem>>(
-        { queryKey: subpageKeys.lists() },
-        (old) =>
-          old
-            ? {
-                ...old,
-                items: old.items.map((item) =>
-                  item.id === id ? { ...item, status } : item,
-                ),
-              }
-            : old,
-      );
-      return { previousLists };
-    },
-    onError: (error: FetchError, _vars, context) => {
-      if (context?.previousLists) {
-        for (const [queryKey, data] of context.previousLists) {
-          queryClient.setQueryData(queryKey, data);
-        }
-      }
-      toast.error(error.message);
-    },
-    onSuccess: (_data, { status }) => {
-      toast.success(
-        status === 'PUBLISHED' ? '발행되었습니다.' : '초안으로 변경되었습니다.',
-      );
-    },
-    onSettled: (_data, _error, { id }) => {
-      queryClient.invalidateQueries({ queryKey: subpageKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: subpageKeys.detail(id) });
-    },
-  });
-}
-
-export function useBulkDeleteSubpages(options?: {
-  onSuccess?: (data: BulkDeleteSubpageResponse) => void;
-}) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (ids: string[]) => bulkDeleteSubpages(ids),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: subpageKeys.lists() });
-      if (data.deleted.length > 0 && data.blocked.length === 0) {
-        toast.success(`${data.deleted.length}개 서브 페이지가 삭제되었습니다.`);
-      } else if (data.deleted.length > 0 && data.blocked.length > 0) {
-        toast.warning(
-          `${data.deleted.length}개 삭제, ${data.blocked.length}개는 참조 중이라 제외되었습니다.`,
-        );
-      } else if (data.blocked.length > 0) {
-        toast.error(`선택한 ${data.blocked.length}개 모두 참조 중이라 삭제할 수 없습니다.`);
-      }
-      options?.onSuccess?.(data);
-    },
-    onError: (error: FetchError) => {
-      toast.error(error.message);
-    },
-  });
-}
-
-export function useBulkUpdateSubpageStatus(options?: {
-  onSuccess?: (data: BulkStatusSubpageResponse) => void;
-}) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ ids, status }: { ids: string[]; status: ContentStatus }) =>
-      bulkUpdateSubpageStatus(ids, status),
-    onSuccess: (data, { status }) => {
-      queryClient.invalidateQueries({ queryKey: subpageKeys.lists() });
-      const label = status === 'PUBLISHED' ? '발행' : '초안';
-      if (data.updated.length > 0 && data.failed.length === 0) {
-        toast.success(`${data.updated.length}개 ${label} 처리되었습니다.`);
-      } else if (data.failed.length > 0) {
-        toast.warning(
-          `${data.updated.length}개 처리, ${data.failed.length}개 실패`,
-        );
-      }
-      options?.onSuccess?.(data);
-    },
-    onError: (error: FetchError) => {
-      toast.error(error.message);
-    },
-  });
-}
-
+export {
+  useCreateSubpage,
+  useUpdateSubpage,
+  useDeleteSubpage,
+  useBulkDeleteSubpages,
+  useBulkUpdateSubpageStatus,
+};
