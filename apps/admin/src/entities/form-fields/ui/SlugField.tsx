@@ -11,16 +11,18 @@ interface SlugFieldProps {
   title: string;
   value: string;
   onChange: (slug: string) => void;
-  isPublic: boolean;
   savedSlug?: string;
+  warningWhen?: boolean;
+  warningMessage?: string;
 }
 
 export function SlugField({
   title,
   value,
   onChange,
-  isPublic,
   savedSlug,
+  warningWhen,
+  warningMessage,
 }: SlugFieldProps) {
   const manuallyEdited = useRef(false);
 
@@ -38,8 +40,7 @@ export function SlugField({
     onChange(e.target.value);
   };
 
-  const showWarning =
-    isPublic && savedSlug && value !== savedSlug;
+  const showWarning = warningWhen && savedSlug && value !== savedSlug;
 
   return (
     <div className="space-y-2">
@@ -50,10 +51,10 @@ export function SlugField({
         onChange={handleChange}
         placeholder="url-friendly-slug"
       />
-      {showWarning && (
+      {showWarning && warningMessage && (
         <p className="flex items-center gap-1 text-sm text-warning">
           <AlertTriangle className="size-4" />
-          공개 게시판의 slug를 변경하면 기존 URL이 작동하지 않을 수 있습니다.
+          {warningMessage}
         </p>
       )}
     </div>

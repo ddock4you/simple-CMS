@@ -10,7 +10,7 @@ const STATUS_CONFIG: Record<
   PUBLISHED: { label: '발행', variant: 'default' },
 };
 
-export function PostStatusBadge({ status }: { status: ContentStatus }) {
+export function ContentStatusBadge({ status }: { status: ContentStatus }) {
   const { label, variant } = STATUS_CONFIG[status];
   return <Badge variant={variant}>{label}</Badge>;
 }

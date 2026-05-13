@@ -26,7 +26,7 @@ import { ListPagination } from '@/shared/ui/ListPagination';
 import type { PostListFilters } from '../model/postFilters';
 import { postListOptions } from '../api/postQueries';
 import { useTogglePostStatus } from '../api/usePostMutations';
-import { PostStatusBadge } from './PostStatusBadge';
+import { ContentStatusBadge } from '@/entities/content-status/ui/StatusBadge';
 import { BulkDeletePostDialog } from './BulkDeletePostDialog';
 import { BulkStatusPostDialog } from './BulkStatusPostDialog';
 import { BulkMovePostDialog } from './BulkMovePostDialog';
@@ -191,7 +191,7 @@ export function PostTable({ filters }: PostTableProps) {
                         }
                       />
                     ) : (
-                      <PostStatusBadge status={post.status} />
+                      <ContentStatusBadge status={post.status} />
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">

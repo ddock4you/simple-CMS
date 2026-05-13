@@ -1141,6 +1141,10 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
   - Phase machine(`confirm → result`)·`handleClose`·`handleOpenChange`·AlertDialog 쉘 공유, 텍스트와 blocked 항목 렌더링만 도메인별 커스텀
   - 핵심 prop: `useDeleteHook` (도메인 mutation 훅 팩토리), `renderBlockedItem` (blocked 항목 렌더 prop)
   - BulkStatus/BulkMove 같은 도메인 특이 액션은 이 컴포넌트 범위 밖 — 기존 inline Dialog 유지
+- **UrlFilterTabs (Stage 16e)**: URL-driven 필터 탭 버튼 그룹 (`shared/ui/UrlFilterTabs.tsx`)
+  - Subpage/Post/Board/User 목록의 상태·공개 여부 필터 탭 공통 쉘. 도메인 Filter 컴포넌트(`SubpageStatusFilter` 등)가 options + props만 지정해 얇게 감쌈
+  - Props: `options` (값·라벨 배열), `currentValue`, `paramKey` (URL 파라미터 이름), `defaultValue` (ALL 등 초기값), `basePath` (목록 경로)
+  - 새 목록 페이지에 필터 탭 추가 시 이 컴포넌트를 직접 또는 도메인 wrapper로 사용
 - **Boolean Switch 폼 패턴 (Stage 15c-2)**: boolean 토글 필드는 `BooleanSwitchField` 사용 (`shared/ui/BooleanSwitchField.tsx`)
   - RHF `Controller + Switch + label/description/error` 통합 컴포넌트
   - 목록 인라인 토글은 기존 `InlineBooleanToggle` / `InlineStatusSwitchToggle` 유지 (책임 분리)
@@ -1366,6 +1370,18 @@ entities → shared                   ✅
 
 금지: `schemas/`, `hooks/`, `types/`, `utils/` 등 비표준 세그먼트
 예외: `shared/hooks/`는 shadcn/ui 생성 훅으로 허용
+
+### entities 슬라이스 목록 (Stage 16e 기준)
+
+| 슬라이스 | 핵심 파일 | 역할 |
+|---|---|---|
+| `entities/auth/` | `lib/`, `ui/PermissionProvider` | 인증·인가 |
+| `entities/editor/` | `ui/TiptapEditor` | Tiptap 에디터 래퍼 |
+| `entities/link-target/` | `ui/LinkTargetInput`, `api/linkTargetReferencesQueries` | URL 분기 입력 |
+| `entities/media/` | `ui/MediaPicker`, `ui/ImageUrlInput` | 미디어 선택·업로드 |
+| `entities/preview/` | `ui/PreviewButton`, `api/usePreviewMutations` | 미리보기 토큰 |
+| `entities/form-fields/` | `ui/SlugField` | 공용 slug 입력 (자동 생성 + 변경 경고). `warningWhen`/`warningMessage` prop으로 도메인별 분기 |
+| `entities/content-status/` | `ui/StatusBadge` | `ContentStatusBadge` — DRAFT/PUBLISHED 공용 Badge |
 
 ## 유효성 검사 규칙
 

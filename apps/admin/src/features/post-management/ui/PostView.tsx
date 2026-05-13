@@ -23,7 +23,7 @@ import { ViewLiveButton } from '@/entities/preview/ui/ViewLiveButton';
 
 import { postDetailOptions } from '../api/postQueries';
 import { useDeletePost } from '../api/usePostMutations';
-import { PostStatusBadge } from './PostStatusBadge';
+import { ContentStatusBadge } from '@/entities/content-status/ui/StatusBadge';
 import { DeletePostDialog } from './DeletePostDialog';
 
 interface PostViewProps {
@@ -57,7 +57,7 @@ export function PostView({ id }: PostViewProps) {
         title={
           <span className="flex items-center gap-2">
             {data.title}
-            <PostStatusBadge status={data.status} />
+            <ContentStatusBadge status={data.status} />
           </span>
         }
       />
@@ -128,7 +128,7 @@ export function PostView({ id }: PostViewProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">상태</span>
-                <PostStatusBadge status={data.status} />
+                <ContentStatusBadge status={data.status} />
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">작성자</span>

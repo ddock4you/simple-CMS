@@ -42,7 +42,7 @@ import {
   useUpdateSubpage,
   useDeleteSubpage,
 } from '../api/useSubpageMutations';
-import { SlugField } from './SlugField';
+import { SlugField } from '@/entities/form-fields/ui/SlugField';
 import { DeleteSubpageDialog } from './DeleteSubpageDialog';
 
 interface SubpageFormProps {
@@ -183,7 +183,8 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
                 title={title}
                 value={slug}
                 onChange={handleSlugChange}
-                isPublished={initialData?.status === 'PUBLISHED'}
+                warningWhen={initialData?.status === 'PUBLISHED'}
+                warningMessage="발행된 서브 페이지의 slug를 변경하면 기존 URL이 작동하지 않을 수 있습니다."
                 savedSlug={initialData?.slug}
               />
               {errors.slug && (

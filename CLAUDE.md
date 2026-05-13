@@ -757,6 +757,15 @@ entities/auth/
 ├── ui/PermissionProvider.tsx   # 클라이언트 권한 Context + usePermission() 훅
 └── model/auth.types.ts         # SessionUser 타입 (role + permissions 포함)
 
+entities/form-fields/
+└── ui/SlugField.tsx            # 공용 slug 입력 필드 (자동 생성 + 변경 경고). warningWhen/warningMessage prop으로 도메인별 경고 분기 (Stage 16e)
+
+entities/content-status/
+└── ui/StatusBadge.tsx          # ContentStatusBadge — DRAFT/PUBLISHED 공용 Badge (Stage 16e)
+
+shared/ui/
+└── UrlFilterTabs.tsx           # URL-driven 필터 탭 버튼 그룹. paramKey/basePath/defaultValue prop으로 도메인별 분기 (Stage 16e)
+
 shared/lib/
 └── sidebarPermissions.ts       # getVisibleMenuItems() 사이드바 권한 필터링
 ```

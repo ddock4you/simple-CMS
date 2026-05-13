@@ -34,7 +34,7 @@ import { VersionDetailDialog } from '@/features/subpage-version/ui/VersionDetail
 import { RestoreVersionAlertDialog } from '@/features/subpage-version/ui/RestoreVersionAlertDialog';
 import { SaveVersionButton } from '@/features/subpage-version/ui/SaveVersionButton';
 import { useRollbackSubpageVersion } from '@/features/subpage-version/api/useVersionMutations';
-import { SubpageStatusBadge } from './SubpageStatusBadge';
+import { ContentStatusBadge } from '@/entities/content-status/ui/StatusBadge';
 import { DeleteSubpageDialog } from './DeleteSubpageDialog';
 
 interface SubpageViewProps {
@@ -81,7 +81,7 @@ export function SubpageView({ id }: SubpageViewProps) {
         title={
           <span className="flex items-center gap-2">
             {data.title}
-            <SubpageStatusBadge status={data.status} />
+            <ContentStatusBadge status={data.status} />
           </span>
         }
       />
@@ -173,7 +173,7 @@ export function SubpageView({ id }: SubpageViewProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">상태</span>
-                <SubpageStatusBadge status={data.status} />
+                <ContentStatusBadge status={data.status} />
               </div>
               {data.publishedAt && (
                 <div className="flex justify-between">

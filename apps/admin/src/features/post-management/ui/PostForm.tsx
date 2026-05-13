@@ -42,7 +42,7 @@ import {
   useDeletePost,
 } from '../api/usePostMutations';
 import { boardOptionsQuery } from '../api/postQueries';
-import { SlugField } from './SlugField';
+import { SlugField } from '@/entities/form-fields/ui/SlugField';
 import { DeletePostDialog } from './DeletePostDialog';
 
 interface PostFormProps {
@@ -172,7 +172,8 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
                 title={title}
                 value={slug}
                 onChange={handleSlugChange}
-                isPublished={initialData?.status === 'PUBLISHED'}
+                warningWhen={initialData?.status === 'PUBLISHED'}
+                warningMessage="발행된 게시글의 slug를 변경하면 기존 URL이 작동하지 않을 수 있습니다."
                 savedSlug={initialData?.slug}
               />
               {errors.slug && (

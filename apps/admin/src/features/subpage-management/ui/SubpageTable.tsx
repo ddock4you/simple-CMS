@@ -25,7 +25,7 @@ import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import type { SubpageListFilters } from '../model/subpageFilters';
 import { subpageListOptions } from '../api/subpageQueries';
 import { useToggleSubpageStatus } from '../api/useSubpageMutations';
-import { SubpageStatusBadge } from './SubpageStatusBadge';
+import { ContentStatusBadge } from '@/entities/content-status/ui/StatusBadge';
 import { BulkDeleteSubpageDialog } from './BulkDeleteSubpageDialog';
 import { BulkStatusSubpageDialog } from './BulkStatusSubpageDialog';
 
@@ -183,7 +183,7 @@ export function SubpageTable({ filters }: SubpageTableProps) {
                         }
                       />
                     ) : (
-                      <SubpageStatusBadge status={subpage.status} />
+                      <ContentStatusBadge status={subpage.status} />
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
