@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { getCurrentUser } from '@/entities/auth/lib/getCurrentUser';
 import { hasPermission } from '@/entities/auth/lib/checkPermission';
+import { requireAnyPermission } from '@/entities/auth/lib/requireAnyPermission';
 
 export type QuickSearchType = 'subpage' | 'post' | 'board' | 'menu';
 
@@ -23,14 +23,16 @@ interface QuickSearchResponse {
 const ALL_TYPES: QuickSearchType[] = ['subpage', 'post', 'board', 'menu'];
 const DEFAULT_LIMIT = 8;
 
+const QUICK_SEARCH_PERMISSION_CHECKS = [
+  { resource: 'subpages', action: 'read' },
+  { resource: 'posts', action: 'read' },
+  { resource: 'boards', action: 'read' },
+  { resource: 'navigation', action: 'read' },
+] as const;
+
 export async function GET(request: Request): Promise<NextResponse> {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json(
-      { success: false, error: '인증이 필요합니다.' } satisfies ApiResponse<never>,
-      { status: 401 },
-    );
-  }
+  const { user, error } = await requireAnyPermission(QUICK_SEARCH_PERMISSION_CHECKS);
+  if (error) return error;
 
   const { searchParams } = new URL(request.url);
   const q = (searchParams.get('q') ?? '').trim();

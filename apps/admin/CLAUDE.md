@@ -72,7 +72,8 @@ src/
 - 총괄 관리자(`isSystem: true`): 모든 권한 보유, 권한 체크 바이패스
 - 기본 역할(`isDefault: true`): 가입 승인 시 자동 부여
 - 권한 체크 패턴 (**API + UI 양쪽 필수**):
-  - API Route: `requirePermission(resource, action)` — 401(미인증) 또는 403(권한 없음) 반환
+  - API Route (단일 리소스): `requirePermission(resource, action)` — 401(미인증) 또는 403(권한 없음) 반환
+  - API Route (멀티 리소스 OR): `requireAnyPermission([{ resource, action }, ...])` — 인증 필수 + 주어진 권한 중 하나 이상 보유해야 통과. quick-search처럼 여러 도메인 중 하나라도 조회 권한이 있으면 의미있는 결과를 줄 수 있는 API에서만 사용. 위치: `entities/auth/lib/requireAnyPermission.ts`
   - Client Component: `usePermission(resource, action)` 훅 — `PermissionProvider` Context 사용
   - Server Component: `hasPermission(user, resource, action)` 직접 호출
   - 사이드바: `getVisibleMenuItems(user)` — read 권한 없는 메뉴 숨김

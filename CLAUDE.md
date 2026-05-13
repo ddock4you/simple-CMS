@@ -307,7 +307,7 @@ apps/{앱}/
 
 | 패턴 | Before (격리 도입 전) | After (현재) |
 |---|---|---|
-| 단일 필드 unique lookup | `prisma.x.findUnique({ where: { slug } })` | `prisma.x.findFirst({ where: { slug } })` — extension이 sessionId 자동 주입 |
+| 단일 필드 unique lookup **(slug / key / contentHash)** | `prisma.x.findUnique({ where: { slug } })` | `prisma.x.findFirst({ where: { slug } })` — **slug/key/contentHash 기반은 `findFirst` 강제** (composite unique에 sessionId 포함). extension이 sessionId 자동 주입. EXCLUDED_MODELS(`Session`, `PreviewToken`) 또는 `id` 기반 `findUnique`는 예외 |
 | upsert | `prisma.x.upsert({ where: { key }, ... })` | `findFirst → update | create` 명시 분기 (extension은 upsert에서 cross-tenant 안전 처리 어려움 → 경고 출력) |
 | Raw SQL | `WHERE status = 'PUBLISHED'` | `WHERE status = 'PUBLISHED' AND "sessionId" = ${getCurrentSessionId()}` (`$queryRaw`는 extension hook 우회) |
 | 인증 부트스트랩 | `getSessionUser(token)` | `demo.runWithBypass(() => getSessionUser(token))` — Session+User+Role include 체인 안전망 |
