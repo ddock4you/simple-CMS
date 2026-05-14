@@ -1,22 +1,21 @@
 import { NextResponse } from 'next/server';
+import type { z } from 'zod';
 
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse, PaginatedResponse } from '@simple-cms/types';
 import { extractTextFromTiptap, generateSlug } from '@simple-cms/editor';
 
-import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { defineRoute } from '@/shared/api/defineRoute';
 import {
   postListQuerySchema,
   createPostSchema,
 } from '@/features/post-management/model/postSchemas';
 import type { PostListItem } from '@/features/post-management/model/postFilters';
 
-export async function GET(request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('posts', 'read');
-  if (error) return error;
-
-  try {
+export const GET = defineRoute<undefined, PaginatedResponse<PostListItem>>({
+  resource: 'posts',
+  action: 'read',
+  handler: async ({ request }) => {
     const { searchParams } = new URL(request.url);
     const parsed = postListQuerySchema.safeParse({
       status: searchParams.get('status') ?? undefined,
@@ -61,7 +60,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       prisma.post.count({ where }),
     ]);
 
-    const data = {
+    return {
       items: items.map((item) => ({
         id: item.id,
         title: item.title,
@@ -77,35 +76,15 @@ export async function GET(request: Request): Promise<NextResponse> {
       page,
       pageSize,
     };
+  },
+});
 
-    return NextResponse.json(
-      { success: true, data } satisfies ApiResponse<PaginatedResponse<PostListItem>>,
-    );
-  } catch (err) {
-    console.error('[Posts GET] Unexpected error:', err);
-    return NextResponse.json(
-      { success: false, error: '게시글 목록 조회에 실패했습니다.' } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
-
-export async function POST(request: Request): Promise<NextResponse> {
-  const { user, error } = await requirePermission('posts', 'create');
-  if (error) return error;
-
-  try {
-    const body = await request.json();
-    const parsed = createPostSchema.safeParse(body);
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { success: false, error: parsed.error.issues[0].message } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
-    }
-
-    const { title, boardId, seoTitle, seoDescription, contentJson, status } = parsed.data;
+export const POST = defineRoute<z.infer<typeof createPostSchema>, null>({
+  resource: 'posts',
+  action: 'create',
+  schema: createPostSchema,
+  handler: async ({ user, parsed, auditCtx }) => {
+    const { title, boardId, seoTitle, seoDescription, contentJson, status } = parsed;
 
     const board = await prisma.board.findUnique({ where: { id: boardId } });
     if (!board) {
@@ -115,7 +94,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const slug = parsed.data.slug?.trim() || generateSlug(title);
+    const slug = parsed.slug?.trim() || generateSlug(title);
     if (!slug) {
       return NextResponse.json(
         { success: false, error: 'slug을 입력해주세요.' } satisfies ApiResponse<never>,
@@ -123,9 +102,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const existing = await prisma.post.findFirst({
-      where: { boardId, slug },
-    });
+    const existing = await prisma.post.findFirst({ where: { boardId, slug } });
     if (existing) {
       return NextResponse.json(
         { success: false, error: '이 게시판에서 이미 사용 중인 slug입니다.' } satisfies ApiResponse<never>,
@@ -133,14 +110,11 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const maxOrder = await prisma.post.aggregate({
-      _max: { displayOrder: true },
-    });
+    const maxOrder = await prisma.post.aggregate({ _max: { displayOrder: true } });
     const displayOrder = (maxOrder._max.displayOrder ?? -1) + 1;
 
     const content = contentJson ? extractTextFromTiptap(contentJson) : null;
     const publishedAt = status === 'PUBLISHED' ? new Date() : null;
-
     const normalizedSeoTitle = seoTitle?.trim() || null;
     const normalizedSeoDescription = seoDescription?.trim() || null;
 
@@ -156,12 +130,11 @@ export async function POST(request: Request): Promise<NextResponse> {
         status,
         publishedAt,
         displayOrder,
-        authorId: user!.id,
+        authorId: user.id,
       },
     });
 
-    const auditContext = getAuditContext(request);
-    logAuditEvent({
+    void logAuditEvent({
       action: 'CREATE',
       entityType: 'POST',
       entityId: post.id,
@@ -176,22 +149,14 @@ export async function POST(request: Request): Promise<NextResponse> {
           seoDescription: normalizedSeoDescription,
         },
       },
-      userId: user!.id,
-      ipAddress: auditContext.ipAddress,
-      userAgent: auditContext.userAgent,
+      userId: user.id,
+      ipAddress: auditCtx.ipAddress,
+      userAgent: auditCtx.userAgent,
     });
 
     return NextResponse.json(
       { success: true, data: { id: post.id } } satisfies ApiResponse<{ id: string }>,
       { status: 201 },
     );
-  } catch (err) {
-    console.error('[Posts POST] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '게시글 생성에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+  },
+});

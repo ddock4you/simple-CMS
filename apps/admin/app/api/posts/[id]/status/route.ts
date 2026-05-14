@@ -1,25 +1,23 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { prisma, logAuditEvent } from '@simple-cms/db';
+import { prisma } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { defineRoute } from '@/shared/api/defineRoute';
 
 const statusSchema = z.object({
   status: z.enum(['DRAFT', 'PUBLISHED']),
 });
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const { user, error } = await requirePermission('posts', 'update');
-  if (error) return error;
+type StatusResult = { title: string; before: string; after: string };
 
-  try {
-    const { id } = await params;
+export const PATCH = defineRoute<z.infer<typeof statusSchema>, StatusResult>({
+  resource: 'posts',
+  action: 'update',
+  schema: statusSchema,
+  handler: async ({ parsed, params }) => {
+    const { id } = params;
     const post = await prisma.post.findUnique({ where: { id } });
     if (!post) {
       return NextResponse.json(
@@ -28,16 +26,7 @@ export async function PATCH(
       );
     }
 
-    const body = await request.json();
-    const parsed = statusSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { success: false, error: parsed.error.issues[0].message } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
-    }
-
-    const { status } = parsed.data;
+    const { status } = parsed;
     if (status === post.status) {
       return NextResponse.json(
         { success: true, data: null } satisfies ApiResponse<null>,
@@ -49,33 +38,18 @@ export async function PATCH(
       updateData.publishedAt = new Date();
     }
 
-    const updated = await prisma.post.update({
-      where: { id },
-      data: updateData,
-    });
+    const updated = await prisma.post.update({ where: { id }, data: updateData });
 
-    const auditContext = getAuditContext(request);
-    logAuditEvent({
+    return { title: updated.title, before: post.status, after: status };
+  },
+  responseData: () => null,
+  audit: {
+    build: (result, ctx) => ({
       action: 'UPDATE',
       entityType: 'POST',
-      entityId: id,
-      entityTitle: `${updated.title} (상태 변경)`,
-      changes: { before: { status: post.status }, after: { status } },
-      userId: user!.id,
-      ipAddress: auditContext.ipAddress,
-      userAgent: auditContext.userAgent,
-    });
-
-    return NextResponse.json(
-      { success: true, data: null } satisfies ApiResponse<null>,
-    );
-  } catch (err) {
-    console.error('[Posts PATCH status] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '상태 변경에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+      entityId: ctx.params.id,
+      entityTitle: `${result.title} (상태 변경)`,
+      changes: { before: { status: result.before }, after: { status: result.after } },
+    }),
+  },
+});

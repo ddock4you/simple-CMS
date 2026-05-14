@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { logAuditEvent, prisma } from '@simple-cms/db';
+import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { defineRoute } from '@/shared/api/defineRoute';
 
 const bulkMoveSchema = z.object({
   ids: z
@@ -21,32 +20,19 @@ interface FailedItem {
   reason: string;
 }
 
-interface BulkMoveResponse {
+interface BulkMoveResult {
   updated: string[];
   failed: FailedItem[];
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
-  const { user, error } = await requirePermission('posts', 'update');
-  if (error) return error;
+export const POST = defineRoute<z.infer<typeof bulkMoveSchema>, BulkMoveResult>({
+  resource: 'posts',
+  action: 'update',
+  schema: bulkMoveSchema,
+  handler: async ({ user, parsed, auditCtx }) => {
+    const { ids, boardId } = parsed;
 
-  try {
-    const body = await request.json();
-    const parsed = bulkMoveSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: parsed.error.issues[0]?.message ?? '잘못된 요청입니다.',
-        } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
-    }
-
-    const ids = Array.from(new Set(parsed.data.ids));
-    const { boardId } = parsed.data;
-
-    const targetBoard = await prisma.board.findUnique({ where: { id: boardId } });
+    const targetBoard = await prisma.board.findFirst({ where: { id: boardId } });
     if (!targetBoard) {
       return NextResponse.json(
         { success: false, error: '대상 게시판을 찾을 수 없습니다.' } satisfies ApiResponse<never>,
@@ -56,14 +42,12 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const posts = await prisma.post.findMany({ where: { id: { in: ids } } });
 
-    const auditContext = getAuditContext(request);
     const updated: string[] = [];
     const failed: FailedItem[] = [];
 
     for (const post of posts) {
       if (post.boardId === boardId) continue;
 
-      // slug 충돌 검사 (대상 게시판에서 같은 slug 존재 여부)
       const existing = await prisma.post.findFirst({
         where: { boardId, slug: post.slug },
       });
@@ -82,7 +66,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           data: { boardId },
         });
 
-        logAuditEvent({
+        void logAuditEvent({
           action: 'UPDATE',
           entityType: 'POST',
           entityId: post.id,
@@ -91,9 +75,9 @@ export async function POST(request: Request): Promise<NextResponse> {
             before: { boardId: post.boardId },
             after: { boardId },
           },
-          userId: user!.id,
-          ipAddress: auditContext.ipAddress,
-          userAgent: auditContext.userAgent,
+          userId: user.id,
+          ipAddress: auditCtx.ipAddress,
+          userAgent: auditCtx.userAgent,
         });
 
         updated.push(post.id);
@@ -106,17 +90,6 @@ export async function POST(request: Request): Promise<NextResponse> {
       }
     }
 
-    const data: BulkMoveResponse = { updated, failed };
-    return NextResponse.json(
-      { success: true, data } satisfies ApiResponse<BulkMoveResponse>,
-    );
-  } catch (err) {
-    console.error('[Posts bulk-move] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '일괄 이동에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+    return { updated, failed };
+  },
+});

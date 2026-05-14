@@ -1,23 +1,21 @@
 import { NextResponse } from 'next/server';
+import type { z } from 'zod';
 
-import { prisma, logAuditEvent } from '@simple-cms/db';
+import { prisma } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 import { extractTextFromTiptap } from '@simple-cms/editor';
 
-import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { defineRoute } from '@/shared/api/defineRoute';
+import { renormalizeDisplayOrder } from '@/shared/api/renormalizeDisplayOrder';
 import { updatePostSchema } from '@/features/post-management/model/postSchemas';
+import { buildPostPatchDiff } from '@/features/post-management/lib/buildPostPatchDiff';
 import type { PostDetail } from '@/features/post-management/model/postFilters';
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const { error } = await requirePermission('posts', 'read');
-  if (error) return error;
-
-  try {
-    const { id } = await params;
+export const GET = defineRoute<undefined, PostDetail>({
+  resource: 'posts',
+  action: 'read',
+  handler: async ({ params }) => {
+    const { id } = params;
     const post = await prisma.post.findUnique({
       where: { id },
       include: {
@@ -33,7 +31,7 @@ export async function GET(
       );
     }
 
-    const data: PostDetail = {
+    return {
       id: post.id,
       title: post.title,
       slug: post.slug,
@@ -50,31 +48,22 @@ export async function GET(
       displayOrder: post.displayOrder,
       createdAt: post.createdAt.toISOString(),
       updatedAt: post.updatedAt.toISOString(),
-    };
+    } satisfies PostDetail;
+  },
+});
 
-    return NextResponse.json(
-      { success: true, data } satisfies ApiResponse<PostDetail>,
-    );
-  } catch (err) {
-    console.error('[Posts GET detail] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '게시글 조회에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+type PatchResult = {
+  updatedTitle: string;
+  before: Record<string, string | null>;
+  after: Record<string, string | null>;
+};
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const { user, error } = await requirePermission('posts', 'update');
-  if (error) return error;
-
-  try {
-    const { id } = await params;
+export const PATCH = defineRoute<z.infer<typeof updatePostSchema>, PatchResult>({
+  resource: 'posts',
+  action: 'update',
+  schema: updatePostSchema,
+  handler: async ({ parsed, params }) => {
+    const { id } = params;
     const post = await prisma.post.findUnique({ where: { id } });
     if (!post) {
       return NextResponse.json(
@@ -83,18 +72,8 @@ export async function PATCH(
       );
     }
 
-    const body = await request.json();
-    const parsed = updatePostSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { success: false, error: parsed.error.issues[0].message } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
-    }
+    const { title, slug, boardId, seoTitle, seoDescription, contentJson, status } = parsed;
 
-    const { title, slug, boardId, seoTitle, seoDescription, contentJson, status } = parsed.data;
-
-    // Validate board if changing
     if (boardId && boardId !== post.boardId) {
       const board = await prisma.board.findUnique({ where: { id: boardId } });
       if (!board) {
@@ -105,7 +84,6 @@ export async function PATCH(
       }
     }
 
-    // Per-board slug uniqueness check
     const targetBoardId = boardId ?? post.boardId;
     const targetSlug = slug ?? post.slug;
     if (targetBoardId !== post.boardId || targetSlug !== post.slug) {
@@ -137,81 +115,33 @@ export async function PATCH(
       }
     }
 
-    const updated = await prisma.post.update({
-      where: { id },
-      data: updateData,
-    });
+    const updated = await prisma.post.update({ where: { id }, data: updateData });
+    const { before, after } = buildPostPatchDiff(parsed, post);
 
-    const before: Record<string, string | null> = {};
-    const after: Record<string, string | null> = {};
-    if (title !== undefined && title !== post.title) {
-      before.title = post.title;
-      after.title = title;
-    }
-    if (slug !== undefined && slug !== post.slug) {
-      before.slug = post.slug;
-      after.slug = slug;
-    }
-    if (boardId !== undefined && boardId !== post.boardId) {
-      before.boardId = post.boardId;
-      after.boardId = boardId;
-    }
-    if (status !== undefined && status !== post.status) {
-      before.status = post.status;
-      after.status = status;
-    }
-    if (seoTitle !== undefined) {
-      const normalized = seoTitle?.trim() || null;
-      if (normalized !== post.seoTitle) {
-        before.seoTitle = post.seoTitle;
-        after.seoTitle = normalized;
-      }
-    }
-    if (seoDescription !== undefined) {
-      const normalized = seoDescription?.trim() || null;
-      if (normalized !== post.seoDescription) {
-        before.seoDescription = post.seoDescription;
-        after.seoDescription = normalized;
-      }
-    }
-
-    if (Object.keys(after).length > 0) {
-      const auditContext = getAuditContext(request);
-      logAuditEvent({
+    return { updatedTitle: updated.title, before, after };
+  },
+  responseData: () => null,
+  audit: {
+    build: (result, ctx) => {
+      if (Object.keys(result.after).length === 0) return null;
+      return {
         action: 'UPDATE',
         entityType: 'POST',
-        entityId: id,
-        entityTitle: updated.title,
-        changes: { before, after },
-        userId: user!.id,
-        ipAddress: auditContext.ipAddress,
-        userAgent: auditContext.userAgent,
-      });
-    }
+        entityId: ctx.params.id,
+        entityTitle: result.updatedTitle,
+        changes: { before: result.before, after: result.after },
+      };
+    },
+  },
+});
 
-    return NextResponse.json(
-      { success: true, data: null } satisfies ApiResponse<null>,
-    );
-  } catch (err) {
-    console.error('[Posts PATCH] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '게시글 수정에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+type DeleteResult = { title: string; slug: string; boardId: string };
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const { user, error } = await requirePermission('posts', 'delete');
-  if (error) return error;
-
-  try {
-    const { id } = await params;
+export const DELETE = defineRoute<undefined, DeleteResult>({
+  resource: 'posts',
+  action: 'delete',
+  handler: async ({ params }) => {
+    const { id } = params;
     const post = await prisma.post.findUnique({ where: { id } });
 
     if (!post) {
@@ -222,41 +152,18 @@ export async function DELETE(
     }
 
     await prisma.post.delete({ where: { id } });
+    await renormalizeDisplayOrder({ model: 'post' });
 
-    // Renormalize displayOrder
-    const remaining = await prisma.post.findMany({
-      select: { id: true },
-      orderBy: [{ displayOrder: 'asc' }, { updatedAt: 'desc' }],
-    });
-    for (let i = 0; i < remaining.length; i++) {
-      await prisma.post.update({
-        where: { id: remaining[i].id },
-        data: { displayOrder: i },
-      });
-    }
-
-    const auditContext = getAuditContext(request);
-    logAuditEvent({
+    return { title: post.title, slug: post.slug, boardId: post.boardId };
+  },
+  responseData: () => null,
+  audit: {
+    build: (result, ctx) => ({
       action: 'DELETE',
       entityType: 'POST',
-      entityId: id,
-      entityTitle: post.title,
-      changes: { before: { title: post.title, slug: post.slug, boardId: post.boardId } },
-      userId: user!.id,
-      ipAddress: auditContext.ipAddress,
-      userAgent: auditContext.userAgent,
-    });
-
-    return NextResponse.json(
-      { success: true, data: null } satisfies ApiResponse<null>,
-    );
-  } catch (err) {
-    console.error('[Posts DELETE] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '게시글 삭제에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+      entityId: ctx.params.id,
+      entityTitle: result.title,
+      changes: { before: { title: result.title, slug: result.slug, boardId: result.boardId } },
+    }),
+  },
+});
