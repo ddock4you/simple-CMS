@@ -592,6 +592,10 @@ apps/{앱}/
 | 16d | `BulkDeleteDialog` + `ConfirmDeleteDialog` 공용 컴포넌트 추출 + 7 dialog 마이그레이션 | typecheck·lint·build 통과 | **완료** |
 | 16e | `entities/form-fields/SlugField` + `entities/content-status/StatusBadge` + `shared/ui/UrlFilterTabs` SSOT 통합 | typecheck·lint·build 통과 | **완료** |
 | 16b-1 | `defineRoute`/`defineBulkOperation`/`renormalizeDisplayOrder` 인프라 신설 + subpages 도메인 11 라우트 마이그레이션 | typecheck·lint·280 tests 통과 | **완료** |
+| 16f | `SettingsCardForm` 공용 컴포넌트 신설 + DomainSettingsForm/UploadSettingsForm/SeoSettingsForm 마이그레이션 | typecheck·lint·build 통과 | **완료** |
+| 16b-2-a | posts 6 라우트 `defineRoute`/`defineBulkOperation` 마이그레이션 (`buildPostPatchDiff` + bulk-move `prisma.$transaction`) | typecheck·lint·280 tests 통과 | **완료** |
+| 16b-2-b | boards 3 라우트 `defineRoute` 마이그레이션 + `renormalizeDisplayOrder` 'board' 추가 (`buildBoardPatchDiff`) | typecheck·lint·280 tests 통과 | **완료** |
+| 16b-2-c | media 4 라우트 `defineRoute`/`defineBulkOperation` 마이그레이션 (upload/branding-upload 명시적 범위 외) | typecheck·lint·280 tests 통과 | **완료** |
 
 ## Stage 8 사전 계획 (다음 컨텍스트 핸드오프)
 
