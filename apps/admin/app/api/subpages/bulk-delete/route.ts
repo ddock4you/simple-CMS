@@ -1,11 +1,9 @@
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { logAuditEvent, prisma } from '@simple-cms/db';
-import type { ApiResponse } from '@simple-cms/types';
+import { prisma, logAuditEvent } from '@simple-cms/db';
 
-import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { defineBulkOperation } from '@/shared/api/defineBulkOperation';
+import { renormalizeDisplayOrder } from '@/shared/api/renormalizeDisplayOrder';
 
 const bulkDeleteSchema = z.object({
   ids: z
@@ -20,95 +18,51 @@ interface BlockedItem {
   reason: string;
 }
 
-interface BulkDeleteResponse {
-  deleted: string[];
-  blocked: BlockedItem[];
-}
-
-export async function POST(request: Request): Promise<NextResponse> {
-  const { user, error } = await requirePermission('subpages', 'delete');
-  if (error) return error;
-
-  try {
-    const body = await request.json();
-    const parsed = bulkDeleteSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: parsed.error.issues[0]?.message ?? '잘못된 요청입니다.',
-        } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
-    }
-
-    const ids = Array.from(new Set(parsed.data.ids));
-
-    const subpages = await prisma.subpage.findMany({
-      where: { id: { in: ids } },
+export const POST = defineBulkOperation<z.infer<typeof bulkDeleteSchema>, BlockedItem>({
+  resource: 'subpages',
+  action: 'delete',
+  inputSchema: bulkDeleteSchema,
+  successKey: 'deleted',
+  failKey: 'blocked',
+  processItem: async (id, ctx) => {
+    const subpage = await prisma.subpage.findFirst({
+      where: { id },
       include: { _count: { select: { navigationMenuItems: true } } },
     });
-
-    const auditContext = getAuditContext(request);
-    const deleted: string[] = [];
-    const blocked: BlockedItem[] = [];
-
-    for (const subpage of subpages) {
-      if (subpage._count.navigationMenuItems > 0) {
-        blocked.push({
-          id: subpage.id,
+    if (!subpage) return { kind: 'skip' };
+    if (subpage._count.navigationMenuItems > 0) {
+      return {
+        kind: 'fail',
+        data: {
+          id,
           title: subpage.title,
           reason: `메뉴 항목 ${subpage._count.navigationMenuItems}개에서 참조 중`,
-        });
-        continue;
-      }
-
-      await prisma.subpage.delete({ where: { id: subpage.id } });
-
-      logAuditEvent({
-        action: 'DELETE',
-        entityType: 'SUBPAGE',
-        entityId: subpage.id,
-        entityTitle: subpage.title,
-        changes: {
-          before: {
-            title: subpage.title,
-            slug: subpage.slug,
-            status: subpage.status,
-          },
         },
-        userId: user!.id,
-        ipAddress: auditContext.ipAddress,
-        userAgent: auditContext.userAgent,
-      });
-
-      deleted.push(subpage.id);
+      };
     }
 
-    if (deleted.length > 0) {
-      const remaining = await prisma.subpage.findMany({
-        select: { id: true },
-        orderBy: [{ displayOrder: 'asc' }, { updatedAt: 'desc' }],
-      });
-      for (let i = 0; i < remaining.length; i++) {
-        await prisma.subpage.update({
-          where: { id: remaining[i].id },
-          data: { displayOrder: i },
-        });
-      }
-    }
+    await prisma.subpage.delete({ where: { id } });
 
-    const data: BulkDeleteResponse = { deleted, blocked };
-    return NextResponse.json(
-      { success: true, data } satisfies ApiResponse<BulkDeleteResponse>,
-    );
-  } catch (err) {
-    console.error('[Subpages bulk-delete] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '일괄 삭제에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+    void logAuditEvent({
+      action: 'DELETE',
+      entityType: 'SUBPAGE',
+      entityId: id,
+      entityTitle: subpage.title,
+      changes: {
+        before: {
+          title: subpage.title,
+          slug: subpage.slug,
+          status: subpage.status,
+        },
+      },
+      userId: ctx.user.id,
+      ipAddress: ctx.auditCtx.ipAddress,
+      userAgent: ctx.auditCtx.userAgent,
+    });
+
+    return { kind: 'success' };
+  },
+  afterAll: async () => {
+    await renormalizeDisplayOrder({ model: 'subpage' });
+  },
+});

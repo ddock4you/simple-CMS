@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { z } from 'zod';
 
 import {
@@ -8,14 +9,12 @@ import {
 } from '@simple-cms/db';
 import type { Prisma, SubpageVersionSource } from '@simple-cms/db';
 import type {
-  ApiResponse,
   SubpageVersionListItem,
   SubpageVersionListResponse,
 } from '@simple-cms/types';
 import { SUBPAGE_VERSION_LABEL_MAX_LENGTH } from '@simple-cms/types';
 
-import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { defineRoute } from '@/shared/api/defineRoute';
 
 const listQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional().default(1),
@@ -58,17 +57,13 @@ function toListItem(v: {
   };
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const { error } = await requirePermission('subpages', 'read');
-  if (error) return error;
-
-  try {
-    const { id: subpageId } = await params;
+export const GET = defineRoute<undefined, SubpageVersionListResponse>({
+  resource: 'subpages',
+  action: 'read',
+  handler: async ({ request, params }) => {
+    const subpageId = params.id;
     const url = new URL(request.url);
-    const parsed = listQuerySchema.safeParse({
+    const queryParsed = listQuerySchema.safeParse({
       page: url.searchParams.get('page') ?? undefined,
       pageSize: url.searchParams.get('pageSize') ?? undefined,
       authorId: url.searchParams.get('authorId') ?? undefined,
@@ -77,32 +72,25 @@ export async function GET(
       pinnedOnly: url.searchParams.get('pinnedOnly') ?? undefined,
       source: url.searchParams.get('source') ?? undefined,
     });
-    if (!parsed.success) {
+    if (!queryParsed.success) {
       return NextResponse.json(
-        {
-          success: false,
-          error: parsed.error.issues[0].message,
-        } satisfies ApiResponse<never>,
+        { success: false, error: queryParsed.error.issues[0].message },
         { status: 400 },
       );
     }
 
-    const subpage = await prisma.subpage.findUnique({
+    const subpage = await prisma.subpage.findFirst({
       where: { id: subpageId },
       select: { id: true },
     });
     if (!subpage) {
       return NextResponse.json(
-        {
-          success: false,
-          error: '서브페이지를 찾을 수 없습니다.',
-        } satisfies ApiResponse<never>,
+        { success: false, error: '서브페이지를 찾을 수 없습니다.' },
         { status: 404 },
       );
     }
 
-    const { page, pageSize, authorId, from, to, pinnedOnly, source } =
-      parsed.data;
+    const { page, pageSize, authorId, from, to, pinnedOnly, source } = queryParsed.data;
 
     const where: Prisma.SubpageVersionWhereInput = { subpageId };
     if (authorId) where.createdById = authorId;
@@ -125,79 +113,46 @@ export async function GET(
         skip: (page - 1) * pageSize,
         take: pageSize,
         include: {
-          createdBy: {
-            select: { id: true, username: true, name: true },
-          },
+          createdBy: { select: { id: true, username: true, name: true } },
         },
       }),
     ]);
 
-    const data: SubpageVersionListResponse = {
+    return {
       items: items.map(toListItem),
       total,
       page,
       pageSize,
     };
+  },
+});
 
-    return NextResponse.json(
-      { success: true, data } satisfies ApiResponse<SubpageVersionListResponse>,
-    );
-  } catch (err) {
-    console.error('[SubpageVersions GET] Unexpected error:', err);
-    return NextResponse.json(
-      {
-        success: false,
-        error: '버전 목록 조회에 실패했습니다.',
-      } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+export const POST = defineRoute<z.infer<typeof createSchema>, null>({
+  resource: 'subpages',
+  action: 'update',
+  schema: createSchema,
+  handler: async ({ user, parsed, params, auditCtx }) => {
+    const subpageId = params.id;
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const { user, error } = await requirePermission('subpages', 'update');
-  if (error) return error;
-
-  try {
-    const { id: subpageId } = await params;
-    const subpage = await prisma.subpage.findUnique({
+    const subpage = await prisma.subpage.findFirst({
       where: { id: subpageId },
       select: { id: true, title: true },
     });
     if (!subpage) {
       return NextResponse.json(
-        {
-          success: false,
-          error: '서브페이지를 찾을 수 없습니다.',
-        } satisfies ApiResponse<never>,
+        { success: false, error: '서브페이지를 찾을 수 없습니다.' },
         { status: 404 },
-      );
-    }
-
-    const body = await request.json().catch(() => ({}));
-    const parsed = createSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: parsed.error.issues[0].message,
-        } satisfies ApiResponse<never>,
-        { status: 400 },
       );
     }
 
     const version = await createSubpageVersionSnapshot({
       subpageId,
-      createdById: user!.id,
-      label: parsed.data.label ?? null,
+      createdById: user.id,
+      label: parsed.label ?? null,
       sourceAction: 'MANUAL',
     });
 
-    const auditContext = getAuditContext(request);
-    logAuditEvent({
+    void logAuditEvent({
       action: 'CREATE',
       entityType: 'SUBPAGE_VERSION',
       entityId: version.id,
@@ -209,25 +164,14 @@ export async function POST(
           sourceAction: 'MANUAL',
         },
       },
-      userId: user!.id,
-      ipAddress: auditContext.ipAddress,
-      userAgent: auditContext.userAgent,
+      userId: user.id,
+      ipAddress: auditCtx.ipAddress,
+      userAgent: auditCtx.userAgent,
     });
 
     return NextResponse.json(
-      { success: true, data: { id: version.id } } satisfies ApiResponse<{
-        id: string;
-      }>,
+      { success: true, data: { id: version.id } },
       { status: 201 },
     );
-  } catch (err) {
-    console.error('[SubpageVersions POST] Unexpected error:', err);
-    return NextResponse.json(
-      {
-        success: false,
-        error: '버전 저장에 실패했습니다.',
-      } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+  },
+});

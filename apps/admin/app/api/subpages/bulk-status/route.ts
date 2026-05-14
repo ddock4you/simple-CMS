@@ -1,11 +1,8 @@
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { logAuditEvent, prisma } from '@simple-cms/db';
-import type { ApiResponse } from '@simple-cms/types';
+import { prisma, logAuditEvent } from '@simple-cms/db';
 
-import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { defineBulkOperation } from '@/shared/api/defineBulkOperation';
 
 const bulkStatusSchema = z.object({
   ids: z
@@ -20,89 +17,48 @@ interface FailedItem {
   reason: string;
 }
 
-interface BulkStatusResponse {
-  updated: string[];
-  failed: FailedItem[];
-}
+export const POST = defineBulkOperation<z.infer<typeof bulkStatusSchema>, FailedItem>({
+  resource: 'subpages',
+  action: 'update',
+  inputSchema: bulkStatusSchema,
+  successKey: 'updated',
+  failKey: 'failed',
+  processItem: async (id, ctx) => {
+    const subpage = await prisma.subpage.findFirst({ where: { id } });
+    if (!subpage) return { kind: 'skip' };
+    if (subpage.status === ctx.parsed.status) return { kind: 'skip' };
 
-export async function POST(request: Request): Promise<NextResponse> {
-  const { user, error } = await requirePermission('subpages', 'update');
-  if (error) return error;
-
-  try {
-    const body = await request.json();
-    const parsed = bulkStatusSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: parsed.error.issues[0]?.message ?? '잘못된 요청입니다.',
-        } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
+    const updateData: Record<string, unknown> = { status: ctx.parsed.status };
+    if (ctx.parsed.status === 'PUBLISHED' && subpage.status === 'DRAFT') {
+      updateData.publishedAt = new Date();
     }
 
-    const ids = Array.from(new Set(parsed.data.ids));
-    const { status } = parsed.data;
+    try {
+      await prisma.subpage.update({ where: { id }, data: updateData });
 
-    const subpages = await prisma.subpage.findMany({
-      where: { id: { in: ids } },
-    });
+      void logAuditEvent({
+        action: 'UPDATE',
+        entityType: 'SUBPAGE',
+        entityId: id,
+        entityTitle: `${subpage.title} (상태 변경)`,
+        changes: {
+          before: { status: subpage.status },
+          after: { status: ctx.parsed.status },
+        },
+        userId: ctx.user.id,
+        ipAddress: ctx.auditCtx.ipAddress,
+        userAgent: ctx.auditCtx.userAgent,
+      });
 
-    const auditContext = getAuditContext(request);
-    const updated: string[] = [];
-    const failed: FailedItem[] = [];
-
-    for (const subpage of subpages) {
-      if (subpage.status === status) {
-        continue; // skip — 이미 같은 상태
-      }
-
-      const updateData: Record<string, unknown> = { status };
-      if (status === 'PUBLISHED' && subpage.status === 'DRAFT') {
-        updateData.publishedAt = new Date();
-      }
-
-      try {
-        await prisma.subpage.update({
-          where: { id: subpage.id },
-          data: updateData,
-        });
-
-        logAuditEvent({
-          action: 'UPDATE',
-          entityType: 'SUBPAGE',
-          entityId: subpage.id,
-          entityTitle: `${subpage.title} (상태 변경)`,
-          changes: {
-            before: { status: subpage.status },
-            after: { status },
-          },
-          userId: user!.id,
-          ipAddress: auditContext.ipAddress,
-          userAgent: auditContext.userAgent,
-        });
-
-        updated.push(subpage.id);
-      } catch (e) {
-        failed.push({
-          id: subpage.id,
+      return { kind: 'success' };
+    } catch (e) {
+      return {
+        kind: 'fail',
+        data: {
+          id,
           reason: e instanceof Error ? e.message : '알 수 없는 오류',
-        });
-      }
+        },
+      };
     }
-
-    const data: BulkStatusResponse = { updated, failed };
-    return NextResponse.json(
-      { success: true, data } satisfies ApiResponse<BulkStatusResponse>,
-    );
-  } catch (err) {
-    console.error('[Subpages bulk-status] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '일괄 상태 변경에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+  },
+});

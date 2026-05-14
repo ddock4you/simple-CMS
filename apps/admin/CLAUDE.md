@@ -1325,6 +1325,19 @@ app/api/{domain}/[id]/route.ts         # 상세(GET), 수정(PATCH), 삭제(DELE
 app/api/{domain}/[id]/{action}/route.ts # 특수 액션 (approve, suspend 등)
 ```
 
+#### defineRoute 패턴
+
+`shared/api/defineRoute.ts` 팩토리 (Stage 16b-1). `requirePermission` → Zod 파싱 → handler → `{ success: true, data }` 래핑 → 감사 로그를 공통 처리.
+
+- **단일 라우트** (`PATCH /api/subpages/[id]/status`): `handler`가 TResult 반환 → `audit.build(result, ctx)`로 감사 로그 자동 기록
+- **bulk 라우트** (`POST /api/subpages/bulk-delete`): `defineBulkOperation`이 id 배열 순회 → `{ deleted, blocked }` 응답 자동 조립
+- **다중 audit** (`POST /api/subpages/[id]/versions/[versionId]/rollback`): `audit.build`에서 배열 반환 시 여러 entityType에 감사 이벤트 동시 기록 (SUBPAGE UPDATE + SUBPAGE_VERSION CREATE)
+- **escape hatch**: handler가 `NextResponse`를 직접 반환하면 래핑·감사 로그 우회 (404·409·400 도메인 에러에 사용)
+- **no-op 패턴**: handler가 `null`을 반환하면 `audit.build` 호출 skip (PATCH 무변경 경로 등)
+- **인프라 위치**: `shared/api/{defineRoute,defineBulkOperation,renormalizeDisplayOrder}.ts`
+
+**적용 범위**: subpages 도메인 11 라우트 완료. 나머지 도메인(posts/boards/navigation/home 등)은 16b-2~N에서 점진 확장.
+
 ### FSD features API 파일 배치
 
 ```

@@ -582,6 +582,17 @@ apps/{앱}/
 | 15c-3e | AlertDialog size 토큰 3-tier (confirm/default/wide) + shadcn type 확장 + AlertDialog.tsx wrapper 함수화 + 10 호출처 size prop 마이그레이션 (8 BulkXxx→wide, DeleteMedia→default, RestoreVersion className 제거) [[상세]](docs/stages/stage-15c-3e.md) | typecheck·lint·build 통과 | **완료** |
 | 15c-3f | 폼 컨트롤 height 통일 (32px baseline) — Button wrapper 신설 + sm h-8 override + ESLint 가드 + 92 imports 마이그레이션 (shadcn/button.tsx 무수정) + audit-logs Excel 패턴 정렬 (화면 필터 그대로 사용) + design.md height 토큰 신설 + AUDIT_LOG enum [[상세]](docs/stages/stage-15c-3f.md) | typecheck·lint·build 통과 + audit-logs Excel이 화면 필터 반영 | **완료** |
 
+### Stage 16 — 코드 최적화 (SSOT 통합 + 공용 컴포넌트 추출)
+
+| 단계 | 내용 | 확인 가능한 것 | 상태 |
+| ---- | ---- | -------------- | ---- |
+| 16a | `requireAnyPermission` 신설 + slug/key 기반 `findUnique` → `findFirst` 전환 (DEMO mode composite unique 대응) | typecheck·lint·build 통과 | **완료** |
+| 16c-1 | `ListSnapshot<T>` 중복 → `@simple-cms/types`의 `PaginatedList<T>` 단일 출처 | typecheck·lint·build 통과 | **완료** |
+| 16c-2 | mutation 훅 팩토리 4개 신설(`createCrudMutations` 등) + 11 도메인 마이그레이션 | typecheck·lint·build 통과 | **완료** |
+| 16d | `BulkDeleteDialog` + `ConfirmDeleteDialog` 공용 컴포넌트 추출 + 7 dialog 마이그레이션 | typecheck·lint·build 통과 | **완료** |
+| 16e | `entities/form-fields/SlugField` + `entities/content-status/StatusBadge` + `shared/ui/UrlFilterTabs` SSOT 통합 | typecheck·lint·build 통과 | **완료** |
+| 16b-1 | `defineRoute`/`defineBulkOperation`/`renormalizeDisplayOrder` 인프라 신설 + subpages 도메인 11 라우트 마이그레이션 | typecheck·lint·280 tests 통과 | **완료** |
+
 ## Stage 8 사전 계획 (다음 컨텍스트 핸드오프)
 
 > **다음 컨텍스트에서 "Stage 8 진행" 요청을 받으면 이 섹션을 먼저 읽고 시작.**
@@ -737,7 +748,10 @@ pnpm db:pgroonga      # PGroonga 확장 + 검색 인덱스 설정
 shared/api/
 ├── fetchClient.ts              # 공통 fetch 래퍼 (에러 처리, 서버/클라이언트 base URL 분기)
 ├── queryClient.ts              # getQueryClient() — 서버 prefetch용 싱글턴 (React cache)
-└── QueryProvider.tsx            # QueryClientProvider + ReactQueryDevtools 래퍼 ('use client')
+├── QueryProvider.tsx           # QueryClientProvider + ReactQueryDevtools 래퍼 ('use client')
+├── defineRoute.ts              # API Route 팩토리 — requirePermission·parse·audit 보일러플레이트 통합 (Stage 16b-1)
+├── defineBulkOperation.ts      # bulk endpoint(ids[]) 공통 골격 (Stage 16b-1)
+└── renormalizeDisplayOrder.ts  # 삭제 후 displayOrder 재정렬 헬퍼 (Stage 16b-1)
 
 shared/model/
 └── uiStore.ts                  # 전역 UI 상태 (Zustand, 사이드바 등)

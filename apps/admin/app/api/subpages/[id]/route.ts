@@ -1,32 +1,27 @@
 import { NextResponse } from 'next/server';
 
-import { prisma, logAuditEvent, createSubpageVersionSnapshot } from '@simple-cms/db';
+import { prisma, createSubpageVersionSnapshot } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
+import type { z } from 'zod';
 
-import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
 import { updateSubpageSchema } from '@/features/subpage-management/model/subpageSchemas';
 import type { SubpageDetail } from '@/features/subpage-management/model/subpageFilters';
+import { defineRoute } from '@/shared/api/defineRoute';
+import { renormalizeDisplayOrder } from '@/shared/api/renormalizeDisplayOrder';
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const { error } = await requirePermission('subpages', 'read');
-  if (error) return error;
-
-  try {
-    const { id } = await params;
+export const GET = defineRoute<undefined, SubpageDetail>({
+  resource: 'subpages',
+  action: 'read',
+  handler: async ({ params }) => {
+    const { id } = params;
     const subpage = await prisma.subpage.findUnique({ where: { id } });
-
     if (!subpage) {
       return NextResponse.json(
         { success: false, error: '서브 페이지를 찾을 수 없습니다.' } satisfies ApiResponse<never>,
         { status: 404 },
       );
     }
-
-    const data: SubpageDetail = {
+    return {
       id: subpage.id,
       title: subpage.title,
       slug: subpage.slug,
@@ -41,31 +36,22 @@ export async function GET(
       revision: subpage.revision,
       createdAt: subpage.createdAt.toISOString(),
       updatedAt: subpage.updatedAt.toISOString(),
-    };
+    } satisfies SubpageDetail;
+  },
+});
 
-    return NextResponse.json(
-      { success: true, data } satisfies ApiResponse<SubpageDetail>,
-    );
-  } catch (err) {
-    console.error('[Subpages GET detail] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '서브 페이지 조회에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+type PatchResult = {
+  updatedTitle: string;
+  before: Record<string, string | boolean | null>;
+  after: Record<string, string | boolean | null>;
+};
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const { user, error } = await requirePermission('subpages', 'update');
-  if (error) return error;
-
-  try {
-    const { id } = await params;
+export const PATCH = defineRoute<z.infer<typeof updateSubpageSchema>, PatchResult>({
+  resource: 'subpages',
+  action: 'update',
+  schema: updateSubpageSchema,
+  handler: async ({ user, parsed, params }) => {
+    const { id } = params;
     const subpage = await prisma.subpage.findUnique({ where: { id } });
     if (!subpage) {
       return NextResponse.json(
@@ -74,25 +60,8 @@ export async function PATCH(
       );
     }
 
-    const body = await request.json();
-    const parsed = updateSubpageSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { success: false, error: parsed.error.issues[0].message } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
-    }
-
-    const {
-      title,
-      slug,
-      seoTitle,
-      seoDescription,
-      status,
-      cclType,
-      cclAi,
-      feedbackEnabled,
-    } = parsed.data;
+    const { title, slug, seoTitle, seoDescription, status, cclType, cclAi, feedbackEnabled } =
+      parsed;
 
     if (slug && slug !== subpage.slug) {
       const existing = await prisma.subpage.findFirst({ where: { slug } });
@@ -104,8 +73,7 @@ export async function PATCH(
       }
     }
 
-    const willPublish =
-      status === 'PUBLISHED' && subpage.status === 'DRAFT';
+    const willPublish = status === 'PUBLISHED' && subpage.status === 'DRAFT';
 
     const updateData: Record<string, unknown> = {};
     if (title !== undefined) updateData.title = title;
@@ -128,24 +96,18 @@ export async function PATCH(
     }
     if (feedbackEnabled !== undefined) updateData.feedbackEnabled = feedbackEnabled;
 
-    const updated = await prisma.subpage.update({
-      where: { id },
-      data: updateData,
-    });
+    const updated = await prisma.subpage.update({ where: { id }, data: updateData });
 
     if (willPublish) {
       try {
         await createSubpageVersionSnapshot({
           subpageId: id,
-          createdById: user!.id,
+          createdById: user.id,
           label: null,
           sourceAction: 'AUTO_PUBLISH',
         });
       } catch (snapshotError) {
-        console.error(
-          '[Subpages PATCH] AUTO_PUBLISH snapshot failed:',
-          snapshotError,
-        );
+        console.error('[Subpages PATCH] AUTO_PUBLISH snapshot failed:', snapshotError);
         // 주 액션은 진행 — 감사 로그와 동일한 fire-and-forget 원칙
       }
     }
@@ -160,17 +122,11 @@ export async function PATCH(
       before.slug = subpage.slug;
       after.slug = slug;
     }
-    if (
-      seoTitle !== undefined &&
-      (seoTitle ?? null) !== (subpage.seoTitle ?? null)
-    ) {
+    if (seoTitle !== undefined && (seoTitle ?? null) !== (subpage.seoTitle ?? null)) {
       before.seoTitle = subpage.seoTitle;
       after.seoTitle = seoTitle ?? null;
     }
-    if (
-      seoDescription !== undefined &&
-      (seoDescription ?? null) !== (subpage.seoDescription ?? null)
-    ) {
+    if (seoDescription !== undefined && (seoDescription ?? null) !== (subpage.seoDescription ?? null)) {
       before.seoDescription = subpage.seoDescription;
       after.seoDescription = seoDescription ?? null;
     }
@@ -191,55 +147,40 @@ export async function PATCH(
       after.feedbackEnabled = updated.feedbackEnabled;
     }
 
-    if (Object.keys(after).length > 0) {
-      const auditContext = getAuditContext(request);
-      logAuditEvent({
+    return { updatedTitle: updated.title, before, after };
+  },
+  responseData: () => null,
+  audit: {
+    build: (result, ctx) => {
+      if (Object.keys(result.after).length === 0) return null;
+      return {
         action: 'UPDATE',
         entityType: 'SUBPAGE',
-        entityId: id,
-        entityTitle: updated.title,
-        changes: { before, after },
-        userId: user!.id,
-        ipAddress: auditContext.ipAddress,
-        userAgent: auditContext.userAgent,
-      });
-    }
+        entityId: ctx.params.id,
+        entityTitle: result.updatedTitle,
+        changes: { before: result.before, after: result.after },
+      };
+    },
+  },
+});
 
-    return NextResponse.json(
-      { success: true, data: null } satisfies ApiResponse<null>,
-    );
-  } catch (err) {
-    console.error('[Subpages PATCH] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '서브 페이지 수정에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+type DeleteResult = { title: string; slug: string; status: string };
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const { user, error } = await requirePermission('subpages', 'delete');
-  if (error) return error;
-
-  try {
-    const { id } = await params;
+export const DELETE = defineRoute<undefined, DeleteResult>({
+  resource: 'subpages',
+  action: 'delete',
+  handler: async ({ params }) => {
+    const { id } = params;
     const subpage = await prisma.subpage.findUnique({
       where: { id },
       include: { _count: { select: { navigationMenuItems: true } } },
     });
-
     if (!subpage) {
       return NextResponse.json(
         { success: false, error: '서브 페이지를 찾을 수 없습니다.' } satisfies ApiResponse<never>,
         { status: 404 },
       );
     }
-
     if (subpage._count.navigationMenuItems > 0) {
       return NextResponse.json(
         {
@@ -252,41 +193,18 @@ export async function DELETE(
     }
 
     await prisma.subpage.delete({ where: { id } });
+    await renormalizeDisplayOrder({ model: 'subpage' });
 
-    // Renormalize displayOrder
-    const remaining = await prisma.subpage.findMany({
-      select: { id: true },
-      orderBy: [{ displayOrder: 'asc' }, { updatedAt: 'desc' }],
-    });
-    for (let i = 0; i < remaining.length; i++) {
-      await prisma.subpage.update({
-        where: { id: remaining[i].id },
-        data: { displayOrder: i },
-      });
-    }
-
-    const auditContext = getAuditContext(request);
-    logAuditEvent({
+    return { title: subpage.title, slug: subpage.slug, status: subpage.status };
+  },
+  responseData: () => null,
+  audit: {
+    build: (result, ctx) => ({
       action: 'DELETE',
       entityType: 'SUBPAGE',
-      entityId: id,
-      entityTitle: subpage.title,
-      changes: { before: { title: subpage.title, slug: subpage.slug, status: subpage.status } },
-      userId: user!.id,
-      ipAddress: auditContext.ipAddress,
-      userAgent: auditContext.userAgent,
-    });
-
-    return NextResponse.json(
-      { success: true, data: null } satisfies ApiResponse<null>,
-    );
-  } catch (err) {
-    console.error('[Subpages DELETE] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '서브 페이지 삭제에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+      entityId: ctx.params.id,
+      entityTitle: result.title,
+      changes: { before: { title: result.title, slug: result.slug, status: result.status } },
+    }),
+  },
+});
