@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { Globe } from 'lucide-react';
 
-import { Button } from '@/shared/ui/Button';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
 import {
@@ -15,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui/shadcn/card';
+import { SettingsCardForm } from '@/entities/settings/ui/SettingsCardForm';
 
 import { seoSettingsOptions } from '../api/settingsQueries';
 import { useUpdateSeo } from '../api/useSettingsMutations';
@@ -38,15 +38,12 @@ export function SeoSettingsForm() {
   const { data } = useQuery(seoSettingsOptions());
   const updateMutation = useUpdateSeo();
 
-  const {
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors, isDirty },
-  } = useForm<UpdateSeoData>({
+  const form = useForm<UpdateSeoData>({
     resolver: zodResolver(updateSeoSchema),
     defaultValues: { robotsAdditionalDisallow: [] },
   });
+
+  const { control, reset, formState: { errors, isDirty } } = form;
 
   useEffect(() => {
     if (data) {
@@ -101,57 +98,51 @@ export function SeoSettingsForm() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>robots.txt 추가 Disallow</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="robotsAdditionalDisallow">
-                크롤링을 차단할 경로 (한 줄에 하나)
-              </Label>
-              <Controller
-                name="robotsAdditionalDisallow"
-                control={control}
-                render={({ field }) => (
-                  <Textarea
-                    id="robotsAdditionalDisallow"
-                    value={pathsToTextarea(field.value)}
-                    onChange={(e) =>
-                      field.onChange(parseTextareaToPaths(e.target.value))
-                    }
-                    onBlur={field.onBlur}
-                    placeholder={'/preview\n/_internal'}
-                    rows={8}
-                    className="font-mono text-sm"
-                  />
-                )}
-              />
-              <p className="text-xs text-muted-foreground">
-                <code className="font-mono">/api/</code>는 기본으로 차단됩니다.
-                경로는 <code className="font-mono">/</code>로 시작해야 하며,
-                최대 50개까지 설정 가능합니다. 변경 사항은 공개 웹에 최대
-                1분 후 반영됩니다.
-              </p>
-              {errors.robotsAdditionalDisallow && (
-                <p className="text-sm text-destructive">
-                  {errors.robotsAdditionalDisallow.message ??
-                    errors.robotsAdditionalDisallow.root?.message ??
-                    errors.robotsAdditionalDisallow[0]?.message}
-                </p>
+      <SettingsCardForm
+        title="robots.txt 추가 Disallow"
+        form={form}
+        onSubmit={onSubmit}
+        isPending={updateMutation.isPending}
+        disabled={!isDirty}
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="robotsAdditionalDisallow">
+              크롤링을 차단할 경로 (한 줄에 하나)
+            </Label>
+            <Controller
+              name="robotsAdditionalDisallow"
+              control={control}
+              render={({ field }) => (
+                <Textarea
+                  id="robotsAdditionalDisallow"
+                  value={pathsToTextarea(field.value)}
+                  onChange={(e) =>
+                    field.onChange(parseTextareaToPaths(e.target.value))
+                  }
+                  onBlur={field.onBlur}
+                  placeholder={'/preview\n/_internal'}
+                  rows={8}
+                  className="font-mono text-sm"
+                />
               )}
-            </div>
-
-            <Button
-              type="submit"
-              disabled={updateMutation.isPending || !isDirty}
-            >
-              {updateMutation.isPending ? '저장 중...' : '저장'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+            />
+            <p className="text-xs text-muted-foreground">
+              <code className="font-mono">/api/</code>는 기본으로 차단됩니다.
+              경로는 <code className="font-mono">/</code>로 시작해야 하며,
+              최대 50개까지 설정 가능합니다. 변경 사항은 공개 웹에 최대
+              1분 후 반영됩니다.
+            </p>
+            {errors.robotsAdditionalDisallow && (
+              <p className="text-sm text-destructive">
+                {errors.robotsAdditionalDisallow.message ??
+                  errors.robotsAdditionalDisallow.root?.message ??
+                  errors.robotsAdditionalDisallow[0]?.message}
+              </p>
+            )}
+          </div>
+        </div>
+      </SettingsCardForm>
     </div>
   );
 }
