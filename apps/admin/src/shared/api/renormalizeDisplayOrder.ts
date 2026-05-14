@@ -6,7 +6,8 @@ type SupportedModel =
   | 'homePopup'
   | 'homeSection'
   | 'post'
-  | 'navigationMenuItem';
+  | 'navigationMenuItem'
+  | 'board';
 
 export async function renormalizeDisplayOrder({
   model,

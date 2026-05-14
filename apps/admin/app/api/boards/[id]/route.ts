@@ -1,22 +1,20 @@
 import { NextResponse } from 'next/server';
 
-import { prisma, logAuditEvent } from '@simple-cms/db';
+import { prisma } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { defineRoute } from '@/shared/api/defineRoute';
+import { renormalizeDisplayOrder } from '@/shared/api/renormalizeDisplayOrder';
 import { updateBoardSchema } from '@/features/board-management/model/boardSchemas';
+import type { UpdateBoardData } from '@/features/board-management/model/boardSchemas';
+import { buildBoardPatchDiff } from '@/features/board-management/lib/buildBoardPatchDiff';
 import type { BoardDetail } from '@/features/board-management/model/boardFilters';
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const { error } = await requirePermission('boards', 'read');
-  if (error) return error;
-
-  try {
-    const { id } = await params;
+export const GET = defineRoute<undefined, BoardDetail>({
+  resource: 'boards',
+  action: 'read',
+  handler: async ({ params }) => {
+    const { id } = params;
     const board = await prisma.board.findUnique({
       where: { id },
       include: { _count: { select: { posts: true } } },
@@ -29,7 +27,7 @@ export async function GET(
       );
     }
 
-    const data: BoardDetail = {
+    return {
       id: board.id,
       name: board.name,
       slug: board.slug,
@@ -40,31 +38,22 @@ export async function GET(
       postCount: board._count.posts,
       createdAt: board.createdAt.toISOString(),
       updatedAt: board.updatedAt.toISOString(),
-    };
+    } satisfies BoardDetail;
+  },
+});
 
-    return NextResponse.json(
-      { success: true, data } satisfies ApiResponse<BoardDetail>,
-    );
-  } catch (err) {
-    console.error('[Boards GET detail] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '게시판 조회에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+type PatchResult = {
+  updatedName: string;
+  before: Record<string, string | null>;
+  after: Record<string, string | null>;
+};
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const { user, error } = await requirePermission('boards', 'update');
-  if (error) return error;
-
-  try {
-    const { id } = await params;
+export const PATCH = defineRoute<UpdateBoardData, PatchResult>({
+  resource: 'boards',
+  action: 'update',
+  schema: updateBoardSchema,
+  handler: async ({ parsed, params }) => {
+    const { id } = params;
     const board = await prisma.board.findUnique({ where: { id } });
     if (!board) {
       return NextResponse.json(
@@ -73,16 +62,7 @@ export async function PATCH(
       );
     }
 
-    const body = await request.json();
-    const parsed = updateBoardSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { success: false, error: parsed.error.issues[0].message } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
-    }
-
-    const { name, slug, description, skinType, isPublic } = parsed.data;
+    const { name, slug, description, skinType, isPublic } = parsed;
 
     if (slug && slug !== board.slug) {
       const existing = await prisma.board.findFirst({ where: { slug } });
@@ -101,71 +81,33 @@ export async function PATCH(
     if (skinType !== undefined) updateData.skinType = skinType;
     if (isPublic !== undefined) updateData.isPublic = isPublic;
 
-    const updated = await prisma.board.update({
-      where: { id },
-      data: updateData,
-    });
+    const updated = await prisma.board.update({ where: { id }, data: updateData });
+    const { before, after } = buildBoardPatchDiff(parsed, board);
 
-    const before: Record<string, string> = {};
-    const after: Record<string, string> = {};
-    if (name !== undefined && name !== board.name) {
-      before.name = board.name;
-      after.name = name;
-    }
-    if (slug !== undefined && slug !== board.slug) {
-      before.slug = board.slug;
-      after.slug = slug;
-    }
-    if (skinType !== undefined && skinType !== board.skinType) {
-      before.skinType = board.skinType;
-      after.skinType = skinType;
-    }
-    if (isPublic !== undefined && isPublic !== board.isPublic) {
-      before.isPublic = String(board.isPublic);
-      after.isPublic = String(isPublic);
-    }
-    if (description !== undefined && description !== board.description) {
-      before.description = board.description ?? '';
-      after.description = description ?? '';
-    }
-
-    if (Object.keys(after).length > 0) {
-      const auditContext = getAuditContext(request);
-      logAuditEvent({
+    return { updatedName: updated.name, before, after };
+  },
+  responseData: () => null,
+  audit: {
+    build: (result, ctx) => {
+      if (Object.keys(result.after).length === 0) return null;
+      return {
         action: 'UPDATE',
         entityType: 'BOARD',
-        entityId: id,
-        entityTitle: updated.name,
-        changes: { before, after },
-        userId: user!.id,
-        ipAddress: auditContext.ipAddress,
-        userAgent: auditContext.userAgent,
-      });
-    }
+        entityId: ctx.params.id,
+        entityTitle: result.updatedName,
+        changes: { before: result.before, after: result.after },
+      };
+    },
+  },
+});
 
-    return NextResponse.json(
-      { success: true, data: null } satisfies ApiResponse<null>,
-    );
-  } catch (err) {
-    console.error('[Boards PATCH] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '게시판 수정에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+type DeleteResult = { name: string; slug: string; skinType: string };
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const { user, error } = await requirePermission('boards', 'delete');
-  if (error) return error;
-
-  try {
-    const { id } = await params;
+export const DELETE = defineRoute<undefined, DeleteResult>({
+  resource: 'boards',
+  action: 'delete',
+  handler: async ({ params }) => {
+    const { id } = params;
     const board = await prisma.board.findUnique({
       where: { id },
       include: { _count: { select: { posts: true, navigationMenuItems: true } } },
@@ -192,51 +134,25 @@ export async function DELETE(
       return NextResponse.json(
         {
           success: false,
-          error:
-            '이 게시판을 참조하는 메뉴 항목이 있습니다. 먼저 메뉴 연결을 해제해주세요.',
+          error: '이 게시판을 참조하는 메뉴 항목이 있습니다. 먼저 메뉴 연결을 해제해주세요.',
         } satisfies ApiResponse<never>,
         { status: 400 },
       );
     }
 
     await prisma.board.delete({ where: { id } });
+    await renormalizeDisplayOrder({ model: 'board' });
 
-    // Renormalize displayOrder
-    const remaining = await prisma.board.findMany({
-      select: { id: true },
-      orderBy: [{ displayOrder: 'asc' }, { updatedAt: 'desc' }],
-    });
-    for (let i = 0; i < remaining.length; i++) {
-      await prisma.board.update({
-        where: { id: remaining[i].id },
-        data: { displayOrder: i },
-      });
-    }
-
-    const auditContext = getAuditContext(request);
-    logAuditEvent({
+    return { name: board.name, slug: board.slug, skinType: board.skinType };
+  },
+  responseData: () => null,
+  audit: {
+    build: (result, ctx) => ({
       action: 'DELETE',
       entityType: 'BOARD',
-      entityId: id,
-      entityTitle: board.name,
-      changes: {
-        before: { name: board.name, slug: board.slug, skinType: board.skinType },
-      },
-      userId: user!.id,
-      ipAddress: auditContext.ipAddress,
-      userAgent: auditContext.userAgent,
-    });
-
-    return NextResponse.json(
-      { success: true, data: null } satisfies ApiResponse<null>,
-    );
-  } catch (err) {
-    console.error('[Boards DELETE] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '게시판 삭제에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+      entityId: ctx.params.id,
+      entityTitle: result.name,
+      changes: { before: { name: result.name, slug: result.slug, skinType: result.skinType } },
+    }),
+  },
+});

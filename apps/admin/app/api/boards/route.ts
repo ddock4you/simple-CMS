@@ -1,22 +1,21 @@
 import { NextResponse } from 'next/server';
+import type { z } from 'zod';
 
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse, PaginatedResponse } from '@simple-cms/types';
 import { generateSlug } from '@simple-cms/editor';
 
-import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { defineRoute } from '@/shared/api/defineRoute';
 import {
   boardListQuerySchema,
   createBoardSchema,
 } from '@/features/board-management/model/boardSchemas';
 import type { BoardListItem } from '@/features/board-management/model/boardFilters';
 
-export async function GET(request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('boards', 'read');
-  if (error) return error;
-
-  try {
+export const GET = defineRoute<undefined, PaginatedResponse<BoardListItem>>({
+  resource: 'boards',
+  action: 'read',
+  handler: async ({ request }) => {
     const { searchParams } = new URL(request.url);
     const parsed = boardListQuerySchema.safeParse({
       visibility: searchParams.get('visibility') ?? undefined,
@@ -65,7 +64,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       prisma.board.count({ where }),
     ]);
 
-    const data = {
+    return {
       items: items.map((item) => ({
         id: item.id,
         name: item.name,
@@ -80,36 +79,16 @@ export async function GET(request: Request): Promise<NextResponse> {
       page,
       pageSize,
     };
+  },
+});
 
-    return NextResponse.json(
-      { success: true, data } satisfies ApiResponse<PaginatedResponse<BoardListItem>>,
-    );
-  } catch (err) {
-    console.error('[Boards GET] Unexpected error:', err);
-    return NextResponse.json(
-      { success: false, error: '게시판 목록 조회에 실패했습니다.' } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
-
-export async function POST(request: Request): Promise<NextResponse> {
-  const { user, error } = await requirePermission('boards', 'create');
-  if (error) return error;
-
-  try {
-    const body = await request.json();
-    const parsed = createBoardSchema.safeParse(body);
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { success: false, error: parsed.error.issues[0].message } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
-    }
-
-    const { name, description, skinType, isPublic } = parsed.data;
-    const slug = parsed.data.slug?.trim() || generateSlug(name);
+export const POST = defineRoute<z.infer<typeof createBoardSchema>, never>({
+  resource: 'boards',
+  action: 'create',
+  schema: createBoardSchema,
+  handler: async ({ user, parsed, auditCtx }) => {
+    const { name, description, skinType, isPublic } = parsed;
+    const slug = parsed.slug?.trim() || generateSlug(name);
 
     if (!slug) {
       return NextResponse.json(
@@ -126,45 +105,27 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const maxOrder = await prisma.board.aggregate({
-      _max: { displayOrder: true },
-    });
+    const maxOrder = await prisma.board.aggregate({ _max: { displayOrder: true } });
     const displayOrder = (maxOrder._max.displayOrder ?? -1) + 1;
 
     const board = await prisma.board.create({
-      data: {
-        name,
-        slug,
-        description,
-        skinType,
-        isPublic,
-        displayOrder,
-      },
+      data: { name, slug, description, skinType, isPublic, displayOrder },
     });
 
-    const auditContext = getAuditContext(request);
-    logAuditEvent({
+    void logAuditEvent({
       action: 'CREATE',
       entityType: 'BOARD',
       entityId: board.id,
       entityTitle: name,
       changes: { after: { name, slug, skinType, isPublic: String(isPublic) } },
-      userId: user!.id,
-      ipAddress: auditContext.ipAddress,
-      userAgent: auditContext.userAgent,
+      userId: user.id,
+      ipAddress: auditCtx.ipAddress,
+      userAgent: auditCtx.userAgent,
     });
 
     return NextResponse.json(
       { success: true, data: { id: board.id } } satisfies ApiResponse<{ id: string }>,
       { status: 201 },
     );
-  } catch (err) {
-    console.error('[Boards POST] Unexpected error:', err);
-    const message =
-      err instanceof Error ? err.message : '게시판 생성에 실패했습니다.';
-    return NextResponse.json(
-      { success: false, error: message } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+  },
+});
