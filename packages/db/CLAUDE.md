@@ -75,12 +75,14 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 ## 명령어
 
 ```bash
-pnpm db:generate    # Prisma Client 생성
+pnpm db:generate    # Prisma Client 생성 (pnpm install 시 postinstall로 자동 실행됨)
 pnpm db:push        # 스키마를 DB에 직접 반영 (개발용)
 pnpm db:migrate     # 마이그레이션 생성 및 적용
 pnpm db:studio      # Prisma Studio 실행
 pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
 ```
+
+> **postinstall 동작**: `packages/db/package.json`의 `postinstall: prisma generate`가 `pnpm install` 직후 자동 실행되어 `src/generated/prisma/`를 만든다. Vercel Install Command(`pnpm install --frozen-lockfile`)만으로 Prisma client가 생성되므로 Build Command에 별도 `db:generate` 단계 불필요. Dockerfile은 명시적 `pnpm --filter @simple-cms/db generate` 단계를 유지하지만 멱등이라 무해.
 
 ## Role 모델 컨벤션
 
@@ -388,7 +390,7 @@ PR4가 도입한 두 진입점. 세부 동작은 루트 CLAUDE.md "PR4 visitor �
 
 ## 주의사항
 
-- `schema.prisma` 변경 후 반드시 `db:generate` 실행
-- `generated/` 디렉토리는 `.gitignore` 포함
+- `schema.prisma` 변경 후 반드시 `db:generate` 실행 (또는 `pnpm install` 재실행 — postinstall이 자동 호출)
+- `generated/` 디렉토리는 `.gitignore` 포함 → Git에 없음. `postinstall: prisma generate`가 단일 출처
 - 앱에서 Prisma를 직접 import하지 않고 반드시 이 패키지를 통해 접근
 - 테스트: query helper는 Vitest + 테스트 DB로 검증, 테스트 파일은 대상 코드와 같은 위치

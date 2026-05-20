@@ -104,6 +104,8 @@
 4. **Environment Variables**: 일단 **3장 마스터 리스트의 admin 값들을 모두 등록한 후 Deploy**
 5. **Deploy** 클릭 (1차 빌드는 cron 설정 자동 인식 + 환경변수 검증 목적)
 
+> **Prisma client 자동 생성**: `packages/db`의 `postinstall: prisma generate`가 Install 단계에서 자동 실행되어 `packages/db/src/generated/prisma/`를 만든다. 별도 build step 추가 불필요. `packages/db/src/generated/`는 `.gitignore` 대상이라 Git에 없으므로 이 postinstall이 누락되면 빌드가 `Module not found: Can't resolve './generated/prisma/client'`로 실패한다.
+
 ### 2-2. admin 배포 URL 확보
 - 배포 성공 후 Production Domain 복사 (예: `https://simple-cms-admin-demo.vercel.app`)
 - 이 URL을 다음 단계의 `NEXT_PUBLIC_ADMIN_REWRITE_URL`에 사용
