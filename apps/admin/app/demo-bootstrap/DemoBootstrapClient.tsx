@@ -19,8 +19,10 @@ const STAGE_MESSAGES = [
 ] as const;
 
 const STAGE_INTERVAL_MS = 700;
-// admin은 basePath='/_cms/admin'이라 상대 경로 '/api/demo/bootstrap' 사용 시 자동 prepend.
-const BOOTSTRAP_ENDPOINT = '/api/demo/bootstrap';
+// Next.js의 client-side fetch는 basePath를 자동 prepend하지 않으므로 명시 prefix 필수.
+// admin Vercel 직접 접근(같은 origin) + web origin 통한 진입(web rewrites로 admin proxy) 양쪽 모두에서
+// 정확히 admin의 bootstrap endpoint로 도달.
+const BOOTSTRAP_ENDPOINT = '/_cms/admin/api/demo/bootstrap';
 
 type Status = 'pending' | 'success' | 'seed_not_found' | 'error';
 
