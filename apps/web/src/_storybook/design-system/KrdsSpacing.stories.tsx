@@ -68,7 +68,7 @@ export const Radius: Story = {
         title="Border Radius"
         description="rounded-0 ~ rounded-9 (0/2/4/6/8/12/16/20/24/40px). rounded-4(8px)와 rounded-5(12px)가 카드·버튼·이미지에 가장 많이 사용됨."
       />
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-[16px]">
+      <div className="grid grid-cols-2 tablet:grid-cols-3 desktop:grid-cols-5 gap-[16px]">
         {KRDS_RADIUS.map((t) => (
           <div key={t.step} className="text-center">
             <div
