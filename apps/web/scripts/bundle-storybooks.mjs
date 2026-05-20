@@ -45,9 +45,14 @@ const STORYBOOKS = [
   { filter: '@simple-cms/web', name: 'web' },
 ];
 
-function run(cmd, args, cwd) {
+function run(cmd, args, cwd, extraEnv = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, { cwd, stdio: 'inherit', shell: true });
+    const child = spawn(cmd, args, {
+      cwd,
+      stdio: 'inherit',
+      shell: true,
+      env: { ...process.env, ...extraEnv },
+    });
     child.on('exit', (code) =>
       code === 0 ? resolve() : reject(new Error(`${cmd} ${args.join(' ')} exited ${code}`)),
     );
@@ -89,13 +94,20 @@ async function main() {
   await rm(finalParent, { recursive: true, force: true });
 
   // 2. 두 Storybook을 public 바깥의 임시 디렉토리에 빌드.
+  //    STORYBOOK_BASE_PATH 환경변수로 최종 서빙 sub-directory를 전달 → 양쪽 .storybook/main.ts의
+  //    viteFinal이 그 값을 vite `config.base`에 주입 → 빌드 산출물의 모든 asset href/src가
+  //    `/_cms/storybook/{admin|web}/assets/...` 형태로 박혀 정상 fetch.
   for (const { filter, name } of STORYBOOKS) {
     const outDir = path.join(tmpBase, name);
-    console.log(`[bundle-storybooks] building ${filter} → ${outDir}`);
+    const basePath = `/_cms/storybook/${name}/`;
+    console.log(
+      `[bundle-storybooks] building ${filter} → ${outDir} (base=${basePath})`,
+    );
     await run(
       'pnpm',
       ['--filter', filter, 'exec', 'storybook', 'build', '--output-dir', outDir],
       monorepoRoot,
+      { STORYBOOK_BASE_PATH: basePath },
     );
   }
 
