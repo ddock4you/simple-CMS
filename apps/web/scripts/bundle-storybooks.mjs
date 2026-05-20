@@ -25,7 +25,7 @@
  *   public 안에는 빌드 도중 어떤 산출물도 들어가지 않아 self-nesting이 원천 차단된다.
  */
 import { spawn } from 'node:child_process';
-import { rename, rm, mkdir } from 'node:fs/promises';
+import { rename, rm, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -122,7 +122,39 @@ async function main() {
     await moveWithRetry(from, to);
   }
 
-  // 4. 임시 디렉토리 잔여 정리.
+  // 4. Storybook Manager 빌더는 viteFinal의 base path를 무시하고 산출물
+  //    index.html에 `./sb-manager/...` / `./vite-inject-mocker-entry.js` 같은
+  //    relative path를 박는다. Visitor가 trailing slash 없이
+  //    `/_cms/storybook/admin`으로 접근하면 base URL이 부모 디렉토리
+  //    (`/_cms/storybook/`)로 해석되어 manager asset fetch가 모두
+  //    `/_cms/storybook/sb-manager/...`(404)로 가버린다.
+  //
+  //    HTML의 `src=`/`href=` 속성에서 `./` 시작 모든 relative path를 절대
+  //    path로 치환해 trailing slash 의존성을 원천 제거. `../`, 외부 URL
+  //    (`https://...`), 인라인 데이터(`data:...`)는 영향 없음.
+  for (const { name } of STORYBOOKS) {
+    const dir = path.join(finalBase, name);
+    const absBase = `/_cms/storybook/${name}`;
+    for (const htmlFile of ['index.html', 'iframe.html']) {
+      const file = path.join(dir, htmlFile);
+      try {
+        let content = await readFile(file, 'utf-8');
+        const before = content;
+        content = content.replace(
+          /((?:src|href)=["'])\.\//g,
+          `$1${absBase}/`,
+        );
+        if (content !== before) {
+          await writeFile(file, content);
+          console.log(`[bundle-storybooks] rewrote relative paths in ${path.relative(webRoot, file)}`);
+        }
+      } catch (err) {
+        if (err.code !== 'ENOENT') throw err;
+      }
+    }
+  }
+
+  // 5. 임시 디렉토리 잔여 정리.
   await rm(tmpBase, { recursive: true, force: true });
 
   console.log('[bundle-storybooks] done');
