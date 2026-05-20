@@ -26,10 +26,19 @@ const nextConfig: NextConfig = {
   ],
   // 시연 모드: admin을 단일 도메인(/_cms/admin/*)에 프록시.
   // emdashcms.com 패턴과 동일하게 단일 origin을 유지해 세션 쿠키(Path=/)를 admin/web 양쪽에서 공유.
+  //
+  // root path `/_cms/admin`(no trailing slash + path*=빈 값) 자체를 명시적으로 dashboard로
+  // 매핑한다. 명시 처리가 없으면 path*=빈 매칭이 destination을 trailing slash 형태로 만들어
+  // Vercel/Next.js의 자동 trailing slash 정규화와 충돌하면서 `/_cms/admin` ↔ `/_cms/admin`
+  // 308 무한 redirect 루프가 발생.
   ...(isDemoMode && adminRewriteUrl
     ? {
         async rewrites() {
           return [
+            {
+              source: '/_cms/admin',
+              destination: `${adminRewriteUrl}/_cms/admin/dashboard`,
+            },
             {
               source: '/_cms/admin/:path*',
               destination: `${adminRewriteUrl}/_cms/admin/:path*`,
