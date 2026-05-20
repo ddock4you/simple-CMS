@@ -597,6 +597,12 @@ apps/{앱}/
 | 16b-2-b | boards 3 라우트 `defineRoute` 마이그레이션 + `renormalizeDisplayOrder` 'board' 추가 (`buildBoardPatchDiff`) | typecheck·lint·280 tests 통과 | **완료** |
 | 16b-2-c | media 4 라우트 `defineRoute`/`defineBulkOperation` 마이그레이션 (upload/branding-upload 명시적 범위 외) | typecheck·lint·280 tests 통과 | **완료** |
 
+### Stage 17 — Storybook 디자인 시스템 문서화 (admin + web Design System 카탈로그)
+
+| 단계 | 내용 | 확인 가능한 것 | 상태 |
+| ---- | ---- | -------------- | ---- |
+| 17 | admin 6파일(Colors·Typography·SpacingAndRadius·Breakpoints·Foundations·AdminCustoms) + web 6파일(KrdsColors·KrdsTypography·KrdsSpacing·Breakpoints·Foundations·WebCustomTokens) 디자인 시스템 카탈로그 스토리. KRDS `html { font-size: 62.5% }` 회피(`useLayoutEffect` 동기 style 주입) + spacing override 회피(arbitrary value + inline style) 패턴 확립. admin: shadcn 토큰·shadow·wrapper 정책·레이아웃 구조 시각화. web: KRDS 색상·타이포·간격·브레이크포인트 토큰 카탈로그 | Storybook `Admin/Design System/*` + `Web/Design System/*` 진입 → 각 토큰·레이아웃 표준 시각 확인 | **완료** |
+
 ## Stage 8 사전 계획 (다음 컨텍스트 핸드오프)
 
 > **다음 컨텍스트에서 "Stage 8 진행" 요청을 받으면 이 섹션을 먼저 읽고 시작.**
