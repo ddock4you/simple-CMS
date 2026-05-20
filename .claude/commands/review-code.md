@@ -81,6 +81,17 @@ admin에 새 URL 입력 필드를 추가할 때:
 - [ ] **spacing scale 혼동 금지**: KRDS spacing은 `p-3`=8px, `p-7`=24px 등 **default Tailwind와 값이 다름** (admin은 default, web은 KRDS). 앱 간 코드 이동 시 spacing 숫자 재매핑
 - [ ] **Tiptap/HTML 블록 자식 스타일 불가**: `.tiptap-content *` 및 `.subpage-block-html *`는 사용자 입력 HTML이므로 utility 적용 불가 — globals.css에서 유지
 
+### 시연 모드 빌드 (apps/web — `build:demo`)
+
+`apps/web/scripts/bundle-storybooks.mjs` 또는 `apps/{admin,web}/vercel.json` / `apps/web/app/robots.ts`의 `DEMO_MODE` 분기를 만지는 PR에서:
+
+- [ ] **temp dir 패턴 보존**: bundle-storybooks가 `apps/web/.tmp-storybook/{admin,web}/` 에 먼저 빌드 후 `apps/web/public/_cms/storybook/{admin,web}/` 로 rename하는 흐름을 유지. public 안으로 직접 빌드하도록 바꾸면 web Storybook이 admin 산출물을 자기 staticDirs로 흡수해 무한 self-nesting (`/web/_cms/storybook/web/_cms/storybook/...`) → Windows long-path(260자) 한도 즉시 초과
+- [ ] **`finalParent` cleanup 유지**: 빌드 시작 시 `apps/web/public/_cms` 디렉토리 **전체**를 `rm -rf`. `_cms/storybook`만 비우면 빈 `_cms/` 디렉토리가 web Storybook 산출물 안에 다시 복사되는 2차 self-nesting 발생
+- [ ] **rename target 부모 mkdir**: `mkdir(finalBase, { recursive: true })`로 `public/_cms/storybook` 까지 생성해야 함. `path.dirname(finalBase)`만 만들면 `ENOENT` (Node fs.rename은 target의 부모가 존재해야 동작)
+- [ ] **`moveWithRetry` 유지**: Windows에서 fs.rename이 Defender 스캔 / 잔여 file handle로 일시 `EPERM`/`EBUSY` 발생. 300ms × N backoff 5회 retry 패턴 변경 금지. cross-platform이라 Linux/macOS 영향 0
+- [ ] **검색엔진 차단 defense-in-depth**: `apps/{admin,web}/vercel.json`의 `X-Robots-Tag: noindex, nofollow, noarchive` 헤더 + `apps/web/app/robots.ts`의 `process.env.DEMO_MODE === 'true'` 분기(`Disallow: /` early return) 두 곳이 함께 유지되어야 함. 한쪽만 두면 robots.txt를 무시하는 크롤러 / robots.txt가 차단되기 전 크롤된 캐시에 노출 위험
+- [ ] **`apps/web/public/_cms/storybook/`는 `.gitignore`에 포함**: 시연 빌드 산출물이 실수로 commit되지 않도록 보존. Windows long-path 이슈로 cleanup이 어려운 디렉토리라 한 번 들어가면 빼기 어려움
+
 ### Swiper 캐러셀 사용 (Stage 7e — apps/web 한정)
 
 - [ ] **Carousel 공용 컴포넌트 경유**: 새 슬라이드/캐러셀 UI는 반드시 `apps/web/src/shared/ui/Carousel.tsx`를 사용. 직접 `import { Swiper } from 'swiper/react'` 사용 금지 (width 측정 race 방어 미적용 상태가 됨)

@@ -368,6 +368,14 @@ apps/{앱}/
 - `packages/db/prisma/seed.ts` + `demo-seed.ts` — FULL_PERMISSIONS에 `demo-snapshot` 추가
 - `packages/db/src/demo/snapshotWalker.test.ts` — 14건 단위 테스트 (HERO/RECOMMENDED/LATEST_POSTS/IMAGE/RICH_TEXT/HomePopup/SubpageVersion/Post/edge case)
 
+**Storybook 시연 동봉 (build:demo)**
+- `apps/web/scripts/bundle-storybooks.mjs` — 시연 web 빌드 전에 admin/web Storybook 2개를 `apps/web/.tmp-storybook/`에 빌드 후 `apps/web/public/_cms/storybook/{admin,web}/`로 rename 이동. **별도 Vercel 프로젝트 없이** 시연 web origin 단일 도메인에서 `/_cms/storybook/{admin,web}/` 경로로 정적 서빙
+- `apps/web/package.json` — `"build:demo": "pnpm bundle-storybooks && next build"`. Vercel 시연 web 프로젝트 Build Command가 이 명령. 운영 self-host는 `build` 그대로 (Storybook 미동봉)
+- `apps/web/vercel.json` — `X-Robots-Tag: noindex, nofollow, noarchive` 헤더가 web origin 전체에 적용되어 동봉된 Storybook도 자동 차단
+- `apps/web/app/robots.ts` — `DEMO_MODE === 'true'`이면 전체 `Disallow: /` (defense in depth)
+- **Windows 함정 회피 패턴** — temp dir 외부 빌드 + `finalParent`(`public/_cms`)까지 cleanup + `moveWithRetry`(EPERM/EBUSY 5회 retry). 직접 `public/_cms/storybook/`에 빌드하면 web Storybook이 admin 산출물을 자기 staticDirs로 흡수해 self-nesting 무한 중첩 → Windows long-path 한도 즉시 초과. 메모리 `project_build_demo_bundling.md` + 시연 가이드 10장 단일 출처
+- 검색엔진 차단 + Supabase 2026 변경(대시보드 Connect 패널 / API key `sb_secret_*` 마이그레이션 / DIRECT_URL Session pooler 권장 / Hobby cron 100개 한도) → `docs/react-cms-시연모드-배포-가이드.md` 1-4절·11장 단일 출처
+
 **의존성 추가**: `packages/db`에 `sharp ^0.34.5` + `zod ^3.25.76`
 
 ### master 브랜치 단일 스택 운영
@@ -636,7 +644,7 @@ apps/{앱}/
 2. **시연 모드 인프라는 Vercel 배포 전용** — Stage 8은 운영 self-host 옵션도 다룸. 두 트랙 분리 명확화 필요
 3. **Stage 7j addon-vitest cold start** — `node_modules/.cache/storybook` + `.vite` 캐시 이슈가 CI에서도 재현될 가능성. 8b에서 cache restore 전략 결정 필요 (Stage 7j 사전학습 문서 참조)
 4. **Stage 7k-3 미적용 항목** — `browser.isolate: false` 시도가 측정 미달로 revert됐고 "Stage 8+ 이연"으로 표시. 8b에서 재평가 가능
-5. **Hobby plan cron 슬롯 2개** — 시연 cleanup 1개 사용 중. 8c에서 keepalive 추가하면 1개 더. 운영 healthcheck 같은 추가 cron 도입 시 plan upgrade 필요
+5. **Hobby plan cron 한도 최대 100개 / daily 빈도 + hourly 정밀도(±59분)** — 2024년 변경. 시연 cleanup 1개 사용 중. 8c에서 keepalive + healthcheck 추가해도 한도 여유 충분. 분 단위 정밀도 / 잦은 실행이 필요하면 Pro plan (cron 자체 한도는 plan별로 100개 동일)
 6. **PostgreSQL + PGroonga Docker 이미지** — `groonga/pgroonga`가 이미 사용 중. admin/web Dockerfile에서 sharp + Prisma binary가 alpine 호환성 이슈 가능성 (검증 필요)
 7. **모노레포 pnpm workspace** — Dockerfile에서 workspace 의존성 해석은 `pnpm fetch` + `pnpm install --offline` 패턴 권장. multi-stage build에서 deps 캐싱 정확도가 빌드 속도에 직결
 

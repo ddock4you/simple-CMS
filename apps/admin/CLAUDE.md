@@ -1284,6 +1284,7 @@ admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인�
   - `Admin/Design System/Foundations` (ThemeInline / LightDarkPair / FontLoading / VerifyDesignTokens / SsotPolicy) — `@theme inline` 패턴 · light/dark 페어 구조
   - `Admin/Design System/Admin Customs` (Shadow 토큰 / 페이지 레이아웃 표준 / z-index 계단 / 폼 컨트롤 height / shadcn wrapper 정책 / Dialog size 토큰) — Stage 14·15에서 정립된 admin 고유 정책
 - **명령**: `pnpm --filter @simple-cms/admin storybook` (port 6006), `pnpm --filter @simple-cms/admin test` (unit + storybook project 자동 병행), `pnpm --filter @simple-cms/admin build-storybook`
+- **시연 모드 동봉 진입점**: admin Storybook의 정적 산출물은 시연 web 프로젝트의 `build:demo` 단계(`apps/web/scripts/bundle-storybooks.mjs`)가 `pnpm --filter @simple-cms/admin exec storybook build --output-dir <apps/web/public/_cms/storybook/admin>`을 호출해 직접 출력. admin Vercel 시연 프로젝트는 자체 Storybook 빌드를 수행하지 않으며, 별도 Vercel 프로젝트도 만들지 않는다. 자세한 정책은 `docs/react-cms-시연모드-배포-가이드.md` 10장
 - **Stage 7h에서 정립된 play function 패턴** (`storybook/test` v10 core):
   - `expect` / `userEvent` / `within` / `waitFor` / `fn`을 `storybook/test`에서 import (core 패키지, `@storybook/test` 별도 설치 금지)
   - Dialog/toast는 body portal 렌더 → `within(canvasElement)` 아닌 `within(document.body)` 범위에서 탐색

@@ -8,6 +8,12 @@ export const dynamic = 'force-dynamic';
 const DEFAULT_DISALLOW: string[] = ['/api/'];
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
+  if (process.env.DEMO_MODE === 'true') {
+    return {
+      rules: { userAgent: '*', disallow: '/' },
+    };
+  }
+
   const [baseUrl, seo] = await Promise.all([getSiteUrl(), getCachedSeo()]);
 
   const disallow = Array.from(

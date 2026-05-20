@@ -59,6 +59,7 @@ src/
 - `apps/web/app/robots.ts` — `MetadataRoute.Robots` 구조체. `dynamic = 'force-dynamic'`
   - 기본 Disallow `/api/` + admin이 `/settings/seo`에서 관리하는 `ROBOTS_ADDITIONAL_DISALLOW` SiteSetting(JSON 배열) 병합
   - `sitemap: ${baseUrl}/sitemap.xml`, `host: baseUrl` 자동 포함
+  - **`DEMO_MODE=true` 분기 (시연 환경 검색엔진 차단)**: 운영 분기 진입 전 early return으로 `{ rules: { userAgent: '*', disallow: '/' } }` 출력. sitemap·host 라인 없음. defense in depth — `apps/web/vercel.json`의 `X-Robots-Tag: noindex, nofollow, noarchive` 헤더와 함께 적용. 자세한 정책은 `docs/react-cms-시연모드-배포-가이드.md` 11장 참조
 - `apps/web/src/shared/lib/seoCache.ts` — `brandingCache.ts`/`domainCache.ts` 동일 패턴(60s prod / 5s dev TTL). `ROBOTS_ADDITIONAL_DISALLOW` 파싱 실패 시 빈 배열 폴백(robots.txt 서빙 차단 금지)
 
 ### 페이지별 SEO 메타데이터
@@ -186,6 +187,7 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
   - `Web/Design System/Web Customs` (FontStack / DemoBannerVariable / ScopedClasses / CarouselWidthGuard) — web 전용 CSS 변수·패턴 (Stage 17)
   - `Web/Design System/Foundations` (CSS import 순서 / @layer 순서 / Pretendard CDN 로드 / 페이지 컨테이너) — KRDS 스타일 레이어 구조 (Stage 17)
 - **명령**: `pnpm --filter @simple-cms/web storybook` (port 6007), `pnpm --filter @simple-cms/web test`, `pnpm --filter @simple-cms/web build-storybook`
+- **시연 모드 Storybook 동봉 (`build:demo`)**: 시연 Vercel web 프로젝트는 `pnpm --filter @simple-cms/web build:demo`를 호출. `pnpm bundle-storybooks && next build` 순서로 실행되어 admin/web Storybook을 `apps/web/public/_cms/storybook/{admin,web}/`에 동봉 → 단일 도메인(`demo.example.com/_cms/storybook/{admin,web}/`)에서 정적 서빙. 운영(`pnpm build`)에는 영향 없음. 스크립트 위치: `apps/web/scripts/bundle-storybooks.mjs`. 자세한 정책은 `docs/react-cms-시연모드-배포-가이드.md` 10장
 - **Stage 7i 결과 — Swiper 22M 회귀 자동 감지**: `Web/Shared/Carousel > Regression22M` variant 신규 추가. play function이 `canvasElement.querySelector('.krds-carousel')`의 `style.width`를 400px→800px로 두 번 변경해 **`ResizeObserver` 경로를 강제 트리거**한 뒤 `.swiper-slide`의 `style.width`가 `> 0 && < 2000`인지 assert. `window.resizeTo`는 Playwright Chromium headless에서 동작하지 않으므로 채택 안 함. 단순 mount 후 width assert는 방어 로직을 제거해도 통과하므로(Storybook 환경은 Pretendard race condition이 재현되지 않음) 회귀 감지기 역할 불가 — container resize로 3층 defensive triggers 중 최소 하나(ResizeObserver.observe)를 실제로 밟아야 함. 총 변동 — web 12 files / **33 tests** (32 → +1). Stage 17에서 `Web/Design System/*` 6파일 26 stories 추가 → **59 tests**. `readyState='loading'` 시뮬레이션, viewport 360/768/1024 cycle, MSW 검색/팝업 시나리오는 Stage 7i 범위에서 제외 (후속 과제)
 - **Stage 17 — KRDS Storybook 환경 제약**: web Design System stories는 `storyShellDecorator`(S`rc/_storybook/design-system/lib/storyShell.tsx`)가 2가지 환경 제약을 해결한다.
   - **KRDS `html { font-size: 62.5% }` override**: `useLayoutEffect`로 paint 전 동기 `<style>` 주입(html/body `16px !important`). `useEffect`는 첫 frame에 rem 기반 텍스트가 10px로 렌더되는 flash 발생

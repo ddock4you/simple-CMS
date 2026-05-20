@@ -6,6 +6,8 @@
     "dev": "next dev --turbopack --port 3000",
     "dev:https": "next dev --turbopack --experimental-https --port 3000",
     "build": "next build",
+    "build:demo": "pnpm bundle-storybooks && next build",
+    "bundle-storybooks": "node scripts/bundle-storybooks.mjs",
     "start": "next start --port 3000",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

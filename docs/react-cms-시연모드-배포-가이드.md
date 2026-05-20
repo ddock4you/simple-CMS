@@ -1,5 +1,7 @@
 # 시연 모드 배포 가이드 (Vercel + Supabase)
 
+> **최종 검토**: 2026-05-20 — Supabase 대시보드 개편(Connect 패널 신설, API Keys 리네임), 신규 API 키 체계(`sb_publishable_*` / `sb_secret_*`), Prisma `DIRECT_URL` Session pooler 권장 전환, Vercel Hobby cron 100개 한도 갱신, **Storybook 2개를 web 빌드 산출물에 동봉**해 시연 admin + web + Storybook admin/web을 **단일 Vercel web 프로젝트**에서 서빙(10장), 검색엔진 차단 정책(11장).
+>
 > 이 가이드는 시연 모드 인프라(PR1~7)가 모두 완료된 후 **한 번에 배포 환경을 구성**할 때 사용한다. 운영 배포는 별도(`DEMO_MODE` 미설정)이며 본 가이드는 시연 전용 환경만 다룬다.
 >
 > **대상 시점**: master 브랜치에 PR1~PR7이 모두 머지된 상태. PR6 또는 PR7 미완료 시점에 미리 배포해보고 싶다면 5장(시드 적재) → "방법 A — `db:demo-seed` only"만 따르면 된다 (CLI/Admin UI 미사용).
@@ -17,7 +19,8 @@
 
 ## 0. 사전 준비물
 
-- Vercel 계정 (Hobby plan으로 충분 — cron 일 1회만 사용)
+- Vercel 계정 (Hobby plan으로 충분 — cron 최대 100개 / daily 빈도 / hourly 정밀도 한도 내)
+- (선택) Storybook 카탈로그를 시연 환경에 같이 노출하려면 10장 절차 적용 — **추가 Vercel 프로젝트 없이** web 빌드 산출물에 동봉되어 단일 도메인에서 함께 서빙됨
 - Supabase 계정 (Free plan으로 충분 — DB 500MB / Storage 1GB)
 - 도메인(선택) — 시연 전용 커스텀 도메인을 쓰려면 미리 확보. 없으면 Vercel이 발급하는 `*.vercel.app` 사용
 - 로컬에 git/pnpm/node 22 설치
@@ -35,9 +38,11 @@
 5. Plan: **Free** (시연용 충분)
 
 ### 1-2. PGroonga 확장 활성화
-1. 좌측 사이드바 **Database** → **Extensions**
+1. 좌측 사이드바 **Database** → **Extensions** (대시보드 navigation)
 2. 검색창에 `pgroonga`
 3. 토글 활성화 (자동으로 `CREATE EXTENSION pgroonga` 실행됨)
+
+> Free plan에서도 PGroonga 활성화 가능. 첫 활성화 시 1~2분 소요.
 
 ### 1-3. Storage bucket 생성
 1. 좌측 사이드바 **Storage** → **New bucket**
@@ -46,17 +51,40 @@
 4. **Save**
 
 ### 1-4. 연결 정보 복사 (메모장에 임시 보관)
-1. **Project Settings** → **Database** 탭
-2. 다음 4개 값을 복사:
 
-| 라벨 | Vercel 환경변수명 | 비고 |
+> 📍 **2024년 후반부터 Supabase 대시보드가 개편됐다.** 연결 문자열은 더 이상 "Project Settings → Database" 탭에 없다.
+> 대시보드 상단의 **[Connect] 버튼**(또는 좌측 메뉴 `Project Settings → Database`의 "Connection string" 섹션) 패널을 사용한다.
+
+#### A. DB 연결 문자열 (Connect 패널)
+
+1. 프로젝트 대시보드 상단의 **[Connect]** 버튼 클릭 (정확한 위치는 Supabase UI 개편에 따라 변경 가능 — 상단 navigation에서 "Connect" 라벨 검색)
+2. Connect 패널에서 **Prisma용 connection string** 섹션 또는 framework/ORM 선택 영역에서 Prisma 선택
+3. 다음 2개 값을 복사:
+
+| 패널 라벨 | Vercel 환경변수명 | 형식 예시 |
 |---|---|---|
-| Connection string > **Transaction pooler** | `DATABASE_URL` | 끝에 `?pgbouncer=true` 추가 필수 |
-| Connection string > **Direct connection** | `DIRECT_URL` | prisma migrate 전용 |
-| **Project URL** (Settings > API) | `SUPABASE_URL` | `https://xxx.supabase.co` |
-| **service_role key** (Settings > API > Project API keys) | `SUPABASE_SERVICE_ROLE_KEY` | 절대 클라이언트 노출 금지 |
+| **Transaction pooler** (port 6543) | `DATABASE_URL` | `postgres://postgres.xxx:PASS@aws-0-...pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1` |
+| **Session pooler** (port 5432) | `DIRECT_URL` | `postgres://postgres.xxx:PASS@aws-0-...pooler.supabase.com:5432/postgres` |
 
-> `DATABASE_URL`에 `?pgbouncer=true`가 빠지면 Prisma가 prepared statement 충돌로 간헐 실패함.
+> ⚠️ **변경된 권장사항** (2025년 이후):
+> - `DATABASE_URL`은 `?pgbouncer=true&connection_limit=1`까지 포함 (둘 다 권장 — pgbouncer는 prepared statement 충돌 방지, connection_limit는 serverless 함수당 풀 제어).
+> - `DIRECT_URL`은 **Session pooler**(`pooler.supabase.com:5432`)를 사용.
+>   기존 가이드의 "Direct connection"(`db.xxx.supabase.co:5432`)은 IPv6 기본이라 일반 ISP/Vercel에서 IPv4 Add-On(유료) 없이 연결 실패 가능. IPv6 지원 환경이라면 Direct connection도 동작하나, 시연 환경은 **Session pooler 권장**.
+
+#### B. Project URL + API Key (Settings → API Keys)
+
+1. 좌측 사이드바 **Project Settings** → **API Keys** (구 "API" 탭이 "API Keys"로 리네임됨)
+2. 다음 2개 값을 복사:
+
+| 라벨 | Vercel 환경변수명 | 형식 |
+|---|---|---|
+| **Project URL** | `SUPABASE_URL` | `https://xxx.supabase.co` |
+| **secret key** (`sb_secret_xxx`) 또는 **service_role key** (legacy) | `SUPABASE_SERVICE_ROLE_KEY` | 신규: `sb_secret_...` / 구: `eyJ...` (JWT) |
+
+> 🔐 **API 키 마이그레이션 안내**:
+> - Supabase가 2024년부터 신규 키 체계(`sb_publishable_*` / `sb_secret_*`)로 전환 중. legacy `anon` / `service_role` 키는 **2026년 말까지만 동작**.
+> - 본 코드베이스의 환경변수명은 그대로 `SUPABASE_SERVICE_ROLE_KEY` 유지하되, **값은 신규 `sb_secret_xxx`로 복사**할 것 (서버 사이드 권한이 같음).
+> - 절대 `NEXT_PUBLIC_` 접두 금지 (client bundle에 secret 노출됨).
 
 ---
 
@@ -85,11 +113,13 @@
 2. **Configure Project**:
    - **Project Name**: `simple-cms-web-demo` (자유)
    - **Root Directory**: `apps/web` ← **꼭 변경**
-   - **Build Command**: `cd ../.. && pnpm --filter @simple-cms/web build`
+   - **Build Command**: `cd ../.. && pnpm --filter @simple-cms/web build:demo`  ← **`build`가 아니라 `build:demo`** (Storybook 2개를 web 빌드에 동봉 — 10장 참조)
    - **Install Command**: `cd ../.. && pnpm install --frozen-lockfile`
    - **Node.js Version**: `22.x`
 3. Environment Variables — 3장 마스터 리스트의 web 값들 등록 (`NEXT_PUBLIC_ADMIN_REWRITE_URL`은 2-2에서 받은 admin URL)
 4. **Deploy**
+
+> `build:demo`는 `pnpm bundle-storybooks && next build` 흐름이라 admin/web Storybook 두 개를 `apps/web/public/_cms/storybook/{admin,web}/`에 출력한 뒤 web Next.js 빌드를 진행한다. 운영 self-host에서는 그대로 `build` 사용 (Storybook 동봉 불필요).
 
 ### 2-4. 커스텀 도메인 (선택)
 - web 프로젝트 Settings → Domains에 시연 도메인(예: `demo.example.com`) 연결
@@ -107,8 +137,8 @@
 | Key | Value 예시 | 출처 |
 |---|---|---|
 | `DEMO_MODE` | `true` | 고정 |
-| `DATABASE_URL` | `postgresql://postgres.xxx:PASS@aws-0-...pooler.supabase.com:6543/postgres?pgbouncer=true` | 1-4의 Transaction pooler |
-| `DIRECT_URL` | `postgresql://postgres.xxx:PASS@db.xxx.supabase.co:5432/postgres` | 1-4의 Direct connection |
+| `DATABASE_URL` | `postgresql://postgres.xxx:PASS@aws-0-...pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1` | 1-4의 Transaction pooler |
+| `DIRECT_URL` | `postgresql://postgres.xxx:PASS@aws-0-...pooler.supabase.com:5432/postgres` | 1-4의 Session pooler (Prisma migrate 전용) |
 | `STORAGE_PROVIDER` | `supabase` | 고정 |
 | `SUPABASE_URL` | `https://xxx.supabase.co` | 1-4 |
 | `SUPABASE_SERVICE_ROLE_KEY` | `eyJ...` | 1-4 (서버 전용, 절대 NEXT_PUBLIC_ 접두 금지) |
@@ -161,8 +191,10 @@ vercel env add CRON_SECRET production
 
 ```bash
 # 1. .env 파일에 시연 Supabase의 DATABASE_URL/DIRECT_URL 임시 적재
-echo "DATABASE_URL=postgresql://...?pgbouncer=true" >> .env
-echo "DIRECT_URL=postgresql://..." >> .env
+#    DATABASE_URL = Transaction pooler (port 6543, ?pgbouncer=true&connection_limit=1)
+#    DIRECT_URL   = Session pooler (port 5432). 1-4절 참조
+echo "DATABASE_URL=postgresql://...pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1" >> .env
+echo "DIRECT_URL=postgresql://...pooler.supabase.com:5432/postgres" >> .env
 
 # 2. Prisma client 재생성 (사실 schema 변동 없으면 skip 가능)
 pnpm db:generate
@@ -276,7 +308,7 @@ curl -X POST \
 
 401 응답 시 `CRON_SECRET` 환경변수 미설정/오타. 503 응답 시 `DEMO_MODE` 미설정.
 
-> Vercel Hobby plan은 cron 슬롯 2개 한도 / daily만 허용. PR6 이후 healthcheck ping을 추가하면 슬롯 1개 더 사용.
+> Vercel Hobby plan: cron 최대 **100개** 등록 가능 (2024년 변경). 단 빈도는 **daily만** + 정밀도는 hourly(±59분 윈도우). 시연 cleanup + keepalive + healthcheck 모두 등록해도 한도 여유 충분. 분 단위 정밀도 / 잦은 실행이 필요하면 Pro plan (cron 자체 한도는 plan별로 100개 동일).
 
 ---
 
@@ -285,7 +317,9 @@ curl -X POST \
 Supabase Free plan은 **7일 미사용 시 DB 자동 일시정지**된다. 시연 트래픽이 일주일 끊기면 다음 방문자 첫 접속 시 splash 무한 로딩.
 
 ### 회피책 — GitHub Actions keepalive (권장)
-`.github/workflows/demo-keepalive.yml` (PR6+에서 추가 예정. 미리 추가해도 무방):
+`.github/workflows/demo-keepalive.yml`:
+
+> GitHub Actions를 권장하는 이유는 **slot 한도 회피가 아니라** Supabase 외부 ping이 자연스럽고 Vercel cron 의존성을 줄이기 위해서다. Vercel cron으로 keepalive 추가해도 한도 문제 없음 (6장 참조).
 
 ```yaml
 name: Demo Keepalive
@@ -325,6 +359,8 @@ jobs:
 - [ ] (PR7) 시연 admin에서 **[스냅샷 내보내기]** 버튼 클릭 → JSON 다운로드 + toast 결과 표시
 - [ ] (PR7) 일반 관리자로 시연 admin 진입 → **시연 스냅샷** 탭이 SettingsNav에서 안 보이는지 (운영자 전용 권한 게이팅 검증)
 - [ ] (PR7) 운영 admin(`DEMO_MODE` 미설정)에서 시연 스냅샷 탭 진입 → **[Supabase에 즉시 적용]** 버튼이 비활성화 + 안내 표시 (운영 환경 import 차단)
+- [ ] **검색엔진 차단** (11장) — 시연 admin + web 단일 origin의 4개 경로(`/`, `/_cms/admin/dashboard`, `/_cms/storybook/admin/`, `/_cms/storybook/web/`) 모두 `curl -I` 응답 헤더에 `X-Robots-Tag: noindex, nofollow, noarchive` 포함 확인
+- [ ] **robots.txt** — `curl https://demo.example.com/robots.txt` 응답이 `User-agent: *` + `Disallow: /` (DEMO_MODE=true 분기). sitemap/host 라인이 없는지 확인
 
 ---
 
@@ -371,6 +407,199 @@ curl -X POST \
 
 ---
 
+## 10. Storybook 카탈로그 동봉 (시연 web 빌드 내 정적 동봉)
+
+admin/web 각각의 Storybook을 **시연 web 프로젝트의 빌드 산출물에 직접 동봉**해 단일 도메인에서 4가지(admin 시연 + web 시연 + Storybook 2개)를 모두 서빙한다. **별도 Vercel 프로젝트 추가 없음** — 2-3절에서 web Build Command를 `build:demo`로 설정하면 본 동작이 자동 발생.
+
+> Stage 17까지 정비된 디자인 시스템 카탈로그(admin 6 파일 + web 6 파일 + 컴포넌트/widget stories)를 시연 평가자에게 공개하기 위한 절차다. 카탈로그 공개를 원하지 않으면 web Build Command를 평범한 `build`로 두면 됨 (`build:demo` 미선택 시 동봉이 발생하지 않음).
+
+### 10-1. 동작 원리
+
+`apps/web/package.json`의 `build:demo` 스크립트는 `pnpm bundle-storybooks && next build` 순서로 실행한다.
+
+```
+pnpm bundle-storybooks
+  ├─ apps/web/scripts/bundle-storybooks.mjs
+  │   ├─ 1. apps/web/public/_cms/storybook/ 비우기
+  │   ├─ 2. admin Storybook build → apps/web/public/_cms/storybook/admin/
+  │   └─ 3. web   Storybook build → apps/web/public/_cms/storybook/web/
+  └─ next build
+      └─ web 일반 Next.js 빌드 (public/ 디렉토리가 정적 산출물에 그대로 포함됨)
+```
+
+배포 후 단일 origin에서 다음 4 경로가 모두 노출된다:
+
+| 경로 | 처리 위치 | 비고 |
+|---|---|---|
+| `demo.example.com/` | web Next.js | 메인 |
+| `demo.example.com/_cms/admin/*` | web Next.js rewrites → admin Vercel 프로젝트 | 기존 시연 인프라 그대로 |
+| `demo.example.com/_cms/storybook/admin/*` | web `public/_cms/storybook/admin/` (정적) | 빌드 시 동봉 |
+| `demo.example.com/_cms/storybook/web/*` | web `public/_cms/storybook/web/` (정적) | 빌드 시 동봉 |
+
+### 10-2. 코드 위치 (이미 반영됨)
+
+- `apps/web/scripts/bundle-storybooks.mjs` — `child_process.spawn`으로 `pnpm --filter @simple-cms/{admin,web} exec storybook build --output-dir <abs>` 2회 실행. cross-platform (`shell: true`)
+- `apps/web/package.json` scripts:
+  - `"build:demo": "pnpm bundle-storybooks && next build"` ← **Vercel web 프로젝트가 호출하는 명령**
+  - `"bundle-storybooks": "node scripts/bundle-storybooks.mjs"`
+  - `"build": "next build"` ← 운영(Docker self-host)이 호출하는 명령. Storybook 동봉 없음
+- `.gitignore`: `apps/web/public/_cms/storybook/` 추가 (build artifact)
+
+운영 self-host의 Dockerfile은 `pnpm --filter @simple-cms/web build`를 사용하므로 영향 0.
+
+### 10-3. Vercel 설정 (2-3절에서 이미 처리)
+
+2-3절의 web 프로젝트 Build Command가 `build:demo`이면 자동 동봉. 이미 배포된 web 프로젝트라면 Settings → Build & Development Settings에서 Build Command를 다음으로 변경 후 Redeploy:
+
+```
+cd ../.. && pnpm --filter @simple-cms/web build:demo
+```
+
+> **환경변수 더미 추가 불요** — admin/web Storybook은 web 시연 프로젝트의 실제 환경변수(`DATABASE_URL`/`SUPABASE_*` 등)가 이미 적재된 빌드 컨텍스트에서 실행되므로 별도 더미 세팅이 필요 없다. 이전 가이드 버전이 요구하던 dummy `DATABASE_URL`/`SESSION_SECRET`/`FEEDBACK_IP_SALT` 세트는 더 이상 불필요.
+
+### 10-4. 빌드 시간 영향
+
+- 기본 `build` → admin/web 시연 본체만 빌드 (수십 초)
+- `build:demo` → 위 + Storybook 2개 추가 빌드 → **약 3~6분 증가** (story 100+ 기준)
+- 빌드 산출물 크기: web `.vercel/output/static/_cms/storybook/`에 약 20~50MB 추가
+- Vercel Hobby plan 빌드 시간 한도는 build당 45분이라 충분히 여유
+
+빌드 시간이 부담되면 `bundle-storybooks.mjs`를 환경변수(`SKIP_STORYBOOKS=true`)로 가드해서 PR preview에서만 skip하는 식으로 확장 가능 (현재 가이드 범위 외).
+
+### 10-5. 검증 체크리스트
+
+로컬에서 1회:
+
+```bash
+# 모노레포 루트에서
+pnpm --filter @simple-cms/web build:demo
+# 또는 apps/web 디렉토리에서
+pnpm build:demo
+```
+
+- [ ] `apps/web/public/_cms/storybook/admin/index.html` 생성 확인
+- [ ] `apps/web/public/_cms/storybook/web/index.html` 생성 확인
+- [ ] `apps/web/.next/` 정상 생성 (next build 단계 통과)
+
+배포 직후 시크릿 창에서:
+
+- [ ] `https://demo.example.com/_cms/storybook/admin/` 접근 → Storybook UI 표시 + 좌측 sidebar에 `Admin/Design System/*` 6개 항목 노출
+- [ ] `Admin/Design System/Colors` 진입 → 모든 토큰 시각화 (light/dark 양쪽)
+- [ ] `Admin/Features/Auth/LoginForm` 진입 → 컴포넌트 렌더 + Controls 패널 정상
+- [ ] `https://demo.example.com/_cms/storybook/web/` 접근 → `Web/Design System/*` 6개 항목 노출
+- [ ] `Web/Design System/KRDS Colors` 진입 → 31개 팔레트 렌더 + Pretendard 폰트 로드 정상
+- [ ] `Web/Shared/Carousel > Regression22M` 진입 → 우측 **Interactions** 패널에서 모든 step ✓ 표시 확인 (Stage 7i ResizeObserver 회귀 자동 감지기. play function은 정적 Storybook UI에서 자동 실행됨)
+
+### 10-6. 한계 / 운영 시 유의
+
+- **Storybook만 수정해도 web 전체 재배포**: Storybook 변경 빈도가 낮아 부담은 크지 않으나, 디자인 시스템 카탈로그를 자주 갱신한다면 Vercel **Ignored Build Step**으로 `git diff --quiet HEAD^ HEAD -- apps/{admin,web}/.storybook apps/{admin,web}/src/**/*.stories.tsx` 검사 추가 (선택 최적화)
+- **검색엔진 인덱싱 차단은 11장에서 일괄 처리** — `apps/web/vercel.json`의 `X-Robots-Tag: noindex, nofollow, noarchive` 헤더가 web origin 전체에 적용되므로 `/_cms/storybook/*` 경로도 자동 차단. 추가 작업 불필요
+- **시연 모드와 무관**: 본 동봉은 web Build Command(`build:demo`) 단계에서 발생할 뿐 런타임 DEMO_MODE/세션/AsyncLocalStorage와 무관. 운영 self-host도 동일 스크립트를 호출하면 동일 동작이 가능하나, 운영 도메인에서 디자인 시스템을 공개하는 것은 보안상 권장 안 함
+- **빌드 캐시 회귀**: Storybook addon-vitest dep cache 이슈(Stage 7g) 재발 시 `node_modules/.cache/storybook + .vite` 삭제 후 재빌드. Vercel에서는 Settings → **Clear Build Cache** 버튼 사용
+- **mock 데이터 노출**: Storybook story에 등장하는 mock(사용자 이름, 게시글 제목, 미디어 URL)은 fixture 데이터이지만 한국어 fixture가 운영 도메인 가까운 톤이면 평가자가 실 운영 데이터로 오인할 수 있음 — story 작성 시 명백한 fixture 표기(`[Demo] ...`, `샘플 게시글 ...`) 권장 (현 코드 변경 범위 외)
+- **uploads/ 동봉 bloat**: `@storybook/nextjs-vite`가 Next.js `public/` 전체를 자동으로 staticDirs로 흡수하므로 `apps/web/public/uploads/` 안의 dev 업로드 파일이 두 Storybook 산출물(`/_cms/storybook/admin/uploads/...`, `/_cms/storybook/web/uploads/...`)에 그대로 복사된다. 운영 시연 환경의 `public/uploads/`는 일반적으로 비어있지만, dev에서 빌드를 실행했다면 자기 dev 미디어 URL이 정적 산출물에 섞일 수 있음 — Vercel 배포 시 항상 clean checkout에서 빌드되므로 운영 영향은 없으나, 로컬 빌드 산출물을 외부 공유할 때는 주의
+- **Windows long-path 한계 (로컬 빌드 1회차)**: 이전 버전의 스크립트(빌드 순서 admin→web)에서는 web Storybook이 자기 `public/_cms/storybook/admin/`을 재귀 흡수해 self-nesting 폭주가 발생했다. **현 스크립트는 `apps/web/.tmp-storybook/`(public 바깥)에 먼저 빌드한 뒤 rename으로 이동**하므로 self-nesting 자체가 차단되지만, 만약 stale 산출물이 이미 `public/_cms/storybook/` 안에 self-nested로 남아있다면 첫 빌드의 `rm(finalBase)`가 EPERM/long-path 한도 때문에 실패할 수 있다. 시스템 재부팅 후 Windows 우클릭 삭제 또는 WSL `rm -rf` 로 cleanup 후 재시도 권장
+
+---
+
+## 11. 검색엔진 차단 정책 (시연 2개 프로젝트 공통)
+
+시연 환경은 평가용이라 검색엔진에 노출돼서는 안 된다. 시연 admin + 시연 web = **2개 Vercel 프로젝트 모두**에 동일 차단을 적용한다. Storybook 2개는 10장 패턴(web 빌드 동봉)을 따르므로 web의 `vercel.json` headers가 자동 적용 → 별도 차단 작업 불요.
+
+### 11-1. 차단 방식 (defense in depth)
+
+| 계층 | 적용 위치 | 효과 |
+|---|---|---|
+| HTTP 응답 헤더 (1차) | `apps/admin/vercel.json` + `apps/web/vercel.json`의 `headers` 섹션 | 모든 응답에 `X-Robots-Tag: noindex, nofollow, noarchive` — Google/Bing 모두 인덱싱·링크 추적·캐시 차단 |
+| robots.txt (2차) | `apps/web/app/robots.ts`의 `DEMO_MODE=true` 분기 | `User-agent: *` + `Disallow: /` — 정중한 크롤러는 진입 전 차단. sitemap·host 라인은 출력하지 않음 |
+
+X-Robots-Tag는 HTTP 레벨이라 robots.txt를 무시하는 크롤러에도 강제 효과가 있다. robots.txt는 보조 — `<head>`의 `<meta name="robots">`는 정적 HTML(Storybook)에 자동 삽입되지 않으므로 채택하지 않음.
+
+### 11-2. 코드 위치 (이미 반영됨)
+
+```jsonc
+// apps/admin/vercel.json
+{
+  "crons": [...],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
+      ]
+    }
+  ]
+}
+```
+
+```jsonc
+// apps/web/vercel.json (신규)
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
+      ]
+    }
+  ]
+}
+```
+
+```typescript
+// apps/web/app/robots.ts
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  if (process.env.DEMO_MODE === 'true') {
+    return { rules: { userAgent: '*', disallow: '/' } };
+  }
+  // ... 운영 분기 (SiteSettings 기반 동적 robots)
+}
+```
+
+### 11-3. 적용 범위 매트릭스
+
+| Vercel 프로젝트 | Root Directory | vercel.json 적용 | robots.txt 동작 |
+|---|---|---|---|
+| 시연 admin (`simple-cms-admin-demo`) | `apps/admin` | ✅ admin/vercel.json의 headers + crons | robots.txt 라우트 없음 (admin은 Next.js 동적 — `/_cms/admin/*` rewrite 받는 API/UI 전용) |
+| 시연 web (`simple-cms-web-demo`) | `apps/web` | ✅ web/vercel.json의 headers | ✅ `DEMO_MODE=true`라 전체 Disallow |
+| `/_cms/storybook/admin/*` (web 빌드 동봉) | (web 산출물의 정적 파일) | ✅ web/vercel.json의 headers — `source: "/(.*)"` 라 정적 파일에도 적용 | 동봉된 정적 자원이라 robots.txt 영향 없음 (web origin robots.txt의 `Disallow: /`가 이 경로도 포괄) |
+| `/_cms/storybook/web/*` (web 빌드 동봉) | (web 산출물의 정적 파일) | ✅ web/vercel.json의 headers | 동봉된 정적 자원이라 robots.txt 영향 없음 |
+
+> 시연 web 본체는 X-Robots-Tag + robots.txt 양쪽 차단. Storybook 2개는 web 빌드 산출물에 동봉되어 같은 origin에서 서빙되므로 web의 `vercel.json` headers가 자동 적용 — Vercel 프로젝트 수가 2개로 유지되고 매트릭스도 단순해진다. 추가 보안이 필요하면 Vercel Deployment Protection 활성화 (web 프로젝트 1개에만 적용하면 Storybook 경로도 같이 보호됨).
+
+### 11-4. 검증
+
+```bash
+# 단일 origin 4 경로 모두 동일 응답 헤더 확인 — 302든 200이든 응답 헤더에 X-Robots-Tag 포함되어야 함
+curl -I https://demo.example.com/                                  # 시연 web (200)
+curl -I https://demo.example.com/_cms/admin/dashboard               # 시연 admin (비로그인 시 302 → /login. 302 응답 자체에 X-Robots-Tag 포함 확인)
+curl -I https://demo.example.com/_cms/storybook/admin/              # admin Storybook 동봉 (200)
+curl -I https://demo.example.com/_cms/storybook/web/                # web Storybook 동봉 (200)
+# 응답 헤더에 다음이 포함돼야 함:
+#   X-Robots-Tag: noindex, nofollow, noarchive
+
+# 시연 web의 robots.txt
+curl https://demo.example.com/robots.txt
+# 응답:
+#   User-agent: *
+#   Disallow: /
+# (sitemap / host 라인 없음)
+```
+
+### 11-5. 운영 self-host 영향
+
+- `vercel.json`은 **Vercel 배포에서만 읽힘**. Docker self-host 운영 환경에는 영향 없음 — Caddy/Nginx 등 reverse proxy가 자체적으로 응답 헤더를 처리.
+- `apps/web/app/robots.ts`의 `DEMO_MODE === 'true'` 분기는 환경변수 기준이라 운영(`DEMO_MODE` 미설정)에서는 기존 SiteSettings 기반 동적 robots가 그대로 동작 (Stage 9 정책 유지).
+
+### 11-6. 향후 Vercel에 운영 배포를 추가할 경우
+
+운영 도메인을 Vercel에 배포하면 동일한 `vercel.json` headers가 자동 적용돼 **검색엔진이 운영 사이트도 인덱싱 못 함**. 이 경우:
+
+- 운영용으로 vercel.json을 분리하지 말고 — 동일 코드베이스라 `vercel.json` 자체를 운영 환경에서는 비우거나 Vercel Settings → Project → Headers UI에서 시연용만 override
+- 또는 `apps/web/vercel.json` 자체를 시연 전용 lockdown으로 두고, 운영은 Docker self-host로 분리 (현재 권장 트랙)
+
+---
+
 ## 부록 A — `.env.demo` 템플릿 (로컬 작업용)
 
 DB 초기화/시드 적재 시 시연 환경변수를 임시로 격리하려면 `.env.demo`를 만들고 `dotenv-cli`로 사용:
@@ -378,11 +607,11 @@ DB 초기화/시드 적재 시 시연 환경변수를 임시로 격리하려면 
 ```dotenv
 # apps/.env.demo (gitignore에 포함 권장)
 DEMO_MODE=true
-DATABASE_URL=postgresql://postgres.xxx:PASS@aws-0-...pooler.supabase.com:6543/postgres?pgbouncer=true
-DIRECT_URL=postgresql://postgres.xxx:PASS@db.xxx.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres.xxx:PASS@aws-0-...pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1
+DIRECT_URL=postgresql://postgres.xxx:PASS@aws-0-...pooler.supabase.com:5432/postgres
 STORAGE_PROVIDER=supabase
 SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_...    # legacy(`eyJ...` JWT)도 2026년 말까지 호환
 SUPABASE_STORAGE_BUCKET=demo-uploads
 INITIAL_ADMIN_USERNAME=admin
 INITIAL_ADMIN_PASSWORD=changeme
@@ -406,12 +635,15 @@ dotenv -e .env.demo -- pnpm demo:import ./snapshot.json
 | 증상 | 원인 추정 | 조치 |
 |---|---|---|
 | splash 무한 로딩 | bootstrap API 503(SeedNotFoundError) | Supabase에 `__SEED__` row 없음. 5장 시드 적재 재실행 |
-| splash → 500 | cloneSeedToSession 트랜잭션 실패 | Supabase 로그 확인. 자주 발생 시 `DATABASE_URL`에 `?pgbouncer=true` 누락 의심 |
+| splash → 500 | cloneSeedToSession 트랜잭션 실패 | Supabase 로그 확인. 자주 발생 시 `DATABASE_URL`에 `?pgbouncer=true&connection_limit=1` 누락 의심 |
 | banner의 [새 세션 시작] 클릭 → 401 | admin Vercel 프로젝트의 reset endpoint 미인식 | admin 재배포. basePath 설정(`apps/admin/next.config.ts`) 확인 |
 | cron 미실행 | `apps/admin/vercel.json` 미인식 | admin 프로젝트 root directory 설정이 `apps/admin`인지 확인. Settings → Crons에 항목 표시되는지 |
 | 시드 이미지 [삭제]했는데 다른 visitor의 시드 이미지가 사라짐 | adapter `__SEED__` 가드 미작동 (회귀) | `apps/admin/src/shared/lib/storage/supabaseAdapter.ts`의 `delete()` 분기 검증. PR5 회귀 |
 | visitor 격리 안 됨 (다른 창에서 같은 콘텐츠 보임) | `DEMO_MODE` 환경변수 미적용 또는 extension 미작용 | admin/web 양쪽에 `DEMO_MODE=true` 등록 확인. 빌드 캐시 초기화(`vercel deploy --prod --force`) |
-| Supabase Free 5분 connection limit 초과 | pgbouncer 설정 누락 | `DATABASE_URL` 끝에 `?pgbouncer=true` 추가. `DIRECT_URL`은 그대로 (마이그레이션 전용) |
+| Supabase Free 5분 connection limit 초과 | pgbouncer 설정 누락 | `DATABASE_URL` 끝에 `?pgbouncer=true&connection_limit=1` 추가. `DIRECT_URL`은 그대로 (마이그레이션 전용) |
+| Supabase 대시보드에 "Project Settings → Database" 탭이 없음 | 2024년 후반 UI 개편 | 대시보드 상단의 **[Connect] 버튼** 사용. `Project Settings → API`는 `API Keys`로 리네임됨. 1-4절 참조 |
+| Prisma migrate가 timeout / IPv6 관련 에러 | `DIRECT_URL`이 Direct connection(`db.xxx.supabase.co`)이고 환경이 IPv4 only | `DIRECT_URL`을 **Session pooler**(`pooler.supabase.com:5432`)로 교체. IPv4 add-on 결제 불필요 |
+| API 키가 `eyJ...` 형식이 아니라 `sb_secret_xxx` | Supabase 신규 키 체계 (2024+) | 그대로 `SUPABASE_SERVICE_ROLE_KEY` 환경변수에 적재. legacy 키 호환 (2026년 말 만료) |
 | 1시간 지나도 만료 안 됨 | `SESSION_MAX_AGE` 분기 누락 | `apps/admin/src/shared/lib/cookies.ts` + `packages/db/src/sessionHelper.ts` 양쪽 분기 확인 (PR4) |
 | `pnpm demo:export` 실행 시 "DATABASE_URL environment variable is not set" | ESM import hoisting로 `dotenv.config()`가 client.ts 평가 후 실행 | `packages/db/package.json`의 demo-export script가 `tsx --env-file=../../.env`로 시작하는지 확인 (PR6 처리됨) |
 | `pnpm demo:import` 실행 시 "DEMO_MODE !== true" 에러 | 운영 DB 보호 가드 작동 — .env에 시연 환경변수 미적재 | `.env.demo`로 격리 실행 (`dotenv -e .env.demo -- pnpm demo:import ...`) 또는 임시로 `.env`에 `DEMO_MODE=true` + 시연 URL 적재 |

@@ -36,6 +36,9 @@ coverage/
 # storybook
 storybook-static/
 
+# 시연 build:demo가 web/public에 동봉하는 Storybook 정적 산출물
+apps/web/public/_cms/storybook/
+
 # vitest browser / playwright
 test-results/
 playwright-report/
@@ -50,6 +53,9 @@ docker/data/
 docs/
 next-env.d.ts
 settings.local.json
+
+# Claude Code runtime locks
+.claude/scheduled_tasks.lock
 
 # 시연 모드 PR6 dev 산출물 (snapshot export 검증용 임시 파일)
 packages/db/*snapshot*.json
