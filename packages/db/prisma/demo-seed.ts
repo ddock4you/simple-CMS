@@ -202,7 +202,7 @@ async function main() {
   });
   console.log(`✓ PageBlock: about RICH_TEXT (displayOrder 0)`);
 
-  // ─── 8. HomeSection x6 ─────────────────────────────────
+  // ─── 8. HomeSection x7 ─────────────────────────────────
   const homeSections = [
     {
       sectionType: 'HERO' as const,
@@ -211,9 +211,22 @@ async function main() {
       configJson: { slides: [], slideOptions: DEFAULT_SLIDE_OPTIONS },
     },
     {
+      sectionType: 'SUB_CAROUSEL' as const,
+      title: '서브 캐러셀',
+      displayOrder: 1,
+      configJson: {
+        tagline: null,
+        mainHeading: '',
+        subHeading: null,
+        description: null,
+        items: [],
+        slideOptions: DEFAULT_SLIDE_OPTIONS,
+      },
+    },
+    {
       sectionType: 'RECOMMENDED' as const,
       title: '추천 콘텐츠',
-      displayOrder: 1,
+      displayOrder: 2,
       configJson: {
         heading: '추천 콘텐츠',
         description: null,
@@ -224,13 +237,13 @@ async function main() {
     {
       sectionType: 'SHORTCUT' as const,
       title: '바로가기',
-      displayOrder: 2,
+      displayOrder: 3,
       configJson: { heading: '바로가기', description: null, items: [] },
     },
     {
       sectionType: 'LATEST_POSTS' as const,
       title: '최신 게시글',
-      displayOrder: 3,
+      displayOrder: 4,
       configJson: {
         heading: '최신 게시글',
         description: null,
@@ -241,7 +254,7 @@ async function main() {
     {
       sectionType: 'CTA' as const,
       title: 'CTA 섹션',
-      displayOrder: 4,
+      displayOrder: 5,
       configJson: {
         heading: '지금 시작하세요',
         description: null,
@@ -252,7 +265,7 @@ async function main() {
     {
       sectionType: 'NOTICE' as const,
       title: '공지사항',
-      displayOrder: 5,
+      displayOrder: 6,
       configJson: { heading: '공지사항', description: null, items: [] },
     },
   ];
@@ -264,7 +277,7 @@ async function main() {
       isVisible: true,
     });
   }
-  console.log('✓ HomeSection: 6 sections');
+  console.log('✓ HomeSection: 7 sections');
 
   // ─── 9. NavigationMenuItem x2: about 링크 (Header + Footer) ───
   await upsertNavigationMenuItemSeed(headerMenu.id, '소개', {
@@ -481,6 +494,7 @@ async function upsertHomeSectionSeed(
   sectionType:
     | 'HERO'
     | 'RECOMMENDED'
+    | 'SUB_CAROUSEL'
     | 'SHORTCUT'
     | 'LATEST_POSTS'
     | 'CTA'

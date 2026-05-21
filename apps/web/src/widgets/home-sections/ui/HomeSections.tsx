@@ -4,6 +4,7 @@ import {
 } from '@/entities/home-section/api/getHomeSections';
 import { HeroSection } from '@/features/home-section/ui/HeroSection';
 import { RecommendedSection } from '@/features/home-section/ui/RecommendedSection';
+import { SubCarouselSection } from '@/features/home-section/ui/SubCarouselSection';
 import { ShortcutSection } from '@/features/home-section/ui/ShortcutSection';
 import { LatestPostsSection } from '@/features/home-section/ui/LatestPostsSection';
 import { CtaSection } from '@/features/home-section/ui/CtaSection';
@@ -32,6 +33,8 @@ export async function HomeSections({ sections: providedSections }: HomeSectionsP
             return <HeroSection key={section.id} section={section} />;
           case 'RECOMMENDED':
             return <RecommendedSection key={section.id} section={section} />;
+          case 'SUB_CAROUSEL':
+            return <SubCarouselSection key={section.id} section={section} />;
           case 'SHORTCUT':
             return <ShortcutSection key={section.id} section={section} />;
           case 'LATEST_POSTS':

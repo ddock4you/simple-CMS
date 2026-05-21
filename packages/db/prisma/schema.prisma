@@ -28,6 +28,7 @@ enum BoardSkinType {
 enum HomeSectionType {
   HERO
   RECOMMENDED
+  SUB_CAROUSEL
   SHORTCUT
   LATEST_POSTS
   CTA

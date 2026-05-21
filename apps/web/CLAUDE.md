@@ -238,9 +238,9 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
 - 섹션 노출 여부/순서는 admin에서 설정한 대로 반영
 - 디자이너 시안 → 재사용 가능한 섹션 컴포넌트로 분해
 
-### 구현 (Stage 5a)
+### 구현 (Stage 5a + Stage 19)
 
-- **6개 고정 섹션 타입**: HERO, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
+- **7개 섹션 타입**: HERO, SUB_CAROUSEL, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
 - **SSR Server Component 중심**: 섹션 컴포넌트는 Server, 슬라이드 컨트롤만 Client (`Carousel`)
 - **자체 커스텀 디자인** (시안 확정 전): `apps/web/app/globals.css`의 `.home-*` 클래스로 스코프된 스타일. 시안 확정 시 섹션 컴포넌트 교체 전제, admin 데이터 구조는 안정
 
@@ -250,6 +250,7 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
   - 아이템 스키마: `{ imageUrl, imageAlt, title, description?, url? }`
   - url 있으면 전체 슬라이드가 `<Link>`로 감싸짐
   - 배경 이미지 + 그라데이션 오버레이 + 하단 제목/설명
+- **SUB_CAROUSEL** (Stage 19): 4단 카피(tagline/mainHeading/subHeading/description) + 원형 썸네일 캐러셀. **항상 Swiper** (RECOMMENDED처럼 그리드 폴백 없음). slidesPerView: mobile 1 / tablet 2 / desktop 4. `SubCarouselItem`: title + subtitle + imageUrl/imageAlt + url/mediaId
 - **RECOMMENDED**: 자유 갤러리 (subpage/post 참조 아님)
   - 아이템 개수 ≤ 3: 그리드 (모바일 1, 태블릿 2, 데스크톱 3)
   - 아이템 개수 > 3: Carousel (디바이스별 slidesPerView: mobile 1, tablet 2, desktop 3)
@@ -264,10 +265,11 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
 ```
 src/entities/home-section/
 ├── api/getHomeSections.ts      # React.cache, LATEST_POSTS 참조만 배치 조회
-└── lib/parseConfig.ts          # configJson Zod safeParse 타입 가드 (6개)
+└── lib/parseConfig.ts          # configJson Zod safeParse 타입 가드 (7개)
 
 src/features/home-section/ui/
 ├── HeroSection.tsx             # 단일/슬라이드 분기
+├── SubCarouselSection.tsx      # 항상 Swiper, 원형 썸네일 4열 (Stage 19)
 ├── RecommendedSection.tsx      # 그리드/슬라이드 분기
 ├── ShortcutSection.tsx
 ├── LatestPostsSection.tsx
@@ -290,6 +292,7 @@ src/shared/ui/Carousel.tsx                       # Swiper 기반 공통 캐러�
 
 - **configJson 손상**: Zod 실패 → 해당 섹션 skip
 - **HERO slides 빈 배열**: 섹션 전체 숨김 (seed 기본값이 빈 배열이므로 관리자 편집 전까지 미표시)
+- **SUB_CAROUSEL items 빈 배열**: 섹션 전체 숨김 (항상 Swiper이므로 items ≥ 1이어야 렌더)
 - **RECOMMENDED items 빈 배열**: 섹션 전체 숨김
 - **LATEST_POSTS boardId null 또는 비공개**: 섹션은 표시하되 items 빈 배열 → "게시글이 없습니다" placeholder
 - **이미지 URL 입력만 지원** (Stage 5a): `<img src>`로 직접 로드, lazy loading. 이후 Media 관리 Stage에서 업로드 지원 추가 예정

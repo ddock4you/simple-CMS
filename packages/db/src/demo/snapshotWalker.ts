@@ -76,8 +76,8 @@ function remapHomeSectionConfig(
         }
       }
     }
-    // RECOMMENDED items[].mediaId
-    if (sectionType === 'RECOMMENDED' && Array.isArray(cfg.items)) {
+    // RECOMMENDED / SUB_CAROUSEL items[].mediaId
+    if ((sectionType === 'RECOMMENDED' || sectionType === 'SUB_CAROUSEL') && Array.isArray(cfg.items)) {
       for (const item of cfg.items) {
         if (item && typeof item === 'object') {
           const i = item as { mediaId?: unknown };

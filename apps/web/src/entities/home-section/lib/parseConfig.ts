@@ -7,6 +7,7 @@ import type {
   LatestPostsConfig,
   CtaConfig,
   NoticeConfig,
+  SubCarouselConfig,
 } from '@simple-cms/types';
 
 /**
@@ -124,4 +125,28 @@ export function parseCtaConfig(raw: unknown): CtaConfig | null {
 export function parseNoticeConfig(raw: unknown): NoticeConfig | null {
   const result = noticeSchema.safeParse(raw);
   return result.success ? (result.data as NoticeConfig) : null;
+}
+
+const subCarouselSchema = z.object({
+  tagline: z.string().nullable(),
+  mainHeading: z.string(),
+  subHeading: z.string().nullable(),
+  description: z.string().nullable().optional(),
+  items: z.array(
+    z.object({
+      imageUrl: z.string(),
+      imageAlt: z.string(),
+      title: z.string(),
+      subtitle: z.string().nullable().optional(),
+      url: z.string().nullable().optional(),
+      imageOriginalName: z.string().nullable().optional(),
+      mediaId: z.string().nullable().optional(),
+    }),
+  ),
+  slideOptions: slideOptionsSchema,
+});
+
+export function parseSubCarouselConfig(raw: unknown): SubCarouselConfig | null {
+  const result = subCarouselSchema.safeParse(raw);
+  return result.success ? (result.data as SubCarouselConfig) : null;
 }

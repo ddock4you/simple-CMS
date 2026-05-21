@@ -5,6 +5,7 @@ import type {
   HomeSectionType,
   HeroConfig,
   RecommendedConfig,
+  SubCarouselConfig,
   ShortcutConfig,
   LatestPostsConfig,
   CtaConfig,
@@ -18,6 +19,7 @@ import {
   parseNoticeConfig,
   parseRecommendedConfig,
   parseShortcutConfig,
+  parseSubCarouselConfig,
 } from '../lib/parseConfig';
 
 /**
@@ -74,9 +76,16 @@ export interface ResolvedNoticeSection {
   config: NoticeConfig;
 }
 
+export interface ResolvedSubCarouselSection {
+  id: string;
+  sectionType: 'SUB_CAROUSEL';
+  config: SubCarouselConfig;
+}
+
 export type ResolvedSection =
   | ResolvedHeroSection
   | ResolvedRecommendedSection
+  | ResolvedSubCarouselSection
   | ResolvedShortcutSection
   | ResolvedLatestPostsSection
   | ResolvedCtaSection
@@ -103,6 +112,7 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
     config:
       | HeroConfig
       | RecommendedConfig
+      | SubCarouselConfig
       | ShortcutConfig
       | LatestPostsConfig
       | CtaConfig
@@ -144,6 +154,12 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
       }
       case 'NOTICE': {
         const config = parseNoticeConfig(section.configJson);
+        if (!config) continue;
+        parsedSections.push({ ...section, config });
+        break;
+      }
+      case 'SUB_CAROUSEL': {
+        const config = parseSubCarouselConfig(section.configJson);
         if (!config) continue;
         parsedSections.push({ ...section, config });
         break;
@@ -250,6 +266,13 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
           id: section.id,
           sectionType: 'NOTICE',
           config: section.config as NoticeConfig,
+        });
+        break;
+      case 'SUB_CAROUSEL':
+        resolved.push({
+          id: section.id,
+          sectionType: 'SUB_CAROUSEL',
+          config: section.config as SubCarouselConfig,
         });
         break;
     }

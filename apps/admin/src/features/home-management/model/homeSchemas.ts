@@ -146,12 +146,38 @@ export const noticeConfigSchema = z.object({
 });
 export type NoticeConfigData = z.infer<typeof noticeConfigSchema>;
 
+const subCarouselItemSchema = z.object({
+  imageUrl: z.string().min(1, '이미지 URL을 입력해주세요.').max(2000),
+  imageAlt: z
+    .string()
+    .min(1, '이미지 대체 텍스트를 입력해주세요.')
+    .max(200),
+  title: z.string().min(1, '이름을 입력해주세요.').max(200),
+  subtitle: z.string().max(200).nullable().optional(),
+  url: optionalUrlString,
+  imageOriginalName: z.string().max(255).nullable().optional(),
+  mediaId: z.string().max(64).nullable().optional(),
+});
+
+export const subCarouselConfigSchema = z.object({
+  tagline: z.string().max(200).nullable(),
+  mainHeading: z.string().min(1, '메인 제목을 입력해주세요.').max(400),
+  subHeading: z.string().max(200).nullable(),
+  description: z.string().max(500).nullable().optional(),
+  items: z
+    .array(subCarouselItemSchema)
+    .max(12, '최대 12개까지 등록할 수 있습니다.'),
+  slideOptions: slideOptionsSchema,
+});
+export type SubCarouselConfigData = z.infer<typeof subCarouselConfigSchema>;
+
 /**
  * 섹션 타입 → Zod 스키마 매핑 (API 핸들러에서 재검증용)
  */
 export const configSchemaByType = {
   HERO: heroConfigSchema,
   RECOMMENDED: recommendedConfigSchema,
+  SUB_CAROUSEL: subCarouselConfigSchema,
   SHORTCUT: shortcutConfigSchema,
   LATEST_POSTS: latestPostsConfigSchema,
   CTA: ctaConfigSchema,
@@ -172,6 +198,14 @@ export const defaultConfigByType = {
     items: [],
     slideOptions: DEFAULT_SLIDE_OPTIONS,
   } satisfies RecommendedConfigData,
+  SUB_CAROUSEL: {
+    tagline: null,
+    mainHeading: '',
+    subHeading: null,
+    description: null,
+    items: [],
+    slideOptions: DEFAULT_SLIDE_OPTIONS,
+  } satisfies SubCarouselConfigData,
   SHORTCUT: {
     heading: '',
     description: null,
@@ -215,9 +249,9 @@ export const reorderHomeSectionsSchema = z.object({
     .array(
       z.object({
         id: z.string().min(1),
-        displayOrder: z.number().int().min(0).max(5),
+        displayOrder: z.number().int().min(0).max(6),
       }),
     )
-    .length(6, '전체 섹션(6개)을 포함해야 합니다.'),
+    .length(7, '전체 섹션(7개)을 포함해야 합니다.'),
 });
 export type ReorderHomeSectionsData = z.infer<typeof reorderHomeSectionsSchema>;

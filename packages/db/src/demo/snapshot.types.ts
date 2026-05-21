@@ -104,6 +104,7 @@ const homeSectionRowSchema = z.object({
   sectionType: z.enum([
     'HERO',
     'RECOMMENDED',
+    'SUB_CAROUSEL',
     'SHORTCUT',
     'LATEST_POSTS',
     'CTA',

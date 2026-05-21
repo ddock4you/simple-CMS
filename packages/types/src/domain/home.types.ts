@@ -8,6 +8,7 @@
 export type HomeSectionType =
   | 'HERO'
   | 'RECOMMENDED'
+  | 'SUB_CAROUSEL'
   | 'SHORTCUT'
   | 'LATEST_POSTS'
   | 'CTA'
@@ -73,6 +74,29 @@ export interface RecommendedConfig {
   slideOptions: SlideOptions;
 }
 
+/**
+ * 서브 캐러셀 아이템 (원형 썸네일 + 제목 + 학명/영문 부제목).
+ * mediaId는 Media 라이브러리 참조 — 미디어 삭제 시 사용처 추적용.
+ */
+export interface SubCarouselItem {
+  imageUrl: string;
+  imageAlt: string;
+  title: string;
+  subtitle?: string | null;
+  url?: string | null;
+  imageOriginalName?: string | null;
+  mediaId?: string | null;
+}
+
+export interface SubCarouselConfig {
+  tagline: string | null;
+  mainHeading: string;
+  subHeading: string | null;
+  description?: string | null;
+  items: SubCarouselItem[];
+  slideOptions: SlideOptions;
+}
+
 export interface ShortcutItem {
   label: string;
   description?: string | null;
@@ -114,6 +138,7 @@ export interface NoticeConfig {
 export type HomeSectionConfig =
   | ({ sectionType: 'HERO' } & { config: HeroConfig })
   | ({ sectionType: 'RECOMMENDED' } & { config: RecommendedConfig })
+  | ({ sectionType: 'SUB_CAROUSEL' } & { config: SubCarouselConfig })
   | ({ sectionType: 'SHORTCUT' } & { config: ShortcutConfig })
   | ({ sectionType: 'LATEST_POSTS' } & { config: LatestPostsConfig })
   | ({ sectionType: 'CTA' } & { config: CtaConfig })

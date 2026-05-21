@@ -21,6 +21,8 @@ export type {
   HeroConfig,
   RecommendedItem,
   RecommendedConfig,
+  SubCarouselItem,
+  SubCarouselConfig,
   ShortcutItem,
   ShortcutConfig,
   LatestPostsConfig,

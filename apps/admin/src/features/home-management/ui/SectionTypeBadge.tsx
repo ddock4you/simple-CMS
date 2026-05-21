@@ -9,6 +9,7 @@ const VARIANT_BY_TYPE: Record<
 > = {
   HERO: 'default',
   RECOMMENDED: 'default',
+  SUB_CAROUSEL: 'default',
   SHORTCUT: 'secondary',
   LATEST_POSTS: 'secondary',
   CTA: 'outline',

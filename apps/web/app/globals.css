@@ -1656,3 +1656,137 @@ a.home-notice-link:hover {
     font-size: 0.8125rem;
   }
 }
+
+/* ==========================================================================
+   Sub Carousel 섹션 (SUB_CAROUSEL)
+   ========================================================================== */
+
+.home-sub-carousel {
+  padding: var(--gap-8, 32px) var(--screen-margin-desktop, 24px);
+}
+
+.home-sub-carousel-header {
+  text-align: center;
+  margin-bottom: var(--gap-7, 24px);
+}
+
+.home-sub-carousel-tagline {
+  font-size: 0.875rem;
+  color: #8a949e;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--gap-3, 8px);
+}
+
+.home-sub-carousel-main-heading {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #1a1a2e;
+  white-space: pre-line;
+  margin-bottom: var(--gap-4, 16px);
+}
+
+.home-sub-carousel-sub-heading {
+  margin-bottom: var(--gap-3, 8px);
+}
+
+/* 형광펜 효과 — background half-line gradient */
+.home-sub-carousel-highlight {
+  background: linear-gradient(transparent 50%, #ffe0a3 50%);
+  padding: 0 0.1em;
+}
+
+.home-sub-carousel-description {
+  font-size: 0.9375rem;
+  color: #555;
+  margin-top: var(--gap-2, 4px);
+}
+
+/* 카드 (링크/비링크 공통) */
+.home-sub-carousel-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--gap-3, 8px);
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 원형 썸네일 */
+.home-sub-carousel-thumb {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.home-sub-carousel-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+a.home-sub-carousel-card:hover .home-sub-carousel-thumb img {
+  transform: scale(1.05);
+}
+
+.home-sub-carousel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-sub-carousel-item-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.home-sub-carousel-item-subtitle {
+  font-size: 0.875rem;
+  color: #8a949e;
+  font-style: italic;
+}
+
+/* Swiper 22M 회귀 방어 — SubCarouselSection.tsx breakpoints/spaceBetween과 1:1 동기화 필수
+   mobile: slidesPerView=1, spaceBetween=16
+   tablet(≥768): slidesPerView=2, spaceBetween=20 → calc((100% - 20px) / 2)
+   desktop(≥1024): slidesPerView=4, spaceBetween=24 → calc((100% - 72px) / 4) */
+.home-sub-carousel .swiper-slide {
+  width: 100% !important;
+  flex-shrink: 0;
+}
+@media (min-width: 768px) {
+  .home-sub-carousel .swiper-slide {
+    width: calc((100% - 20px) / 2) !important;
+  }
+}
+@media (min-width: 1024px) {
+  .home-sub-carousel .swiper-slide {
+    width: calc((100% - 72px) / 4) !important;
+  }
+}
+
+.home-sub-carousel .krds-carousel .swiper-slide > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 767px) {
+  .home-sub-carousel {
+    padding: var(--gap-7, 24px) var(--screen-margin-mobile, 16px);
+  }
+  .home-sub-carousel-main-heading {
+    font-size: 1.375rem;
+  }
+  .home-sub-carousel-thumb {
+    width: 120px;
+    height: 120px;
+  }
+}
