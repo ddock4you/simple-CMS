@@ -14,6 +14,13 @@ const nextConfig: NextConfig = {
   // outputFileTracingRoot가 없으면 .next/standalone에 @simple-cms/* 패키지가 빠짐.
   output: 'standalone',
   outputFileTracingRoot: path.resolve(__dirname, '../../'),
+  // Next.js turbopack은 server-side 의존성을 자체 번들링하려 시도하는데, jsdom 같이
+  // dynamic require가 많은 native-leaning 패키지는 ESM/CJS interop가 깨져 Vercel
+  // serverless 환경에서 `ERR_REQUIRE_ESM`(@exodus/bytes encoding-lite.js → html-encoding-
+  // sniffer)으로 throw. `serverExternalPackages`에 등록하면 Node.js 표준 모듈 해석으로
+  // fallback해 정상 동작. `isomorphic-dompurify`(`renderContent.ts`에서 SSR HTML
+  // sanitize)가 jsdom을 lazy load하므로 양쪽 모두 등록.
+  serverExternalPackages: ['isomorphic-dompurify', 'jsdom'],
   // next/image 점진 도입(Stage 3-2)을 위한 remotePatterns. /uploads/* 는 same-origin이라
   // 자동 허용되어 별도 패턴 불필요. Supabase Storage 도메인은 wildcard로 등록.
   images: {
