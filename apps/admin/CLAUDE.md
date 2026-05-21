@@ -65,6 +65,7 @@ src/
   - 쿠키 유틸: `setSessionCookie()`, `clearSessionCookie()` — `shared/lib/cookies.ts`
   - 세션 유효성: `(authenticated)` route group layout에서 `requireAuth()` 호출로 인증 처리
   - 동시 로그인 정책: `SiteSettings.CONCURRENT_LOGIN_ENABLED`로 제어
+  - **세션 dedup (Stage 18)**: `shared/lib/cachedSession.ts`의 `getCachedSession()`이 React `cache()`로 같은 요청 내 `Session.findUnique` 호출을 1회로 dedup. `getCurrentUser` + `ensureDemoSession`이 같은 cache 인스턴스를 공유 → admin layout 진입 시 매번 2번 발생하던 DB 쿼리가 1번으로 통합. 새 인증 헬퍼 추가 시 `prisma.session.findUnique` 직접 호출 대신 `getCachedSession()` 경유 권장. Prisma generated 타입 portability 위해 반환 타입은 `Prisma.SessionGetPayload<{ include: { user: { include: { role: true } } } }>` 명시
 
 ### 인가 (Authorization) — 역할 기반 권한 관리
 

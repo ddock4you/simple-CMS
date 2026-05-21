@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import { QueryProvider } from '@/shared/api/QueryProvider';
 import { TooltipProvider } from '@/shared/ui/shadcn/tooltip';
@@ -36,6 +37,7 @@ export default function RootLayout({
           </QueryProvider>
           <Toaster />
         </ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   );

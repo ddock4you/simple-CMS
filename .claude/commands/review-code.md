@@ -92,6 +92,18 @@ admin에 새 URL 입력 필드를 추가할 때:
 - [ ] **검색엔진 차단 defense-in-depth**: `apps/{admin,web}/vercel.json`의 `X-Robots-Tag: noindex, nofollow, noarchive` 헤더 + `apps/web/app/robots.ts`의 `process.env.DEMO_MODE === 'true'` 분기(`Disallow: /` early return) 두 곳이 함께 유지되어야 함. 한쪽만 두면 robots.txt를 무시하는 크롤러 / robots.txt가 차단되기 전 크롤된 캐시에 노출 위험
 - [ ] **`apps/web/public/_cms/storybook/`는 `.gitignore`에 포함**: 시연 빌드 산출물이 실수로 commit되지 않도록 보존. Windows long-path 이슈로 cleanup이 어려운 디렉토리라 한 번 들어가면 빼기 어려움
 
+### 성능 회귀 방지 (Stage 18 — 시연/운영 양쪽)
+
+새 Server Component / layout / route 추가/수정 시:
+
+- [ ] **layout에 dynamic API 추가 금지 (운영 정적화 깨짐)**: apps/web의 layout에 `cookies()`/`headers()`/`searchParams` 등을 직접 호출하면 모든 하위 페이지가 강제 dynamic. 시연 전용 API(`ensureDemoSession`/`getCurrentPathname`)는 `if (process.env.DEMO_MODE === 'true')` 가드로 감싸야 운영 ISR 유지
+- [ ] **`force-dynamic` 명시 자제**: dynamic API 호출하면 자동 dynamic. 명시는 force라 운영에서 ISR 차단. 명시했다면 정말 필요한지 검토. **Next.js route config는 ternary 불가** — 환경 분기는 dynamic 명시 제거 또는 build profile 분기로 처리
+- [ ] **새 fetch가 layout/page에 추가될 때 sequential await인지 확인**: 부모가 미리 `Promise.all`로 모으고 자식에 props 전달이 기본. 자식 Server Component가 자체 fetch를 하면 부모 await 끝나야 시작되어 사실상 순차
+- [ ] **같은 모델 다회 조회는 IN/hasSome/OR로 통합**: 슬롯/카테고리별 N번 호출 대신 `where: { X: { in/hasSome: [...] } }` 1회 + 메모리 그룹핑. 예: `getMenusBySlots(['HEADER','FOOTER','SIDEBAR'])` 패턴
+- [ ] **인증 헬퍼는 `getCachedSession()` 경유 (admin)**: `prisma.session.findUnique` 직접 호출은 같은 요청 내 다른 인증 헬퍼와 중복. `apps/admin/src/shared/lib/cachedSession.ts`의 `getCachedSession()`을 사용해 React `cache()` dedup
+- [ ] **Prisma generated 타입 portability**: `React.cache(async () => prisma.X.findMany(...))` 결과를 export 하면 TS2742 (inferred type not portable). 명시적 `Prisma.XGetPayload<{...}>` 또는 `interface` annotation 추가
+- [ ] **build로 운영 정적화 검증 (force-dynamic 변경 PR)**: `DEMO_MODE= pnpm --filter @simple-cms/web build` 출력 Route 테이블에서 `/`가 `○ (Static)`로 표시되는지 확인. `ƒ (Dynamic)`이면 어디서 dynamic API가 호출되는지 layout부터 추적. typecheck/test는 이걸 검증하지 않음
+
 ### Swiper 캐러셀 사용 (Stage 7e — apps/web 한정)
 
 - [ ] **Carousel 공용 컴포넌트 경유**: 새 슬라이드/캐러셀 UI는 반드시 `apps/web/src/shared/ui/Carousel.tsx`를 사용. 직접 `import { Swiper } from 'swiper/react'` 사용 금지 (width 측정 race 방어 미적용 상태가 됨)

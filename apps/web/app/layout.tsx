@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import 'krds-react/dist/index.css';
 
-import { getMenuBySlot } from '@/entities/navigation/api/getNavigation';
+import { getMenusBySlots } from '@/entities/navigation/api/getNavigation';
 import { getCachedBranding } from '@/shared/lib/brandingCache';
 import { ensureDemoSession } from '@/shared/lib/ensureDemoSession';
 import { getCurrentPathname } from '@/shared/lib/getCurrentPathname';
@@ -70,17 +71,21 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   // 시연 모드: cookie 검증 + sessionId 부착, 없으면 splash로 redirect.
-  // 운영 모드(DEMO_MODE 미설정): no-op + null 반환.
-  const currentPath = await getCurrentPathname();
-  const demoSession = await ensureDemoSession(currentPath);
+  // 운영 모드(DEMO_MODE 미설정): dynamic API(cookies/headers) 호출 자체를 skip하여
+  // 페이지 레벨 force-dynamic 해제 시 ISR/static rendering이 동작하도록 보장.
+  const isDemoMode = process.env.DEMO_MODE === 'true';
+  const demoSession = isDemoMode
+    ? await ensureDemoSession(await getCurrentPathname())
+    : null;
 
-  const [headerMenu, footerMenu, sidebarMenu, branding, baseUrl] = await Promise.all([
-    getMenuBySlot('HEADER'),
-    getMenuBySlot('FOOTER'),
-    getMenuBySlot('SIDEBAR'),
+  const [menus, branding, baseUrl] = await Promise.all([
+    getMenusBySlots(['HEADER', 'FOOTER', 'SIDEBAR']),
     getCachedBranding(),
     getSiteUrl(),
   ]);
+  const headerMenu = menus.HEADER;
+  const footerMenu = menus.FOOTER;
+  const sidebarMenu = menus.SIDEBAR;
 
   const organizationJsonLd = buildOrganizationJsonLd({
     siteName: branding.siteName,
@@ -125,6 +130,7 @@ export default async function RootLayout({
         >
           {children}
         </PageLayout>
+        <SpeedInsights />
       </body>
     </html>
   );

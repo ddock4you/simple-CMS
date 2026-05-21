@@ -19,9 +19,9 @@
 import { redirect } from 'next/navigation';
 import { after } from 'next/server';
 
-import { demo, prisma, cleanupExpiredSessions } from '@simple-cms/db';
+import { demo, cleanupExpiredSessions } from '@simple-cms/db';
 
-import { getSessionCookie } from '@/shared/lib/cookies';
+import { getCachedSession } from '@/shared/lib/cachedSession';
 
 const BOOTSTRAP_PATH_PREFIX = '/demo-bootstrap';
 const LAZY_CLEANUP_PROBABILITY = 0.05;
@@ -39,37 +39,28 @@ export async function ensureDemoSession(
   if (process.env.DEMO_MODE !== 'true') return null;
   if (currentPath.startsWith(BOOTSTRAP_PATH_PREFIX)) return null;
 
-  const token = await getSessionCookie();
-  if (token) {
-    const session = await demo.runWithBypass(() =>
-      prisma.session.findUnique({
-        where: { sessionToken: token },
-        include: { user: true },
-      }),
-    );
-    if (
-      session &&
-      session.expires > new Date() &&
-      session.user.status === 'ACTIVE'
-    ) {
-      demo.enterWith({ sessionId: session.user.sessionId });
+  // `getCachedSession`이 React `cache()`로 같은 요청 내 호출을 dedup.
+  // `getCurrentUser`/`requireAuth`도 같은 헬퍼를 사용하므로 admin layout의
+  // ensureDemoSession + requireAuth = 2 DB 쿼리가 1-쿼리로 통합된다.
+  const session = await getCachedSession();
+  if (session) {
+    demo.enterWith({ sessionId: session.user.sessionId });
 
-      // 5% 확률로 만료 sessionId 일괄 정리 — 응답 송신 후 실행되어 visitor latency 0
-      if (Math.random() < LAZY_CLEANUP_PROBABILITY) {
-        after(async () => {
-          try {
-            await cleanupExpiredSessions(); // DB만 — Storage는 cron이 처리
-          } catch (err) {
-            console.error('[Demo Lazy Cleanup]', err);
-          }
-        });
-      }
-
-      return {
-        sessionId: session.user.sessionId,
-        expiresAt: session.expires.toISOString(),
-      };
+    // 5% 확률로 만료 sessionId 일괄 정리 — 응답 송신 후 실행되어 visitor latency 0
+    if (Math.random() < LAZY_CLEANUP_PROBABILITY) {
+      after(async () => {
+        try {
+          await cleanupExpiredSessions(); // DB만 — Storage는 cron이 처리
+        } catch (err) {
+          console.error('[Demo Lazy Cleanup]', err);
+        }
+      });
     }
+
+    return {
+      sessionId: session.user.sessionId,
+      expiresAt: session.expires.toISOString(),
+    };
   }
 
   redirect(

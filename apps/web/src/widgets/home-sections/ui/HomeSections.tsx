@@ -1,4 +1,7 @@
-import { getHomeSections } from '@/entities/home-section/api/getHomeSections';
+import {
+  getHomeSections,
+  type ResolvedSection,
+} from '@/entities/home-section/api/getHomeSections';
 import { HeroSection } from '@/features/home-section/ui/HeroSection';
 import { RecommendedSection } from '@/features/home-section/ui/RecommendedSection';
 import { ShortcutSection } from '@/features/home-section/ui/ShortcutSection';
@@ -6,8 +9,12 @@ import { LatestPostsSection } from '@/features/home-section/ui/LatestPostsSectio
 import { CtaSection } from '@/features/home-section/ui/CtaSection';
 import { NoticeSection } from '@/features/home-section/ui/NoticeSection';
 
-export async function HomeSections() {
-  const sections = await getHomeSections();
+interface HomeSectionsProps {
+  sections?: ResolvedSection[];
+}
+
+export async function HomeSections({ sections: providedSections }: HomeSectionsProps = {}) {
+  const sections = providedSections ?? (await getHomeSections());
 
   if (sections.length === 0) {
     return (

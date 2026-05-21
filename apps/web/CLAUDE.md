@@ -532,6 +532,20 @@ src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 
 - 캐시: Next.js fetch cache + `revalidatePath` / `revalidateTag` 활용
 - TanStack Query 등 클라이언트 상태 관리는 사용하지 않음 (읽기 전용 SSR 특성)
 
+### Server Component 병렬화 / fetch 통합 (Stage 18)
+
+- **자식 Server Component의 fetch가 부모 await에 묶이지 않게 분리**: 부모가 자식이 필요한 데이터를 미리 `Promise.all`로 모아 props로 전달. 예: `apps/web/src/pages/home/ui/HomePage.tsx`가 `Promise.all([getActiveHomePopups(), getHomeSections()])` 후 `<HomeSections sections={...}>`로 전달. React `cache()`로도 dedup되지만 props가 더 명시적이고 cache 의존성 제거
+- **여러 슬롯/조건의 데이터를 단일 쿼리로 통합**: 같은 모델을 다른 WHERE로 N번 조회하는 패턴은 `IN`/`hasSome`/`OR`로 묶고 메모리에서 그룹핑. 예: `getMenusBySlots(['HEADER','FOOTER','SIDEBAR'])` (`apps/web/src/entities/navigation/api/getNavigation.ts`)가 `NavigationMenu.findMany({ where: { slots: { hasSome } } })` 1회 호출 후 slot별 result 객체로 그룹핑. DB round-trip 3 → 1
+- **Prisma 타입 portability**: 통합 헬퍼의 반환 타입을 `cache()`로 inferred하면 TS2742(non-portable) 발생 가능. `interface ResolvedMenu` / `type MenusBySlotsResult = Record<NavigationMenuSlot, ResolvedMenu | null>` 같은 명시적 type을 export하고 callback에 `Promise<MenusBySlotsResult>` annotation
+
+### force-dynamic 회피 + 운영 모드 정적화 (Stage 18)
+
+- **새 page/layout에 `export const dynamic = 'force-dynamic'` 명시 자제**: dynamic API(`cookies()`/`headers()`/`searchParams`) 호출 시 Next.js가 자동으로 dynamic 판정한다. 명시는 강제 force-dynamic으로 운영 모드 ISR/static을 차단
+- **layout이 dynamic API 호출하면 모든 하위 페이지가 강제 dynamic** (전염성): `apps/web/app/layout.tsx`는 `process.env.DEMO_MODE === 'true'` 가드로 `ensureDemoSession`/`getCurrentPathname`(headers() 사용)을 운영 모드에서 skip → 운영에서만 layout이 정적화되어 메인 페이지 ISR 동작
+- **Next.js route config는 ternary 불가**: `export const dynamic = process.env.X === 'true' ? 'force-dynamic' : 'auto';`는 build 시 `Next.js can't recognize the exported \`dynamic\` field in route. It needs to be a static string` 에러. dynamic 명시를 **제거**하거나 build profile 자체를 분기하는 것이 정답
+- **운영 build 검증**: `DEMO_MODE= pnpm --filter @simple-cms/web build` 출력 Route 테이블에서 `/`가 `○ (Static)` 표시 → 정적화 성공. `ƒ (Dynamic)`이면 layout/page 어딘가가 여전히 dynamic API 호출 중. typecheck/test는 이걸 검증하지 않으므로 build 단계 확인 필수
+- **sitemap.xml**: visitor 무관한 공개 URL 목록이라 시연/운영 모두 `revalidate=300` 5분 ISR. `force-dynamic` 명시 제거 (Stage 18)
+
 ## 컴포넌트 구조 패턴
 
 - **pages 레이어**: Server Component — 데이터 fetching + metadata + 레이아웃 조합

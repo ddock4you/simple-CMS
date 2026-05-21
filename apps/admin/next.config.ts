@@ -22,7 +22,19 @@ const nextConfig: NextConfig = {
         assetPrefix: '/_cms/admin',
         images: { unoptimized: true },
       }
-    : {}),
+    : {
+        // 운영 모드 next/image 점진 도입: Supabase Storage URL 허용.
+        // /uploads/* 같은 same-origin 경로는 자동 허용되어 별도 패턴 불필요.
+        images: {
+          remotePatterns: [
+            {
+              protocol: 'https',
+              hostname: '**.supabase.co',
+              pathname: '/storage/v1/object/public/**',
+            },
+          ],
+        },
+      }),
   async redirects() {
     return [
       {

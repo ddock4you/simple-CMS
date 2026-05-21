@@ -1,22 +1,16 @@
 import { redirect } from 'next/navigation';
 
-import { getSessionUser, demo } from '@simple-cms/db';
-
-import { getSessionCookie } from '@/shared/lib/cookies';
+import { getCachedSession } from '@/shared/lib/cachedSession';
 import type { SessionUser } from '@/entities/auth/model/auth.types';
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
-  const sessionToken = await getSessionCookie();
-  if (!sessionToken) return null;
+  // `getCachedSession`이 React `cache()`로 같은 요청 내 호출을 dedup.
+  // `ensureDemoSession`도 같은 헬퍼를 사용하므로 admin layout의 2-쿼리가 1-쿼리로 통합된다.
+  // Session 모델은 DEMO extension의 EXCLUDED_MODELS + `runWithBypass` 이중 안전망 그대로 유지.
+  const session = await getCachedSession();
+  if (!session) return null;
 
-  // 시연 모드(DEMO_MODE) 안전망: Session 모델은 extension에서 제외되어 sessionId 격리 외이지만,
-  // include 체인의 user/role 동작이 Prisma 7.x에서 100% 검증된 상태가 아니다. runWithBypass로
-  // 인증 부트스트랩 전체를 감싸 cross-tenant filter가 인증 흐름을 깨지 않도록 보험 처리한다.
-  // 단위 테스트(Phase 6)에서 include 체인 안전 확인되면 후속 PR에서 제거 검토.
-  const user = await demo.runWithBypass(() => getSessionUser(sessionToken));
-  if (!user) return null;
-
-  const { password: _, ...safeUser } = user;
+  const { password: _, ...safeUser } = session.user;
   return safeUser;
 }
 

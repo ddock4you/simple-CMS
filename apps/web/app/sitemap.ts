@@ -4,7 +4,11 @@ import { prisma } from '@simple-cms/db';
 
 import { getSiteUrl } from '@/shared/lib/siteUrl';
 
-export const dynamic = 'force-dynamic';
+// sitemap.xml은 visitor와 무관한 공개 콘텐츠 URL 목록이라 시연/운영 모두 5분 ISR로 통일.
+// 시연 모드는 X-Robots-Tag로 검색엔진 차단되어 실 트래픽 거의 없음(영향 미미).
+// 콘텐츠 추가/발행 시 admin이 revalidatePath('/sitemap.xml') 호출하면 즉시 무효화 가능.
+// Next.js route config는 literal만 허용 → ternary 사용 불가, 단일 값 명시.
+export const revalidate = 300;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = await getSiteUrl();

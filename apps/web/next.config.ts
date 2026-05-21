@@ -14,6 +14,17 @@ const nextConfig: NextConfig = {
   // outputFileTracingRoot가 없으면 .next/standalone에 @simple-cms/* 패키지가 빠짐.
   output: 'standalone',
   outputFileTracingRoot: path.resolve(__dirname, '../../'),
+  // next/image 점진 도입(Stage 3-2)을 위한 remotePatterns. /uploads/* 는 same-origin이라
+  // 자동 허용되어 별도 패턴 불필요. Supabase Storage 도메인은 wildcard로 등록.
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
   // dev 서버를 LAN IP(예: 모바일 디바이스에서 192.168.x.x)로 접속할 때 chunk/HMR이
   // cross-origin으로 차단되어 hydration이 실패하는 문제를 해결.
   // Next.js 15.2+ top-level 옵션. wildcard 지원.

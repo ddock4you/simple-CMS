@@ -611,6 +611,12 @@ apps/{앱}/
 | ---- | ---- | -------------- | ---- |
 | 17 | admin 6파일(Colors·Typography·SpacingAndRadius·Breakpoints·Foundations·AdminCustoms) + web 6파일(KrdsColors·KrdsTypography·KrdsSpacing·Breakpoints·Foundations·WebCustomTokens) 디자인 시스템 카탈로그 스토리. KRDS `html { font-size: 62.5% }` 회피(`useLayoutEffect` 동기 style 주입) + spacing override 회피(arbitrary value + inline style) 패턴 확립. admin: shadcn 토큰·shadow·wrapper 정책·레이아웃 구조 시각화. web: KRDS 색상·타이포·간격·브레이크포인트 토큰 카탈로그 | Storybook `Admin/Design System/*` + `Web/Design System/*` 진입 → 각 토큰·레이아웃 표준 시각 확인 | **완료** |
 
+### Stage 18 — 시연/운영 성능 최적화 (Vercel·Supabase region 정렬 + Server Component 병렬화 + cache dedup)
+
+| 단계 | 내용 | 확인 가능한 것 | 상태 |
+| ---- | ---- | -------------- | ---- |
+| 18 | Vercel(iad1) ↔ Supabase 사이 태평양 횡단 RTT가 페이지당 5~7쿼리에 누적되어 1~1.5초 지연 발생하던 문제 해소. **Supabase region을 us-east로 이전**(Vercel과 정렬, Hobby plan 유지)이 단일 결정타. + `cachedSession.ts`로 admin layout의 `ensureDemoSession` + `requireAuth` 2 DB 쿼리 → React `cache()` dedup으로 1 쿼리. + `getMenusBySlots(['HEADER','FOOTER','SIDEBAR'])` 통합 헬퍼로 web layout 메뉴 round-trip 3 → 1. + `HomePage` `Promise.all([popups, sections])` 병렬화. + 운영 모드 `force-dynamic` 제거 + layout `DEMO_MODE` 가드로 dynamic API 호출 skip → `/` Static prerender + `/sitemap.xml` 5분 ISR. + `@vercel/speed-insights` 마운트로 p75 LCP/FCP/INP 자동 수집. [[상세]](docs/stages/stage-18.md) | 시연 메인 페이지 TTFB 1.2s → 0.2~0.4s (예상). 운영 build에서 `/` → `○ Static`. 시연 build에서 `/` → `ƒ Dynamic` 유지 | **완료** |
+
 ## Stage 8 사전 계획 (다음 컨텍스트 핸드오프)
 
 > **다음 컨텍스트에서 "Stage 8 진행" 요청을 받으면 이 섹션을 먼저 읽고 시작.**
