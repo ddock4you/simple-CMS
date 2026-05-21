@@ -140,8 +140,18 @@ async function main() {
       try {
         let content = await readFile(file, 'utf-8');
         const before = content;
+        // (a) HTML 속성: `src="./..."`, `href="./..."`
         content = content.replace(
           /((?:src|href)=["'])\.\//g,
+          `$1${absBase}/`,
+        );
+        // (b) inline `<script type="module">` 내부 ES module import 문:
+        //     `import './sb-manager/runtime.js'`, `import('./X.js')` 등.
+        //     Storybook Manager 빌더가 index.html에 inline import script를
+        //     박는데 이게 base URL 기준 resolve라 trailing-slash 없는 URL에서
+        //     부모 디렉토리로 잘못 resolve됨. 절대 path로 치환해 해결.
+        content = content.replace(
+          /(\bimport[\s(]+["'])\.\//g,
           `$1${absBase}/`,
         );
         if (content !== before) {
