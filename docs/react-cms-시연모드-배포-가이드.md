@@ -682,6 +682,32 @@ dotenv -e .env.demo -- pnpm demo:import ./snapshot.json
 | Admin UI에서 일반 관리자에게 시연 스냅샷 탭이 보임                        | demo-snapshot 권한 잘못 부여                                                       | `packages/db/prisma/seed.ts`의 `DEFAULT_PERMISSIONS`에 demo-snapshot이 빠져있는지 확인. `pnpm db:seed` 재실행 후 일반 관리자 역할 권한 매트릭스 검토 |
 | Admin UI import 후 통계가 갱신 안 됨                                      | `router.refresh()` 호출 누락 또는 캐시 문제                                        | 페이지 hard reload (Ctrl+Shift+R). DemoSnapshotForm의 import 성공 흐름에 `router.refresh()` 호출 확인                                                |
 
+### 실전 배포 디버깅 (PR4-7 후속 검증으로 발견된 함정)
+
+| 증상                                                                      | 원인 추정                                                                          | 조치                                                                                                                                                 |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vercel admin/web 빌드: `Module not found: Can't resolve './generated/prisma/client'` 6건 | `packages/db/src/generated/`는 `.gitignore` 대상 + `postinstall: prisma generate` 누락 | `packages/db/package.json` `scripts.postinstall: "prisma generate"` 1줄 추가. Vercel `pnpm install --frozen-lockfile` 시 자동 생성. Dockerfile은 무관(별도 명시 실행) |
+| Vercel web 빌드: `Failed to collect page data ... DATABASE_URL environment variable is not set` + Turbo warning `missing from "turbo.json"` | Vercel 자동 감지로 `turbo run build` 실행 → Turborepo env sandbox가 환경변수 차단. Root Directory 수정 시 Build/Install Command가 자동 reset됨 | Vercel Dashboard → Settings → Build & Development Settings에서 **Override 토글 켜고** Build Command(`cd ../.. && pnpm --filter @simple-cms/web build:demo`) + Install Command(`cd ../.. && pnpm install --frozen-lockfile`) 명시 입력 |
+| Vercel web 빌드: `The file ".next/routes-manifest.json" couldn't be found` + path가 admin을 가리킴 | web 프로젝트의 Root Directory가 `apps/admin`으로 잘못 설정 | Vercel Dashboard → Settings → General → Root Directory를 `apps/web`으로 변경 + Build/Install Command 재설정 (자동 reset되므로 위 행 참조) |
+| `/_cms/admin` 접속 시 `ERR_TOO_MANY_REDIRECTS` (모두 308 + Location `/_cms/admin`) | web rewrites `:path*`이 empty match 시 destination을 trailing slash로 만들고 admin Vercel CDN의 자동 trailing slash 정규화와 충돌 | `apps/web/next.config.ts` rewrites 배열의 첫 룰로 `{ source: '/_cms/admin', destination: ${adminRewriteUrl}/_cms/admin/dashboard }` 명시 (`/_cms/admin/:path*` catch-all 위에) |
+| admin splash 진입 시 콘솔 `POST /api/demo/bootstrap 404` + "일시적 오류" | `apps/admin/app/demo-bootstrap/DemoBootstrapClient.tsx`의 `BOOTSTRAP_ENDPOINT`가 basePath 누락 (`/api/demo/bootstrap`) | `/_cms/admin/api/demo/bootstrap` 명시. Next.js client-side fetch는 basePath 자동 prepend 안 함 (admin CLAUDE.md 명시 정책) |
+| Storybook (`/_cms/storybook/admin`) 빈 화면 + manager asset 404 (sb-manager/sb-addons) | `.storybook/main.ts`에 base path 미설정 → vite preview만 절대 path 됨, manager builder는 `./sb-manager/...` relative 그대로 박힘 → trailing slash 없는 URL에서 부모 디렉토리로 resolve | `bundle-storybooks.mjs`가 4-layer 처리: (1) `STORYBOOK_BASE_PATH` env로 viteFinal `config.base` 주입 (2) HTML `src=`/`href=` 절대 path 치환 (3) inline ES module `import './...'` 절대 path 치환 (4) `<base href>` 명시 주입 |
+| Storybook 사이드 메뉴 오류 + 콘솔에 `NEXT_REDIRECT;/demo-bootstrap?next=%2F_cms%2Fstorybook%2Findex.json` | Storybook이 stories 목록용 `fetch('./index.json')` 호출 → base URL이 sub-dir 부모로 해석되어 `/_cms/storybook/index.json` 요청 → web Next.js layout gate가 splash로 redirect | bundle-storybooks 4-layer fix의 `<base href>` 주입(4)이 모든 JS fetch / CSS url() 안전망 — index.html에 `<base href="/_cms/storybook/{name}/" />` 1줄 |
+| `pnpm db:push` P1013 `invalid port number in database URL`              | 비밀번호 특수문자(`:`, `@`, `/`, `?`, `#`) 미인코딩 또는 Supabase 복사 시 `[YOUR-PASSWORD]` placeholder 미치환 | Supabase Dashboard → Project Settings → Database → **Reset database password** → 영숫자만 사용. `.env` 양쪽 URL과 Vercel admin/web 환경변수 동시 갱신 |
+| `pnpm db:push` P1001 `Can't reach database server` (TCP 응답하는데도)   | hostname region 오타(`aws-0-...` vs 실제 `aws-1-...`) — 가이드 예시는 `aws-0-...`인데 실제 프로젝트는 region별로 cluster 번호 다름 | Supabase Dashboard → **Connect** 패널에서 정확한 connection string 다시 복사. `Test-NetConnection -ComputerName <hostname> -Port 6543`로 정확한 host 검증 |
+| `.env` 수정해도 P1001 같은 에러 반복                                    | shell 환경변수 우선순위 — `$env:DATABASE_URL`이 export되어 있으면 `.env`보다 우선해 무력화 | `Remove-Item Env:DATABASE_URL` / `Remove-Item Env:DIRECT_URL` 후 **새 PowerShell 창** 열고 재시도. `node -e "require('dotenv').config({path:'.env'}); console.log(process.env.DATABASE_URL?.replace(/(:)[^@]+(@)/,'$1****$2'))"`로 실제 적재값 확인 |
+| Vercel admin URL 직접 접속 시 404 (`https://admin.vercel.app/`)        | admin은 basePath `/_cms/admin`이라 root 라우트 없음 — **정상 동작** | 시연 단일 origin은 **web URL**. visitor는 항상 `https://web-demo.vercel.app/` 또는 `/_cms/admin/dashboard`로 접근. admin Vercel URL은 backend 전용 (web rewrites로 proxy) |
+| Storybook patch 적용했는데 production은 여전히 404                       | Vercel edge cache 또는 browser cache stale | curl로 production 검증 우선: `curl -s https://web.vercel.app/_cms/storybook/admin/index.html \| grep '<base'`. 시크릿 창 + DevTools "Disable cache" + Ctrl+Shift+R |
+
+> **실전 배포 회귀 자동 검증** (commit 전):
+> ```bash
+> # 로컬에서 bundle-storybooks 실행 후
+> grep '<base href=' apps/web/public/_cms/storybook/admin/index.html  # base href 주입 확인
+> grep "import '/_cms" apps/web/public/_cms/storybook/admin/index.html  # ES module import 절대 path 확인
+> grep -oE '(src|href)="\.\/' apps/web/public/_cms/storybook/admin/*.html  # 누락된 relative path 없는지 (출력 0줄이어야 정상)
+> ```
+> 셋 모두 통과 후 commit. Vercel 빌드 1회로 끝낼 수 있음 (push cycle 회피).
+
 ---
 
 ## 참고

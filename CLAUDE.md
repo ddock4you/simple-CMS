@@ -374,7 +374,23 @@ apps/{앱}/
 - `apps/web/vercel.json` — `X-Robots-Tag: noindex, nofollow, noarchive` 헤더가 web origin 전체에 적용되어 동봉된 Storybook도 자동 차단
 - `apps/web/app/robots.ts` — `DEMO_MODE === 'true'`이면 전체 `Disallow: /` (defense in depth)
 - **Windows 함정 회피 패턴** — temp dir 외부 빌드 + `finalParent`(`public/_cms`)까지 cleanup + `moveWithRetry`(EPERM/EBUSY 5회 retry). 직접 `public/_cms/storybook/`에 빌드하면 web Storybook이 admin 산출물을 자기 staticDirs로 흡수해 self-nesting 무한 중첩 → Windows long-path 한도 즉시 초과. 메모리 `project_build_demo_bundling.md` + 시연 가이드 10장 단일 출처
+- **sub-directory 배포 4-layer fix (실전 배포 후속)**: Storybook은 deployment-root 기준으로 빌드되므로 sub-dir 서빙 시 4가지 layer에서 path 깨짐. bundle-storybooks.mjs가 모든 layer를 처리:
+  1. **viteFinal `config.base`** — `STORYBOOK_BASE_PATH` env로 받아 preview iframe asset(`/assets/...`)을 절대 path로 빌드. `.storybook/main.ts`에 정의
+  2. **HTML `src=`/`href=` 속성** — manager builder가 `./sb-manager/...` relative로 박는 부분 후처리 정규식 치환
+  3. **inline ES module import** — `<script type="module">` 내부 `import './sb-manager/runtime.js'` 형태도 정규식 치환 (위 (2)와 별도)
+  4. **`<base href>` 명시 주입** — JS `fetch()` / CSS `url()` 등 정규식으로 못 잡는 동적 URL resolution을 sub-directory 기준으로 강제. index.html은 `<head>` 직후 신규 삽입, iframe.html은 기존 `<base target="_parent" />`에 `href` 속성 확장. idempotent
+  - **함정**: 만약 (4)를 빼면 visitor가 trailing slash 없이 `/_cms/storybook/admin`으로 접근 시 `admin`이 파일명으로 해석되어 base URL이 부모(`/_cms/storybook/`)가 되고, Storybook이 `fetch('./index.json')`으로 stories 목록을 부르는데 `/_cms/storybook/index.json`로 가서 web Next.js layout gate가 `NEXT_REDIRECT;/demo-bootstrap...`로 던짐 → 사이드 메뉴 오류. `<base href>` 1줄로 모든 경로 안전
 - 검색엔진 차단 + Supabase 2026 변경(대시보드 Connect 패널 / API key `sb_secret_*` 마이그레이션 / DIRECT_URL Session pooler 권장 / Hobby cron 100개 한도) → `docs/react-cms-시연모드-배포-가이드.md` 1-4절·11장 단일 출처
+
+**실전 Vercel 배포 함정 (PR4-7 후속, 시연 가이드 12장 단일 출처)**
+- **`packages/db/package.json` postinstall** — `src/generated/prisma/`는 `.gitignore` 대상이라 Git에 없음. `postinstall: prisma generate` 1줄로 Vercel `pnpm install --frozen-lockfile` 시 자동 생성. 미설치 시 admin/web 양쪽 빌드가 `Module not found: Can't resolve './generated/prisma/client'`로 실패
+- **Vercel monorepo 프로젝트 설정 정합성** — Root Directory · Build Command · Install Command 세 항목이 한 묶음. Root Directory만 수정하면 나머지가 자동 감지로 reset되어 `turbo run build` (env sandbox로 DATABASE_URL 차단) + Storybook 미동봉 빌드로 깨짐. **Override 토글 켠 후 Build Command(`cd ../.. && pnpm --filter @simple-cms/web build:demo`) + Install Command(`cd ../.. && pnpm install --frozen-lockfile`) 명시** 필수. 시연 가이드 2-1·2-3절 단일 출처
+- **`apps/web/next.config.ts` rewrites root path 명시** — `/_cms/admin/:path*` 단일 패턴만 두면 visitor가 `/_cms/admin` (단독 path)로 접근 시 path*=빈 매칭이 destination을 trailing slash로 만들고 admin Vercel CDN의 자동 trailing slash 정규화(`/_cms/admin/` → `/_cms/admin`)와 충돌해 자기 자신 308 무한 redirect 발생. **`{ source: '/_cms/admin', destination: ${adminRewriteUrl}/_cms/admin/dashboard }` 룰을 첫 번째에 명시** 필수
+- **admin splash fetch endpoint basePath 명시** — `apps/admin/app/demo-bootstrap/DemoBootstrapClient.tsx`의 `BOOTSTRAP_ENDPOINT`는 반드시 `/_cms/admin/api/demo/bootstrap` (basePath 포함). Next.js client-side `fetch`는 basePath를 자동 prepend하지 않음. 모든 admin client fetch도 동일 (DemoBanner의 reset endpoint 등). web splash는 같은 절대 path를 직접 명시
+- **Supabase URL 디버깅 함정 3종** — DB push 시점 흔한 오류
+  - **P1013 (invalid port)**: 비밀번호 특수문자(`:`, `@`, `/`, `?`, `#`) 미인코딩 또는 Supabase 복사 시 `[YOUR-PASSWORD]` placeholder 미치환. 해결책: Supabase Dashboard → Reset password → 영숫자만 사용
+  - **P1001 (Can't reach)**: region 부분 오타(`aws-0-...` vs `aws-1-...`). 가이드 예시는 `aws-0-...`인데 실제 프로젝트는 `aws-1-...`일 수 있음 — Supabase Dashboard → Connect 패널에서 정확한 hostname 다시 복사
+  - **TCP는 닿는데 P1001**: shell 환경변수 우선순위 — `$env:DATABASE_URL`이 export되어 있으면 `.env`보다 우선해 무력화. `Remove-Item Env:DATABASE_URL` 후 새 PowerShell 창에서 재시도
 
 **의존성 추가**: `packages/db`에 `sharp ^0.34.5` + `zod ^3.25.76`
 
