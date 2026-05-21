@@ -154,6 +154,29 @@ async function main() {
           /(\bimport[\s(]+["'])\.\//g,
           `$1${absBase}/`,
         );
+        // (c) `<base href>` 명시 주입으로 JS `fetch()` / CSS `url()` /
+        //     모든 미명시 relative URL을 sub-directory 기준으로 강제 resolve.
+        //     Storybook의 stories index(`index.json`), 공통 폰트(`sb-common-assets/`)
+        //     등이 JS 안에서 `fetch('./index.json')`/`fetch('./sb-common-assets/...')`
+        //     형태로 호출되는데 정규식으로 잡기 어려움. base href가 한 번에 해결.
+        //
+        //     절대 URL(`/...` 또는 `https://...`)은 base href 무관 — 이미 patch한
+        //     부분과 충돌 없음. idempotent: `<base href=`가 이미 있으면 skip.
+        if (!content.includes('<base href=')) {
+          if (content.match(/<base\s+target="_parent"\s*\/>/)) {
+            // iframe.html: 기존 <base target="_parent" />를 확장
+            content = content.replace(
+              /<base\s+target="_parent"\s*\/>/,
+              `<base href="${absBase}/" target="_parent" />`,
+            );
+          } else {
+            // index.html: <head> 직후 새 <base href> 삽입
+            content = content.replace(
+              /<head>/,
+              `<head>\n    <base href="${absBase}/" />`,
+            );
+          }
+        }
         if (content !== before) {
           await writeFile(file, content);
           console.log(`[bundle-storybooks] rewrote relative paths in ${path.relative(webRoot, file)}`);
