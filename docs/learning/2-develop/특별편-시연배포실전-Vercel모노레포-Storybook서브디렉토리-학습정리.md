@@ -501,7 +501,7 @@ Vercel은 모든 PR에 preview deploy를 자동 생성합니다. master에 push�
 | Storybook 여전히 404 (3차 push) | inline ES module `import './...'` 문 누락 | 정규식 `\bimport[\s(]+["']\.\/` 추가 | 7d27295 |
 | Storybook 사이드 메뉴 오류 NEXT_REDIRECT + 폰트 404 (4차 push) | JS `fetch('./index.json')` / CSS `url()` 등 동적 URL은 정규식 미적용 | HTML `<head>` 직후 `<base href>` 명시 주입 (idempotent + iframe.html은 기존 `<base target>`에 href 확장) | d4b795c |
 | 4-layer 모두 적용했는데 사용자 console에 같은 404 표시 | browser cache 또는 stale Vercel deploy | curl로 production 검증 우선 + 시크릿 창 + DevTools Disable cache | (코드 변경 없음, 진단 안내) |
-| 시연 web 메인 `/` 500 Internal Server Error | Stage 18 commit(`e2d49d6`) 후 발생 — 정확한 stack trace는 Vercel function logs에서 확인 필요 | 진단 진행 중 — 사용자에게 Vercel Function Logs + 환경변수 동기화 확인 요청 (push-and-pray 회피) | (진단 중) |
+| 시연 web 메인 `/` 500 Internal Server Error + Vercel function logs에 `Failed to load external module jsdom: ERR_REQUIRE_ESM` | `renderContent.ts`의 `isomorphic-dompurify` → jsdom lazy load → `html-encoding-sniffer@6` (CJS) → `@exodus/bytes/encoding-lite.js` (ESM only) → Next.js turbopack의 server-side 번들링 중 ESM/CJS interop 깨짐 | `apps/web/next.config.ts`에 `serverExternalPackages: ['isomorphic-dompurify', 'jsdom']` 등록 → Node.js 표준 모듈 해석으로 fallback. 로컬 production build 통과 + 정적화(`/` Static) 유지 확인 | be627a0 |
 
 ## 한 줄 요약 카드
 

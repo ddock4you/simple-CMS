@@ -295,7 +295,24 @@ advisor의 조언: "**Don't guess which scenario without checking.** 각 시나�
 
 **대안**: Supabase Dashboard → Connect 패널에서 **본인 프로젝트의 connection string을 직접 복사**. 가이드는 형식 참고만.
 
-### 안티패턴 4: 정리 작업 미루기
+### 안티패턴 4: turbopack의 server-side 번들링을 무조건 신뢰
+
+**문제**: Next.js turbopack(또는 webpack)은 server-side 의존성을 자체 번들링하려 시도하지만, **dynamic `require()`가 많거나 ESM/CJS 혼용 chain이 깊은 패키지**(`jsdom`, `isomorphic-dompurify` 등)는 번들링 과정에서 interop가 깨진다. 로컬 dev에서는 통과해도 Vercel serverless 환경에서 `ERR_REQUIRE_ESM`으로 throw.
+
+**증상**: Vercel function logs에 `Failed to load external module <package>: ERR_REQUIRE_ESM: require() of ES Module ... not supported` 형태.
+
+**대안**: Next.js 공식 옵션 `serverExternalPackages`에 해당 패키지를 등록 → 번들링 건너뛰고 Node.js 표준 모듈 해석으로 fallback → ESM/CJS interop native 호환.
+
+```typescript
+const nextConfig: NextConfig = {
+  serverExternalPackages: ['isomorphic-dompurify', 'jsdom'],
+  // ...
+};
+```
+
+이 패턴은 SSR HTML sanitize(DOMPurify), MDX 처리, 일부 Markdown parser, image processing 패키지(sharp 등)에서 흔히 필요. 로컬 build 통과해도 production에서 처음 발견되는 경우가 많아 **반드시 Vercel preview deploy 또는 production runtime에서 검증** 필수.
+
+### 안티패턴 5: 정리 작업 미루기
 
 **문제**: 디버깅용 screenshot.png를 `apps/web/public/`에 두면 운영 도메인(`https://web/screenshot1.png`)에 외부 노출. cleanup 안 하면 시연 시작 시 발견.
 

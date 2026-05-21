@@ -698,6 +698,7 @@ dotenv -e .env.demo -- pnpm demo:import ./snapshot.json
 | `.env` 수정해도 P1001 같은 에러 반복                                    | shell 환경변수 우선순위 — `$env:DATABASE_URL`이 export되어 있으면 `.env`보다 우선해 무력화 | `Remove-Item Env:DATABASE_URL` / `Remove-Item Env:DIRECT_URL` 후 **새 PowerShell 창** 열고 재시도. `node -e "require('dotenv').config({path:'.env'}); console.log(process.env.DATABASE_URL?.replace(/(:)[^@]+(@)/,'$1****$2'))"`로 실제 적재값 확인 |
 | Vercel admin URL 직접 접속 시 404 (`https://admin.vercel.app/`)        | admin은 basePath `/_cms/admin`이라 root 라우트 없음 — **정상 동작** | 시연 단일 origin은 **web URL**. visitor는 항상 `https://web-demo.vercel.app/` 또는 `/_cms/admin/dashboard`로 접근. admin Vercel URL은 backend 전용 (web rewrites로 proxy) |
 | Storybook patch 적용했는데 production은 여전히 404                       | Vercel edge cache 또는 browser cache stale | curl로 production 검증 우선: `curl -s https://web.vercel.app/_cms/storybook/admin/index.html \| grep '<base'`. 시크릿 창 + DevTools "Disable cache" + Ctrl+Shift+R |
+| web 메인 `/` 500 + Vercel function logs `Failed to load external module jsdom: ERR_REQUIRE_ESM` | `renderContent.ts`의 `isomorphic-dompurify` → jsdom lazy load 시 turbopack server-side 번들링이 `@exodus/bytes/encoding-lite.js` (ESM) ↔ `html-encoding-sniffer` (CJS) interop 깨뜨림 | `apps/web/next.config.ts`에 `serverExternalPackages: ['isomorphic-dompurify', 'jsdom']` 등록. Node.js 표준 모듈 해석으로 fallback. 로컬 build 통과해도 Vercel runtime에서만 발견되므로 preview/production 검증 필수 |
 
 > **실전 배포 회귀 자동 검증** (commit 전):
 > ```bash
