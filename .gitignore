@@ -50,7 +50,9 @@ docker/data/
 *.log
 *.tsbuildinfo
 
-docs/
+docs/*
+!docs/codex/
+!docs/codex/**
 next-env.d.ts
 settings.local.json
 

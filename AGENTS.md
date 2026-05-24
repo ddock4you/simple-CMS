@@ -1,3 +1,7 @@
+<!--
+Codex migration note: this file is a Codex-friendly instruction/reference file.
+Codex automatically reads AGENTS.md files by directory scope.
+-->
 # Simple CMS
 
 Next.js 기반의 관리자 CMS(admin)와 공개 웹(web)을 모노레포로 분리 운영하는 실무형 CMS 프로젝트.
@@ -461,13 +465,13 @@ apps/{앱}/
 
 > **로드맵 변경 정책**: 개발 중 기능 보강, 신규 추가, 삭제가 언제든 발생할 수 있다.
 > 단계 번호는 고정 순서가 아닌 논리적 그룹이며, 우선순위와 범위는 필요에 따라 조정한다.
-> 변경 시 이 로드맵과 관련 CLAUDE.md를 함께 업데이트한다.
+> 변경 시 이 로드맵과 관련 AGENTS.md를 함께 업데이트한다.
 >
-> **Stage 완료 시 문서 정합성 확인**: 각 Stage 커밋 전에 루트 CLAUDE.md, apps/\*/CLAUDE.md, packages/\*/CLAUDE.md에서
+> **Stage 완료 시 문서 정합성 확인**: 각 Stage 커밋 전에 루트 AGENTS.md, apps/\*/AGENTS.md, packages/\*/AGENTS.md에서
 > 해당 Stage에서 변경된 패턴·파일 경로·아키텍처가 정확히 반영되었는지 확인한다.
 > middleware→layout 전환 같은 구조 변경이 있었다면 기존 문서의 참조도 함께 수정한다.
 >
-> **Stage 결과 요약 작성 위치 (Stage 7c 이후)**: 각 Stage의 상세 결과 요약은 루트 CLAUDE.md 본문에 작성하지 않고 `docs/stages/stage-{id}.md` 파일로 작성한다. 루트 CLAUDE.md의 로드맵 표에는 1~2문장 요약 + `[[상세]](docs/stages/stage-{id}.md)` 링크만 유지한다. 과거 Stage 7c~7m의 상세 요약은 `docs/stages/` 이하에 이미 분리되어 있다.
+> **Stage 결과 요약 작성 위치 (Stage 7c 이후)**: 각 Stage의 상세 결과 요약은 루트 AGENTS.md 본문에 작성하지 않고 `docs/stages/stage-{id}.md` 파일로 작성한다. 루트 AGENTS.md의 로드맵 표에는 1~2문장 요약 + `[[상세]](docs/stages/stage-{id}.md)` 링크만 유지한다. 과거 Stage 7c~7m의 상세 요약은 `docs/stages/` 이하에 이미 분리되어 있다.
 
 ### Stage 1 — 기초 환경
 
@@ -539,7 +543,7 @@ apps/{앱}/
 | 7k-3 | addon-vitest 30s cold start 탐사 (measure-first) [[상세]](docs/stages/stage-7k-3.md) | primary source 확인(`storybookScript`는 watch 전용, `disableAddonDocs` 기본 true) + `browser.isolate: false` 시도 결과 10초 기준 미달로 revert. Stage 8+ 이연 | **완료 (findings only)** |
 | 7l   | 사이트 브랜딩 + SEO 메타데이터 (로고/favicon/OG/사이트명·설명) [[상세]](docs/stages/stage-7l.md) | admin `/settings/branding` 5번째 탭에서 6키 통합 관리 + web 헤더 동적 로고 + `generateMetadata`로 title/description/icons/openGraph 자동 반영 | **완료** |
 | 7m   | 서브페이지 버전 관리 (이력 / 롤백 / 작성자 필터 · admin 미리보기) [[상세]](docs/stages/stage-7m.md) | `SubpageVersion` 단일 JSON 스냅샷 + 명시적 [버전 저장] + DRAFT→PUBLISHED AUTO_PUBLISH + 소프트 롤백 (PRE_ROLLBACK 자동 백업) + 깃 스타일 메모 + 낙관 동시성(`Subpage.revision`) + 보존 30개 lazy cleanup | **완료** |
-| 8    | Docker + CI/CD + 문서화 [[상세]](docs/stages/stage-8.md) | 8a Docker compose 3-컨테이너 + admin/web Dockerfile multi-stage(image content 100MB) + standalone outputFileTracingRoot / 8b CI matrix에 build task 추가(admin/web × 4 = 8 jobs) + packages typecheck 신설(latent 타입 버그 6건 노출/수정) / 8c Playwright nightly E2E + demo keepalive(6h cron + issue 자동 생성) + 패스워드 fixture 정합화 / 8d 운영 self-host 가이드 10장 + README + admin/web CLAUDE.md Docker 섹션 | **완료** |
+| 8    | Docker + CI/CD + 문서화 [[상세]](docs/stages/stage-8.md) | 8a Docker compose 3-컨테이너 + admin/web Dockerfile multi-stage(image content 100MB) + standalone outputFileTracingRoot / 8b CI matrix에 build task 추가(admin/web × 4 = 8 jobs) + packages typecheck 신설(latent 타입 버그 6건 노출/수정) / 8c Playwright nightly E2E + demo keepalive(6h cron + issue 자동 생성) + 패스워드 fixture 정합화 / 8d 운영 self-host 가이드 10장 + README + admin/web AGENTS.md Docker 섹션 | **완료** |
 | 9    | SEO 기반 구축 (sitemap + robots + 페이지별 SEO + Schema.org JSON-LD) [[상세]](docs/stages/stage-9.md) | `/sitemap.xml`·`/robots.txt` 자동 생성 + Post에 seoTitle/seoDescription + Article/BreadcrumbList/Organization/WebSite JSON-LD + admin `/settings/seo` 탭에서 robots 추가 Disallow 관리 | **완료** |
 | 10   | 사용자 피드백 (서브페이지 만족도 조사 + admin 통계/차트) [[상세]](docs/stages/stage-10.md) | KRDS 가이드 + Figma 시안 기반 네/아니오 + 긍정 이유 3개 + 자유 텍스트 / SubpageForm `feedbackEnabled` 토글(opt-in) / `/api/feedback` 익명 수집(IP 해싱 + 24h rate limit + preview 차단) / admin `/subpage-feedback`에서 recharts 통계 + 목록 + 삭제 / SubpageVersion 스냅샷에 `feedbackEnabled` 포함 | **완료** |
 
@@ -596,11 +600,11 @@ apps/{앱}/
 
 | 단계 | 내용 | 확인 가능한 것 | 상태 |
 | ---- | ---- | -------------- | ---- |
-| 15a | `apps/admin/design.md` 전면 재작성 (Stitch DESIGN.md 사양, 한글 8섹션) + 루트 CLAUDE.md Stage 15 추가 + admin CLAUDE.md UI 전략 갱신. 코드 변경 0건 | `npx @google/design.md lint` broken-ref 0건 확인 | **완료** |
+| 15a | `apps/admin/design.md` 전면 재작성 (Stitch DESIGN.md 사양, 한글 8섹션) + 루트 AGENTS.md Stage 15 추가 + admin AGENTS.md UI 전략 갱신. 코드 변경 0건 | `npx @google/design.md lint` broken-ref 0건 확인 | **완료** |
 | 15b | `globals.css`에 shadow 토큰 3개 추가 (`--shadow-card/toolbar/popover`, light/dark 페어). `@theme inline` + `:root` + `.dark`. 기존 shadcn 토큰 무변경 | Storybook smoke 56 tests 회귀 0건 확인 | **완료** |
 | 15c-1 | shadow 토큰 실 컴포넌트 적용 3파일 5건: PageToolbar `shadow-toolbar`, BlockContentView `shadow-card`, TiptapEditor 팝업 3곳 `shadow-popover`. design.md toolbar 설명 정정 [[상세]](docs/stages/stage-15c.md) | `pnpm --filter @simple-cms/admin build` 통과 | **완료** |
 | 15c-2 | shadow wrapper 4개(Popover/Select/DropdownMenu/Sheet) + 27파일 swap + BooleanSwitchField + 5폼 통일 + spacing/scale 토큰 + PageHeader typography fix + ESLint 가드 [[상세]](docs/stages/stage-15c-2.md) | typecheck·lint·build 통과 | **완료** |
-| 15c-3a | verify-design-tokens.mjs(ΔE2000 22토큰 검증) + success/warning 토큰 신설 + design.md YAML 22토큰 보정 + 부록B + CLAUDE.md 갱신 [[상세]](docs/stages/stage-15c-3a.md) | `pnpm design:verify` 22 tokens pass (max ΔE 1.29) + typecheck·lint·build 통과 | **완료** |
+| 15c-3a | verify-design-tokens.mjs(ΔE2000 22토큰 검증) + success/warning 토큰 신설 + design.md YAML 22토큰 보정 + 부록B + AGENTS.md 갱신 [[상세]](docs/stages/stage-15c-3a.md) | `pnpm design:verify` 22 tokens pass (max ΔE 1.29) + typecheck·lint·build 통과 | **완료** |
 | 15c-3b | Badge wrapper(success/warning variant) + 14곳 raw green/amber/emerald → 토큰 swap + chartColors helper + 2개 차트 적용 [[상세]](docs/stages/stage-15c-3b.md) | typecheck·lint·build 통과 | **완료** |
 | 15c-3c | AlertDialog wrapper(단순 re-export, size 미도입) + ESLint 가드 + 24 호출처 import 경로 swap + PageHeader 2곳 정정(ProfilePage·NavigationEditClient) [[상세]](docs/stages/stage-15c-3c.md) | typecheck·lint·build 통과 | **완료** |
 | 15c-3d | Card baseline 보정 (rounded-xl→lg, py-4→py-6, px-4→px-6, CardTitle text-base→text-lg semibold, CardDescription text-sm→text-xs) + StatCard/Auth 예외 유지 + text-base override 4곳 제거 [[상세]](docs/stages/stage-15c-3d.md) | typecheck·lint·build 통과 | **완료** |
@@ -664,7 +668,7 @@ apps/{앱}/
 
 ### 알려진 의존성 / 함정
 
-1. **Stage 11e `e2e/` 폴더는 이미 존재** — Stage 11e CLAUDE.md 노트에 "CI 통합은 Stage 8(Docker) 이후"로 명시. 8c가 그 약속을 이행
+1. **Stage 11e `e2e/` 폴더는 이미 존재** — Stage 11e AGENTS.md 노트에 "CI 통합은 Stage 8(Docker) 이후"로 명시. 8c가 그 약속을 이행
 2. **시연 모드 인프라는 Vercel 배포 전용** — Stage 8은 운영 self-host 옵션도 다룸. 두 트랙 분리 명확화 필요
 3. **Stage 7j addon-vitest cold start** — `node_modules/.cache/storybook` + `.vite` 캐시 이슈가 CI에서도 재현될 가능성. 8b에서 cache restore 전략 결정 필요 (Stage 7j 사전학습 문서 참조)
 4. **Stage 7k-3 미적용 항목** — `browser.isolate: false` 시도가 측정 미달로 revert됐고 "Stage 8+ 이연"으로 표시. 8b에서 재평가 가능
@@ -689,7 +693,7 @@ ls .github/workflows/
 
 ### Stage 8 시점에 확인할 컨텍스트
 
-- 루트 CLAUDE.md "시연 모드 격리 인프라" 섹션 — Stage 8c keepalive와 시너지
+- 루트 AGENTS.md "시연 모드 격리 인프라" 섹션 — Stage 8c keepalive와 시너지
 - `docs/react-cms-시연모드-배포-가이드.md` — Stage 8d 운영 가이드 형식 참조
 - Stage 7j 학습 문서(있다면) — addon-vitest CI 함정 + cache 전략
 - Stage 11e 학습 문서 — e2e 골든 플로우 시나리오
