@@ -14,7 +14,6 @@
   --breakpoint-desktop: 1025px;
 }
 
-@plugin "@krds-ui/tailwindcss-plugin";
 @plugin "@tailwindcss/typography";
 
 /* ==========================================================================
@@ -27,6 +26,10 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html {
+  font-size: 100%;
 }
 
 body {
@@ -47,6 +50,7 @@ body {
     'Segoe UI Symbol',
     sans-serif;
   line-height: 1.6;
+  font-size: 1rem;
   color: #333;
   -webkit-font-smoothing: antialiased;
 }

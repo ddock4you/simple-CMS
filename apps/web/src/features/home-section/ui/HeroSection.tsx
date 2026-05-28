@@ -21,7 +21,7 @@ export function HeroSection({ section }: HeroSectionProps) {
   if (slides.length === 1) {
     return (
       <section
-        className="block w-full overflow-hidden rounded-5"
+        className="block w-full overflow-hidden rounded-[12px]"
         aria-label="메인 히어로"
       >
         {renderSlide(slides[0])}
@@ -33,7 +33,7 @@ export function HeroSection({ section }: HeroSectionProps) {
   return (
     <section
       data-hero-carousel
-      className="block w-full min-w-0 overflow-hidden rounded-5"
+      className="block w-full min-w-0 overflow-hidden rounded-[12px]"
       aria-label="메인 히어로"
     >
       <Carousel
@@ -52,7 +52,7 @@ export function HeroSection({ section }: HeroSectionProps) {
 function renderSlide(slide: HeroSlide): ReactNode {
   const content = (
     <div
-      className="relative flex w-full min-h-[280px] items-end overflow-hidden rounded-5 bg-[#1a2b4a] bg-cover bg-center bg-no-repeat text-white tablet:min-h-[360px] desktop:min-h-[440px]"
+      className="relative flex w-full min-h-[280px] items-end overflow-hidden rounded-[12px] bg-[#1a2b4a] bg-cover bg-center bg-no-repeat text-white tablet:min-h-[360px] desktop:min-h-[440px]"
       style={
         slide.imageUrl
           ? { backgroundImage: `url(${escapeUrl(slide.imageUrl)})` }

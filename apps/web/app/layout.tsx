@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-import 'krds-react/dist/index.css';
+import './krds-normalized.css';
 
 import { getMenusBySlots } from '@/entities/navigation/api/getNavigation';
 import { getCachedBranding } from '@/shared/lib/brandingCache';

@@ -12,8 +12,8 @@ const meta = {
     docs: {
       description: {
         component:
-          'KRDS plugin spacing 0~10 (2/4/8/12/16/20/24/32/40/48px) — **Tailwind 기본값 override**. ' +
-          'borderRadius 0~9 (2/4/6/8/12/16/20/24/40px). p-1이 2px (Tailwind 기본 4px와 다름) 주의.',
+          'KRDS spacing 0~10 (2/4/8/12/16/20/24/32/40/48px)와 borderRadius 0~9 (2/4/6/8/12/16/20/24/40px). ' +
+          'Tailwind plugin은 사용하지 않으므로 앱 코드에서는 표준 Tailwind spacing 또는 arbitrary value를 명시한다.',
       },
     },
   },
@@ -28,7 +28,7 @@ export const Spacing: Story = {
     <div className="space-y-[16px] max-w-3xl mx-auto">
       <SectionHeader
         title="Spacing"
-        description="padding · margin · gap utility. KRDS 그리드 단위 (2/4/8/12/16/20/24/32/40/48px). p-1=2px (Tailwind 기본 4px가 아님 주의)."
+        description="KRDS 그리드 단위 (2/4/8/12/16/20/24/32/40/48px). 앱 코드에서는 표준 Tailwind spacing과 혼동하지 않도록 필요한 값만 arbitrary value로 쓴다."
       />
       {KRDS_SPACING.map((t) => (
         <div
@@ -66,7 +66,7 @@ export const Radius: Story = {
     <div className="max-w-4xl mx-auto">
       <SectionHeader
         title="Border Radius"
-        description="rounded-0 ~ rounded-9 (0/2/4/6/8/12/16/20/24/40px). rounded-4(8px)와 rounded-5(12px)가 카드·버튼·이미지에 가장 많이 사용됨."
+        description="KRDS radius 0~9 (0/2/4/6/8/12/16/20/24/40px). 앱 코드에서는 rounded-[8px], rounded-[12px]처럼 값을 명시한다."
       />
       <div className="grid grid-cols-2 tablet:grid-cols-3 desktop:grid-cols-5 gap-[16px]">
         {KRDS_RADIUS.map((t) => (
@@ -91,12 +91,12 @@ export const Radius: Story = {
 };
 
 export const TailwindVsKrds: Story = {
-  name: 'Tailwind 기본값 vs KRDS override',
+  name: 'Tailwind 기본값 vs KRDS scale',
   parameters: {
     docs: {
       description: {
         story:
-          'KRDS plugin은 Tailwind 기본 spacing/borderRadius 토큰을 **완전히 override**. p-1, p-3 등 같은 utility 이름이지만 px 값이 다름.',
+          '과거 KRDS plugin은 Tailwind 기본 spacing/borderRadius 토큰을 덮었지만, 현재는 plugin을 제거해 Tailwind 기본값을 유지한다. KRDS 값은 참고표로만 사용한다.',
       },
     },
   },
@@ -116,7 +116,7 @@ export const TailwindVsKrds: Story = {
       <div className="max-w-3xl mx-auto">
         <SectionHeader
           title="Tailwind 기본값 vs KRDS"
-          description="KRDS plugin은 Tailwind 기본 spacing 토큰을 완전히 override. 같은 utility 이름(p-1, p-3 등)이지만 px 값이 다름."
+          description="Tailwind 기본 spacing은 그대로 유지된다. KRDS scale이 필요하면 arbitrary value로 px 값을 명시한다."
         />
         <div
           className="overflow-hidden"
@@ -127,7 +127,7 @@ export const TailwindVsKrds: Story = {
               <tr>
                 <th className="text-left p-[14px] font-mono text-[14px] font-bold">utility</th>
                 <th className="text-left p-[14px] font-mono text-[14px] font-bold">Tailwind 기본</th>
-                <th className="text-left p-[14px] font-mono text-[14px] font-bold">KRDS plugin</th>
+                <th className="text-left p-[14px] font-mono text-[14px] font-bold">KRDS scale</th>
                 <th className="text-left p-[14px] text-[14px] font-bold">차이</th>
               </tr>
             </thead>
@@ -148,7 +148,7 @@ export const TailwindVsKrds: Story = {
                     className="p-[14px] text-[12px]"
                     style={{ color: row.tailwind !== row.krds ? '#E71825' : '#008A1E' }}
                   >
-                    {row.tailwind !== row.krds ? '⚠ override' : '= 동일'}
+                    {row.tailwind !== row.krds ? '값 명시 필요' : '= 동일'}
                   </td>
                 </tr>
               ))}
@@ -156,7 +156,7 @@ export const TailwindVsKrds: Story = {
           </table>
         </div>
         <p className="text-[14px] mt-[16px] leading-relaxed" style={{ color: '#555555' }}>
-          ⚠ Tailwind 표준 spacing을 기억하고 KRDS 환경에 적용하면 오차 발생. KRDS 토큰표를 항상 확인.
+          KRDS scale을 그대로 맞춰야 하는 영역은 <code className="font-mono text-[12px]">p-[24px]</code>처럼 값을 직접 적어 Tailwind 기본 토큰과 구분한다.
         </p>
       </div>
     );

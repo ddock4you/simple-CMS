@@ -97,12 +97,16 @@ src/
 
 ## KRDS Tailwind 스타일링 (Stage 7e)
 
-공개 웹은 기존 `globals.css`(1670줄, `.home-*`/`.subpage-*` 등 BEM-스러운 네이밍)와 함께 Tailwind v4 + KRDS 공식 plugin을 병행. 새 컴포넌트는 utility 우선, 기존 클래스는 점진 마이그레이션.
+공개 웹은 기존 `globals.css`(1670줄, `.home-*`/`.subpage-*` 등 BEM-스러운 네이밍)와 함께 Tailwind v4 utility를 병행한다. KRDS 컴포넌트 CSS는 사용하되, KRDS의 전역 `html { font-size: 62.5%; }` 정책과 Tailwind plugin 토큰 override는 앱 전역에 적용하지 않는다.
 
 ### 설정 구조
 
 - `apps/web/postcss.config.mjs` — `@tailwindcss/postcss`만 등록
-- `apps/web/app/globals.css` 상단 9줄:
+- `apps/web/scripts/normalize-krds-css.mjs` — `krds-react/dist/index.css`를 읽어 `apps/web/app/krds-normalized.css` 생성
+  - `--krds-font-size-base: 62.5%` → `100%`
+  - KRDS CSS 내부 `rem` 값은 `0.625배`로 변환해 KRDS 컴포넌트의 실제 px 크기 보존
+  - `predev` / `prebuild` / `prestorybook` / `prebuild-storybook`에서 자동 재생성
+- `apps/web/app/globals.css` 상단:
   ```css
   @layer theme, krds-base, components, utilities;
   @import 'tailwindcss/theme.css' layer(theme);
@@ -112,33 +116,32 @@ src/
     --breakpoint-tablet: 601px;
     --breakpoint-desktop: 1025px;
   }
-  @plugin "@krds-ui/tailwindcss-plugin";
+  @plugin "@tailwindcss/typography";
   ```
 - **Preflight 제외** 방식 (`tailwindcss/preflight.css` import 안 함) — KRDS 컴포넌트의 `<button>`/`<input>` 기본 스타일과 충돌 방지
-- layout.tsx의 import 순서: `import 'krds-react/dist/index.css';` → `import './globals.css';` — utility가 KRDS CSS 위에 올라가 overrides 가능
+- layout.tsx의 import 순서: `import './krds-normalized.css';` → `import './globals.css';` — utility가 KRDS CSS 위에 올라가 overrides 가능
 
-### KRDS plugin이 제공하는 토큰
+### KRDS token 사용 원칙
 
-plugin 함수 본문은 빈 함수이고 `theme.extend.{colors,fontSize,fontWeight,spacing,borderRadius}` + `theme.screens` 토큰만 등록. v4 `@plugin` 호환 모드가 이를 utility로 변환.
+`@krds-ui/tailwindcss-plugin`은 `theme.extend.{colors,fontSize,fontWeight,spacing,borderRadius}`뿐 아니라 spacing/screens를 Tailwind 기본과 다르게 만드는 부작용이 있어 web 런타임에서 사용하지 않는다. KRDS 값이 필요하면 hex/arbitrary value 또는 CSS variable을 명시한다.
 
-| 카테고리 | 예시 utility | 값 |
-|----------|-------------|-----|
-| 색상 (31개 팔레트 × ~11단계) | `bg-primary-50`, `text-gray-90`, `border-point-50` | primary-50 = `#246BEB`, point-50 = `#E71825` |
-| 타이포 (~50개) | `text-display-s`, `text-heading-m`, `text-title-s`, `text-body-s` | display-s = `40px / line-height 150% / letter-spacing 1px` |
-| spacing (0~10) | `p-3` = 8px, `p-7` = 24px, `p-10` = 48px | KRDS 그리드 단위, default Tailwind spacing override |
-| borderRadius (0~9) | `rounded-4` = 8px, `rounded-5` = 12px | |
-| fontWeight | `font-regular`(400), `font-bold`(700) + default Tailwind 유지 | |
-| 브레이크포인트 | `mobile:`(360+), `tablet:`(601+), `desktop:`(1025+) | `@theme`로 v4 변수도 등록 — plugin 호환 모드만으로 modifier가 누락되는 케이스 방어 |
+| 카테고리 | 사용 방식 | 예시 |
+|----------|-----------|------|
+| 색상 | hex/arbitrary value 또는 `var(--krds-color-*)` | `bg-[#256ef4]`, `text-[#1e2124]` |
+| 타이포 | px arbitrary + line-height 명시 | `text-[17px] leading-[1.5]` |
+| spacing | 표준 Tailwind 또는 px arbitrary | `p-4`, `p-[24px]` |
+| radius | px arbitrary | `rounded-[8px]`, `rounded-[12px]` |
+| 브레이크포인트 | `@theme` 등록 modifier | `mobile:`(360+), `tablet:`(601+), `desktop:`(1025+) |
 
 ### 마이그레이션 룰 (Hero 섹션 선행)
 
 globals.css의 기존 클래스를 utility로 옮길 때 적용하는 매핑:
 
-- **색상**: `var(--krds-color-*)` 및 hex → KRDS plugin 토큰. `#fff` → `text-white`. 정확 매핑 없는 hex는 가까운 `gray-*`
-- **spacing**: `var(--gap-N, Xpx)` → KRDS scale `p-N`. 64px 이상은 arbitrary `p-[64px]`
-- **radius**: `var(--krds-radius-md, 8px)` → `rounded-4`, `var(--krds-radius-lg, 12px)` → `rounded-5`
+- **색상**: `var(--krds-color-*)` 및 hex → arbitrary value. `#fff` → `text-white`. 정확 매핑 없는 hex는 가까운 Tailwind 기본 `gray-*` 또는 hex 직접 사용
+- **spacing**: 표준 Tailwind spacing을 기본으로 사용. KRDS scale 고정값이 필요하면 arbitrary `p-[24px]`
+- **radius**: KRDS radius 고정값이 필요하면 `rounded-[8px]`, `rounded-[12px]`
 - **브레이크포인트**: globals.css의 `768px` 기준 → `tablet:`(601+) 매핑 (일부 구간에서 시각 변화 허용)
-- **fontSize**: 정확 매핑(15/17/19px 등)은 KRDS 토큰, 디자인 강조(28/36/44 등)는 arbitrary로 line-height/tracking 보존 (KRDS 토큰은 line-height 150% + letter-spacing 1px가 동반됨)
+- **fontSize**: `text-[17px] leading-[1.5]`처럼 px/arbitrary value + line-height/tracking 보존
 - **`.parent:hover .child`**: `group` + `group-hover:` 패턴 (Link wrapper에 `group`, 자식에 `group-hover:`)
 
 ### Swiper 캐러셀 width 측정 회귀 방어
@@ -172,7 +175,7 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
 - **Framework**: `@storybook/nextjs-vite` (v10 stable) — admin과 독립 설치 (shadcn vs KRDS UI 시스템 달라 `.storybook/` 공유 불가)
 - **파일 구성**:
   - `.storybook/main.ts` — framework + stories glob + `@storybook/addon-vitest`
-  - `.storybook/preview.tsx` — **CSS import 순서 엄수**: `import 'krds-react/dist/index.css'; import '../app/globals.css';` (layout.tsx 재현). 순서가 바뀌면 `@layer krds-base` override 순서가 깨져 Tailwind utility가 KRDS 위에 올라가지 못함
+  - `.storybook/preview.tsx` — **CSS import 순서 엄수**: `import '../app/krds-normalized.css'; import '../app/globals.css';` (layout.tsx 재현). 순서가 바뀌면 `@layer krds-base` override 순서가 깨져 Tailwind utility가 KRDS 위에 올라가지 못함
   - `.storybook/preview-head.html` — Pretendard CDN `<link rel="stylesheet">` 삽입 (layout.tsx와 동일 포맷). 다음 Stage의 swiper 22M 회귀 테스트가 "Pretendard async load race" 조건을 재현하려면 필수
   - `.storybook/vitest.setup.ts` — `setProjectAnnotations` 기반 preview 연결
   - `vite.config.ts` — React plugin + `@/*` → `./src/*` alias
@@ -184,19 +187,17 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
   - `Web/Widgets/RightSidebar` (ThreeItems / FiveItems / Empty)
   - `Web/Widgets/KoglFooter` (Type0 / Type1 / **Type2** / **Type3** / Type4 / WithAI / Hidden — 7g 후속에서 Type2/Type3 누락 보완. `CclType` 전체 5단계 모두 커버)
   - `Web/KRDS/{Header, Footer, SideNavigation, Pagination, Breadcrumb, Masthead, SkipLink}` — `apps/web/src/shared/ui/krds-showcase/`에 **런타임 import 없는 story 전용** 디렉토리. 실제 사용하는 variant만 등록(advisor 지적: SkipLink 추가, RightSidebar는 커스텀 JSX라 KRDS 아닌 Widgets로 분류)
-  - `Web/Design System/KRDS Colors` (Brand / Neutral / Status / Extended / All) — 31개 팔레트 + KRDS token → Tailwind utility 매핑 (Stage 17)
-  - `Web/Design System/KRDS Typography` (Display / Heading / Title / Body / DetailLabelLink / FontWeight / FontFamily) — ~50개 타이포 utility, rem 기반 px 환산 포함 (Stage 17)
-  - `Web/Design System/KRDS Spacing & Radius` (Spacing / Radius / TailwindVsKrds) — KRDS spacing override 시각화(`p-1=2px` 등) + Tailwind 기본값 대비 표 (Stage 17)
+  - `Web/Design System/KRDS Colors` (Brand / Neutral / Status / Extended / All) — 31개 팔레트 카탈로그. 런타임 plugin utility가 아닌 token label + inline style로 시각화 (Stage 17)
+  - `Web/Design System/KRDS Typography` (Display / Heading / Title / Body / DetailLabelLink / FontWeight / FontFamily) — ~50개 타이포 값 카탈로그 (Stage 17)
+  - `Web/Design System/KRDS Spacing & Radius` (Spacing / Radius / TailwindVsKrds) — KRDS scale 참고표 + Tailwind 기본값 대비 표 (Stage 17)
   - `Web/Design System/Breakpoints` (Tokens / ModifierExample / TailwindComparison) — mobile:360 / tablet:601 / desktop:1025; Tailwind `sm/md/lg`와의 차이 정리 (Stage 17)
   - `Web/Design System/Web Customs` (FontStack / DemoBannerVariable / ScopedClasses / CarouselWidthGuard) — web 전용 CSS 변수·패턴 (Stage 17)
   - `Web/Design System/Foundations` (CSS import 순서 / @layer 순서 / Pretendard CDN 로드 / 페이지 컨테이너) — KRDS 스타일 레이어 구조 (Stage 17)
 - **명령**: `pnpm --filter @simple-cms/web storybook` (port 6007), `pnpm --filter @simple-cms/web test`, `pnpm --filter @simple-cms/web build-storybook`
 - **시연 모드 Storybook 동봉 (`build:demo`)**: 시연 Vercel web 프로젝트는 `pnpm --filter @simple-cms/web build:demo`를 호출. `pnpm bundle-storybooks && next build` 순서로 실행되어 admin/web Storybook을 `apps/web/public/_cms/storybook/{admin,web}/`에 동봉 → 단일 도메인(`demo.example.com/_cms/storybook/{admin,web}/`)에서 정적 서빙. 운영(`pnpm build`)에는 영향 없음. 스크립트 위치: `apps/web/scripts/bundle-storybooks.mjs`. 자세한 정책은 `docs/react-cms-시연모드-배포-가이드.md` 10장
 - **Stage 7i 결과 — Swiper 22M 회귀 자동 감지**: `Web/Shared/Carousel > Regression22M` variant 신규 추가. play function이 `canvasElement.querySelector('.krds-carousel')`의 `style.width`를 400px→800px로 두 번 변경해 **`ResizeObserver` 경로를 강제 트리거**한 뒤 `.swiper-slide`의 `style.width`가 `> 0 && < 2000`인지 assert. `window.resizeTo`는 Playwright Chromium headless에서 동작하지 않으므로 채택 안 함. 단순 mount 후 width assert는 방어 로직을 제거해도 통과하므로(Storybook 환경은 Pretendard race condition이 재현되지 않음) 회귀 감지기 역할 불가 — container resize로 3층 defensive triggers 중 최소 하나(ResizeObserver.observe)를 실제로 밟아야 함. 총 변동 — web 12 files / **33 tests** (32 → +1). Stage 17에서 `Web/Design System/*` 6파일 26 stories 추가 → **59 tests**. `readyState='loading'` 시뮬레이션, viewport 360/768/1024 cycle, MSW 검색/팝업 시나리오는 Stage 7i 범위에서 제외 (후속 과제)
-- **Stage 17 — KRDS Storybook 환경 제약**: web Design System stories는 `storyShellDecorator`(S`rc/_storybook/design-system/lib/storyShell.tsx`)가 2가지 환경 제약을 해결한다.
-  - **KRDS `html { font-size: 62.5% }` override**: `useLayoutEffect`로 paint 전 동기 `<style>` 주입(html/body `16px !important`). `useEffect`는 첫 frame에 rem 기반 텍스트가 10px로 렌더되는 flash 발생
-  - **KRDS spacing override**: `@krds-ui/tailwindcss-plugin`이 `theme.spacing`을 완전히 교체(`p-1=2px`, `p-3=8px`, 없는 단계는 utility 자체가 미생성). 외부 패딩은 `style={OUTER_STYLE}` inline CSSProperties로 해결 — Vite source scanner 누락 + KRDS override 양쪽을 동시에 우회. 스토리 내부 arbitrary value(`p-[24px]`)는 그대로 사용 가능
-  - **`md:/sm:/lg:` modifier 사용 금지**: KRDS plugin이 `theme.screens`를 `mobile/tablet/desktop`으로 완전 교체. standard responsive modifier는 무효 — `mobile:/tablet:/desktop:` 또는 arbitrary/inline style 사용
+- **Stage 17 후속 — KRDS root 정규화**: web Design System stories도 앱과 동일하게 `krds-normalized.css`를 사용한다. 과거 `storyShellDecorator`의 `useLayoutEffect` 기반 `html/body 16px !important` 보정은 제거됨. 외부 padding은 story shell inline style로만 유지해 Tailwind source scanning과 무관하게 안정화한다.
+- **responsive modifier**: `@theme`에 `mobile/tablet/desktop`을 등록해 사용한다. Tailwind 기본 `sm/md/lg`도 기본 의미로 유지되지만, 공개 web의 KRDS 기준 반응형은 `mobile:/tablet:/desktop:` 우선 사용.
 - **Tiptap `optimizeDeps.include` pnpm 해석 규칙 (2026-05-27)**: `renderContent.ts`가 사용하는 Tiptap 패키지는 web의 직접 dependency가 아니라 workspace package `@simple-cms/editor`의 dependency다. 따라서 `vite.config.ts`에서 `'@tiptap/html'`처럼 직접 include하면 Storybook dev의 Vite optimizer가 `apps/web` 기준으로 해석하다 `Failed to resolve dependency: @tiptap/*`를 반복 출력하고 preview가 비어 보일 수 있다. 선제 최적화가 필요할 때는 Vite nested dependency 표기인 `'@simple-cms/editor > @tiptap/html'` / `'@simple-cms/editor > @tiptap/core'` 형태로만 추가한다. 검증은 `pnpm --filter @simple-cms/web typecheck`와 `pnpm --filter @simple-cms/web build-storybook`을 실행하고, dev 실행 로그에 Tiptap resolve warning이 없는지 확인한다.
 - **Stage 7g에서 만난 이슈 — addon-vitest dep cache**: admin과 동일 증상으로 첫 실행 `Failed to fetch dynamically imported module` 발생. `node_modules/.cache/storybook + .vite` 삭제 후 성공
 - **Story meta decorator로 실사용처 맥락 재현 패턴**: `SubpageBlockRenderer`처럼 부모 wrapper(`<article>` + CSS 클래스)에 의존하는 컴포넌트는 `layout: 'padded'`만으론 시각적으로 묻힘. `meta.decorators`에 실제 rendering 환경을 축약 재현한 wrapper를 추가해 story 레벨에서도 동등한 맥락 확보. 가치는 (a) 단독 variant의 시각 확인 용이, (b) 렌더 실패 vs 묻힘 구분 명확화
@@ -418,7 +419,7 @@ admin에서 발급한 토큰을 교환해 **draft 콘텐츠**를 공개 웹 렌�
 - **재제출 차단**: localStorage `feedback_submitted_{subpageId}` 24h TTL. 서버 `(ipHash, subpageId, 24h)` rate limit이 진실의 원천이고 클라이언트는 UX
 - **POST `/api/feedback`** (apps/web/app/api/feedback/route.ts, runtime nodejs): Zod 검증 → preview 쿠키 차단(403) → subpage 존재 + PUBLISHED + feedbackEnabled 게이트(403/404) → ipHash + subpageId 24h rate limit(429) → 화이트리스트 subset 검증 → `sha256(ip + FEEDBACK_IP_SALT)` → DB 저장. 감사 로그 생략(익명 입수 이벤트)
 - **환경 변수**: `.env`의 `FEEDBACK_IP_SALT` (운영 배포 전 강한 랜덤 값으로 교체 필수). 미설정 시 console.warn + fallback (dev 편의)
-- **KRDS Tailwind utility**: `bg-gray-5` / `rounded-5` / `p-7` / `text-title-s` / `text-body-m` / `bg-primary-50` / `text-point-50` 사용. native HTML form (KRDS 폼 컴포넌트 미사용 패턴 일관)
+- **스타일링**: KRDS chip/check CSS 클래스는 유지하고, wrapper/문구/버튼 보조 스타일은 `bg-[#f4f5f6]`, `rounded-[12px]`, `text-[17px] leading-[1.5]`처럼 Tailwind arbitrary value로 명시한다. native HTML form (KRDS 폼 컴포넌트 미사용 패턴 일관)
 
 ## 게시판 / 게시글 렌더링
 

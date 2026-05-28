@@ -1,9 +1,9 @@
 /**
  * CSS import 순서 엄수 — app/layout.tsx 재현.
- * krds-react가 먼저 로드되어야 globals.css의 Tailwind utility가
+ * 정규화된 KRDS CSS가 먼저 로드되어야 globals.css의 Tailwind utility가
  * `@layer krds-base` 위에 올라가며 override 가능해진다.
  */
-import 'krds-react/dist/index.css';
+import '../app/krds-normalized.css';
 import '../app/globals.css';
 
 import type { Preview } from '@storybook/react';

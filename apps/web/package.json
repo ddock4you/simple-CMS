@@ -3,8 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "prepare:krds-css": "node scripts/normalize-krds-css.mjs",
+    "predev": "pnpm prepare:krds-css",
     "dev": "next dev --turbopack --port 3000",
     "dev:https": "next dev --turbopack --experimental-https --port 3000",
+    "prebuild": "pnpm prepare:krds-css",
     "build": "next build",
     "build:demo": "pnpm bundle-storybooks && next build",
     "bundle-storybooks": "node scripts/bundle-storybooks.mjs",
@@ -12,13 +15,14 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next .turbo",
+    "prestorybook": "pnpm prepare:krds-css",
     "storybook": "storybook dev -p 6007",
+    "prebuild-storybook": "pnpm prepare:krds-css",
     "build-storybook": "storybook build",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@krds-ui/tailwindcss-plugin": "^0.6.0",
     "@simple-cms/db": "workspace:*",
     "@simple-cms/editor": "workspace:*",
     "@simple-cms/types": "workspace:*",

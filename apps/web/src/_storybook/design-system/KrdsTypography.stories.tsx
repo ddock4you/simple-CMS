@@ -16,7 +16,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'KRDS plugin 타이포 스케일. 폰트: **Pretendard Variable** (`apps/web/app/layout.tsx` + `.storybook/preview-head.html` CDN). ' +
+          'KRDS 타이포 스케일. 폰트: **Pretendard Variable** (`apps/web/app/layout.tsx` + `.storybook/preview-head.html` CDN). ' +
           '`display / heading / title / body / detail / label / link` 7개 그룹. desktop 기본 + mobile 변형은 별도. ' +
           '대부분 line-height 150%, display/heading 일부 + title-xxl만 letter-spacing 1px.',
       },
@@ -133,7 +133,7 @@ export const FontWeight: Story = {
         title="Font Weight"
         description={
           <>
-            KRDS plugin이 제공하는 weight 토큰: <code className="font-mono text-[12px]">font-regular</code> (400), <code className="font-mono text-[12px]">font-bold</code> (700). ‼ 그 외 단계(300/500/600)는 KRDS plugin에 포함 안 됨 — Pretendard Variable은 100~900 모두 지원하므로 Tailwind 기본 <code className="font-mono text-[12px]">font-N</code> utility로 사용 가능.
+            KRDS weight 토큰: <code className="font-mono text-[12px]">regular</code> (400), <code className="font-mono text-[12px]">bold</code> (700). Pretendard Variable은 100~900 모두 지원하므로 Tailwind 기본 <code className="font-mono text-[12px]">font-N</code> utility로 사용 가능.
           </>
         }
       />

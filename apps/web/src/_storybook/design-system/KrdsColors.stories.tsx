@@ -12,8 +12,8 @@ const meta = {
     docs: {
       description: {
         component:
-          '`@krds-ui/tailwindcss-plugin` v0.6.0 제공 색상 카탈로그. **31개 팔레트 × 5~12 단계**. ' +
-          'KRDS plugin이 단일 출처. 50 단계가 각 팔레트의 대표 색.',
+          'KRDS 색상 카탈로그. **31개 팔레트 × 5~12 단계**. ' +
+          '앱에서는 KRDS Tailwind plugin 대신 hex/arbitrary value 또는 전용 CSS를 사용해 Tailwind 기본 토큰 충돌을 피한다. 50 단계가 각 팔레트의 대표 색.',
       },
     },
   },

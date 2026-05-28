@@ -117,7 +117,7 @@ export const ModifierExample: Story = {
             className="overflow-x-auto p-[16px] font-mono text-[12px] leading-relaxed"
             style={{ backgroundColor: '#F8F8F8', borderRadius: 4 }}
           >
-{`<h1 className="text-heading-s tablet:text-heading-m desktop:text-heading-l">
+{`<h1 className="text-[32px] tablet:text-[40px] desktop:text-[50px]">
   제목
 </h1>`}
           </pre>
@@ -130,17 +130,17 @@ export const ModifierExample: Story = {
           className="p-[24px]"
           style={{ borderRadius: 8, border: '1px solid #E4E4E4', backgroundColor: '#FFFFFF' }}
         >
-          <h3 className="text-[20px] font-bold mb-[8px]">예 3: KRDS 전용 mobile variants</h3>
+          <h3 className="text-[20px] font-bold mb-[8px]">예 3: KRDS mobile variant 값 명시</h3>
           <pre
             className="overflow-x-auto p-[16px] font-mono text-[12px] leading-relaxed"
             style={{ backgroundColor: '#F8F8F8', borderRadius: 4 }}
           >
-{`<p className="text-display-s-mobile tablet:text-display-s">
+{`<p className="text-[25px] tablet:text-[40px]">
   반응형 표제
 </p>`}
           </pre>
           <p className="text-[14px] mt-[8px]" style={{ color: '#555555' }}>
-            → KRDS는 일부 타이포에 별도 mobile variant 토큰 제공 (예: `display-s-mobile` = 25px)
+            → KRDS는 일부 타이포에 별도 mobile variant 값을 제공한다. Tailwind class는 px arbitrary value로 명시한다.
           </p>
         </div>
       </div>
@@ -169,7 +169,7 @@ export const TailwindComparison: Story = {
             <tr>
               <th className="text-left p-[14px] text-[14px] font-bold">상황</th>
               <th className="text-left p-[14px] text-[14px] font-bold">Tailwind 기본</th>
-              <th className="text-left p-[14px] text-[14px] font-bold">KRDS plugin</th>
+              <th className="text-left p-[14px] text-[14px] font-bold">web 등록 토큰</th>
             </tr>
           </thead>
           <tbody>

@@ -11,7 +11,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'web 디자인 시스템의 기반 — CSS layer 순서 · KRDS import · Pretendard CDN · Tailwind v4 preflight 정책. ' +
+          'web 디자인 시스템의 기반 — 정규화 KRDS CSS · CSS layer 순서 · Pretendard CDN · Tailwind v4 preflight 정책. ' +
           'globals.css 상단 9줄과 `layout.tsx`의 import 순서가 권위.',
       },
     },
@@ -28,7 +28,7 @@ export const CssImportOrder: Story = {
     <div className="max-w-4xl mx-auto">
       <SectionHeader
         title="layout.tsx import 순서 (권위)"
-        description="apps/web/app/layout.tsx 3줄. krds-react가 먼저, globals.css가 다음. ‼ 순서를 바꾸면 Tailwind utility가 KRDS 위에 올라가지 못해 override가 실패한다."
+        description="apps/web/app/layout.tsx 3줄. 정규화 KRDS CSS가 먼저, globals.css가 다음. KRDS 컴포넌트는 유지하면서 Tailwind는 16px root 기준으로 동작한다."
       />
       <div
         className="p-[24px]"
@@ -39,14 +39,14 @@ export const CssImportOrder: Story = {
           style={{ backgroundColor: '#F8F8F8', borderRadius: 4 }}
         >
 {`// apps/web/app/layout.tsx
-import 'krds-react/dist/index.css';   // 1순위 — KRDS 컴포넌트 기본 스타일 + @layer krds-base
-import './globals.css';                // 2순위 — Tailwind utilities + 자체 BEM 클래스
+import './krds-normalized.css'; // 1순위 — KRDS CSS(rem 0.625배 변환 + root 100%)
+import './globals.css';         // 2순위 — Tailwind utilities + 자체 BEM 클래스
 
 // .storybook/preview.tsx도 동일 순서 강제`}
         </pre>
       </div>
       <p className="text-[14px] mt-[16px] leading-relaxed" style={{ color: '#555555' }}>
-        ⚠ <code className="font-mono text-[12px]">Stage 7e</code>에서 의도적으로 도입된 패턴. KRDS의 button/input 기본 스타일과 Tailwind preflight가 충돌하지 않도록 preflight도 제외.
+        ⚠ <code className="font-mono text-[12px]">normalize-krds-css.mjs</code>가 KRDS의 10px root 전제를 CSS 파일 생성 시점에 흡수한다. KRDS의 button/input 기본 스타일과 Tailwind preflight가 충돌하지 않도록 preflight는 계속 제외.
       </p>
     </div>
   ),
@@ -58,7 +58,7 @@ export const LayerOrder: Story = {
     <div className="max-w-4xl mx-auto">
       <SectionHeader
         title="globals.css layer 선언"
-        description="apps/web/app/globals.css 상단 9줄. Tailwind preflight 제외 정책. KRDS plugin이 v4 호환 모드로 토큰 inject."
+        description="apps/web/app/globals.css 상단. Tailwind preflight 제외 정책. KRDS Tailwind plugin은 사용하지 않아 기본 spacing/screens 충돌을 피한다."
       />
       <div
         className="p-[24px]"
@@ -80,7 +80,7 @@ export const LayerOrder: Story = {
   --breakpoint-desktop: 1025px;
 }
 
-@plugin "@krds-ui/tailwindcss-plugin";`}
+@plugin "@tailwindcss/typography";`}
         </pre>
       </div>
       <div

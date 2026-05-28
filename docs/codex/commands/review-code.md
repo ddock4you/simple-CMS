@@ -80,7 +80,7 @@ admin에 새 URL 입력 필드를 추가할 때:
 
 ### 공개 웹 스타일링 (Stage 7e — apps/web 한정)
 
-- [ ] **KRDS Tailwind utility 우선**: 새 컴포넌트의 스타일은 globals.css 신규 클래스 추가 대신 KRDS plugin utility 우선 검토 (`bg-primary-50`/`text-display-s`/`rounded-5`/`p-7` 등)
+- [ ] **web Tailwind/KRDS 병행 정책**: 새 web 컴포넌트는 KRDS Tailwind plugin utility를 쓰지 않는다. Tailwind 기본 utility를 우선하고, KRDS 고정값이 필요하면 arbitrary value 또는 CSS variable을 명시한다 (`bg-[#256ef4]`, `text-[17px] leading-[1.5]`, `rounded-[12px]` 등)
 - [ ] **KRDS 브레이크포인트만 사용**: `mobile:`(360+)/`tablet:`(601+)/`desktop:`(1025+)만 사용. `md:`/`lg:`/`xl:`/`sm:` 같은 default Tailwind 브레이크포인트는 KRDS plugin이 `theme.screens`를 override해서 **컴파일되지 않음** — 사용 시 런타임 무반응 버그
 - [ ] **색상 매핑**: `var(--krds-color-*)` 또는 hex를 새로 쓰지 말고 plugin 토큰 사용. 정확 매핑이 없는 hex는 가까운 `gray-*`/`point-*`로. arbitrary `bg-[#XXX]`는 최후 수단
 - [ ] **spacing scale 혼동 금지**: KRDS spacing은 `p-3`=8px, `p-7`=24px 등 **default Tailwind와 값이 다름** (admin은 default, web은 KRDS). 앱 간 코드 이동 시 spacing 숫자 재매핑

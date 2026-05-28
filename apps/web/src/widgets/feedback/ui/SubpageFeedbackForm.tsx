@@ -125,23 +125,23 @@ export function SubpageFeedbackForm({
 
   return (
     <section
-      className="subpage-feedback rounded-5 bg-gray-5 p-7 tablet:p-10"
+      className="subpage-feedback rounded-[12px] bg-[#f4f5f6] p-[24px] tablet:p-[48px]"
       aria-labelledby={titleId}
       aria-describedby={messageId}
     >
       {status === 'submitted' ? (
         <div id={messageId} aria-live="polite" className="text-center">
-          <p className="text-title-s font-bold text-gray-90">
+          <p className="text-[17px] leading-[1.5] font-bold text-[#1e2124]">
             의견을 남겨주셔서 감사합니다.
           </p>
-          <p className="mt-2 text-body-s text-gray-70">
+          <p className="mt-2 text-[15px] leading-[1.5] text-[#464c53]">
             보내주신 소중한 의견은 페이지 개선에 도움이 됩니다.
           </p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-7">
           <div className="flex flex-col gap-4 tablet:flex-row tablet:items-center tablet:justify-between">
-            <h2 id={titleId} className="text-title-s font-bold text-gray-90">
+            <h2 id={titleId} className="text-[17px] leading-[1.5] font-bold text-[#1e2124]">
               이 페이지에 만족하시나요?
             </h2>
             {/*
@@ -183,14 +183,14 @@ export function SubpageFeedbackForm({
 
           {showQuestions && (
             <div
-              className="space-y-6 border-t border-gray-30 pt-6"
+              className="space-y-6 border-t border-[#b1b8be] pt-6"
               aria-live="polite"
             >
               {showPositiveReasons && (
                 <fieldset className="flex flex-col gap-3">
-                  <legend className="text-body-m font-medium text-gray-90">
+                  <legend className="text-[17px] leading-[1.5] font-medium text-[#1e2124]">
                     1. 이 페이지의 어떤 점에 만족하셨나요?{' '}
-                    <span className="text-gray-60">(선택 입력)</span>
+                    <span className="text-[#58616a]">(선택 입력)</span>
                   </legend>
                   <div className="krds-check-area chk-column">
                     {FEEDBACK_POSITIVE_REASON_CODES.map((code) => {
@@ -219,11 +219,11 @@ export function SubpageFeedbackForm({
               <div className="flex flex-col gap-2">
                 <label
                   htmlFor={`${titleId}-comment`}
-                  className="text-body-m font-medium text-gray-90"
+                  className="text-[17px] leading-[1.5] font-medium text-[#1e2124]"
                 >
                   {showPositiveReasons ? '2. ' : '1. '}
                   기타 제안 사항이 있다면 작성해주세요.{' '}
-                  <span className="text-gray-60">(선택 입력)</span>
+                  <span className="text-[#58616a]">(선택 입력)</span>
                 </label>
                 <textarea
                   id={`${titleId}-comment`}
@@ -235,22 +235,22 @@ export function SubpageFeedbackForm({
                   }
                   placeholder="내용을 입력하세요"
                   rows={4}
-                  className="w-full rounded-4 border border-gray-50 bg-white p-3 text-body-m text-gray-90 placeholder-gray-50 focus:border-primary-50 focus:outline-none"
+                  className="w-full rounded-[8px] border border-[#6d7882] bg-white p-[8px] text-[17px] leading-[1.5] text-[#1e2124] placeholder-[#6d7882] focus:border-[#256ef4] focus:outline-none"
                 />
-                <p className="text-right text-body-s text-gray-60">
-                  <span className="text-primary-50">{comment.length}</span>
+                <p className="text-right text-[15px] leading-[1.5] text-[#58616a]">
+                  <span className="text-[#256ef4]">{comment.length}</span>
                   <span> / {FEEDBACK_COMMENT_MAX_LENGTH}</span>
                 </p>
               </div>
 
               {errorMessage && (
-                <p role="alert" className="text-body-s text-point-50">
+                <p role="alert" className="text-[15px] leading-[1.5] text-[#e71825]">
                   {errorMessage}
                 </p>
               )}
 
               {previewMode && (
-                <p role="note" className="text-body-s text-gray-60">
+                <p role="note" className="text-[15px] leading-[1.5] text-[#58616a]">
                   미리보기 모드에서는 피드백을 제출할 수 없습니다.
                 </p>
               )}
@@ -260,7 +260,7 @@ export function SubpageFeedbackForm({
                   variant="tertiary"
                   size="medium"
                   onClick={handleReset}
-                  className="rounded-4 border border-gray-60 bg-white px-6 py-2 text-body-m text-gray-90 hover:bg-gray-10"
+                  className="rounded-[8px] border border-[#58616a] bg-white px-[20px] py-[4px] text-[17px] leading-[1.5] text-[#1e2124] hover:bg-[#e6e8ea]"
                 >
                   취소
                 </Button>
@@ -269,7 +269,7 @@ export function SubpageFeedbackForm({
                   size="medium"
                   type="submit"
                   disabled={!isSubmittable}
-                  className="rounded-4 bg-primary-50 px-6 py-2 text-body-m text-white hover:bg-primary-60 disabled:cursor-not-allowed disabled:bg-gray-40"
+                  className="rounded-[8px] bg-[#256ef4] px-[20px] py-[4px] text-[17px] leading-[1.5] text-white hover:bg-[#0b50d0] disabled:cursor-not-allowed disabled:bg-[#8a949e]"
                   title={
                     previewMode
                       ? '미리보기에서는 제출할 수 없습니다'

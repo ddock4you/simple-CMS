@@ -15,14 +15,14 @@ import type { ReactNode } from 'react';
  */
 
 interface ColorSwatchProps {
-  /** KRDS Tailwind utility class. 예: `bg-primary-50` */
+  /** KRDS token label. 예: `primary-50` */
   utility: string;
   /** 토큰 이름 (라벨용). 예: `primary-50` */
   name: string;
   /** 단계 (optional, 단계 강조용). 예: 50 */
   shade?: number | string;
   /**
-   * Hex 값. KRDS plugin이 단일 출처.
+    * Hex 값. KRDS token table이 단일 출처.
    * Tailwind v4의 source scanning이 동적 className(`${utility}`)을 따라가지 못해 빌드 시 누락될 수 있으므로
    * 시각화는 inline style로 직접 적용하고, utility 이름은 라벨로만 표시한다.
    */
@@ -74,8 +74,8 @@ interface TypographySampleProps {
 }
 
 /**
- * Typography 토큰 샘플. fontSize/lineHeight/letterSpacing은 KRDS plugin 정의값을 inline style로 직접 적용.
- * Tailwind utility(`text-display-s` 등)는 라벨로만 표시.
+ * Typography 토큰 샘플. fontSize/lineHeight/letterSpacing은 KRDS 정의값을 inline style로 직접 적용.
+ * `text-display-s` 같은 옛 plugin utility 이름은 라벨로만 표시.
  */
 export function TypographySample({
   name,

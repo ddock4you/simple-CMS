@@ -1,10 +1,10 @@
 /**
- * KRDS Tailwind plugin (`@krds-ui/tailwindcss-plugin@0.6.0`) 토큰 카탈로그.
+ * KRDS token catalog.
  *
- * 원본: node_modules/@krds-ui/tailwindcss-plugin/krds-plugin.js (`theme.extend.*`)
- * KRDS plugin이 단일 출처. 이 파일은 stories에서 utility class를 순회하기 위한 인덱스.
+ * KRDS Tailwind plugin은 앱 런타임에서 쓰지 않는다. 이 파일은 stories에서
+ * token labels를 순회하기 위한 인덱스.
  *
- * 신규 KRDS 버전 업그레이드 시 plugin 파일의 변경분을 이 카탈로그에 반영.
+ * 신규 KRDS 버전 업그레이드 시 KRDS token 변경분을 이 카탈로그에 반영.
  * 참고: https://uiux.egovframe.go.kr/guide/style/style_05.html
  */
 
