@@ -48,8 +48,7 @@ describe('scopeCustomCss', () => {
   });
 
   it('preserves @keyframes blocks without prefixing internal selectors', () => {
-    const input =
-      '@keyframes fade { from { opacity: 0; } to { opacity: 1; } }';
+    const input = '@keyframes fade { from { opacity: 0; } to { opacity: 1; } }';
     const result = scopeCustomCss(input, 'p1');
     expect(result).toContain('@keyframes fade');
     expect(result).not.toContain('#subpage-p1');
@@ -99,11 +98,21 @@ describe('scopeCustomCss', () => {
   });
 
   it('handles multiple rules', () => {
-    const input = 'h1 { color: red; } p { margin: 0; } .note { font-size: 0.9em; }';
+    const input =
+      'h1 { color: red; } p { margin: 0; } .note { font-size: 0.9em; }';
     const result = scopeCustomCss(input, 'page1');
     expect(result).toContain('#subpage-page1 h1');
     expect(result).toContain('#subpage-page1 p');
     expect(result).toContain('#subpage-page1 .note');
+  });
+
+  it('normalizes line endings before style injection for stable hydration', () => {
+    const result = scopeCustomCss(
+      'h1 {\r\n color: red;\r}\r\np { color: blue; }',
+      'p1',
+    );
+    expect(result).not.toContain('\r');
+    expect(result).toContain('\n');
   });
 
   describe('known limitations (documented)', () => {

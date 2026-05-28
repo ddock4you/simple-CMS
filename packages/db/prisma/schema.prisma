@@ -319,6 +319,7 @@ model Post {
   contentJson     Json?
   content         String?       @db.Text
   status          ContentStatus @default(DRAFT)
+  isImportant     Boolean       @default(false)
   publishedAt     DateTime?
   featuredImageId String?
   authorId        String?

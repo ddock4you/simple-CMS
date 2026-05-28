@@ -2,6 +2,7 @@
 Codex migration note: this file is a Codex-friendly instruction/reference file.
 Codex automatically reads AGENTS.md files by directory scope.
 -->
+
 현재 변경 내용을 대상으로 **커밋 전 코드 품질 체크리스트**를 수행해줘.
 
 ## 동작 순서
@@ -83,7 +84,7 @@ admin에 새 URL 입력 필드를 추가할 때:
 - [ ] **KRDS 브레이크포인트만 사용**: `mobile:`(360+)/`tablet:`(601+)/`desktop:`(1025+)만 사용. `md:`/`lg:`/`xl:`/`sm:` 같은 default Tailwind 브레이크포인트는 KRDS plugin이 `theme.screens`를 override해서 **컴파일되지 않음** — 사용 시 런타임 무반응 버그
 - [ ] **색상 매핑**: `var(--krds-color-*)` 또는 hex를 새로 쓰지 말고 plugin 토큰 사용. 정확 매핑이 없는 hex는 가까운 `gray-*`/`point-*`로. arbitrary `bg-[#XXX]`는 최후 수단
 - [ ] **spacing scale 혼동 금지**: KRDS spacing은 `p-3`=8px, `p-7`=24px 등 **default Tailwind와 값이 다름** (admin은 default, web은 KRDS). 앱 간 코드 이동 시 spacing 숫자 재매핑
-- [ ] **Tiptap/HTML 블록 자식 스타일 불가**: `.tiptap-content *` 및 `.subpage-block-html *`는 사용자 입력 HTML이므로 utility 적용 불가 — globals.css에서 유지
+- [ ] **CMS HTML 렌더링 경계 확인**: Tiptap 본문은 `TiptapContent` wrapper의 Tailwind Typography + descendant utility가 단일 진실원이다. 자식 HTML에 직접 class를 붙일 수 없으므로 wrapper class에 `[&_ul]`/`prose-ul:*` 패턴을 모으고, KRDS reset과 충돌하는 `font-size`/`list-style`/이미지 정렬은 px arbitrary value + `!` modifier 사용. 자유 HTML 블록의 사용자 CSS 스코프 처리는 `scopeCustomCss`/제한 CSS로 유지
 
 ### 시연 모드 빌드 (apps/web — `build:demo`)
 

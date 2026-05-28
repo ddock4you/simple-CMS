@@ -79,7 +79,9 @@ describe('walkSnapshotForRemap — HomeSection', () => {
       title: 'test-section',
       configJson: {
         heading: 'Picks',
-        items: [{ imageUrl: '/u/c.jpg', imageAlt: 'c', title: 'C', mediaId: 'm-3' }],
+        items: [
+          { imageUrl: '/u/c.jpg', imageAlt: 'c', title: 'C', mediaId: 'm-3' },
+        ],
         slideOptions: {},
       },
       isVisible: true,
@@ -150,7 +152,14 @@ describe('walkSnapshotForRemap — HomeSection', () => {
       sectionType: 'HERO',
       title: 'test-section',
       configJson: {
-        slides: [{ imageUrl: '/u/x.jpg', imageAlt: 'x', title: 'X', mediaId: 'unknown' }],
+        slides: [
+          {
+            imageUrl: '/u/x.jpg',
+            imageAlt: 'x',
+            title: 'X',
+            mediaId: 'unknown',
+          },
+        ],
         slideOptions: {},
       },
       isVisible: true,
@@ -356,7 +365,11 @@ describe('walkSnapshotForRemap — SubpageVersion.snapshot', () => {
       sourceAction: 'MANUAL',
     });
 
-    walkSnapshotForRemap(payload, new Map([['old-feat', 'new-feat']]), 'mediaId');
+    walkSnapshotForRemap(
+      payload,
+      new Map([['old-feat', 'new-feat']]),
+      'mediaId',
+    );
 
     const sn = payload.models.SubpageVersion[0]!.snapshot as {
       meta: { featuredImageId: string };
@@ -434,13 +447,18 @@ describe('walkSnapshotForRemap — Post', () => {
       },
       content: null,
       status: 'PUBLISHED',
+      isImportant: false,
       publishedAt: null,
       featuredImageId: null,
       authorId: null,
       displayOrder: 0,
     });
 
-    walkSnapshotForRemap(payload, new Map([['post-old', 'post-new']]), 'mediaId');
+    walkSnapshotForRemap(
+      payload,
+      new Map([['post-old', 'post-new']]),
+      'mediaId',
+    );
 
     const cj = payload.models.Post[0]!.contentJson as {
       content: Array<{ attrs: { mediaId: string } }>;

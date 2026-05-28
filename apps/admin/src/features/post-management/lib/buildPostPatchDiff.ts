@@ -3,8 +3,8 @@ import type { Post } from '@simple-cms/db';
 import type { UpdatePostData } from '../model/postSchemas';
 
 type Diff = {
-  before: Record<string, string | null>;
-  after: Record<string, string | null>;
+  before: Record<string, string | boolean | null>;
+  after: Record<string, string | boolean | null>;
 };
 
 export function buildPostPatchDiff(parsed: UpdatePostData, prev: Post): Diff {
@@ -26,6 +26,13 @@ export function buildPostPatchDiff(parsed: UpdatePostData, prev: Post): Diff {
   if (parsed.status !== undefined && parsed.status !== prev.status) {
     before.status = prev.status;
     after.status = parsed.status;
+  }
+  if (
+    parsed.isImportant !== undefined &&
+    parsed.isImportant !== prev.isImportant
+  ) {
+    before.isImportant = prev.isImportant;
+    after.isImportant = parsed.isImportant;
   }
   if (parsed.seoTitle !== undefined) {
     const normalized = parsed.seoTitle?.trim() || null;

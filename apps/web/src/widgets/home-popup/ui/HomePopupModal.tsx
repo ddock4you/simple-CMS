@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 
 import { Carousel } from '@/shared/ui/Carousel';
+import { TiptapContent } from '@/shared/ui/TiptapContent';
 import { isPopupHidden, setPopupHidden } from '@/shared/lib/popupCookies';
 import type { ActiveHomePopup } from '@/entities/home-popup/api/getActiveHomePopups';
 
@@ -99,9 +100,9 @@ export function HomePopupModal({ popups }: HomePopupModalProps) {
       return (
         <div className="home-popup-content-body">
           {popup.contentHtml ? (
-            <div
-              className="tiptap-content"
-              dangerouslySetInnerHTML={{ __html: popup.contentHtml }}
+            <TiptapContent
+              html={popup.contentHtml}
+              className="text-[#111827]! prose-p:text-[#111827]! prose-li:text-[#111827]!"
             />
           ) : (
             <p>내용이 없습니다.</p>

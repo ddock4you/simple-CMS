@@ -19,6 +19,7 @@ const draftPost: PostDetail = {
   seoDescription: null,
   contentJson: null,
   status: 'DRAFT',
+  isImportant: false,
   authorId: 'story-author-1',
   authorName: '관리자',
   publishedAt: null,
@@ -33,6 +34,7 @@ const publishedPost: PostDetail = {
   title: '공지사항 발행본',
   slug: 'notice-published',
   status: 'PUBLISHED',
+  isImportant: true,
   publishedAt: '2026-04-11T00:00:00.000Z',
   updatedAt: '2026-04-11T00:00:00.000Z',
 };

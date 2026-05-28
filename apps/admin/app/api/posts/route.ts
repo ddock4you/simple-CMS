@@ -27,7 +27,10 @@ export const GET = defineRoute<undefined, PaginatedResponse<PostListItem>>({
 
     if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: '잘못된 요청입니다.' } satisfies ApiResponse<never>,
+        {
+          success: false,
+          error: '잘못된 요청입니다.',
+        } satisfies ApiResponse<never>,
         { status: 400 },
       );
     }
@@ -48,12 +51,13 @@ export const GET = defineRoute<undefined, PaginatedResponse<PostListItem>>({
           slug: true,
           boardId: true,
           status: true,
+          isImportant: true,
           publishedAt: true,
           updatedAt: true,
           board: { select: { name: true } },
           author: { select: { name: true } },
         },
-        orderBy: [{ updatedAt: 'desc' }],
+        orderBy: [{ isImportant: 'desc' }, { updatedAt: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -68,6 +72,7 @@ export const GET = defineRoute<undefined, PaginatedResponse<PostListItem>>({
         boardId: item.boardId,
         boardName: item.board.name,
         status: item.status,
+        isImportant: item.isImportant,
         authorName: item.author?.name ?? null,
         publishedAt: item.publishedAt?.toISOString() ?? null,
         updatedAt: item.updatedAt.toISOString(),
@@ -84,12 +89,23 @@ export const POST = defineRoute<z.infer<typeof createPostSchema>, null>({
   action: 'create',
   schema: createPostSchema,
   handler: async ({ user, parsed, auditCtx }) => {
-    const { title, boardId, seoTitle, seoDescription, contentJson, status } = parsed;
+    const {
+      title,
+      boardId,
+      seoTitle,
+      seoDescription,
+      contentJson,
+      isImportant,
+      status,
+    } = parsed;
 
     const board = await prisma.board.findUnique({ where: { id: boardId } });
     if (!board) {
       return NextResponse.json(
-        { success: false, error: '게시판을 찾을 수 없습니다.' } satisfies ApiResponse<never>,
+        {
+          success: false,
+          error: '게시판을 찾을 수 없습니다.',
+        } satisfies ApiResponse<never>,
         { status: 400 },
       );
     }
@@ -97,7 +113,10 @@ export const POST = defineRoute<z.infer<typeof createPostSchema>, null>({
     const slug = parsed.slug?.trim() || generateSlug(title);
     if (!slug) {
       return NextResponse.json(
-        { success: false, error: 'slug을 입력해주세요.' } satisfies ApiResponse<never>,
+        {
+          success: false,
+          error: 'slug을 입력해주세요.',
+        } satisfies ApiResponse<never>,
         { status: 400 },
       );
     }
@@ -105,12 +124,17 @@ export const POST = defineRoute<z.infer<typeof createPostSchema>, null>({
     const existing = await prisma.post.findFirst({ where: { boardId, slug } });
     if (existing) {
       return NextResponse.json(
-        { success: false, error: '이 게시판에서 이미 사용 중인 slug입니다.' } satisfies ApiResponse<never>,
+        {
+          success: false,
+          error: '이 게시판에서 이미 사용 중인 slug입니다.',
+        } satisfies ApiResponse<never>,
         { status: 409 },
       );
     }
 
-    const maxOrder = await prisma.post.aggregate({ _max: { displayOrder: true } });
+    const maxOrder = await prisma.post.aggregate({
+      _max: { displayOrder: true },
+    });
     const displayOrder = (maxOrder._max.displayOrder ?? -1) + 1;
 
     const content = contentJson ? extractTextFromTiptap(contentJson) : null;
@@ -128,6 +152,7 @@ export const POST = defineRoute<z.infer<typeof createPostSchema>, null>({
         contentJson: contentJson ?? undefined,
         content,
         status,
+        isImportant,
         publishedAt,
         displayOrder,
         authorId: user.id,
@@ -145,6 +170,7 @@ export const POST = defineRoute<z.infer<typeof createPostSchema>, null>({
           slug,
           boardId,
           status,
+          isImportant,
           seoTitle: normalizedSeoTitle,
           seoDescription: normalizedSeoDescription,
         },
@@ -155,7 +181,9 @@ export const POST = defineRoute<z.infer<typeof createPostSchema>, null>({
     });
 
     return NextResponse.json(
-      { success: true, data: { id: post.id } } satisfies ApiResponse<{ id: string }>,
+      { success: true, data: { id: post.id } } satisfies ApiResponse<{
+        id: string;
+      }>,
       { status: 201 },
     );
   },

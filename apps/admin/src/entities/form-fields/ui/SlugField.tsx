@@ -24,7 +24,7 @@ export function SlugField({
   warningWhen,
   warningMessage,
 }: SlugFieldProps) {
-  const manuallyEdited = useRef(false);
+  const manuallyEdited = useRef(Boolean(savedSlug) || Boolean(value));
 
   useEffect(() => {
     if (!manuallyEdited.current && title) {

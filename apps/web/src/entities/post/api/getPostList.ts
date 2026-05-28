@@ -8,7 +8,7 @@ export const getPublishedPosts = cache(
   async (boardId: string, page = 1, pageSize = DEFAULT_PAGE_SIZE) => {
     const skip = (page - 1) * pageSize;
 
-    const [items, total] = await Promise.all([
+    const [items, total, regularTotal] = await Promise.all([
       prisma.post.findMany({
         where: {
           boardId,
@@ -18,10 +18,11 @@ export const getPublishedPosts = cache(
           id: true,
           title: true,
           slug: true,
+          isImportant: true,
           publishedAt: true,
           author: { select: { name: true } },
         },
-        orderBy: { publishedAt: 'desc' },
+        orderBy: [{ isImportant: 'desc' }, { publishedAt: 'desc' }],
         skip,
         take: pageSize,
       }),
@@ -31,11 +32,19 @@ export const getPublishedPosts = cache(
           status: 'PUBLISHED',
         },
       }),
+      prisma.post.count({
+        where: {
+          boardId,
+          status: 'PUBLISHED',
+          isImportant: false,
+        },
+      }),
     ]);
 
     return {
       items,
       total,
+      regularTotal,
       totalPages: Math.ceil(total / pageSize),
       page,
       pageSize,

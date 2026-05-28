@@ -68,7 +68,7 @@ function RichTextBlockContent({ config }: { config: unknown }) {
   if (!html || !html.replace(/<[^>]+>/g, '').trim()) return EMPTY_HINT;
   return (
     <div
-      className="prose prose-sm max-w-none"
+      className="tiptap-content-view prose prose-sm max-w-none"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
@@ -287,7 +287,10 @@ export function BlockContentView({ blocks }: BlockContentViewProps) {
                 </span>
               </Badge>
               {isHidden && (
-                <Badge variant="outline" className="h-6 gap-1 text-muted-foreground">
+                <Badge
+                  variant="outline"
+                  className="h-6 gap-1 text-muted-foreground"
+                >
                   <EyeOff aria-hidden />
                   숨김
                 </Badge>

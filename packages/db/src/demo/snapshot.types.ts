@@ -145,6 +145,7 @@ const postRowSchema = z.object({
   contentJson: jsonValueSchema.nullable(),
   content: z.string().nullable(),
   status: z.enum(['DRAFT', 'PUBLISHED']),
+  isImportant: z.boolean().optional().default(false),
   publishedAt: isoDateString.nullable(),
   featuredImageId: cuidString.nullable(),
   authorId: cuidString.nullable(),
@@ -243,9 +244,7 @@ export type SnapshotRoleRow = z.infer<typeof roleRowSchema>;
 export type SnapshotUserRow = z.infer<typeof userRowSchema>;
 export type SnapshotMediaRow = z.infer<typeof mediaRowSchema>;
 export type SnapshotSiteSettingsRow = z.infer<typeof siteSettingsRowSchema>;
-export type SnapshotNavigationMenuRow = z.infer<
-  typeof navigationMenuRowSchema
->;
+export type SnapshotNavigationMenuRow = z.infer<typeof navigationMenuRowSchema>;
 export type SnapshotBoardRow = z.infer<typeof boardRowSchema>;
 export type SnapshotHomeSectionRow = z.infer<typeof homeSectionRowSchema>;
 export type SnapshotSubpageRow = z.infer<typeof subpageRowSchema>;
@@ -255,9 +254,7 @@ export type SnapshotHomePopupRow = z.infer<typeof homePopupRowSchema>;
 export type SnapshotNavigationMenuItemRow = z.infer<
   typeof navigationMenuItemRowSchema
 >;
-export type SnapshotSubpageVersionRow = z.infer<
-  typeof subpageVersionRowSchema
->;
+export type SnapshotSubpageVersionRow = z.infer<typeof subpageVersionRowSchema>;
 export type SnapshotSubpageFeedbackRow = z.infer<
   typeof subpageFeedbackRowSchema
 >;

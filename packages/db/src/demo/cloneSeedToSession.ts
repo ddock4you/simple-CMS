@@ -114,7 +114,7 @@ export async function cloneSeedToSession(
           email: u.email,
           name: u.name,
           status: u.status,
-          roleId: u.roleId ? roleIdMap.get(u.roleId) ?? null : null,
+          roleId: u.roleId ? (roleIdMap.get(u.roleId) ?? null) : null,
         };
       });
       if (userData.length > 0) {
@@ -158,7 +158,7 @@ export async function cloneSeedToSession(
           alt: m.alt,
           contentHash: m.contentHash,
           uploadedById: m.uploadedById
-            ? userIdMap.get(m.uploadedById) ?? null
+            ? (userIdMap.get(m.uploadedById) ?? null)
             : null,
         };
       });
@@ -265,7 +265,7 @@ export async function cloneSeedToSession(
           status: sp.status,
           publishedAt: sp.publishedAt,
           featuredImageId: sp.featuredImageId
-            ? mediaIdMap.get(sp.featuredImageId) ?? null
+            ? (mediaIdMap.get(sp.featuredImageId) ?? null)
             : null,
           cclType: sp.cclType,
           cclAi: sp.cclAi,
@@ -296,14 +296,16 @@ export async function cloneSeedToSession(
             seoTitle: p.seoTitle,
             seoDescription: p.seoDescription,
             contentJson:
-              (p.contentJson as Prisma.InputJsonValue | null) ?? Prisma.JsonNull,
+              (p.contentJson as Prisma.InputJsonValue | null) ??
+              Prisma.JsonNull,
             content: p.content,
             status: p.status,
+            isImportant: p.isImportant,
             publishedAt: p.publishedAt,
             featuredImageId: p.featuredImageId
-              ? mediaIdMap.get(p.featuredImageId) ?? null
+              ? (mediaIdMap.get(p.featuredImageId) ?? null)
               : null,
-            authorId: p.authorId ? userIdMap.get(p.authorId) ?? null : null,
+            authorId: p.authorId ? (userIdMap.get(p.authorId) ?? null) : null,
             displayOrder: p.displayOrder,
           };
         })
@@ -352,7 +354,7 @@ export async function cloneSeedToSession(
         imageUrl: p.imageUrl,
         imageAlt: p.imageAlt,
         imageMediaId: p.imageMediaId
-          ? mediaIdMap.get(p.imageMediaId) ?? null
+          ? (mediaIdMap.get(p.imageMediaId) ?? null)
           : null,
         linkUrl: p.linkUrl,
         buttonLabel: p.buttonLabel,
@@ -385,9 +387,9 @@ export async function cloneSeedToSession(
             label: i.label,
             itemType: i.itemType,
             subpageId: i.subpageId
-              ? subpageIdMap.get(i.subpageId) ?? null
+              ? (subpageIdMap.get(i.subpageId) ?? null)
               : null,
-            boardId: i.boardId ? boardIdMap.get(i.boardId) ?? null : null,
+            boardId: i.boardId ? (boardIdMap.get(i.boardId) ?? null) : null,
             url: i.url,
             isVisible: i.isVisible,
             openInNewTab: i.openInNewTab,
@@ -428,7 +430,7 @@ export async function cloneSeedToSession(
             sessionId: newSessionId,
             subpageId: newSubpageId,
             createdById: v.createdById
-              ? userIdMap.get(v.createdById) ?? null
+              ? (userIdMap.get(v.createdById) ?? null)
               : null,
             label: v.label,
             snapshot: v.snapshot as Prisma.InputJsonValue,

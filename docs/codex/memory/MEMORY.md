@@ -2,6 +2,7 @@
 Codex migration note: this file is a Codex-friendly instruction/reference file.
 Codex automatically reads AGENTS.md files by directory scope.
 -->
+
 # Memory Index
 
 - [User Profile](user_profile.md) — 레거시→모던 전환 중인 한국어 개발자, 실용적 접근 선호
@@ -18,8 +19,9 @@ Codex automatically reads AGENTS.md files by directory scope.
 - [Response Language Preference](feedback_language.md) — 작업 완료 후 리뷰/요약은 항상 한글로 작성
 - [Search Form Submit Pattern](feedback_search_form_submit.md) — admin 검색은 Enter + [검색] 버튼 form submit. debounce 자동 검색 금지(서버 부담)
 - [Stage 15 Design System](project_stage15_design_system.md) — 디자이너 부재로 design.md가 admin 시각 결정의 단일 진실원. export css-tailwind 금지, brand color 추가 금지
-- [Demo Mode Master-merge Strategy](project_demo_mode.md) — DEMO_MODE 격리 인프라는 master에 통합. sentinel '__PROD__' + composite unique + findFirst/upsert 회피 관습
+- [Demo Mode Master-merge Strategy](project_demo_mode.md) — DEMO_MODE 격리 인프라는 master에 통합. sentinel '**PROD**' + composite unique + findFirst/upsert 회피 관습
 - [build:demo Storybook bundling](project_build_demo_bundling.md) — 시연 Storybook을 web 빌드에 동봉(2 Vercel 프로젝트). Windows self-nesting/EPERM/long-path 함정 회피 패턴
 - [Stage 16 진행 현황](project_stage16_progress.md) — 16a/16c-1/16c-2/16d/16e/16b-1 완료. 다음: 16b-2(posts→boards→media 순 defineRoute 마이그레이션) + 16f(SettingsCardForm)
 - [Stage 18 성능 최적화](project_stage18_perf_optimization.md) — Vercel Hobby + Supabase us-east 정렬, cachedSession/getMenusBySlots 패턴, force-dynamic 회피
+- [Stage 20 콘텐츠 렌더링](project_stage20_content_rendering.md) — 게시글 중요 표시, 공개 목록 번호, TiptapContent Tailwind boundary, KRDS reset 회피
 - [시연 배포 실전 함정](project_demo_deployment_pitfalls.md) — Vercel monorepo + Storybook sub-directory + Supabase 12종 함정 체크리스트 (배포 시작 전 확인)

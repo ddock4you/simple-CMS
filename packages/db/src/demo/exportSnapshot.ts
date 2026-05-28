@@ -53,8 +53,12 @@ export async function exportSnapshot(
 }
 
 async function doExport(options: ExportOptions): Promise<SnapshotPayload> {
-  const { sourceSessionId, downloadMedia, urlToStorageKey, concurrency = 4 } =
-    options;
+  const {
+    sourceSessionId,
+    downloadMedia,
+    urlToStorageKey,
+    concurrency = 4,
+  } = options;
 
   // ─── 14모델 findMany ─────────────────────────────
   const [
@@ -217,6 +221,7 @@ async function doExport(options: ExportOptions): Promise<SnapshotPayload> {
         contentJson: (p.contentJson as unknown) ?? null,
         content: p.content,
         status: p.status,
+        isImportant: p.isImportant,
         publishedAt: p.publishedAt?.toISOString() ?? null,
         featuredImageId: p.featuredImageId,
         authorId: p.authorId,

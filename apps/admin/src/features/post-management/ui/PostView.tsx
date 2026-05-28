@@ -24,6 +24,7 @@ import { ViewLiveButton } from '@/entities/preview/ui/ViewLiveButton';
 import { postDetailOptions } from '../api/postQueries';
 import { useDeletePost } from '../api/usePostMutations';
 import { ContentStatusBadge } from '@/entities/content-status/ui/StatusBadge';
+import { Badge } from '@/shared/ui/Badge';
 import { DeletePostDialog } from './DeletePostDialog';
 
 interface PostViewProps {
@@ -57,6 +58,7 @@ export function PostView({ id }: PostViewProps) {
         title={
           <span className="flex items-center gap-2">
             {data.title}
+            {data.isImportant && <Badge variant="warning">중요</Badge>}
             <ContentStatusBadge status={data.status} />
           </span>
         }
@@ -66,7 +68,9 @@ export function PostView({ id }: PostViewProps) {
           <>
             <PreviewButton entityType="POST" entityId={id} />
             {data.status === 'PUBLISHED' && (
-              <ViewLiveButton url={getPostPublicUrl(data.boardSlug, data.slug)} />
+              <ViewLiveButton
+                url={getPostPublicUrl(data.boardSlug, data.slug)}
+              />
             )}
             {canDelete && (
               <DeletePostDialog
@@ -97,7 +101,7 @@ export function PostView({ id }: PostViewProps) {
             <CardContent>
               {contentHtml ? (
                 <div
-                  className="prose prose-sm max-w-none"
+                  className="tiptap-content-view prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: contentHtml }}
                 />
               ) : (
@@ -131,22 +135,32 @@ export function PostView({ id }: PostViewProps) {
                 <ContentStatusBadge status={data.status} />
               </div>
               <div className="flex justify-between">
+                <span className="text-muted-foreground">중요</span>
+                <span>{data.isImportant ? '예' : '아니오'}</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-muted-foreground">작성자</span>
                 <span>{data.authorName ?? '-'}</span>
               </div>
               {data.publishedAt && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">발행일</span>
-                  <span>{format(new Date(data.publishedAt), 'yyyy-MM-dd HH:mm')}</span>
+                  <span>
+                    {format(new Date(data.publishedAt), 'yyyy-MM-dd HH:mm')}
+                  </span>
                 </div>
               )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">생성일</span>
-                <span>{format(new Date(data.createdAt), 'yyyy-MM-dd HH:mm')}</span>
+                <span>
+                  {format(new Date(data.createdAt), 'yyyy-MM-dd HH:mm')}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">수정일</span>
-                <span>{format(new Date(data.updatedAt), 'yyyy-MM-dd HH:mm')}</span>
+                <span>
+                  {format(new Date(data.updatedAt), 'yyyy-MM-dd HH:mm')}
+                </span>
               </div>
             </CardContent>
           </Card>

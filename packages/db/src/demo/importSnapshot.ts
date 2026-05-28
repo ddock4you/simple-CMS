@@ -191,7 +191,7 @@ async function doImport(
             email: u.email,
             name: u.name,
             status: u.status,
-            roleId: u.roleId ? idMaps.Role.get(u.roleId) ?? null : null,
+            roleId: u.roleId ? (idMaps.Role.get(u.roleId) ?? null) : null,
           })),
         });
         stats.rowsCreatedByModel.User = payload.models.User.length;
@@ -219,13 +219,15 @@ async function doImport(
       // 4) SiteSettings
       if (payload.models.SiteSettings.length > 0) {
         await tx.siteSettings.createMany({
-          data: payload.models.SiteSettings.map((s: SnapshotSiteSettingsRow) => ({
-            id: idMaps.SiteSettings.get(s.id)!,
-            sessionId: SEED_SENTINEL,
-            key: s.key,
-            value: s.value,
-            description: s.description,
-          })),
+          data: payload.models.SiteSettings.map(
+            (s: SnapshotSiteSettingsRow) => ({
+              id: idMaps.SiteSettings.get(s.id)!,
+              sessionId: SEED_SENTINEL,
+              key: s.key,
+              value: s.value,
+              description: s.description,
+            }),
+          ),
         });
         stats.rowsCreatedByModel.SiteSettings =
           payload.models.SiteSettings.length;
@@ -234,13 +236,15 @@ async function doImport(
       // 5) NavigationMenu
       if (payload.models.NavigationMenu.length > 0) {
         await tx.navigationMenu.createMany({
-          data: payload.models.NavigationMenu.map((m: SnapshotNavigationMenuRow) => ({
-            id: idMaps.NavigationMenu.get(m.id)!,
-            sessionId: SEED_SENTINEL,
-            name: m.name,
-            description: m.description,
-            slots: m.slots,
-          })),
+          data: payload.models.NavigationMenu.map(
+            (m: SnapshotNavigationMenuRow) => ({
+              id: idMaps.NavigationMenu.get(m.id)!,
+              sessionId: SEED_SENTINEL,
+              name: m.name,
+              description: m.description,
+              slots: m.slots,
+            }),
+          ),
         });
         stats.rowsCreatedByModel.NavigationMenu =
           payload.models.NavigationMenu.length;
@@ -294,7 +298,7 @@ async function doImport(
             status: s.status,
             publishedAt: s.publishedAt ? new Date(s.publishedAt) : null,
             featuredImageId: s.featuredImageId
-              ? idMaps.Media.get(s.featuredImageId) ?? null
+              ? (idMaps.Media.get(s.featuredImageId) ?? null)
               : null,
             cclType: s.cclType,
             cclAi: s.cclAi,
@@ -322,11 +326,12 @@ async function doImport(
               Prisma.JsonNull,
             content: p.content,
             status: p.status,
+            isImportant: p.isImportant,
             publishedAt: p.publishedAt ? new Date(p.publishedAt) : null,
             featuredImageId: p.featuredImageId
-              ? idMaps.Media.get(p.featuredImageId) ?? null
+              ? (idMaps.Media.get(p.featuredImageId) ?? null)
               : null,
-            authorId: p.authorId ? idMaps.User.get(p.authorId) ?? null : null,
+            authorId: p.authorId ? (idMaps.User.get(p.authorId) ?? null) : null,
             displayOrder: p.displayOrder,
           })),
         });
@@ -364,7 +369,7 @@ async function doImport(
             imageUrl: p.imageUrl,
             imageAlt: p.imageAlt,
             imageMediaId: p.imageMediaId
-              ? idMaps.Media.get(p.imageMediaId) ?? null
+              ? (idMaps.Media.get(p.imageMediaId) ?? null)
               : null,
             linkUrl: p.linkUrl,
             buttonLabel: p.buttonLabel,
@@ -388,9 +393,9 @@ async function doImport(
             label: i.label,
             itemType: i.itemType,
             subpageId: i.subpageId
-              ? idMaps.Subpage.get(i.subpageId) ?? null
+              ? (idMaps.Subpage.get(i.subpageId) ?? null)
               : null,
-            boardId: i.boardId ? idMaps.Board.get(i.boardId) ?? null : null,
+            boardId: i.boardId ? (idMaps.Board.get(i.boardId) ?? null) : null,
             url: i.url,
             isVisible: i.isVisible,
             openInNewTab: i.openInNewTab,
@@ -418,18 +423,20 @@ async function doImport(
       // 13) SubpageVersion (snapshot Json은 walker가 이미 재매핑)
       if (payload.models.SubpageVersion.length > 0) {
         await tx.subpageVersion.createMany({
-          data: payload.models.SubpageVersion.map((v: SnapshotSubpageVersionRow) => ({
-            id: idMaps.SubpageVersion.get(v.id)!,
-            sessionId: SEED_SENTINEL,
-            subpageId: idMaps.Subpage.get(v.subpageId) ?? v.subpageId,
-            createdById: v.createdById
-              ? idMaps.User.get(v.createdById) ?? null
-              : null,
-            label: v.label,
-            snapshot: v.snapshot as Prisma.InputJsonValue,
-            isPinned: v.isPinned,
-            sourceAction: v.sourceAction,
-          })),
+          data: payload.models.SubpageVersion.map(
+            (v: SnapshotSubpageVersionRow) => ({
+              id: idMaps.SubpageVersion.get(v.id)!,
+              sessionId: SEED_SENTINEL,
+              subpageId: idMaps.Subpage.get(v.subpageId) ?? v.subpageId,
+              createdById: v.createdById
+                ? (idMaps.User.get(v.createdById) ?? null)
+                : null,
+              label: v.label,
+              snapshot: v.snapshot as Prisma.InputJsonValue,
+              isPinned: v.isPinned,
+              sourceAction: v.sourceAction,
+            }),
+          ),
         });
         stats.rowsCreatedByModel.SubpageVersion =
           payload.models.SubpageVersion.length;
@@ -438,16 +445,18 @@ async function doImport(
       // 14) SubpageFeedback
       if (payload.models.SubpageFeedback.length > 0) {
         await tx.subpageFeedback.createMany({
-          data: payload.models.SubpageFeedback.map((f: SnapshotSubpageFeedbackRow) => ({
-            id: idMaps.SubpageFeedback.get(f.id)!,
-            sessionId: SEED_SENTINEL,
-            subpageId: idMaps.Subpage.get(f.subpageId) ?? f.subpageId,
-            rating: f.rating,
-            positiveReasons: f.positiveReasons,
-            comment: f.comment,
-            ipAddressHash: f.ipAddressHash,
-            userAgent: f.userAgent,
-          })),
+          data: payload.models.SubpageFeedback.map(
+            (f: SnapshotSubpageFeedbackRow) => ({
+              id: idMaps.SubpageFeedback.get(f.id)!,
+              sessionId: SEED_SENTINEL,
+              subpageId: idMaps.Subpage.get(f.subpageId) ?? f.subpageId,
+              rating: f.rating,
+              positiveReasons: f.positiveReasons,
+              comment: f.comment,
+              ipAddressHash: f.ipAddressHash,
+              userAgent: f.userAgent,
+            }),
+          ),
         });
         stats.rowsCreatedByModel.SubpageFeedback =
           payload.models.SubpageFeedback.length;

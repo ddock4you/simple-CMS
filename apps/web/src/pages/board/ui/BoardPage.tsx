@@ -6,11 +6,13 @@ import type { BoardSkinType } from '@simple-cms/db';
 
 import { KrdsTable } from '@/shared/ui/KrdsTable';
 import { PaginationNav } from '@/shared/ui/PaginationNav';
+import { getPostListNumber } from '../lib/getPostListNumber';
 
 interface PostItem {
   id: string;
   title: string;
   slug: string;
+  isImportant: boolean;
   publishedAt: Date | null;
   author: { name: string } | null;
 }
@@ -25,8 +27,10 @@ interface BoardPageProps {
   posts: {
     items: PostItem[];
     total: number;
+    regularTotal: number;
     totalPages: number;
     page: number;
+    pageSize: number;
   };
 }
 
@@ -44,11 +48,15 @@ function PostListTable({
   boardSlug,
   page,
   pageSize,
+  total,
+  regularTotal,
 }: {
   posts: PostItem[];
   boardSlug: string;
   page: number;
   pageSize: number;
+  total: number;
+  regularTotal: number;
 }) {
   return (
     <KrdsTable mobScroll caption={`게시글 목록 — 번호, 제목, 작성자, 날짜`}>
@@ -63,23 +71,37 @@ function PostListTable({
         </KrdsTable.Tr>
       </KrdsTable.Thead>
       <KrdsTable.Tbody>
-        {posts.map((post, index) => (
-          <KrdsTable.Tr key={post.id}>
-            <KrdsTable.Td style={{ textAlign: 'center' }}>
-              {(page - 1) * pageSize + index + 1}
-            </KrdsTable.Td>
-            <KrdsTable.Td>
-              <Link
-                href={`/board/${boardSlug}/${post.slug}`}
-                className="post-title-link"
-              >
-                {post.title}
-              </Link>
-            </KrdsTable.Td>
-            <KrdsTable.Td>{post.author?.name ?? '-'}</KrdsTable.Td>
-            <KrdsTable.Td>{formatDate(post.publishedAt)}</KrdsTable.Td>
-          </KrdsTable.Tr>
-        ))}
+        {posts.map((post, index) => {
+          const number = getPostListNumber({
+            itemIndex: index,
+            page,
+            pageSize,
+            total,
+            regularTotal,
+          });
+
+          return (
+            <KrdsTable.Tr key={post.id}>
+              <KrdsTable.Td style={{ textAlign: 'center' }}>
+                {post.isImportant ? (
+                  <span className="post-important-label">중요</span>
+                ) : (
+                  number
+                )}
+              </KrdsTable.Td>
+              <KrdsTable.Td>
+                <Link
+                  href={`/board/${boardSlug}/${post.slug}`}
+                  className="post-title-link"
+                >
+                  {post.title}
+                </Link>
+              </KrdsTable.Td>
+              <KrdsTable.Td>{post.author?.name ?? '-'}</KrdsTable.Td>
+              <KrdsTable.Td>{formatDate(post.publishedAt)}</KrdsTable.Td>
+            </KrdsTable.Tr>
+          );
+        })}
       </KrdsTable.Tbody>
     </KrdsTable>
   );
@@ -137,7 +159,9 @@ export function BoardPage({ board, posts }: BoardPageProps) {
               posts={posts.items}
               boardSlug={board.slug}
               page={posts.page}
-              pageSize={20}
+              pageSize={posts.pageSize}
+              total={posts.total}
+              regularTotal={posts.regularTotal}
             />
           ) : (
             <PostGalleryGrid posts={posts.items} boardSlug={board.slug} />

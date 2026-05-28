@@ -26,7 +26,10 @@ export const GET = defineRoute<undefined, PostDetail>({
 
     if (!post) {
       return NextResponse.json(
-        { success: false, error: '게시글을 찾을 수 없습니다.' } satisfies ApiResponse<never>,
+        {
+          success: false,
+          error: '게시글을 찾을 수 없습니다.',
+        } satisfies ApiResponse<never>,
         { status: 404 },
       );
     }
@@ -42,6 +45,7 @@ export const GET = defineRoute<undefined, PostDetail>({
       seoDescription: post.seoDescription,
       contentJson: post.contentJson,
       status: post.status,
+      isImportant: post.isImportant,
       authorId: post.author?.id ?? null,
       authorName: post.author?.name ?? null,
       publishedAt: post.publishedAt?.toISOString() ?? null,
@@ -54,86 +58,112 @@ export const GET = defineRoute<undefined, PostDetail>({
 
 type PatchResult = {
   updatedTitle: string;
-  before: Record<string, string | null>;
-  after: Record<string, string | null>;
+  before: Record<string, string | boolean | null>;
+  after: Record<string, string | boolean | null>;
 };
 
-export const PATCH = defineRoute<z.infer<typeof updatePostSchema>, PatchResult>({
-  resource: 'posts',
-  action: 'update',
-  schema: updatePostSchema,
-  handler: async ({ parsed, params }) => {
-    const { id } = params;
-    const post = await prisma.post.findUnique({ where: { id } });
-    if (!post) {
-      return NextResponse.json(
-        { success: false, error: '게시글을 찾을 수 없습니다.' } satisfies ApiResponse<never>,
-        { status: 404 },
-      );
-    }
-
-    const { title, slug, boardId, seoTitle, seoDescription, contentJson, status } = parsed;
-
-    if (boardId && boardId !== post.boardId) {
-      const board = await prisma.board.findUnique({ where: { id: boardId } });
-      if (!board) {
+export const PATCH = defineRoute<z.infer<typeof updatePostSchema>, PatchResult>(
+  {
+    resource: 'posts',
+    action: 'update',
+    schema: updatePostSchema,
+    handler: async ({ parsed, params }) => {
+      const { id } = params;
+      const post = await prisma.post.findUnique({ where: { id } });
+      if (!post) {
         return NextResponse.json(
-          { success: false, error: '게시판을 찾을 수 없습니다.' } satisfies ApiResponse<never>,
-          { status: 400 },
+          {
+            success: false,
+            error: '게시글을 찾을 수 없습니다.',
+          } satisfies ApiResponse<never>,
+          { status: 404 },
         );
       }
-    }
 
-    const targetBoardId = boardId ?? post.boardId;
-    const targetSlug = slug ?? post.slug;
-    if (targetBoardId !== post.boardId || targetSlug !== post.slug) {
-      const existing = await prisma.post.findFirst({
-        where: { boardId: targetBoardId, slug: targetSlug },
+      const {
+        title,
+        slug,
+        boardId,
+        seoTitle,
+        seoDescription,
+        contentJson,
+        isImportant,
+        status,
+      } = parsed;
+
+      if (boardId && boardId !== post.boardId) {
+        const board = await prisma.board.findUnique({ where: { id: boardId } });
+        if (!board) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: '게시판을 찾을 수 없습니다.',
+            } satisfies ApiResponse<never>,
+            { status: 400 },
+          );
+        }
+      }
+
+      const targetBoardId = boardId ?? post.boardId;
+      const targetSlug = slug ?? post.slug;
+      if (targetBoardId !== post.boardId || targetSlug !== post.slug) {
+        const existing = await prisma.post.findFirst({
+          where: { boardId: targetBoardId, slug: targetSlug },
+        });
+        if (existing && existing.id !== id) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: '이 게시판에서 이미 사용 중인 slug입니다.',
+            } satisfies ApiResponse<never>,
+            { status: 409 },
+          );
+        }
+      }
+
+      const updateData: Record<string, unknown> = {};
+      if (title !== undefined) updateData.title = title;
+      if (slug !== undefined) updateData.slug = slug;
+      if (boardId !== undefined) updateData.boardId = boardId;
+      if (seoTitle !== undefined)
+        updateData.seoTitle = seoTitle?.trim() || null;
+      if (seoDescription !== undefined)
+        updateData.seoDescription = seoDescription?.trim() || null;
+      if (isImportant !== undefined) updateData.isImportant = isImportant;
+      if (contentJson !== undefined) {
+        updateData.contentJson = contentJson;
+        updateData.content = extractTextFromTiptap(contentJson);
+      }
+      if (status !== undefined) {
+        updateData.status = status;
+        if (status === 'PUBLISHED' && post.status === 'DRAFT') {
+          updateData.publishedAt = new Date();
+        }
+      }
+
+      const updated = await prisma.post.update({
+        where: { id },
+        data: updateData,
       });
-      if (existing && existing.id !== id) {
-        return NextResponse.json(
-          { success: false, error: '이 게시판에서 이미 사용 중인 slug입니다.' } satisfies ApiResponse<never>,
-          { status: 409 },
-        );
-      }
-    }
+      const { before, after } = buildPostPatchDiff(parsed, post);
 
-    const updateData: Record<string, unknown> = {};
-    if (title !== undefined) updateData.title = title;
-    if (slug !== undefined) updateData.slug = slug;
-    if (boardId !== undefined) updateData.boardId = boardId;
-    if (seoTitle !== undefined) updateData.seoTitle = seoTitle?.trim() || null;
-    if (seoDescription !== undefined) updateData.seoDescription = seoDescription?.trim() || null;
-    if (contentJson !== undefined) {
-      updateData.contentJson = contentJson;
-      updateData.content = extractTextFromTiptap(contentJson);
-    }
-    if (status !== undefined) {
-      updateData.status = status;
-      if (status === 'PUBLISHED' && post.status === 'DRAFT') {
-        updateData.publishedAt = new Date();
-      }
-    }
-
-    const updated = await prisma.post.update({ where: { id }, data: updateData });
-    const { before, after } = buildPostPatchDiff(parsed, post);
-
-    return { updatedTitle: updated.title, before, after };
-  },
-  responseData: () => null,
-  audit: {
-    build: (result, ctx) => {
-      if (Object.keys(result.after).length === 0) return null;
-      return {
-        action: 'UPDATE',
-        entityType: 'POST',
-        entityId: ctx.params.id,
-        entityTitle: result.updatedTitle,
-        changes: { before: result.before, after: result.after },
-      };
+      return { updatedTitle: updated.title, before, after };
+    },
+    responseData: () => null,
+    audit: {
+      build: (result, ctx) => {
+        if (Object.keys(result.after).length === 0) return null;
+        return {
+          action: 'UPDATE',
+          entityType: 'POST',
+          entityId: ctx.params.id,
+          entityTitle: result.updatedTitle,
+          changes: { before: result.before, after: result.after },
+        };
+      },
     },
   },
-});
+);
 
 type DeleteResult = { title: string; slug: string; boardId: string };
 
@@ -146,7 +176,10 @@ export const DELETE = defineRoute<undefined, DeleteResult>({
 
     if (!post) {
       return NextResponse.json(
-        { success: false, error: '게시글을 찾을 수 없습니다.' } satisfies ApiResponse<never>,
+        {
+          success: false,
+          error: '게시글을 찾을 수 없습니다.',
+        } satisfies ApiResponse<never>,
         { status: 404 },
       );
     }
@@ -163,7 +196,13 @@ export const DELETE = defineRoute<undefined, DeleteResult>({
       entityType: 'POST',
       entityId: ctx.params.id,
       entityTitle: result.title,
-      changes: { before: { title: result.title, slug: result.slug, boardId: result.boardId } },
+      changes: {
+        before: {
+          title: result.title,
+          slug: result.slug,
+          boardId: result.boardId,
+        },
+      },
     }),
   },
 });

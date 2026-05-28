@@ -24,6 +24,7 @@ export interface PostListItem {
   boardId: string;
   boardName: string;
   status: ContentStatus;
+  isImportant: boolean;
   authorName: string | null;
   publishedAt: string | null;
   updatedAt: string;
@@ -40,6 +41,7 @@ export interface PostDetail {
   seoDescription: string | null;
   contentJson: unknown;
   status: ContentStatus;
+  isImportant: boolean;
   authorId: string | null;
   authorName: string | null;
   publishedAt: string | null;

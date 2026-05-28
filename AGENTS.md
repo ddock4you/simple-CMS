@@ -2,6 +2,7 @@
 Codex migration note: this file is a Codex-friendly instruction/reference file.
 Codex automatically reads AGENTS.md files by directory scope.
 -->
+
 # Simple CMS
 
 Next.js 기반의 관리자 CMS(admin)와 공개 웹(web)을 모노레포로 분리 운영하는 실무형 CMS 프로젝트.
@@ -92,7 +93,7 @@ apps/{앱}/
 | **Role**               | 역할(등급) 정의, name·permissions(Json)·isSystem·isDefault, 메뉴별 CRUD 권한 매트릭스                                   |
 | **Subpage**            | 서브페이지, 콘텐츠는 PageBlock 목록으로 관리 (RICH_TEXT/HTML/IMAGE/IFRAME 자유 순서), 검색용 plain text(`content`) 유지 |
 | **Board**              | 게시판 설정, 스킨(list/gallery), slug, 공개 여부                                                                        |
-| **Post**               | 게시판 소속 게시글, 목록/상세 렌더링 대상                                                                               |
+| **Post**               | 게시판 소속 게시글, 목록/상세 렌더링 대상. `isImportant`로 공지성 중요글 우선 노출 지원                                 |
 | **HomeSection**        | 메인 페이지 전용 섹션 설정                                                                                              |
 | **HomePopup**          | 메인 페이지 전용 팝업 (콘텐츠형/이미지형)                                                                               |
 | **PageBlock**          | 서브페이지 콘텐츠 블록 (blockType: RICH_TEXT/HTML/IMAGE/IFRAME + configJson, displayOrder 기반 자유 순서)               |
@@ -104,7 +105,7 @@ apps/{앱}/
 | **ErrorLog**           | 공개 웹 런타임 에러 로그, 서버/클라이언트 에러 기록, fingerprint 기반 그룹핑                                            |
 | **Session**            | 커스텀 DB 세션, crypto.randomUUID 기반 토큰, httpOnly 쿠키, 동시 로그인 제어 대상                                       |
 | **PreviewToken**       | draft 미리보기 토큰 (Stage 7a), TTL 10분, admin→web 교환 후 web 도메인 쿠키로 치환                                      |
-| **SubpageFeedback**    | 공개 웹 익명 만족도 조사 (Stage 10), 네/아니오 + 긍정 이유 + 자유 텍스트, IP 해싱, 24h rate limit                        |
+| **SubpageFeedback**    | 공개 웹 익명 만족도 조사 (Stage 10), 네/아니오 + 긍정 이유 + 자유 텍스트, IP 해싱, 24h rate limit                       |
 
 ## 운영 정책
 
@@ -132,6 +133,17 @@ apps/{앱}/
 - 제목 기반 자동 생성 + 수동 수정 가능
 - `published` 상태에서 slug 변경 시 경고
 - Post slug는 게시판 단위 unique (`boardSlug + postSlug`)
+- Post 작성 UX: 신규 작성의 빈 slug는 제목 기반으로 자동 생성하고, 사용자가 slug를 직접 수정하면 자동 동기화를 중단한다. 편집 화면의 저장된 slug는 초기 렌더에서 덮어쓰지 않는다.
+
+### 게시글 중요 표시 정책
+
+- `Post.isImportant Boolean @default(false)` — 관리자에서 `중요 게시글` 체크박스로 관리
+- 관리자 게시글 목록: `isImportant DESC`, `updatedAt DESC`
+- 공개 게시판 목록: `isImportant DESC`, `publishedAt DESC`
+- 홈 `LATEST_POSTS`: 각 게시판 노출 limit 안에서 `isImportant DESC`, `publishedAt DESC`
+- 공개 검색 결과는 기존 점수 기반 정렬을 유지하고 중요글 우선 정렬을 적용하지 않음
+- 공개 목록형 게시판 LIST 스킨: 중요글은 번호 대신 `중요` 라벨 표시. 일반글 번호는 공개 일반글(`isImportant=false`) 총 개수 기준 역순 번호이며 중요글은 번호 계산에서 제외
+- GALLERY 스킨에는 번호/중요 라벨을 표시하지 않음
 
 ### 정렬 규칙
 
@@ -184,14 +196,14 @@ apps/{앱}/
 
 - **6개 SiteSettings 키 통합 관리** (`/settings/branding`):
 
-  | 키                       | 값            | 설명                                          |
-  | ------------------------ | ------------- | --------------------------------------------- |
-  | `SITE_NAME`              | string        | 헤더 폴백 텍스트, metadata title, 푸터 copyright |
-  | `SITE_DESCRIPTION`       | string        | metadata description (SEO)                    |
-  | `SITE_LOGO_MEDIA_ID`     | Media.id 문자열 | 헤더 로고                                      |
-  | `SITE_LOGO_ALT`          | string        | 로고 sr-only 텍스트 (비우면 SITE_NAME 폴백)     |
-  | `SITE_FAVICON_MEDIA_ID`  | Media.id 문자열 | 브라우저 탭 favicon                            |
-  | `SITE_OG_IMAGE_MEDIA_ID` | Media.id 문자열 | OG 카드 미리보기 (1200x630 권장)               |
+  | 키                       | 값              | 설명                                             |
+  | ------------------------ | --------------- | ------------------------------------------------ |
+  | `SITE_NAME`              | string          | 헤더 폴백 텍스트, metadata title, 푸터 copyright |
+  | `SITE_DESCRIPTION`       | string          | metadata description (SEO)                       |
+  | `SITE_LOGO_MEDIA_ID`     | Media.id 문자열 | 헤더 로고                                        |
+  | `SITE_LOGO_ALT`          | string          | 로고 sr-only 텍스트 (비우면 SITE_NAME 폴백)      |
+  | `SITE_FAVICON_MEDIA_ID`  | Media.id 문자열 | 브라우저 탭 favicon                              |
+  | `SITE_OG_IMAGE_MEDIA_ID` | Media.id 문자열 | OG 카드 미리보기 (1200x630 권장)                 |
 
 - **mediaId만 저장 + Media join**: URL은 별도 키로 저장하지 않고 GET/캐시에서 `Media.url` join. 단일 출처 + Media 삭제 시 자동 일관성. **외부 URL 직접 입력 차단** — 보안(SVG MIME 검증 불가) + SVG 차단 정책 일관성. 운영자는 업로드 또는 라이브러리에서만 선택
 - **SVG 차단 (모든 키 공통)**: `/api/media/branding-upload`에서 `image/svg+xml` 거부. 새 탭에서 SVG가 `<script>` 실행 가능한 XSS 위험 회피. 기존 `/api/media/upload`는 정책 변경 없음
@@ -305,30 +317,32 @@ apps/{앱}/
   - Session.sessionToken / PreviewToken.token은 글로벌 `@unique` 유지 (인증 인프라)
 - **Prisma extension**: `packages/db/src/demo/clientExtension.ts`가 `DEMO_MODE=true`일 때 자동 sessionId 주입 + cross-tenant 차단. 운영에서는 `$extends` 미적용, 0 cost
 - **AsyncLocalStorage**: `packages/db/src/demo/sessionContext.ts`가 한 요청에 sessionId를 묶어 모든 await 체인에 전파
-- **운영 영향 0**: 모든 운영 데이터는 sessionId='__PROD__'라 composite unique가 글로벌 unique와 동일하게 동작. extension 미적용 환경에서는 sentinel만 schema default로 채워짐
+- **운영 영향 0**: 모든 운영 데이터는 sessionId='**PROD**'라 composite unique가 글로벌 unique와 동일하게 동작. extension 미적용 환경에서는 sentinel만 schema default로 채워짐
 
 ### 새 코드 작성 시 따라야 할 관습 (master 브랜치 기본값)
 
-| 패턴 | Before (격리 도입 전) | After (현재) |
-|---|---|---|
+| 패턴                                                   | Before (격리 도입 전)                      | After (현재)                                                                                                                                                                                                                                     |
+| ------------------------------------------------------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | 단일 필드 unique lookup **(slug / key / contentHash)** | `prisma.x.findUnique({ where: { slug } })` | `prisma.x.findFirst({ where: { slug } })` — **slug/key/contentHash 기반은 `findFirst` 강제** (composite unique에 sessionId 포함). extension이 sessionId 자동 주입. EXCLUDED_MODELS(`Session`, `PreviewToken`) 또는 `id` 기반 `findUnique`는 예외 |
-| upsert | `prisma.x.upsert({ where: { key }, ... })` | `findFirst → update | create` 명시 분기 (extension은 upsert에서 cross-tenant 안전 처리 어려움 → 경고 출력) |
-| Raw SQL | `WHERE status = 'PUBLISHED'` | `WHERE status = 'PUBLISHED' AND "sessionId" = ${getCurrentSessionId()}` (`$queryRaw`는 extension hook 우회) |
-| 인증 부트스트랩 | `getSessionUser(token)` | `demo.runWithBypass(() => getSessionUser(token))` — Session+User+Role include 체인 안전망 |
-| Seed / 일회성 스크립트 | 일반 PrismaClient 사용 | composite where 명시 (`where: { sessionId_key: { sessionId: '__PROD__', key } }`) — seed는 운영 시드라 sentinel 직접 사용 |
-| `id` 기반 lookup | `findUnique({ where: { id } })` | 그대로 — extension이 result hook에서 sessionId 검증 (`select` 빠뜨려도 자동 주입 후 응답에서 strip) |
+| upsert                                                 | `prisma.x.upsert({ where: { key }, ... })` | `findFirst → update                                                                                                                                                                                                                              | create` 명시 분기 (extension은 upsert에서 cross-tenant 안전 처리 어려움 → 경고 출력) |
+| Raw SQL                                                | `WHERE status = 'PUBLISHED'`               | `WHERE status = 'PUBLISHED' AND "sessionId" = ${getCurrentSessionId()}` (`$queryRaw`는 extension hook 우회)                                                                                                                                      |
+| 인증 부트스트랩                                        | `getSessionUser(token)`                    | `demo.runWithBypass(() => getSessionUser(token))` — Session+User+Role include 체인 안전망                                                                                                                                                        |
+| Seed / 일회성 스크립트                                 | 일반 PrismaClient 사용                     | composite where 명시 (`where: { sessionId_key: { sessionId: '__PROD__', key } }`) — seed는 운영 시드라 sentinel 직접 사용                                                                                                                        |
+| `id` 기반 lookup                                       | `findUnique({ where: { id } })`            | 그대로 — extension이 result hook에서 sessionId 검증 (`select` 빠뜨려도 자동 주입 후 응답에서 strip)                                                                                                                                              |
 
 ### Critical files
 
 **격리 인프라 (PR3)**
+
 - `packages/db/prisma/schema.prisma` — 17 모델 sentinel + 8 composite unique
 - `packages/db/src/demo/sessionContext.ts` — AsyncLocalStorage + `enterWith` / `runWith` / `runWithBypass` / `getCurrentSessionId` / `isBypassed`
 - `packages/db/src/demo/clientExtension.ts` — `Prisma.defineExtension` + `processOperation` (테스트 가능 named export)
 - `packages/db/src/demo/index.ts` — `import { demo } from '@simple-cms/db'` 진입점
 - `packages/db/src/client.ts` — `DEMO_MODE === 'true'`일 때만 `$extends` 적용
-- `packages/db/prisma/backfill-session-id.ts` — NULL → '__PROD__' 멱등 백필 (PR3 schema 적용 시 1회 실행)
+- `packages/db/prisma/backfill-session-id.ts` — NULL → '**PROD**' 멱등 백필 (PR3 schema 적용 시 1회 실행)
 
 **자동 진입 흐름 (PR4)**
+
 - `packages/db/prisma/demo-seed.ts` — `__SEED__` row prefill (Role x2 / User `demo_admin` / SiteSettings x6 / NavigationMenu x2 / Board / Subpage `about` PUBLISHED / PageBlock RICH_TEXT / HomeSection x6 / NavigationMenuItem x2 = 22 row 멱등). `pnpm db:demo-seed`
 - `packages/db/src/demo/cloneSeedToSession.ts` — 14모델 in-memory remap 클론 (cuid2 사전 생성 + `createMany` bulk insert + NavigationMenuItem `parentId` 2-pass + 30s transaction). 호출자는 `demo.runWithBypass`로 감쌈
 - `packages/db/src/demo/SeedNotFoundError.ts` — `code: 'SEED_NOT_FOUND'` 에러 (bootstrap API 503 분기)
@@ -342,6 +356,7 @@ apps/{앱}/
 - `apps/admin/src/shared/lib/cookies.ts` + `packages/db/src/sessionHelper.ts` — `SESSION_MAX_AGE` / `SESSION_MAX_AGE_MS`를 DEMO_MODE에서 1시간으로 단축 (양쪽 동시 분기)
 
 **Storage 격리 + 자동 정리 + Banner UX (PR5)**
+
 - `apps/admin/src/shared/lib/storage/supabaseAdapter.ts` — `upload()`에 `getCurrentSessionId()` 기반 prefix(`<sessionId>/<category>/<filename>`, `__PROD__`/비DEMO는 prefix 없이 기존 동작) + `delete()`에 `__SEED__/` 가드 (visitor가 라이브러리에서 시드 이미지 [삭제] 시도해도 DB row만 삭제되고 Supabase 파일은 보존 — 모든 visitor 시드 공유 보호) + `cleanupSessionFolder(sessionId)` 메소드 (cron이 사용하는 2-pass list/remove)
 - `packages/db/src/demo/sessionContext.ts` — `RESERVED_SESSION_IDS` Set export (PROD_SENTINEL + SEED_SENTINEL 단일 출처)
 - `packages/db/src/demo/cleanupSessions.ts` — `cleanupExpiredSessions({ now?, cleanupStorage?, forceSessionIds? })`. `runWithBypass` 자동 wrap, 17 모델 deleteMany 자식→부모 순서, Storage cleanup callback 패턴(packages/db는 supabase 의존성 없음), 단계별 try/catch로 부분 실패 허용
@@ -357,6 +372,7 @@ apps/{앱}/
 - `apps/admin/src/shared/ui/PageToolbar.tsx` — `top-14` → `top-[calc(3.5rem+var(--demo-banner-h,0px))]` (sticky chain 자동 보정, 비DEMO 영향 0)
 
 **Snapshot Export/Import + CLI (PR6)**
+
 - `packages/db/src/demo/snapshot.types.ts` — Zod `snapshotPayloadSchema` v1 + 14모델 row 타입(SnapshotRoleRow, SnapshotMediaRow, ...). User.password 의도적 제외, Media.uploadedById null로 anonymize, Media에 `base64Data` 첨부
 - `packages/db/src/demo/snapshotWalker.ts` — `walkSnapshotForRemap(payload, idMap, kind)` in-place mediaId/boardId 재매핑. 위치별 field name 분기(HERO/RECOMMENDED `slides[].mediaId` / IMAGE `imageMediaId` / RICH_TEXT Tiptap recursion / SubpageVersion.snapshot meta+blocks / HomePopup CONTENT). Tiptap image 노드 `attrs.mediaId` 재귀
 - `packages/db/src/demo/exportMedia.ts` — sharp 1600px 리사이즈(`withoutEnlargement`) + JPEG quality 80 (image/jpeg|png|webp만 — SVG/GIF/PDF 원본 유지) + provider별 downloader factory(`createLocalMediaDownloader` / `createSupabaseMediaDownloader`) + `extractStorageKeyFromUrl`
@@ -373,6 +389,7 @@ apps/{앱}/
 - `packages/db/src/demo/snapshotWalker.test.ts` — 14건 단위 테스트 (HERO/RECOMMENDED/LATEST_POSTS/IMAGE/RICH_TEXT/HomePopup/SubpageVersion/Post/edge case)
 
 **Storybook 시연 동봉 (build:demo)**
+
 - `apps/web/scripts/bundle-storybooks.mjs` — 시연 web 빌드 전에 admin/web Storybook 2개를 `apps/web/.tmp-storybook/`에 빌드 후 `apps/web/public/_cms/storybook/{admin,web}/`로 rename 이동. **별도 Vercel 프로젝트 없이** 시연 web origin 단일 도메인에서 `/_cms/storybook/{admin,web}/` 경로로 정적 서빙
 - `apps/web/package.json` — `"build:demo": "pnpm bundle-storybooks && next build"`. Vercel 시연 web 프로젝트 Build Command가 이 명령. 운영 self-host는 `build` 그대로 (Storybook 미동봉)
 - `apps/web/vercel.json` — `X-Robots-Tag: noindex, nofollow, noarchive` 헤더가 web origin 전체에 적용되어 동봉된 Storybook도 자동 차단
@@ -387,9 +404,10 @@ apps/{앱}/
 - 검색엔진 차단 + Supabase 2026 변경(대시보드 Connect 패널 / API key `sb_secret_*` 마이그레이션 / DIRECT_URL Session pooler 권장 / Hobby cron 100개 한도) → `docs/react-cms-시연모드-배포-가이드.md` 1-4절·11장 단일 출처
 
 **실전 Vercel 배포 함정 (PR4-7 후속, 시연 가이드 12장 단일 출처)**
+
 - **`packages/db/package.json` postinstall** — `src/generated/prisma/`는 `.gitignore` 대상이라 Git에 없음. `postinstall: prisma generate` 1줄로 Vercel `pnpm install --frozen-lockfile` 시 자동 생성. 미설치 시 admin/web 양쪽 빌드가 `Module not found: Can't resolve './generated/prisma/client'`로 실패
 - **Vercel monorepo 프로젝트 설정 정합성** — Root Directory · Build Command · Install Command 세 항목이 한 묶음. Root Directory만 수정하면 나머지가 자동 감지로 reset되어 `turbo run build` (env sandbox로 DATABASE_URL 차단) + Storybook 미동봉 빌드로 깨짐. **Override 토글 켠 후 Build Command(`cd ../.. && pnpm --filter @simple-cms/web build:demo`) + Install Command(`cd ../.. && pnpm install --frozen-lockfile`) 명시** 필수. 시연 가이드 2-1·2-3절 단일 출처
-- **`apps/web/next.config.ts` rewrites root path 명시** — `/_cms/admin/:path*` 단일 패턴만 두면 visitor가 `/_cms/admin` (단독 path)로 접근 시 path*=빈 매칭이 destination을 trailing slash로 만들고 admin Vercel CDN의 자동 trailing slash 정규화(`/_cms/admin/` → `/_cms/admin`)와 충돌해 자기 자신 308 무한 redirect 발생. **`{ source: '/_cms/admin', destination: ${adminRewriteUrl}/_cms/admin/dashboard }` 룰을 첫 번째에 명시** 필수
+- **`apps/web/next.config.ts` rewrites root path 명시** — `/_cms/admin/:path*` 단일 패턴만 두면 visitor가 `/_cms/admin` (단독 path)로 접근 시 path\*=빈 매칭이 destination을 trailing slash로 만들고 admin Vercel CDN의 자동 trailing slash 정규화(`/_cms/admin/` → `/_cms/admin`)와 충돌해 자기 자신 308 무한 redirect 발생. **`{ source: '/_cms/admin', destination: ${adminRewriteUrl}/_cms/admin/dashboard }` 룰을 첫 번째에 명시** 필수
 - **admin splash fetch endpoint basePath 명시** — `apps/admin/app/demo-bootstrap/DemoBootstrapClient.tsx`의 `BOOTSTRAP_ENDPOINT`는 반드시 `/_cms/admin/api/demo/bootstrap` (basePath 포함). Next.js client-side `fetch`는 basePath를 자동 prepend하지 않음. 모든 admin client fetch도 동일 (DemoBanner의 reset endpoint 등). web splash는 같은 절대 path를 직접 명시
 - **Vercel SSR `isomorphic-dompurify`/`jsdom` ESM/CJS interop 회귀 방어** — `apps/web/src/shared/lib/renderContent.ts`는 보안상 SSR HTML sanitize에 `isomorphic-dompurify`를 유지한다. 단, `isomorphic-dompurify@3.x` → `jsdom@29` → `html-encoding-sniffer@6` → `@exodus/bytes@1.15.0` 경로는 Vercel serverless 런타임에서 CommonJS `require()`가 ESM 파일(`@exodus/bytes/encoding-lite.js`)을 로드하려다 `ERR_REQUIRE_ESM`을 throw해 메인 `/` 500을 만든다. **해결책은 `apps/web/package.json`에서 `isomorphic-dompurify`를 `2.22.0`으로 고정**해 `jsdom@26.1.0` → `html-encoding-sniffer@4.0.0` → `whatwg-encoding` 경로를 사용하게 하는 것. `serverExternalPackages`/Node 24 상향만으로는 이 런타임 충돌이 사라지지 않았다. 로컬 `next build`가 통과해도 production runtime에서만 드러날 수 있으므로 Vercel preview/production 접속 검증 필수.
 - **Supabase URL 디버깅 함정 3종** — DB push 시점 흔한 오류
@@ -408,17 +426,18 @@ apps/{앱}/
 
 ### 진행 단계 (시연 모드 구현 로드맵)
 
-| PR | 단계 | 내용 | 상태 |
-|---|---|---|---|
-| 1 | Step 1 | 단일 도메인 rewrites + admin basePath | **완료** (ede5365) |
-| 2 | Step 2 | 17개 모델 sessionId 컬럼 + Prisma directUrl | **완료** (1c9eab7) |
-| 3 | Step 3 | Prisma extension + AsyncLocalStorage + composite unique 전환 + raw SQL 격리 | **완료** (59c1adc) |
-| 4 | Step 4 + 5 + 7(부분) | demo-seed.ts + cloneSeedToSession + bootstrap API + admin/web layout gate + login/register 우회 + cookie/Session 1h TTL | **완료** (b7afa51 / b56cc0a / 30901d6) |
-| 5 | Step 6 + 7(cleanup) + 8 | supabaseAdapter sessionId prefix + `__SEED__` delete 가드 + `cleanupExpiredSessions` 헬퍼 + `/api/demo/cleanup`(Vercel Hobby cron `0 3 * * *`) + `/api/demo/reset` + lazy cleanup 5%(`after()`) + DemoBanner(admin AlertDialog / web native confirm) + sticky chain(`--demo-banner-h` CSS 변수) | **완료** |
-| 6 | Step 9 + 11 + CLI | snapshot export/import 코어 + walker(mediaId/boardId 위치별 분기 — HERO/RECOMMENDED `slides[].mediaId` / IMAGE `imageMediaId` / RICH_TEXT Tiptap recursion / SubpageVersion.snapshot) + sharp 1600px 리사이즈 + `__SEED__` 단일 출처 무결성(`cleanupSeedFolder()` + `resetSeedData()`) + cuid 재생성 + `uploadedById = null` anonymization + Phase 1(트랜잭션 밖 upload)/Phase 2($transaction) 분리 + `/api/demo/snapshot/{export,import}` + CLI `pnpm demo:export` / `pnpm demo:import` + `demo-snapshot` 권한 리소스 신규 | **완료** |
-| 7 | Step 10 | snapshot Admin UI (`/settings/demo-snapshot` Server Page + 14모델 row count + Media size StatCard + DemoSnapshotForm Client + [내보내기] blob download + [Supabase 즉시 적용] file input + AlertDialog confirm + SettingsNav 7번째 탭 권한 게이팅) | **완료** |
+| PR  | 단계                    | 내용                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | 상태                                   |
+| --- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 1   | Step 1                  | 단일 도메인 rewrites + admin basePath                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | **완료** (ede5365)                     |
+| 2   | Step 2                  | 17개 모델 sessionId 컬럼 + Prisma directUrl                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | **완료** (1c9eab7)                     |
+| 3   | Step 3                  | Prisma extension + AsyncLocalStorage + composite unique 전환 + raw SQL 격리                                                                                                                                                                                                                                                                                                                                                                                                                                                 | **완료** (59c1adc)                     |
+| 4   | Step 4 + 5 + 7(부분)    | demo-seed.ts + cloneSeedToSession + bootstrap API + admin/web layout gate + login/register 우회 + cookie/Session 1h TTL                                                                                                                                                                                                                                                                                                                                                                                                     | **완료** (b7afa51 / b56cc0a / 30901d6) |
+| 5   | Step 6 + 7(cleanup) + 8 | supabaseAdapter sessionId prefix + `__SEED__` delete 가드 + `cleanupExpiredSessions` 헬퍼 + `/api/demo/cleanup`(Vercel Hobby cron `0 3 * * *`) + `/api/demo/reset` + lazy cleanup 5%(`after()`) + DemoBanner(admin AlertDialog / web native confirm) + sticky chain(`--demo-banner-h` CSS 변수)                                                                                                                                                                                                                             | **완료**                               |
+| 6   | Step 9 + 11 + CLI       | snapshot export/import 코어 + walker(mediaId/boardId 위치별 분기 — HERO/RECOMMENDED `slides[].mediaId` / IMAGE `imageMediaId` / RICH_TEXT Tiptap recursion / SubpageVersion.snapshot) + sharp 1600px 리사이즈 + `__SEED__` 단일 출처 무결성(`cleanupSeedFolder()` + `resetSeedData()`) + cuid 재생성 + `uploadedById = null` anonymization + Phase 1(트랜잭션 밖 upload)/Phase 2($transaction) 분리 + `/api/demo/snapshot/{export,import}` + CLI `pnpm demo:export` / `pnpm demo:import` + `demo-snapshot` 권한 리소스 신규 | **완료**                               |
+| 7   | Step 10                 | snapshot Admin UI (`/settings/demo-snapshot` Server Page + 14모델 row count + Media size StatCard + DemoSnapshotForm Client + [내보내기] blob download + [Supabase 즉시 적용] file input + AlertDialog confirm + SettingsNav 7번째 탭 권한 게이팅)                                                                                                                                                                                                                                                                          | **완료**                               |
 
 **PR4 visitor 진입 흐름** (시크릿 창 첫 방문):
+
 1. `http://demo.example.com/` 또는 `/_cms/admin/dashboard` 접근 → cookie `session-token` 없음
 2. layout gate(ensureDemoSession)가 `/demo-bootstrap?next=...`로 redirect — admin basePath 자동 prepend 때문에 admin/web 양쪽에 동일 splash 라우트 존재
 3. splash가 `POST /_cms/admin/api/demo/bootstrap` 호출 → 새 cuid sessionId 발급 → `cloneSeedToSession`으로 14모델 row를 `__SEED__`에서 visitor sessionId로 클론 → demo_admin User로 Session 생성 → `Set-Cookie: session-token=...; HttpOnly; Max-Age=3600`
@@ -526,118 +545,119 @@ apps/{앱}/
 
 ### Stage 6+ — 확장 / 인프라 / SEO
 
-| 단계 | 내용                                                                | 확인 가능한 것                                                                              | 상태     |
-| ---- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------- |
-| 6    | 서브페이지 블록 + **Admin UI + Web 렌더링**                         | 블록 추가/순서 변경 → 공개 웹 확인                                                          | **완료** |
-| 7a   | Draft 미리보기 (preview 토큰 + web 쿠키)                            | admin → web preview URL 새 창 렌더                                                          | **완료** |
-| 7b   | HTML 블록 = HTML + 페이지 스코프 CSS (Monaco Tabs)                  | 한 블록에서 HTML+CSS, 페이지 스코프 적용                                                    | **완료** |
-| 7c   | 운영 UX (Dirty 가드, 사이트 보기, 빠른 상태 토글, 벌크, cmd+k) [[상세]](docs/stages/stage-7c.md) | 이탈 경고 + 상태 토글 + 일괄 작업 + 빠른 전환 | **완료** |
-| 7d   | 공개 웹 좌·우 사이드바 + 공공누리 마크 + 입력 Dialog 외부 클릭 차단 [[상세]](docs/stages/stage-7d.md) | HEADER 기반 좌측 트리 + SIDEBAR 슬롯 우측 InPageNavigation + KOGL 마크 + Dialog 오클릭 방지 | **완료** |
-| 7e   | 공개 웹 KRDS Tailwind 도입 + Hero utility 마이그레이션 + 캐러셀 width 회귀 방어 [[상세]](docs/stages/stage-7e.md) | KRDS utility class(`bg-primary-50`/`text-display-s`/`tablet:`/`desktop:`) 사용 + Hero/Recommended 모든 viewport 정상 | **완료** |
-| 7f   | Storybook + Vitest 2-track 테스트 인프라 shell (admin/web 동시) [[상세]](docs/stages/stage-7f.md) | 샘플 story 3개(Button/LoginForm/Carousel) smoke, 2-track Vitest(unit + storybook) 기반, Provider 2계층 decorator | **완료** |
-| 7g   | Storybook story 확장 (admin + web + KRDS showcase 19개 smoke) [[상세]](docs/stages/stage-7g.md) | admin 8개(CreateRoleDialog/SubpageForm/PostForm/BlockEditDialog×4/ConfirmLeaveDialog/BulkActionBar/ImageUrlInput/AdminHeader) + web 4개(SubpageBlockRenderer/HomePopupModal/RightSidebar/KoglFooter) + KRDS showcase 7개. CreateRoleDialog로 authenticated decorator 실행 검증 | **완료** |
-| 7h   | play function 5건 (MSW 무의존 범위) + hook 검증 probe 패턴 정립 [[상세]](docs/stages/stage-7h.md) | LoginForm validation / PermissionProvider 권한 토글 / DirtyGuardProbe / SubpageForm CCL+AI / BlockEditDialog IFRAME rejection. MSW 통합은 msw-storybook-addon + addon-vitest browser mode 호환성 이슈로 이관 | **완료** |
-| 7i   | Swiper 22M 회귀 자동 감지 + LinkTargetInput 승격·적용 + 커스텀 래퍼 showcase 5개 [[상세]](docs/stages/stage-7i.md) | Carousel container resize play로 ResizeObserver 경로 강제 트리거 + slide width assert / LinkTargetInput을 entities/link-target로 승격하여 home-management 5개 fields(Cta+Hero+Recommended+Shortcut+Notice) 적용 / Admin/Shared 4개 + Admin/Entities/LinkTarget 1개 showcase | **완료** |
-| 7j   | CI matrix + turbo `test.dependsOn` 정리 + MSW 대신 fetch stub decorator + play function 2건 + addon-vitest 30초 timeout 탐사 [[상세]](docs/stages/stage-7j.md) | GitHub Actions admin/web × {lint, typecheck, test} 6 job 병렬 / `test.dependsOn: ['^build']` 제거 / `msw-storybook-addon` v2.1 부재 primary source 확인 후 `window.fetch` stub decorator 채택 / CreateRoleDialog Submit Success·Conflict + SectionReorderProbe Reorder500 / `optimizeDeps.include` 시도→효과 없어 revert + findings 기록 | **완료** |
-| 7k-1 | 청소 — LinkTarget API 경로 rename + `IFRAME_ALLOWED_HOSTS` 공유 모듈 추출 [[상세]](docs/stages/stage-7k-1.md) | `/api/home-popups/references` → `/api/link-target/references` (7i 이연 처리) / `@simple-cms/types`의 `block.types.ts`에 `IFRAME_ALLOWED_HOSTS` + `isIframeHostAllowed` 단일 출처 통합 (admin/web 3곳 복제 해소, Stage 7b부터 이연) / `normalizeIframeEmbedUrl`은 admin 전용 유지 | **완료** |
-| 7k-3 | addon-vitest 30s cold start 탐사 (measure-first) [[상세]](docs/stages/stage-7k-3.md) | primary source 확인(`storybookScript`는 watch 전용, `disableAddonDocs` 기본 true) + `browser.isolate: false` 시도 결과 10초 기준 미달로 revert. Stage 8+ 이연 | **완료 (findings only)** |
-| 7l   | 사이트 브랜딩 + SEO 메타데이터 (로고/favicon/OG/사이트명·설명) [[상세]](docs/stages/stage-7l.md) | admin `/settings/branding` 5번째 탭에서 6키 통합 관리 + web 헤더 동적 로고 + `generateMetadata`로 title/description/icons/openGraph 자동 반영 | **완료** |
-| 7m   | 서브페이지 버전 관리 (이력 / 롤백 / 작성자 필터 · admin 미리보기) [[상세]](docs/stages/stage-7m.md) | `SubpageVersion` 단일 JSON 스냅샷 + 명시적 [버전 저장] + DRAFT→PUBLISHED AUTO_PUBLISH + 소프트 롤백 (PRE_ROLLBACK 자동 백업) + 깃 스타일 메모 + 낙관 동시성(`Subpage.revision`) + 보존 30개 lazy cleanup | **완료** |
-| 8    | Docker + CI/CD + 문서화 [[상세]](docs/stages/stage-8.md) | 8a Docker compose 3-컨테이너 + admin/web Dockerfile multi-stage(image content 100MB) + standalone outputFileTracingRoot / 8b CI matrix에 build task 추가(admin/web × 4 = 8 jobs) + packages typecheck 신설(latent 타입 버그 6건 노출/수정) / 8c Playwright nightly E2E + demo keepalive(6h cron + issue 자동 생성) + 패스워드 fixture 정합화 / 8d 운영 self-host 가이드 10장 + README + admin/web AGENTS.md Docker 섹션 | **완료** |
-| 9    | SEO 기반 구축 (sitemap + robots + 페이지별 SEO + Schema.org JSON-LD) [[상세]](docs/stages/stage-9.md) | `/sitemap.xml`·`/robots.txt` 자동 생성 + Post에 seoTitle/seoDescription + Article/BreadcrumbList/Organization/WebSite JSON-LD + admin `/settings/seo` 탭에서 robots 추가 Disallow 관리 | **완료** |
-| 10   | 사용자 피드백 (서브페이지 만족도 조사 + admin 통계/차트) [[상세]](docs/stages/stage-10.md) | KRDS 가이드 + Figma 시안 기반 네/아니오 + 긍정 이유 3개 + 자유 텍스트 / SubpageForm `feedbackEnabled` 토글(opt-in) / `/api/feedback` 익명 수집(IP 해싱 + 24h rate limit + preview 차단) / admin `/subpage-feedback`에서 recharts 통계 + 목록 + 삭제 / SubpageVersion 스냅샷에 `feedbackEnabled` 포함 | **완료** |
+| 단계 | 내용                                                                                                                                                           | 확인 가능한 것                                                                                                                                                                                                                                                                                                                                                                                                          | 상태                     |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| 6    | 서브페이지 블록 + **Admin UI + Web 렌더링**                                                                                                                    | 블록 추가/순서 변경 → 공개 웹 확인                                                                                                                                                                                                                                                                                                                                                                                      | **완료**                 |
+| 7a   | Draft 미리보기 (preview 토큰 + web 쿠키)                                                                                                                       | admin → web preview URL 새 창 렌더                                                                                                                                                                                                                                                                                                                                                                                      | **완료**                 |
+| 7b   | HTML 블록 = HTML + 페이지 스코프 CSS (Monaco Tabs)                                                                                                             | 한 블록에서 HTML+CSS, 페이지 스코프 적용                                                                                                                                                                                                                                                                                                                                                                                | **완료**                 |
+| 7c   | 운영 UX (Dirty 가드, 사이트 보기, 빠른 상태 토글, 벌크, cmd+k) [[상세]](docs/stages/stage-7c.md)                                                               | 이탈 경고 + 상태 토글 + 일괄 작업 + 빠른 전환                                                                                                                                                                                                                                                                                                                                                                           | **완료**                 |
+| 7d   | 공개 웹 좌·우 사이드바 + 공공누리 마크 + 입력 Dialog 외부 클릭 차단 [[상세]](docs/stages/stage-7d.md)                                                          | HEADER 기반 좌측 트리 + SIDEBAR 슬롯 우측 InPageNavigation + KOGL 마크 + Dialog 오클릭 방지                                                                                                                                                                                                                                                                                                                             | **완료**                 |
+| 7e   | 공개 웹 KRDS Tailwind 도입 + Hero utility 마이그레이션 + 캐러셀 width 회귀 방어 [[상세]](docs/stages/stage-7e.md)                                              | KRDS utility class(`bg-primary-50`/`text-display-s`/`tablet:`/`desktop:`) 사용 + Hero/Recommended 모든 viewport 정상                                                                                                                                                                                                                                                                                                    | **완료**                 |
+| 7f   | Storybook + Vitest 2-track 테스트 인프라 shell (admin/web 동시) [[상세]](docs/stages/stage-7f.md)                                                              | 샘플 story 3개(Button/LoginForm/Carousel) smoke, 2-track Vitest(unit + storybook) 기반, Provider 2계층 decorator                                                                                                                                                                                                                                                                                                        | **완료**                 |
+| 7g   | Storybook story 확장 (admin + web + KRDS showcase 19개 smoke) [[상세]](docs/stages/stage-7g.md)                                                                | admin 8개(CreateRoleDialog/SubpageForm/PostForm/BlockEditDialog×4/ConfirmLeaveDialog/BulkActionBar/ImageUrlInput/AdminHeader) + web 4개(SubpageBlockRenderer/HomePopupModal/RightSidebar/KoglFooter) + KRDS showcase 7개. CreateRoleDialog로 authenticated decorator 실행 검증                                                                                                                                          | **완료**                 |
+| 7h   | play function 5건 (MSW 무의존 범위) + hook 검증 probe 패턴 정립 [[상세]](docs/stages/stage-7h.md)                                                              | LoginForm validation / PermissionProvider 권한 토글 / DirtyGuardProbe / SubpageForm CCL+AI / BlockEditDialog IFRAME rejection. MSW 통합은 msw-storybook-addon + addon-vitest browser mode 호환성 이슈로 이관                                                                                                                                                                                                            | **완료**                 |
+| 7i   | Swiper 22M 회귀 자동 감지 + LinkTargetInput 승격·적용 + 커스텀 래퍼 showcase 5개 [[상세]](docs/stages/stage-7i.md)                                             | Carousel container resize play로 ResizeObserver 경로 강제 트리거 + slide width assert / LinkTargetInput을 entities/link-target로 승격하여 home-management 5개 fields(Cta+Hero+Recommended+Shortcut+Notice) 적용 / Admin/Shared 4개 + Admin/Entities/LinkTarget 1개 showcase                                                                                                                                             | **완료**                 |
+| 7j   | CI matrix + turbo `test.dependsOn` 정리 + MSW 대신 fetch stub decorator + play function 2건 + addon-vitest 30초 timeout 탐사 [[상세]](docs/stages/stage-7j.md) | GitHub Actions admin/web × {lint, typecheck, test} 6 job 병렬 / `test.dependsOn: ['^build']` 제거 / `msw-storybook-addon` v2.1 부재 primary source 확인 후 `window.fetch` stub decorator 채택 / CreateRoleDialog Submit Success·Conflict + SectionReorderProbe Reorder500 / `optimizeDeps.include` 시도→효과 없어 revert + findings 기록                                                                                | **완료**                 |
+| 7k-1 | 청소 — LinkTarget API 경로 rename + `IFRAME_ALLOWED_HOSTS` 공유 모듈 추출 [[상세]](docs/stages/stage-7k-1.md)                                                  | `/api/home-popups/references` → `/api/link-target/references` (7i 이연 처리) / `@simple-cms/types`의 `block.types.ts`에 `IFRAME_ALLOWED_HOSTS` + `isIframeHostAllowed` 단일 출처 통합 (admin/web 3곳 복제 해소, Stage 7b부터 이연) / `normalizeIframeEmbedUrl`은 admin 전용 유지                                                                                                                                        | **완료**                 |
+| 7k-3 | addon-vitest 30s cold start 탐사 (measure-first) [[상세]](docs/stages/stage-7k-3.md)                                                                           | primary source 확인(`storybookScript`는 watch 전용, `disableAddonDocs` 기본 true) + `browser.isolate: false` 시도 결과 10초 기준 미달로 revert. Stage 8+ 이연                                                                                                                                                                                                                                                           | **완료 (findings only)** |
+| 7l   | 사이트 브랜딩 + SEO 메타데이터 (로고/favicon/OG/사이트명·설명) [[상세]](docs/stages/stage-7l.md)                                                               | admin `/settings/branding` 5번째 탭에서 6키 통합 관리 + web 헤더 동적 로고 + `generateMetadata`로 title/description/icons/openGraph 자동 반영                                                                                                                                                                                                                                                                           | **완료**                 |
+| 7m   | 서브페이지 버전 관리 (이력 / 롤백 / 작성자 필터 · admin 미리보기) [[상세]](docs/stages/stage-7m.md)                                                            | `SubpageVersion` 단일 JSON 스냅샷 + 명시적 [버전 저장] + DRAFT→PUBLISHED AUTO_PUBLISH + 소프트 롤백 (PRE_ROLLBACK 자동 백업) + 깃 스타일 메모 + 낙관 동시성(`Subpage.revision`) + 보존 30개 lazy cleanup                                                                                                                                                                                                                | **완료**                 |
+| 8    | Docker + CI/CD + 문서화 [[상세]](docs/stages/stage-8.md)                                                                                                       | 8a Docker compose 3-컨테이너 + admin/web Dockerfile multi-stage(image content 100MB) + standalone outputFileTracingRoot / 8b CI matrix에 build task 추가(admin/web × 4 = 8 jobs) + packages typecheck 신설(latent 타입 버그 6건 노출/수정) / 8c Playwright nightly E2E + demo keepalive(6h cron + issue 자동 생성) + 패스워드 fixture 정합화 / 8d 운영 self-host 가이드 10장 + README + admin/web AGENTS.md Docker 섹션 | **완료**                 |
+| 9    | SEO 기반 구축 (sitemap + robots + 페이지별 SEO + Schema.org JSON-LD) [[상세]](docs/stages/stage-9.md)                                                          | `/sitemap.xml`·`/robots.txt` 자동 생성 + Post에 seoTitle/seoDescription + Article/BreadcrumbList/Organization/WebSite JSON-LD + admin `/settings/seo` 탭에서 robots 추가 Disallow 관리                                                                                                                                                                                                                                  | **완료**                 |
+| 10   | 사용자 피드백 (서브페이지 만족도 조사 + admin 통계/차트) [[상세]](docs/stages/stage-10.md)                                                                     | KRDS 가이드 + Figma 시안 기반 네/아니오 + 긍정 이유 3개 + 자유 텍스트 / SubpageForm `feedbackEnabled` 토글(opt-in) / `/api/feedback` 익명 수집(IP 해싱 + 24h rate limit + preview 차단) / admin `/subpage-feedback`에서 recharts 통계 + 목록 + 삭제 / SubpageVersion 스냅샷에 `feedbackEnabled` 포함                                                                                                                    | **완료**                 |
 
 ### Stage 11 — 코드 품질 · 관측성 강화
 
-| 단계 | 내용 | 확인 가능한 것 | 상태 |
-| ---- | ---- | -------------- | ---- |
-| 11a | 타입 안전성 강화 [[상세]](docs/stages/stage-11a.md) | 핵심 파일 as 단언 전수 점검 — 모두 안전한 경계 단언 확인. `preprocessTiptapForAdmin` 반환 타입 구체화로 호출부 cast 2건 제거 | **완료** |
-| 11b | N+1 쿼리 점검 [[상세]](docs/stages/stage-11b.md) | 정적 분석 결과 루프 내 개별 쿼리 0건. Promise.all + $transaction 패턴 정착. bulk-delete만 의도적 per-item (zod max(200)) | **완료** |
-| 11c | 에러 바운더리 커버리지 보강 (admin `error.tsx`/`global-error.tsx` 신규 + admin ErrorBoundary 클래스 + web ErrorBoundary 래핑) [[상세]](docs/stages/stage-11c.md) | admin 에러 페이지 + BlockEditDialog/HomeSections/HomePopupModal/SubpageFeedback fallback 격리 | **완료** |
-| 11d | web 접근성 정밀 점검 (HeaderBranding aria-label + SVG aria-hidden + axe-core WCAG AA E2E) [[상세]](docs/stages/stage-11d.md) | 로고 Link aria-label 명시 + 검색 SVG aria-hidden + `@axe-core/playwright` E2E 자동 검사 2건 추가 | **완료** |
-| 11e | E2E 테스트 (Playwright) [[상세]](docs/stages/stage-11e.md) | playwright.config.ts + e2e/ 골든 플로우 5단계 + admin 인증 3건 + web 탐색 3건. CI 통합은 Stage 8(Docker) 이후 | **완료** |
-| 11f | `/check-fsd` 스킬 CI 통합 [[상세]](docs/stages/stage-11f.md) | PR마다 FSD 의존성 위반 자동 감지 + 차단. `@fsd-allow` 블록 주석으로 기존 기술 부채 문서화 | **완료** |
+| 단계 | 내용                                                                                                                                                             | 확인 가능한 것                                                                                                               | 상태     |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------- |
+| 11a  | 타입 안전성 강화 [[상세]](docs/stages/stage-11a.md)                                                                                                              | 핵심 파일 as 단언 전수 점검 — 모두 안전한 경계 단언 확인. `preprocessTiptapForAdmin` 반환 타입 구체화로 호출부 cast 2건 제거 | **완료** |
+| 11b  | N+1 쿼리 점검 [[상세]](docs/stages/stage-11b.md)                                                                                                                 | 정적 분석 결과 루프 내 개별 쿼리 0건. Promise.all + $transaction 패턴 정착. bulk-delete만 의도적 per-item (zod max(200))     | **완료** |
+| 11c  | 에러 바운더리 커버리지 보강 (admin `error.tsx`/`global-error.tsx` 신규 + admin ErrorBoundary 클래스 + web ErrorBoundary 래핑) [[상세]](docs/stages/stage-11c.md) | admin 에러 페이지 + BlockEditDialog/HomeSections/HomePopupModal/SubpageFeedback fallback 격리                                | **완료** |
+| 11d  | web 접근성 정밀 점검 (HeaderBranding aria-label + SVG aria-hidden + axe-core WCAG AA E2E) [[상세]](docs/stages/stage-11d.md)                                     | 로고 Link aria-label 명시 + 검색 SVG aria-hidden + `@axe-core/playwright` E2E 자동 검사 2건 추가                             | **완료** |
+| 11e  | E2E 테스트 (Playwright) [[상세]](docs/stages/stage-11e.md)                                                                                                       | playwright.config.ts + e2e/ 골든 플로우 5단계 + admin 인증 3건 + web 탐색 3건. CI 통합은 Stage 8(Docker) 이후                | **완료** |
+| 11f  | `/check-fsd` 스킬 CI 통합 [[상세]](docs/stages/stage-11f.md)                                                                                                     | PR마다 FSD 의존성 위반 자동 감지 + 차단. `@fsd-allow` 블록 주석으로 기존 기술 부채 문서화                                    | **완료** |
 
 ### Stage 12 — 테스트 커버리지 보강 (12a~12j)
 
-| 단계 | 내용 | 확인 가능한 것 | 상태 |
-| ---- | ---- | -------------- | ---- |
-| 12a | 보안 순수 로직 unit (sanitizeCustomHtml, hashIp/extractIp, isIframeHostAllowed, normalizeIframeEmbedUrl, scopeCustomCss, validateFileUpload) [[상세]](docs/stages/stage-12.md) | 6 파일 ~40 it, XSS·PII·iframe·업로드 우회 회귀 방어 | **완료** |
-| 12b | RBAC + 인증 분기 unit + E2E (hasPermission, requirePermission, getVisibleMenuItems / auth 4분기) [[상세]](docs/stages/stage-12.md) | unit 3 파일 + e2e auth.spec 보강 | **완료** |
-| 12c | 데이터 무결성 + kstDate UTC 절단 버그 fix (findMediaReferences, errorLog fingerprint, kstDate) [[상세]](docs/stages/stage-12.md) | unit 3 파일 + fix(kstDate): `Intl.DateTimeFormat` 교체 | **완료** |
-| 12d | 콘텐츠 무결성 unit (recalculateSubpageContent, subpageVersion diff·dangling·retention) [[상세]](docs/stages/stage-12.md) | unit 3~5 파일 | **완료** |
-| 12e | Block UI play (BlockEditDialog 4분기 + dnd 키보드 a11y) [[상세]](docs/stages/stage-12.md) | play 8~10건 | **완료** |
-| 12f | 메인+네비+일괄작업 play (SectionEditDialog 5분기, BulkDialog, MenuItemTree dnd-kit) [[상세]](docs/stages/stage-12.md) | play 12~15건 | **완료** |
-| 12g | RBAC UI play (UserActionButtons, PermissionMatrix, AppSidebar 권한 토글) [[상세]](docs/stages/stage-12.md) | play 8~10건 | **완료** |
-| 12h | 미디어+브랜딩+Settings play + branding MIME E2E (SVG 차단·PNG 허용) [[상세]](docs/stages/stage-12.md) | play 10~14건 + e2e 2건 | **완료** |
-| 12i | P1 일괄 unit+play (extractTextFromTiptap, generateSlug, searchContent, getAuditContext / admin·web 다수 stories) [[상세]](docs/stages/stage-12.md) | unit 4 파일 + play 8~12건 | **완료** |
-| 12j | CI E2E job + RBAC 매트릭스 E2E (Owner/Editor/Viewer × 사이드바·API 403) [[상세]](docs/stages/stage-12.md) | workflow_dispatch E2E job / rbac-matrix.spec 5케이스 / coverage threshold 베이스라인 측정 후 결정 | **완료** |
+| 단계 | 내용                                                                                                                                                                           | 확인 가능한 것                                                                                    | 상태     |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- | -------- |
+| 12a  | 보안 순수 로직 unit (sanitizeCustomHtml, hashIp/extractIp, isIframeHostAllowed, normalizeIframeEmbedUrl, scopeCustomCss, validateFileUpload) [[상세]](docs/stages/stage-12.md) | 6 파일 ~40 it, XSS·PII·iframe·업로드 우회 회귀 방어                                               | **완료** |
+| 12b  | RBAC + 인증 분기 unit + E2E (hasPermission, requirePermission, getVisibleMenuItems / auth 4분기) [[상세]](docs/stages/stage-12.md)                                             | unit 3 파일 + e2e auth.spec 보강                                                                  | **완료** |
+| 12c  | 데이터 무결성 + kstDate UTC 절단 버그 fix (findMediaReferences, errorLog fingerprint, kstDate) [[상세]](docs/stages/stage-12.md)                                               | unit 3 파일 + fix(kstDate): `Intl.DateTimeFormat` 교체                                            | **완료** |
+| 12d  | 콘텐츠 무결성 unit (recalculateSubpageContent, subpageVersion diff·dangling·retention) [[상세]](docs/stages/stage-12.md)                                                       | unit 3~5 파일                                                                                     | **완료** |
+| 12e  | Block UI play (BlockEditDialog 4분기 + dnd 키보드 a11y) [[상세]](docs/stages/stage-12.md)                                                                                      | play 8~10건                                                                                       | **완료** |
+| 12f  | 메인+네비+일괄작업 play (SectionEditDialog 5분기, BulkDialog, MenuItemTree dnd-kit) [[상세]](docs/stages/stage-12.md)                                                          | play 12~15건                                                                                      | **완료** |
+| 12g  | RBAC UI play (UserActionButtons, PermissionMatrix, AppSidebar 권한 토글) [[상세]](docs/stages/stage-12.md)                                                                     | play 8~10건                                                                                       | **완료** |
+| 12h  | 미디어+브랜딩+Settings play + branding MIME E2E (SVG 차단·PNG 허용) [[상세]](docs/stages/stage-12.md)                                                                          | play 10~14건 + e2e 2건                                                                            | **완료** |
+| 12i  | P1 일괄 unit+play (extractTextFromTiptap, generateSlug, searchContent, getAuditContext / admin·web 다수 stories) [[상세]](docs/stages/stage-12.md)                             | unit 4 파일 + play 8~12건                                                                         | **완료** |
+| 12j  | CI E2E job + RBAC 매트릭스 E2E (Owner/Editor/Viewer × 사이드바·API 403) [[상세]](docs/stages/stage-12.md)                                                                      | workflow_dispatch E2E job / rbac-matrix.spec 5케이스 / coverage threshold 베이스라인 측정 후 결정 | **완료** |
 
 ### Stage 13 — DnD Staged Save (드롭 즉시 저장 → 명시적 [순서 저장] 버튼으로 전환)
 
-| 단계 | 내용 | 확인 가능한 것 | 상태 |
-| ---- | ---- | -------------- | ---- |
-| 13a | 공통 인프라: `useStagedOrder` 훅 + `OrderActionButtons` UI + unit/Storybook 테스트 | 훅 unit 132/132 통과, Storybook play 6건 | **완료** |
-| 13b | HomeSection 적용 (SectionList + useHomeMutations onMutate 제거 + 페이지 가드) | 섹션 DnD 후 [순서 저장] 클릭 시에만 서버 반영 | **완료** |
-| 13c | HomePopup 적용 (PopupList + usePopupMutations onMutate 제거) | 팝업 DnD staged 흐름 + visibility 토글 staged 공존 | **완료** |
-| 13d | PageBlock 적용 (BlockManager + SubpageForm 복합 dirty 가드 공존) | 블록 순서 저장 + "블록 추가·편집·삭제는 즉시 저장됩니다" 안내 교체 | **완료** |
-| 13e | NavigationMenuItem 적용 (tree 모드) + reorder API 트랜잭션 fix [[상세]](docs/stages/stage-13.md) | 메뉴 DnD staged + prisma.$transaction 원자적 reorder | **완료** |
+| 단계 | 내용                                                                                             | 확인 가능한 것                                                     | 상태     |
+| ---- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ | -------- |
+| 13a  | 공통 인프라: `useStagedOrder` 훅 + `OrderActionButtons` UI + unit/Storybook 테스트               | 훅 unit 132/132 통과, Storybook play 6건                           | **완료** |
+| 13b  | HomeSection 적용 (SectionList + useHomeMutations onMutate 제거 + 페이지 가드)                    | 섹션 DnD 후 [순서 저장] 클릭 시에만 서버 반영                      | **완료** |
+| 13c  | HomePopup 적용 (PopupList + usePopupMutations onMutate 제거)                                     | 팝업 DnD staged 흐름 + visibility 토글 staged 공존                 | **완료** |
+| 13d  | PageBlock 적용 (BlockManager + SubpageForm 복합 dirty 가드 공존)                                 | 블록 순서 저장 + "블록 추가·편집·삭제는 즉시 저장됩니다" 안내 교체 | **완료** |
+| 13e  | NavigationMenuItem 적용 (tree 모드) + reorder API 트랜잭션 fix [[상세]](docs/stages/stage-13.md) | 메뉴 DnD staged + prisma.$transaction 원자적 reorder               | **완료** |
 
 ### Stage 14 — admin app UX/DX 공통화 리팩터링 (PageHeader + PageToolbar 도입)
 
-| 단계 | 내용 | 확인 가능한 것 | 상태 |
-| ---- | ---- | -------------- | ---- |
-| 14a | PageHeader 신설 + AdminHeader sticky + nested main 정리 | PageHeader 컴포넌트 + 카나리 3개 적용 | **완료** |
-| 14a-2 | PageToolbar 신설 + sticky 이전 + PageHeader sticky default false 정정 | SubpagesListPage/SubpageForm/DashboardPage 카나리 적용 + 모바일 Sheet collapse | **완료** |
-| 14a-3 | PageToolbar 시각 polish (border-b 제거, sticky bg breakout, button size 통일, Top Sheet) | 스크롤 시 toolbar bg 전체 폭 확장 + drop shadow + 모바일 상단 Sheet | **완료** |
-| 14b | list 10개 + view 4개 PageHeader/PageToolbar 마이그레이션 + e2e selector 안정화 | 전체 목록·상세 페이지 통일된 헤더/툴바 패턴 | **완료** |
-| 14c | Settings 6탭 PageHeader sticky 통합 | 설정 탭 PageHeader.tabs sticky 동작 | **완료** |
-| 14d | 편집 폼 [저장]/[삭제] PageToolbar 이전 (FormSaveBar 폐기) | PostForm/BoardForm/PopupForm 저장 버튼 toolbar 통합 | **완료** |
-| 14e-1~3 | Dialog size 토큰 + bodyOnlyScroll + 일괄 치환 | Dialog 폭 일관성 + body-only scroll | **완료** |
-| 14f | 리스트 인라인 status 토글 시각 통일 (InlineStatusSwitchToggle) [[상세]](docs/stages/stage-14.md) | SubpageTable/PostTable Switch + 라벨 교체, Boolean Switch 5곳 이연 | **완료** |
+| 단계    | 내용                                                                                             | 확인 가능한 것                                                                 | 상태     |
+| ------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | -------- |
+| 14a     | PageHeader 신설 + AdminHeader sticky + nested main 정리                                          | PageHeader 컴포넌트 + 카나리 3개 적용                                          | **완료** |
+| 14a-2   | PageToolbar 신설 + sticky 이전 + PageHeader sticky default false 정정                            | SubpagesListPage/SubpageForm/DashboardPage 카나리 적용 + 모바일 Sheet collapse | **완료** |
+| 14a-3   | PageToolbar 시각 polish (border-b 제거, sticky bg breakout, button size 통일, Top Sheet)         | 스크롤 시 toolbar bg 전체 폭 확장 + drop shadow + 모바일 상단 Sheet            | **완료** |
+| 14b     | list 10개 + view 4개 PageHeader/PageToolbar 마이그레이션 + e2e selector 안정화                   | 전체 목록·상세 페이지 통일된 헤더/툴바 패턴                                    | **완료** |
+| 14c     | Settings 6탭 PageHeader sticky 통합                                                              | 설정 탭 PageHeader.tabs sticky 동작                                            | **완료** |
+| 14d     | 편집 폼 [저장]/[삭제] PageToolbar 이전 (FormSaveBar 폐기)                                        | PostForm/BoardForm/PopupForm 저장 버튼 toolbar 통합                            | **완료** |
+| 14e-1~3 | Dialog size 토큰 + bodyOnlyScroll + 일괄 치환                                                    | Dialog 폭 일관성 + body-only scroll                                            | **완료** |
+| 14f     | 리스트 인라인 status 토글 시각 통일 (InlineStatusSwitchToggle) [[상세]](docs/stages/stage-14.md) | SubpageTable/PostTable Switch + 라벨 교체, Boolean Switch 5곳 이연             | **완료** |
 
 ### Stage 15 — admin 디자인 시스템 도입
 
-| 단계 | 내용 | 확인 가능한 것 | 상태 |
-| ---- | ---- | -------------- | ---- |
-| 15a | `apps/admin/design.md` 전면 재작성 (Stitch DESIGN.md 사양, 한글 8섹션) + 루트 AGENTS.md Stage 15 추가 + admin AGENTS.md UI 전략 갱신. 코드 변경 0건 | `npx @google/design.md lint` broken-ref 0건 확인 | **완료** |
-| 15b | `globals.css`에 shadow 토큰 3개 추가 (`--shadow-card/toolbar/popover`, light/dark 페어). `@theme inline` + `:root` + `.dark`. 기존 shadcn 토큰 무변경 | Storybook smoke 56 tests 회귀 0건 확인 | **완료** |
-| 15c-1 | shadow 토큰 실 컴포넌트 적용 3파일 5건: PageToolbar `shadow-toolbar`, BlockContentView `shadow-card`, TiptapEditor 팝업 3곳 `shadow-popover`. design.md toolbar 설명 정정 [[상세]](docs/stages/stage-15c.md) | `pnpm --filter @simple-cms/admin build` 통과 | **완료** |
-| 15c-2 | shadow wrapper 4개(Popover/Select/DropdownMenu/Sheet) + 27파일 swap + BooleanSwitchField + 5폼 통일 + spacing/scale 토큰 + PageHeader typography fix + ESLint 가드 [[상세]](docs/stages/stage-15c-2.md) | typecheck·lint·build 통과 | **완료** |
-| 15c-3a | verify-design-tokens.mjs(ΔE2000 22토큰 검증) + success/warning 토큰 신설 + design.md YAML 22토큰 보정 + 부록B + AGENTS.md 갱신 [[상세]](docs/stages/stage-15c-3a.md) | `pnpm design:verify` 22 tokens pass (max ΔE 1.29) + typecheck·lint·build 통과 | **완료** |
-| 15c-3b | Badge wrapper(success/warning variant) + 14곳 raw green/amber/emerald → 토큰 swap + chartColors helper + 2개 차트 적용 [[상세]](docs/stages/stage-15c-3b.md) | typecheck·lint·build 통과 | **완료** |
-| 15c-3c | AlertDialog wrapper(단순 re-export, size 미도입) + ESLint 가드 + 24 호출처 import 경로 swap + PageHeader 2곳 정정(ProfilePage·NavigationEditClient) [[상세]](docs/stages/stage-15c-3c.md) | typecheck·lint·build 통과 | **완료** |
-| 15c-3d | Card baseline 보정 (rounded-xl→lg, py-4→py-6, px-4→px-6, CardTitle text-base→text-lg semibold, CardDescription text-sm→text-xs) + StatCard/Auth 예외 유지 + text-base override 4곳 제거 [[상세]](docs/stages/stage-15c-3d.md) | typecheck·lint·build 통과 | **완료** |
-| 15c-3e | AlertDialog size 토큰 3-tier (confirm/default/wide) + shadcn type 확장 + AlertDialog.tsx wrapper 함수화 + 10 호출처 size prop 마이그레이션 (8 BulkXxx→wide, DeleteMedia→default, RestoreVersion className 제거) [[상세]](docs/stages/stage-15c-3e.md) | typecheck·lint·build 통과 | **완료** |
-| 15c-3f | 폼 컨트롤 height 통일 (32px baseline) — Button wrapper 신설 + sm h-8 override + ESLint 가드 + 92 imports 마이그레이션 (shadcn/button.tsx 무수정) + audit-logs Excel 패턴 정렬 (화면 필터 그대로 사용) + design.md height 토큰 신설 + AUDIT_LOG enum [[상세]](docs/stages/stage-15c-3f.md) | typecheck·lint·build 통과 + audit-logs Excel이 화면 필터 반영 | **완료** |
+| 단계   | 내용                                                                                                                                                                                                                                                                                      | 확인 가능한 것                                                                | 상태     |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------- |
+| 15a    | `apps/admin/design.md` 전면 재작성 (Stitch DESIGN.md 사양, 한글 8섹션) + 루트 AGENTS.md Stage 15 추가 + admin AGENTS.md UI 전략 갱신. 코드 변경 0건                                                                                                                                       | `npx @google/design.md lint` broken-ref 0건 확인                              | **완료** |
+| 15b    | `globals.css`에 shadow 토큰 3개 추가 (`--shadow-card/toolbar/popover`, light/dark 페어). `@theme inline` + `:root` + `.dark`. 기존 shadcn 토큰 무변경                                                                                                                                     | Storybook smoke 56 tests 회귀 0건 확인                                        | **완료** |
+| 15c-1  | shadow 토큰 실 컴포넌트 적용 3파일 5건: PageToolbar `shadow-toolbar`, BlockContentView `shadow-card`, TiptapEditor 팝업 3곳 `shadow-popover`. design.md toolbar 설명 정정 [[상세]](docs/stages/stage-15c.md)                                                                              | `pnpm --filter @simple-cms/admin build` 통과                                  | **완료** |
+| 15c-2  | shadow wrapper 4개(Popover/Select/DropdownMenu/Sheet) + 27파일 swap + BooleanSwitchField + 5폼 통일 + spacing/scale 토큰 + PageHeader typography fix + ESLint 가드 [[상세]](docs/stages/stage-15c-2.md)                                                                                   | typecheck·lint·build 통과                                                     | **완료** |
+| 15c-3a | verify-design-tokens.mjs(ΔE2000 22토큰 검증) + success/warning 토큰 신설 + design.md YAML 22토큰 보정 + 부록B + AGENTS.md 갱신 [[상세]](docs/stages/stage-15c-3a.md)                                                                                                                      | `pnpm design:verify` 22 tokens pass (max ΔE 1.29) + typecheck·lint·build 통과 | **완료** |
+| 15c-3b | Badge wrapper(success/warning variant) + 14곳 raw green/amber/emerald → 토큰 swap + chartColors helper + 2개 차트 적용 [[상세]](docs/stages/stage-15c-3b.md)                                                                                                                              | typecheck·lint·build 통과                                                     | **완료** |
+| 15c-3c | AlertDialog wrapper(단순 re-export, size 미도입) + ESLint 가드 + 24 호출처 import 경로 swap + PageHeader 2곳 정정(ProfilePage·NavigationEditClient) [[상세]](docs/stages/stage-15c-3c.md)                                                                                                 | typecheck·lint·build 통과                                                     | **완료** |
+| 15c-3d | Card baseline 보정 (rounded-xl→lg, py-4→py-6, px-4→px-6, CardTitle text-base→text-lg semibold, CardDescription text-sm→text-xs) + StatCard/Auth 예외 유지 + text-base override 4곳 제거 [[상세]](docs/stages/stage-15c-3d.md)                                                             | typecheck·lint·build 통과                                                     | **완료** |
+| 15c-3e | AlertDialog size 토큰 3-tier (confirm/default/wide) + shadcn type 확장 + AlertDialog.tsx wrapper 함수화 + 10 호출처 size prop 마이그레이션 (8 BulkXxx→wide, DeleteMedia→default, RestoreVersion className 제거) [[상세]](docs/stages/stage-15c-3e.md)                                     | typecheck·lint·build 통과                                                     | **완료** |
+| 15c-3f | 폼 컨트롤 height 통일 (32px baseline) — Button wrapper 신설 + sm h-8 override + ESLint 가드 + 92 imports 마이그레이션 (shadcn/button.tsx 무수정) + audit-logs Excel 패턴 정렬 (화면 필터 그대로 사용) + design.md height 토큰 신설 + AUDIT_LOG enum [[상세]](docs/stages/stage-15c-3f.md) | typecheck·lint·build 통과 + audit-logs Excel이 화면 필터 반영                 | **완료** |
 
 ### Stage 16 — 코드 최적화 (SSOT 통합 + 공용 컴포넌트 추출)
 
-| 단계 | 내용 | 확인 가능한 것 | 상태 |
-| ---- | ---- | -------------- | ---- |
-| 16a | `requireAnyPermission` 신설 + slug/key 기반 `findUnique` → `findFirst` 전환 (DEMO mode composite unique 대응) | typecheck·lint·build 통과 | **완료** |
-| 16c-1 | `ListSnapshot<T>` 중복 → `@simple-cms/types`의 `PaginatedList<T>` 단일 출처 | typecheck·lint·build 통과 | **완료** |
-| 16c-2 | mutation 훅 팩토리 4개 신설(`createCrudMutations` 등) + 11 도메인 마이그레이션 | typecheck·lint·build 통과 | **완료** |
-| 16d | `BulkDeleteDialog` + `ConfirmDeleteDialog` 공용 컴포넌트 추출 + 7 dialog 마이그레이션 | typecheck·lint·build 통과 | **완료** |
-| 16e | `entities/form-fields/SlugField` + `entities/content-status/StatusBadge` + `shared/ui/UrlFilterTabs` SSOT 통합 | typecheck·lint·build 통과 | **완료** |
-| 16b-1 | `defineRoute`/`defineBulkOperation`/`renormalizeDisplayOrder` 인프라 신설 + subpages 도메인 11 라우트 마이그레이션 | typecheck·lint·280 tests 통과 | **완료** |
-| 16f | `SettingsCardForm` 공용 컴포넌트 신설 + DomainSettingsForm/UploadSettingsForm/SeoSettingsForm 마이그레이션 | typecheck·lint·build 통과 | **완료** |
+| 단계    | 내용                                                                                                                     | 확인 가능한 것                | 상태     |
+| ------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------- | -------- |
+| 16a     | `requireAnyPermission` 신설 + slug/key 기반 `findUnique` → `findFirst` 전환 (DEMO mode composite unique 대응)            | typecheck·lint·build 통과     | **완료** |
+| 16c-1   | `ListSnapshot<T>` 중복 → `@simple-cms/types`의 `PaginatedList<T>` 단일 출처                                              | typecheck·lint·build 통과     | **완료** |
+| 16c-2   | mutation 훅 팩토리 4개 신설(`createCrudMutations` 등) + 11 도메인 마이그레이션                                           | typecheck·lint·build 통과     | **완료** |
+| 16d     | `BulkDeleteDialog` + `ConfirmDeleteDialog` 공용 컴포넌트 추출 + 7 dialog 마이그레이션                                    | typecheck·lint·build 통과     | **완료** |
+| 16e     | `entities/form-fields/SlugField` + `entities/content-status/StatusBadge` + `shared/ui/UrlFilterTabs` SSOT 통합           | typecheck·lint·build 통과     | **완료** |
+| 16b-1   | `defineRoute`/`defineBulkOperation`/`renormalizeDisplayOrder` 인프라 신설 + subpages 도메인 11 라우트 마이그레이션       | typecheck·lint·280 tests 통과 | **완료** |
+| 16f     | `SettingsCardForm` 공용 컴포넌트 신설 + DomainSettingsForm/UploadSettingsForm/SeoSettingsForm 마이그레이션               | typecheck·lint·build 통과     | **완료** |
 | 16b-2-a | posts 6 라우트 `defineRoute`/`defineBulkOperation` 마이그레이션 (`buildPostPatchDiff` + bulk-move `prisma.$transaction`) | typecheck·lint·280 tests 통과 | **완료** |
-| 16b-2-b | boards 3 라우트 `defineRoute` 마이그레이션 + `renormalizeDisplayOrder` 'board' 추가 (`buildBoardPatchDiff`) | typecheck·lint·280 tests 통과 | **완료** |
-| 16b-2-c | media 4 라우트 `defineRoute`/`defineBulkOperation` 마이그레이션 (upload/branding-upload 명시적 범위 외) | typecheck·lint·280 tests 통과 | **완료** |
+| 16b-2-b | boards 3 라우트 `defineRoute` 마이그레이션 + `renormalizeDisplayOrder` 'board' 추가 (`buildBoardPatchDiff`)              | typecheck·lint·280 tests 통과 | **완료** |
+| 16b-2-c | media 4 라우트 `defineRoute`/`defineBulkOperation` 마이그레이션 (upload/branding-upload 명시적 범위 외)                  | typecheck·lint·280 tests 통과 | **완료** |
 
 ### Stage 17 — Storybook 디자인 시스템 문서화 (admin + web Design System 카탈로그)
 
-| 단계 | 내용 | 확인 가능한 것 | 상태 |
-| ---- | ---- | -------------- | ---- |
-| 17 | admin 6파일(Colors·Typography·SpacingAndRadius·Breakpoints·Foundations·AdminCustoms) + web 6파일(KrdsColors·KrdsTypography·KrdsSpacing·Breakpoints·Foundations·WebCustomTokens) 디자인 시스템 카탈로그 스토리. KRDS `html { font-size: 62.5% }` 회피(`useLayoutEffect` 동기 style 주입) + spacing override 회피(arbitrary value + inline style) 패턴 확립. admin: shadcn 토큰·shadow·wrapper 정책·레이아웃 구조 시각화. web: KRDS 색상·타이포·간격·브레이크포인트 토큰 카탈로그 | Storybook `Admin/Design System/*` + `Web/Design System/*` 진입 → 각 토큰·레이아웃 표준 시각 확인 | **완료** |
+| 단계 | 내용                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | 확인 가능한 것                                                                                   | 상태     |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- |
+| 17   | admin 6파일(Colors·Typography·SpacingAndRadius·Breakpoints·Foundations·AdminCustoms) + web 6파일(KrdsColors·KrdsTypography·KrdsSpacing·Breakpoints·Foundations·WebCustomTokens) 디자인 시스템 카탈로그 스토리. KRDS `html { font-size: 62.5% }` 회피(`useLayoutEffect` 동기 style 주입) + spacing override 회피(arbitrary value + inline style) 패턴 확립. admin: shadcn 토큰·shadow·wrapper 정책·레이아웃 구조 시각화. web: KRDS 색상·타이포·간격·브레이크포인트 토큰 카탈로그 | Storybook `Admin/Design System/*` + `Web/Design System/*` 진입 → 각 토큰·레이아웃 표준 시각 확인 | **완료** |
 
 ### Stage 18 — 시연/운영 성능 최적화 (Vercel·Supabase region 정렬 + Server Component 병렬화 + cache dedup)
 
-| 단계 | 내용 | 확인 가능한 것 | 상태 |
-| ---- | ---- | -------------- | ---- |
-| 18 | Vercel(iad1) ↔ Supabase 사이 태평양 횡단 RTT가 페이지당 5~7쿼리에 누적되어 1~1.5초 지연 발생하던 문제 해소. **Supabase region을 us-east로 이전**(Vercel과 정렬, Hobby plan 유지)이 단일 결정타. + `cachedSession.ts`로 admin layout의 `ensureDemoSession` + `requireAuth` 2 DB 쿼리 → React `cache()` dedup으로 1 쿼리. + `getMenusBySlots(['HEADER','FOOTER','SIDEBAR'])` 통합 헬퍼로 web layout 메뉴 round-trip 3 → 1. + `HomePage` `Promise.all([popups, sections])` 병렬화. + 운영 모드 `force-dynamic` 제거 + layout `DEMO_MODE` 가드로 dynamic API 호출 skip → `/` Static prerender + `/sitemap.xml` 5분 ISR. + `@vercel/speed-insights` 마운트로 p75 LCP/FCP/INP 자동 수집. [[상세]](docs/stages/stage-18.md) | 시연 메인 페이지 TTFB 1.2s → 0.2~0.4s (예상). 운영 build에서 `/` → `○ Static`. 시연 build에서 `/` → `ƒ Dynamic` 유지 | **완료** |
-| 19 | 메인 페이지 SUB_CAROUSEL 섹션 신규 타입 추가. 4단 카피(tagline/mainHeading/subHeading 형광펜/description) + 원형 썸네일 캐러셀(desktop 4열). RECOMMENDED와 독립 타입 — 항상 Swiper(그리드 폴백 없음), slidesPerView mobile 1/tablet 2/desktop 4. 17개 파일: Prisma enum 추가 + @simple-cms/types 신규 인터페이스 + seed/demo-seed 7섹션 체계 + admin 폼/라벨/스키마/재정렬 max(6→7) + web 파서/조회/렌더러/CSS calc() guard + DEMO snapshot walker | admin `/home`에서 SUB_CAROUSEL 섹션 생성·편집 → web `/`의 HERO 아래에 원형 썸네일 4열 캐러셀 노출 | **완료** |
+| 단계 | 내용                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | 확인 가능한 것                                                                                                                                        | 상태     |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| 18   | Vercel(iad1) ↔ Supabase 사이 태평양 횡단 RTT가 페이지당 5~7쿼리에 누적되어 1~1.5초 지연 발생하던 문제 해소. **Supabase region을 us-east로 이전**(Vercel과 정렬, Hobby plan 유지)이 단일 결정타. + `cachedSession.ts`로 admin layout의 `ensureDemoSession` + `requireAuth` 2 DB 쿼리 → React `cache()` dedup으로 1 쿼리. + `getMenusBySlots(['HEADER','FOOTER','SIDEBAR'])` 통합 헬퍼로 web layout 메뉴 round-trip 3 → 1. + `HomePage` `Promise.all([popups, sections])` 병렬화. + 운영 모드 `force-dynamic` 제거 + layout `DEMO_MODE` 가드로 dynamic API 호출 skip → `/` Static prerender + `/sitemap.xml` 5분 ISR. + `@vercel/speed-insights` 마운트로 p75 LCP/FCP/INP 자동 수집. [[상세]](docs/stages/stage-18.md) | 시연 메인 페이지 TTFB 1.2s → 0.2~0.4s (예상). 운영 build에서 `/` → `○ Static`. 시연 build에서 `/` → `ƒ Dynamic` 유지                                  | **완료** |
+| 19   | 메인 페이지 SUB_CAROUSEL 섹션 신규 타입 추가. 4단 카피(tagline/mainHeading/subHeading 형광펜/description) + 원형 썸네일 캐러셀(desktop 4열). RECOMMENDED와 독립 타입 — 항상 Swiper(그리드 폴백 없음), slidesPerView mobile 1/tablet 2/desktop 4. 17개 파일: Prisma enum 추가 + @simple-cms/types 신규 인터페이스 + seed/demo-seed 7섹션 체계 + admin 폼/라벨/스키마/재정렬 max(6→7) + web 파서/조회/렌더러/CSS calc() guard + DEMO snapshot walker                                                                                                                                                                                                                                                                   | admin `/home`에서 SUB_CAROUSEL 섹션 생성·편집 → web `/`의 HERO 아래에 원형 썸네일 4열 캐러셀 노출                                                     | **완료** |
+| 20   | 게시글 `isImportant` 우선 노출 + 공개 LIST 번호/중요 라벨 + 게시글 작성 slug/SEO 자동 입력 + 공개 Tiptap 본문 Tailwind Typography 경계화 + HTML 블록 CSS 개행 정규화. [[상세]](docs/stages/stage-20.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | 관리자/공개/홈 최신글에서 중요글 우선 정렬, LIST 스킨 번호 연속성, RICH_TEXT 본문 16px/bullet/image alignment 유지, HTML 블록 hydration mismatch 해소 | **완료** |
 
 ## Stage 8 사전 계획 (다음 컨텍스트 핸드오프)
 
@@ -657,12 +677,12 @@ apps/{앱}/
 
 ### Sub-stage 분할
 
-| Sub | 핵심 변경 | 재사용 가능 자산 | 의존성 |
-|---|---|---|---|
-| **8a** Docker Compose 통합 | `docker/docker-compose.yml` 확장(PG + admin + web) + `apps/admin/Dockerfile` + `apps/web/Dockerfile` (multi-stage build, pnpm workspace 인식) + `.dockerignore` + `docker compose up`으로 전체 실행 검증 | 기존 PGroonga 컨테이너(`groonga/pgroonga`) + 모노레포 pnpm workspace 구조 + `pnpm db:push` / `pnpm db:pgroonga` | 없음 |
-| **8b** GitHub Actions CI matrix | `.github/workflows/ci.yml` — admin/web × {lint, typecheck, unit test, storybook test, build} 매트릭스. Stage 7j에서 만든 6 job을 push/PR 자동 트리거로 정착. pnpm cache + Turbo cache | Stage 7j의 `test.dependsOn` 정리 + Stage 12 단위 테스트 + storybook play function | 8a 무관 |
-| **8c** Playwright E2E + 시연 keepalive | `.github/workflows/e2e.yml` (workflow_dispatch + nightly cron). Stage 11e e2e + Stage 12j RBAC matrix를 CI에서 실행. 8a Docker compose로 e2e 환경 구성. 시연 모드 keepalive(`docs/react-cms-시연모드-배포-가이드.md` 7장 참조)도 같은 workflow 인프라 | Stage 11e `e2e/` 골든 플로우 5단계 + Stage 12j RBAC 매트릭스 | 8a 의존 |
-| **8d** 운영 self-host 배포 가이드 | `docs/react-cms-운영-배포-가이드.md` 신규(시연 가이드와 별도). Docker self-host + Supabase prod 옵션 + 환경변수 마스터 + 백업/복원 + PGroonga 인덱스 재구축. 운영 미마이그레이션(`pnpm db:push` 1회) 절차 | 시연 가이드(`docs/react-cms-시연모드-배포-가이드.md`) 형식 차용 | 8a~c 권장 (검증된 인프라 기반 가이드) |
+| Sub                                    | 핵심 변경                                                                                                                                                                                                                                             | 재사용 가능 자산                                                                                                | 의존성                                |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| **8a** Docker Compose 통합             | `docker/docker-compose.yml` 확장(PG + admin + web) + `apps/admin/Dockerfile` + `apps/web/Dockerfile` (multi-stage build, pnpm workspace 인식) + `.dockerignore` + `docker compose up`으로 전체 실행 검증                                              | 기존 PGroonga 컨테이너(`groonga/pgroonga`) + 모노레포 pnpm workspace 구조 + `pnpm db:push` / `pnpm db:pgroonga` | 없음                                  |
+| **8b** GitHub Actions CI matrix        | `.github/workflows/ci.yml` — admin/web × {lint, typecheck, unit test, storybook test, build} 매트릭스. Stage 7j에서 만든 6 job을 push/PR 자동 트리거로 정착. pnpm cache + Turbo cache                                                                 | Stage 7j의 `test.dependsOn` 정리 + Stage 12 단위 테스트 + storybook play function                               | 8a 무관                               |
+| **8c** Playwright E2E + 시연 keepalive | `.github/workflows/e2e.yml` (workflow_dispatch + nightly cron). Stage 11e e2e + Stage 12j RBAC matrix를 CI에서 실행. 8a Docker compose로 e2e 환경 구성. 시연 모드 keepalive(`docs/react-cms-시연모드-배포-가이드.md` 7장 참조)도 같은 workflow 인프라 | Stage 11e `e2e/` 골든 플로우 5단계 + Stage 12j RBAC 매트릭스                                                    | 8a 의존                               |
+| **8d** 운영 self-host 배포 가이드      | `docs/react-cms-운영-배포-가이드.md` 신규(시연 가이드와 별도). Docker self-host + Supabase prod 옵션 + 환경변수 마스터 + 백업/복원 + PGroonga 인덱스 재구축. 운영 미마이그레이션(`pnpm db:push` 1회) 절차                                             | 시연 가이드(`docs/react-cms-시연모드-배포-가이드.md`) 형식 차용                                                 | 8a~c 권장 (검증된 인프라 기반 가이드) |
 
 총 예상 4.5일 (1인 풀타임) / 1주~1.5주 (파트 타임).
 
@@ -851,33 +871,33 @@ shared/lib/
 
 ## 도구 / 라이브러리 결정
 
-| 영역                     | 도구                                               | 적용 범위           | 비고                                                                                                              |
-| ------------------------ | -------------------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| 테스트 (단위)            | Vitest                                             | 전체                | 테스트 파일은 대상 코드와 같은 위치                                                                               |
-| 테스트 (E2E)             | Playwright                                         | 전체                | 8단계 이후 도입                                                                                                   |
-| 인증                     | 커스텀 세션 인증 (외부 인증 라이브러리 미사용)     | admin               | bcryptjs 비밀번호 해싱, crypto.randomUUID 세션 토큰                                                               |
-| 세션 전략                | 커스텀 DB 세션 (crypto.randomUUID + httpOnly 쿠키) | admin               | JWT 대신 DB 세션 — 동시 로그인 제어, 서버 사이드 세션 무효화 필요                                                 |
-| UI 프레임워크 (admin)    | shadcn/ui                                          | admin               | Figma 시안 전까지 임시 UI, Tailwind + Radix 기반                                                                  |
-| 폼 관리                  | react-hook-form + zod                              | admin               | shadcn/ui Form 패턴 활용                                                                                          |
-| 테이블                   | TanStack Table                                     | admin               | shadcn/ui Data Table 패턴 활용                                                                                    |
-| 토스트/알림              | sonner                                             | admin               | shadcn/ui Toast 패턴 활용                                                                                         |
-| 드래그&드롭              | dnd-kit                                            | admin               | displayOrder 관리용. drop 즉시 저장이 아닌 staged commit 패턴 (`useStagedOrder` + `[순서 저장]` 버튼으로 명시적 commit) |
-| 콘텐츠 에디터            | Tiptap                                             | admin               | WYSIWYG 편집, Tiptap JSON으로 저장                                                                                |
-| 콘텐츠 렌더러            | @tiptap/html (generateHTML)                        | web                 | Server-side HTML 생성, DOMPurify 새니타이징                                                                       |
-| 공유 에디터 설정         | @simple-cms/editor                                 | 전체                | Tiptap 확장 정의, 콘텐츠 CSS, 텍스트 추출 유틸                                                                    |
-| 코드 에디터              | Monaco Editor                                      | admin               | 커스텀 HTML/CSS 편집용 (@monaco-editor/react)                                                                     |
-| CSS (admin)              | Tailwind CSS                                       | admin               | shadcn/ui 기반                                                                                                    |
-| UI 프레임워크 (web)      | krds-react + krds-uiux                             | web                 | krds-react: React 컴포넌트 + CSS 토큰. krds-uiux: HTML 컴포넌트 소스 참조용 (Table 등 미export 컴포넌트 구현 시)  |
-| HTML 새니타이징          | isomorphic-dompurify                               | web                 | SSR 호환 DOMPurify, Tiptap HTML 새니타이징                                                                        |
-| CSS (web)                | KRDS 기반 (krds-react/dist/index.css)              | web                 | krds-react CSS 토큰 + 커스텀 CSS (Tiptap 콘텐츠 등)                                                               |
-| 날짜 처리                | date-fns                                           | 전체                | tree-shaking 친화적 (함수 단위 import)                                                                            |
-| 아이콘                   | lucide-react                                       | 전체                | shadcn/ui 기본 아이콘, 개별 import 최적화                                                                         |
-| 데이터 페칭 (클라이언트) | TanStack Query                                     | admin               | Key Factory + queryOptions 패턴, @tanstack/eslint-plugin-query 활용                                               |
-| 상태 관리 (클라이언트)   | Zustand                                            | admin, web          | UI 상태 전용. 서버 데이터는 TanStack Query가 담당                                                                 |
-| 슬라이드/캐러셀          | Swiper 12                                          | web                 | 메인 히어로 + 추천 콘텐츠 슬라이드, A11y/Keyboard/Autoplay 모듈, 커스텀 prev/next/play/pause 버튼 지원            |
-| CSV 내보내기             | 네이티브 구현                                      | admin               | 외부 라이브러리 없이 문자열 기반 CSV 생성                                                                         |
-| Excel 내보내기           | exceljs                                            | admin               | XLSX 바이너리 형식 생성, 감사 로그 다운로드용                                                                     |
-| 비밀번호 해싱            | bcryptjs                                           | admin (packages/db) | 순수 JS, 네이티브 빌드 불필요. SHA256은 범용 해시라 비밀번호에 부적합 — bcrypt는 의도적으로 느린 해싱 + 내장 salt |
+| 영역                     | 도구                                               | 적용 범위           | 비고                                                                                                                                                             |
+| ------------------------ | -------------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 테스트 (단위)            | Vitest                                             | 전체                | 테스트 파일은 대상 코드와 같은 위치                                                                                                                              |
+| 테스트 (E2E)             | Playwright                                         | 전체                | 8단계 이후 도입                                                                                                                                                  |
+| 인증                     | 커스텀 세션 인증 (외부 인증 라이브러리 미사용)     | admin               | bcryptjs 비밀번호 해싱, crypto.randomUUID 세션 토큰                                                                                                              |
+| 세션 전략                | 커스텀 DB 세션 (crypto.randomUUID + httpOnly 쿠키) | admin               | JWT 대신 DB 세션 — 동시 로그인 제어, 서버 사이드 세션 무효화 필요                                                                                                |
+| UI 프레임워크 (admin)    | shadcn/ui                                          | admin               | Figma 시안 전까지 임시 UI, Tailwind + Radix 기반                                                                                                                 |
+| 폼 관리                  | react-hook-form + zod                              | admin               | shadcn/ui Form 패턴 활용                                                                                                                                         |
+| 테이블                   | TanStack Table                                     | admin               | shadcn/ui Data Table 패턴 활용                                                                                                                                   |
+| 토스트/알림              | sonner                                             | admin               | shadcn/ui Toast 패턴 활용                                                                                                                                        |
+| 드래그&드롭              | dnd-kit                                            | admin               | displayOrder 관리용. drop 즉시 저장이 아닌 staged commit 패턴 (`useStagedOrder` + `[순서 저장]` 버튼으로 명시적 commit)                                          |
+| 콘텐츠 에디터            | Tiptap                                             | admin               | WYSIWYG 편집, Tiptap JSON으로 저장                                                                                                                               |
+| 콘텐츠 렌더러            | @tiptap/html (generateHTML)                        | web                 | Server-side HTML 생성, DOMPurify 새니타이징                                                                                                                      |
+| 공유 에디터 설정         | @simple-cms/editor                                 | 전체                | Tiptap 확장 정의, 콘텐츠 CSS, 텍스트 추출 유틸                                                                                                                   |
+| 코드 에디터              | Monaco Editor                                      | admin               | 커스텀 HTML/CSS 편집용 (@monaco-editor/react)                                                                                                                    |
+| CSS (admin)              | Tailwind CSS                                       | admin               | shadcn/ui 기반                                                                                                                                                   |
+| UI 프레임워크 (web)      | krds-react + krds-uiux                             | web                 | krds-react: React 컴포넌트 + CSS 토큰. krds-uiux: HTML 컴포넌트 소스 참조용 (Table 등 미export 컴포넌트 구현 시)                                                 |
+| HTML 새니타이징          | isomorphic-dompurify                               | web                 | SSR 호환 DOMPurify, Tiptap HTML 새니타이징                                                                                                                       |
+| CSS (web)                | KRDS CSS + Tailwind CSS                            | web                 | `krds-react/dist/index.css` 전역 import + KRDS/Tailwind utility 우선. CMS rich text는 `TiptapContent` wrapper에서 Tailwind descendant utility로 렌더링 경계 형성 |
+| 날짜 처리                | date-fns                                           | 전체                | tree-shaking 친화적 (함수 단위 import)                                                                                                                           |
+| 아이콘                   | lucide-react                                       | 전체                | shadcn/ui 기본 아이콘, 개별 import 최적화                                                                                                                        |
+| 데이터 페칭 (클라이언트) | TanStack Query                                     | admin               | Key Factory + queryOptions 패턴, @tanstack/eslint-plugin-query 활용                                                                                              |
+| 상태 관리 (클라이언트)   | Zustand                                            | admin, web          | UI 상태 전용. 서버 데이터는 TanStack Query가 담당                                                                                                                |
+| 슬라이드/캐러셀          | Swiper 12                                          | web                 | 메인 히어로 + 추천 콘텐츠 슬라이드, A11y/Keyboard/Autoplay 모듈, 커스텀 prev/next/play/pause 버튼 지원                                                           |
+| CSV 내보내기             | 네이티브 구현                                      | admin               | 외부 라이브러리 없이 문자열 기반 CSV 생성                                                                                                                        |
+| Excel 내보내기           | exceljs                                            | admin               | XLSX 바이너리 형식 생성, 감사 로그 다운로드용                                                                                                                    |
+| 비밀번호 해싱            | bcryptjs                                           | admin (packages/db) | 순수 JS, 네이티브 빌드 불필요. SHA256은 범용 해시라 비밀번호에 부적합 — bcrypt는 의도적으로 느린 해싱 + 내장 salt                                                |
 
 모든 라이브러리는 최신 버전을 설치하는 것을 기본 원칙으로 한다.
 
@@ -899,6 +919,9 @@ shared/lib/
   - `packages/editor`의 공유 확장으로 admin과 동일한 렌더링 보장
   - DOMPurify 새니타이징 (defense-in-depth)
   - 서브페이지는 `SubpageBlockRenderer`가 블록 타입별로 분기 렌더
+  - 게시글, 서브페이지 RICH_TEXT, 콘텐츠형 HomePopup은 `apps/web/src/shared/ui/TiptapContent.tsx` 공용 wrapper로 렌더
+  - `TiptapContent`는 Tailwind Typography + descendant utility로 본문 스타일 경계를 만든다. KRDS 전역 root `62.5%`와 `ul,ol{list-style:none}` reset을 피하기 위해 `text-[16px]!`, `prose-ul:list-disc!`, `prose-ol:list-decimal!`처럼 충돌 속성은 px/arbitrary value + important modifier를 사용
+  - 이 패턴은 사용자 HTML 자식에 직접 class를 붙일 수 없는 구조의 대가이므로, rich text 계열은 wrapper를 재사용하고 같은 descendant utility 문자열을 여러 컴포넌트에 복제하지 않는다
 - **HTML 블록 (Stage 7b — HTML + CSS 코드 블록)**: HTML 블록의 `configJson`이 `{ html, css? }` 구조 — 한 블록에서 자유 HTML과 페이지 스코프 CSS를 함께 관리
   - 페이지 단위 `Subpage.customHtml`/`customCss` 필드는 폐기됨(2025-04-16 Option B 결정 — 데이터 폐기 + db drop)
   - 블록의 `displayOrder`로 본문 사이 자유 위치 + 페이지 단위 CSS 스코프 모두 충족
@@ -913,9 +936,9 @@ shared/lib/
 
 ### 2-track Vitest (Stage 7f 도입)
 
-| 트랙 | 환경 | 대상 | 파일명 |
-| ---- | ---- | ---- | ---- |
-| **unit** | jsdom | 순수 함수, Zod schema, Prisma builder, 훅 pure logic, 서버 유틸 | `{파일명}.test.{ts,tsx}` |
+| 트랙          | 환경                               | 대상                                                                                       | 파일명                                   |
+| ------------- | ---------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| **unit**      | jsdom                              | 순수 함수, Zod schema, Prisma builder, 훅 pure logic, 서버 유틸                            | `{파일명}.test.{ts,tsx}`                 |
 | **storybook** | Playwright Chromium (real browser) | React 컴포넌트 렌더, 폼 validation, hover/focus, scroll, ResizeObserver, swiper, 권한별 UI | `{컴포넌트}.stories.tsx`의 play function |
 
 - **한 컴포넌트에 `*.stories.tsx`와 `*.test.tsx`를 동시에 두지 않음** (겹치는 테스트 회피). 무거운 props combination 테스트는 unit으로 빼되 DOM 검증 없이 pure render만

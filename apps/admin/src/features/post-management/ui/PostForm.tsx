@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
+import { extractTextFromTiptap } from '@simple-cms/editor';
 
 import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/shadcn/input';
@@ -28,6 +29,7 @@ import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
+import { BooleanSwitchField } from '@/shared/ui/BooleanSwitchField';
 
 import type { PostDetail } from '../model/postFilters';
 import {
@@ -76,13 +78,24 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
       seoTitle: initialData?.seoTitle ?? '',
       seoDescription: initialData?.seoDescription ?? '',
       contentJson: initialData?.contentJson ?? undefined,
+      isImportant: initialData?.isImportant ?? false,
       status: initialData?.status ?? 'DRAFT',
     },
   });
 
   const title = watch('title') ?? '';
   const slug = watch('slug') ?? '';
+  const seoTitle = watch('seoTitle') ?? '';
   const initialStatus = initialData?.status ?? 'DRAFT';
+  const seoTitleEdited = useRef(!isCreate || Boolean(initialData?.seoTitle));
+  const seoDescriptionEdited = useRef(
+    !isCreate || Boolean(initialData?.seoDescription),
+  );
+
+  useEffect(() => {
+    if (!isCreate || seoTitleEdited.current || seoTitle === title) return;
+    setValue('seoTitle', title, { shouldDirty: Boolean(title) });
+  }, [isCreate, seoTitle, setValue, title]);
 
   const handleSlugChange = useCallback(
     (newSlug: string) => {
@@ -140,7 +153,10 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
                 onConfirm={() => deleteMutation.mutate(initialData.id)}
               />
             )}
-            <Button type="submit" disabled={isPending || (!isDirty && !isCreate)}>
+            <Button
+              type="submit"
+              disabled={isPending || (!isDirty && !isCreate)}
+            >
               {isPending ? '저장 중...' : '저장'}
             </Button>
           </>
@@ -188,13 +204,11 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
                   name="boardId"
                   control={control}
                   render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger>
                         <span>
-                          {boards?.find((b) => b.id === field.value)?.name ?? '게시판 선택'}
+                          {boards?.find((b) => b.id === field.value)?.name ??
+                            '게시판 선택'}
                         </span>
                       </SelectTrigger>
                       <SelectContent>
@@ -227,7 +241,18 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
                 render={({ field }) => (
                   <TiptapEditor
                     content={field.value}
-                    onChange={(json) => field.onChange(json)}
+                    onChange={(json) => {
+                      field.onChange(json);
+                      if (isCreate && !seoDescriptionEdited.current) {
+                        const summary = extractTextFromTiptap(json)
+                          .replace(/\s+/g, ' ')
+                          .trim()
+                          .slice(0, 160);
+                        setValue('seoDescription', summary, {
+                          shouldDirty: Boolean(summary),
+                        });
+                      }
+                    }}
                   />
                 )}
               />
@@ -243,7 +268,11 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
                 <Label htmlFor="seoTitle">SEO 제목</Label>
                 <Input
                   id="seoTitle"
-                  {...register('seoTitle')}
+                  {...register('seoTitle', {
+                    onChange: () => {
+                      seoTitleEdited.current = true;
+                    },
+                  })}
                   placeholder="검색 결과에 표시될 제목 (비워두면 기본 제목 사용)"
                 />
                 {errors.seoTitle && (
@@ -256,7 +285,11 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
                 <Label htmlFor="seoDescription">SEO 설명</Label>
                 <Textarea
                   id="seoDescription"
-                  {...register('seoDescription')}
+                  {...register('seoDescription', {
+                    onChange: () => {
+                      seoDescriptionEdited.current = true;
+                    },
+                  })}
                   placeholder="검색 결과에 표시될 설명"
                   rows={3}
                 />
@@ -276,7 +309,13 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
               <CardTitle>발행</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="space-y-4">
+                <BooleanSwitchField
+                  control={control}
+                  name="isImportant"
+                  label="중요 게시글"
+                  description="목록에서 일반 게시글보다 먼저 표시됩니다."
+                />
                 <Label>상태</Label>
                 <Controller
                   name="status"

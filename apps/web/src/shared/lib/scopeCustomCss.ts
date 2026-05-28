@@ -19,12 +19,13 @@
 export function scopeCustomCss(css: string, subpageId: string): string {
   if (!css) return '';
   const scope = `#subpage-${subpageId}`;
+  const normalizedCss = css.replace(/\r\n?/g, '\n');
 
   // Step 1: descriptor/keyword 내부 AT 규칙을 placeholder로 치환
   const excludedBlocks: string[] = [];
   const excludeBlockPattern =
     /@(?:keyframes|-webkit-keyframes|-moz-keyframes|-o-keyframes|font-face|counter-style|font-feature-values|page|viewport|property)\b[^{]*\{(?:[^{}]|\{[^{}]*\})*\}/gi;
-  let processed = css.replace(excludeBlockPattern, (match) => {
+  let processed = normalizedCss.replace(excludeBlockPattern, (match) => {
     const index = excludedBlocks.length;
     excludedBlocks.push(match);
     return `__SCOPE_EX_BLOCK_${index}__`;
@@ -61,7 +62,11 @@ export function scopeCustomCss(css: string, subpageId: string): string {
           const trimmed = s.trim();
           if (!trimmed) return '';
           // 이미 scope로 시작하면 중복 방지 (html/body/:root가 치환된 경우 포함)
-          if (trimmed === scope || trimmed.startsWith(`${scope} `) || trimmed.startsWith(`${scope}:`)) {
+          if (
+            trimmed === scope ||
+            trimmed.startsWith(`${scope} `) ||
+            trimmed.startsWith(`${scope}:`)
+          ) {
             return trimmed;
           }
           return `${scope} ${trimmed}`;

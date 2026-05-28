@@ -27,6 +27,7 @@ import type { PostListFilters } from '../model/postFilters';
 import { postListOptions } from '../api/postQueries';
 import { useTogglePostStatus } from '../api/usePostMutations';
 import { ContentStatusBadge } from '@/entities/content-status/ui/StatusBadge';
+import { Badge } from '@/shared/ui/Badge';
 import { BulkDeletePostDialog } from './BulkDeletePostDialog';
 import { BulkStatusPostDialog } from './BulkStatusPostDialog';
 import { BulkMovePostDialog } from './BulkMovePostDialog';
@@ -129,7 +130,11 @@ export function PostTable({ filters }: PostTableProps) {
           ]}
         />
       )}
-      <ListSummary total={data.total} page={data.page} pageSize={data.pageSize} />
+      <ListSummary
+        total={data.total}
+        page={data.page}
+        pageSize={data.pageSize}
+      />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -172,6 +177,11 @@ export function PostTable({ filters }: PostTableProps) {
                     >
                       {post.title}
                     </Link>
+                    {post.isImportant && (
+                      <Badge variant="warning" className="ml-2">
+                        중요
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {post.boardName}
@@ -230,7 +240,11 @@ export function PostTable({ filters }: PostTableProps) {
           </TableBody>
         </Table>
       </div>
-      <ListPagination total={data.total} page={data.page} pageSize={data.pageSize} />
+      <ListPagination
+        total={data.total}
+        page={data.page}
+        pageSize={data.pageSize}
+      />
       <BulkDeletePostDialog
         ids={selectedArray}
         open={bulkDeleteOpen}

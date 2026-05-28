@@ -22,6 +22,7 @@
     "@simple-cms/db": "workspace:*",
     "@simple-cms/editor": "workspace:*",
     "@simple-cms/types": "workspace:*",
+    "@tailwindcss/typography": "^0.5.19",
     "@vercel/speed-insights": "^1.2.0",
     "isomorphic-dompurify": "2.22.0",
     "krds-react": "^1.1.0",

@@ -105,6 +105,7 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
 
   // 2. 참조 엔티티 ID 수집 (LATEST_POSTS만 해당)
   const latestPostsBoardIds = new Set<string>();
+  const latestPostsLimitByBoard = new Map<string, number>();
 
   const parsedSections: Array<{
     id: string;
@@ -142,7 +143,16 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
       case 'LATEST_POSTS': {
         const config = parseLatestPostsConfig(section.configJson);
         if (!config) continue;
-        if (config.boardId) latestPostsBoardIds.add(config.boardId);
+        if (config.boardId) {
+          latestPostsBoardIds.add(config.boardId);
+          latestPostsLimitByBoard.set(
+            config.boardId,
+            Math.max(
+              latestPostsLimitByBoard.get(config.boardId) ?? 0,
+              config.limit,
+            ),
+          );
+        }
         parsedSections.push({ ...section, config });
         break;
       }
@@ -168,7 +178,7 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
   }
 
   // 3. LATEST_POSTS 참조 배치 조회 (N+1 방지)
-  const [boards, latestPostsByBoard] = await Promise.all([
+  const [boards, latestPostGroups] = await Promise.all([
     latestPostsBoardIds.size > 0
       ? prisma.board.findMany({
           where: {
@@ -179,27 +189,32 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
         })
       : Promise.resolve([]),
     latestPostsBoardIds.size > 0
-      ? prisma.post.findMany({
-          where: {
-            boardId: { in: Array.from(latestPostsBoardIds) },
-            status: 'PUBLISHED',
-            board: { isPublic: true },
-          },
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            publishedAt: true,
-            boardId: true,
-            board: { select: { slug: true, name: true } },
-          },
-          orderBy: { publishedAt: 'desc' },
-          take: 60, // 최대 6 섹션 × 10 limit
-        })
+      ? Promise.all(
+          Array.from(latestPostsBoardIds).map((boardId) =>
+            prisma.post.findMany({
+              where: {
+                boardId,
+                status: 'PUBLISHED',
+                board: { isPublic: true },
+              },
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                publishedAt: true,
+                boardId: true,
+                board: { select: { slug: true, name: true } },
+              },
+              orderBy: [{ isImportant: 'desc' }, { publishedAt: 'desc' }],
+              take: latestPostsLimitByBoard.get(boardId) ?? 0,
+            }),
+          ),
+        )
       : Promise.resolve([]),
   ]);
 
   const boardMap = new Map(boards.map((b) => [b.id, b]));
+  const latestPostsByBoard = latestPostGroups.flat();
   const postsByBoard = new Map<string, typeof latestPostsByBoard>();
   for (const post of latestPostsByBoard) {
     const existing = postsByBoard.get(post.boardId) ?? [];
