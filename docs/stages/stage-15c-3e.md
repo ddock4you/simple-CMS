@@ -16,8 +16,8 @@ design.md §7 AlertDialog 항목에 size 토큰 3-tier(`confirm | default | wide
 | `features/media-management/ui/DeleteMediaDialog.tsx` | `className="max-w-lg"` → `size="default"` |
 | `features/subpage-version/ui/RestoreVersionAlertDialog.tsx` | `className="sm:max-w-md"` 제거 (confirm 기본값으로 흡수) |
 | `apps/admin/design.md` | §7 Dialog → Dialog/AlertDialog 분리 + size 토큰 표 신설 |
-| `apps/admin/CLAUDE.md` | AlertDialog wrapper 패턴 안내 갱신 (size 3-tier 설명 추가) |
-| `CLAUDE.md` (루트) | Stage 15c-3e 행 추가 |
+| `apps/admin/AGENTS.md` | AlertDialog wrapper 패턴 안내 갱신 (size 3-tier 설명 추가) |
+| `AGENTS.md` (루트) | Stage 15c-3e 행 추가 |
 | `docs/stages/stage-15c-3e.md` | 이 파일 (신규) |
 
 ## size 토큰 설계

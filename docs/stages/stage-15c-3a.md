@@ -11,8 +11,8 @@ design.md를 admin 시각 결정의 단일 진실원(SSOT)으로 격상하기 �
 | `apps/admin/scripts/verify-design-tokens.mjs` | **신규** — oklch↔hex ΔE2000 검증 스크립트 |
 | `apps/admin/app/globals.css` | success/warning 토큰 신설 (`:root` + `.dark` + `@theme inline`) |
 | `apps/admin/design.md` | YAML colors 22토큰 정합 + 프로즈 전체 업데이트 + 부록B |
-| `apps/admin/CLAUDE.md` | success/warning + design:verify 안내 추가 |
-| `CLAUDE.md` (루트) | Stage 15c-3a 행 추가 |
+| `apps/admin/AGENTS.md` | success/warning + design:verify 안내 추가 |
+| `AGENTS.md` (루트) | Stage 15c-3a 행 추가 |
 
 ## A1 — verify-design-tokens.mjs
 

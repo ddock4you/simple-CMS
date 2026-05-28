@@ -57,4 +57,4 @@
   - Board `/board/free-board` → Organization + WebSite + BreadcrumbList 3개 확인
   - ⚠️ Post `/board/free-board/sdfgsdfg` → 500 확인. 원인: 사용자 dev server가 `pnpm db:generate` 이전에 시작되어 Prisma client에 Post.seoTitle/seoDescription/content 필드 누락. Dev server 재시작 후 정상 동작 예상. Stage 9 코드 자체는 `pnpm typecheck` 녹색으로 정적 보증 완료
 
-- 상세 계획 문서: [`C:/Users/ddock/.claude/plans/cms-enchanted-koala.md`](../../../Users/ddock/.claude/plans/cms-enchanted-koala.md) (Stage 9 섹션)
+- 상세 계획 문서: [`C:/Users/ddock/local plan files/cms-enchanted-koala.md`](../../../Users/ddock/local plan files/cms-enchanted-koala.md) (Stage 9 섹션)

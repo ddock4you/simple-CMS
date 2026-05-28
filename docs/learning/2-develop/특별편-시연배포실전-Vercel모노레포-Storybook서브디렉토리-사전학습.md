@@ -163,7 +163,7 @@ await fetch(BOOTSTRAP_ENDPOINT, { method: 'POST' });
 const BOOTSTRAP_ENDPOINT = '/_cms/admin/api/demo/bootstrap';
 ```
 
-이는 admin CLAUDE.md에 명시되어 있는 정책이지만, 코드 주석에 "admin은 basePath 자동 prepend"라는 잘못된 가정이 박혀 발견되기 어려운 함정.
+이는 admin AGENTS.md에 명시되어 있는 정책이지만, 코드 주석에 "admin은 basePath 자동 prepend"라는 잘못된 가정이 박혀 발견되기 어려운 함정.
 
 #### 이 프로젝트에서의 적용
 

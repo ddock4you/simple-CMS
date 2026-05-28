@@ -32,16 +32,16 @@ PageToolbar 상단 슬롯의 폼 컨트롤들이 1~5px 어긋나는 잔여 불�
 | 파일 | 변경 유형 | 내용 |
 |---|---|---|
 | `apps/admin/design.md` | 수정 | §4.5 신설 + §7 height 컬럼 + Button wrapper 정책 + §8 Do/Don't + 부록 B |
-| `apps/admin/CLAUDE.md` | 수정 | UI 전략에 Button wrapper + 폼 컨트롤 height 단락 추가 |
-| `CLAUDE.md` (루트) | 수정 | Stage 15c-3f 행 추가 |
-| `.claude/commands/create-feature.md` | 수정 | 폼 컨트롤 size 1줄 추가 |
-| `.claude/commands/review-code.md` | 수정 | 폼 컨트롤 height 체크리스트 항목 추가 |
+| `apps/admin/AGENTS.md` | 수정 | UI 전략에 Button wrapper + 폼 컨트롤 height 단락 추가 |
+| `AGENTS.md` (루트) | 수정 | Stage 15c-3f 행 추가 |
+| `docs/codex/commands/create-feature.md` | 수정 | 폼 컨트롤 size 1줄 추가 |
+| `docs/codex/commands/review-code.md` | 수정 | 폼 컨트롤 height 체크리스트 항목 추가 |
 
 ## 결정 사항
 
 | 결정 | 선택 | 사유 |
 |---|---|---|
-| shadcn/button.tsx 처리 | **무수정 유지** | `apps/admin/CLAUDE.md` 정책 — "shadcn/ui 컴포넌트는 직접 코드 수정 금지" |
+| shadcn/button.tsx 처리 | **무수정 유지** | `apps/admin/AGENTS.md` 정책 — "shadcn/ui 컴포넌트는 직접 코드 수정 금지" |
 | sm size 처리 | `cn('h-8', className)` override in wrapper | Tailwind merge 후승으로 h-7 대체 |
 | 인라인 테이블 토글 | **영구 예외 유지** | 행 density 유지 목적 |
 | AuditEntityType 마이그레이션 | `pnpm db:push` 사용 | 프로젝트 정책 — `migrate dev` 금지 |

@@ -534,7 +534,7 @@ if (existing) return { media: existing, reused: true }; // 파일 저장 + 새 �
 | 문서                         | 책임                                                            |
 | ---------------------------- | --------------------------------------------------------------- |
 | `apps/admin/design.md`       | 시각 결정 (색·타이포·간격·라운드·primitives) — Stitch lint 가능 |
-| `apps/admin/CLAUDE.md`       | 운영 정책 (권한·감사로그·페이지 레이아웃 패턴)                  |
+| `apps/admin/AGENTS.md`       | 운영 정책 (권한·감사로그·페이지 레이아웃 패턴)                  |
 | `apps/admin/.storybook/`     | 실물 컴포넌트 시각 검증 + 인터랙션 회귀                         |
 | `apps/admin/app/globals.css` | **runtime 진실원** — oklch 토큰 `:root` + `.dark` 페어          |
 
@@ -855,12 +855,12 @@ simple-cms/
 │   │   ├── scripts/          # verify-design-tokens.mjs (ΔE2000)
 │   │   ├── .storybook/       # 2-track 테스트 인프라 + fetchStubDecorator
 │   │   ├── design.md         # 시각 결정 SSOT (Stitch DESIGN.md 형식)
-│   │   └── CLAUDE.md         # 운영 정책 + Stage 진행
+│   │   └── AGENTS.md         # 운영 정책 + Stage 진행
 │   └── web/                  # 공개 웹 (Next.js 16, port 3000)
 │       ├── app/              # App Router (SSR 페이지)
 │       ├── src/              # FSD 정석 6레이어
 │       │   ├── pages/widgets/features/entities/shared/
-│       └── CLAUDE.md         # KRDS 통합 + Tiptap 렌더링
+│       └── AGENTS.md         # KRDS 통합 + Tiptap 렌더링
 ├── packages/
 │   ├── db/                   # Prisma schema + client + DEMO extension
 │   │   ├── prisma/           # schema.prisma + seed + demo-seed + migrations
@@ -891,9 +891,9 @@ simple-cms/
 
 ### 마스터 문서
 
-- **[`CLAUDE.md`](CLAUDE.md)** — 도메인 모델 / 운영 정책 / Stage 진행 표 / 시연 모드 격리 인프라 (모든 결정의 마스터)
-- **[`apps/admin/CLAUDE.md`](apps/admin/CLAUDE.md)** — admin 권한 / API Route 패턴 / 페이지 레이아웃 / 운영 UX
-- **[`apps/web/CLAUDE.md`](apps/web/CLAUDE.md)** — KRDS 통합 / Tiptap 렌더 / 도메인 프록시 / SEO
+- **[`AGENTS.md`](AGENTS.md)** — 도메인 모델 / 운영 정책 / Stage 진행 표 / 시연 모드 격리 인프라 (모든 결정의 마스터)
+- **[`apps/admin/AGENTS.md`](apps/admin/AGENTS.md)** — admin 권한 / API Route 패턴 / 페이지 레이아웃 / 운영 UX
+- **[`apps/web/AGENTS.md`](apps/web/AGENTS.md)** — KRDS 통합 / Tiptap 렌더 / 도메인 프록시 / SEO
 - **[`apps/admin/design.md`](apps/admin/design.md)** — 시각 결정 단일 진실원 (색·타이포·간격·primitives + Apple 영감 부록)
 
 ### 설계 문서

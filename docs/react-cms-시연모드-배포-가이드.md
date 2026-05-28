@@ -690,7 +690,7 @@ dotenv -e .env.demo -- pnpm demo:import ./snapshot.json
 | Vercel web 빌드: `Failed to collect page data ... DATABASE_URL environment variable is not set` + Turbo warning `missing from "turbo.json"` | Vercel 자동 감지로 `turbo run build` 실행 → Turborepo env sandbox가 환경변수 차단. Root Directory 수정 시 Build/Install Command가 자동 reset됨 | Vercel Dashboard → Settings → Build & Development Settings에서 **Override 토글 켜고** Build Command(`cd ../.. && pnpm --filter @simple-cms/web build:demo`) + Install Command(`cd ../.. && pnpm install --frozen-lockfile`) 명시 입력 |
 | Vercel web 빌드: `The file ".next/routes-manifest.json" couldn't be found` + path가 admin을 가리킴 | web 프로젝트의 Root Directory가 `apps/admin`으로 잘못 설정 | Vercel Dashboard → Settings → General → Root Directory를 `apps/web`으로 변경 + Build/Install Command 재설정 (자동 reset되므로 위 행 참조) |
 | `/_cms/admin` 접속 시 `ERR_TOO_MANY_REDIRECTS` (모두 308 + Location `/_cms/admin`) | web rewrites `:path*`이 empty match 시 destination을 trailing slash로 만들고 admin Vercel CDN의 자동 trailing slash 정규화와 충돌 | `apps/web/next.config.ts` rewrites 배열의 첫 룰로 `{ source: '/_cms/admin', destination: ${adminRewriteUrl}/_cms/admin/dashboard }` 명시 (`/_cms/admin/:path*` catch-all 위에) |
-| admin splash 진입 시 콘솔 `POST /api/demo/bootstrap 404` + "일시적 오류" | `apps/admin/app/demo-bootstrap/DemoBootstrapClient.tsx`의 `BOOTSTRAP_ENDPOINT`가 basePath 누락 (`/api/demo/bootstrap`) | `/_cms/admin/api/demo/bootstrap` 명시. Next.js client-side fetch는 basePath 자동 prepend 안 함 (admin CLAUDE.md 명시 정책) |
+| admin splash 진입 시 콘솔 `POST /api/demo/bootstrap 404` + "일시적 오류" | `apps/admin/app/demo-bootstrap/DemoBootstrapClient.tsx`의 `BOOTSTRAP_ENDPOINT`가 basePath 누락 (`/api/demo/bootstrap`) | `/_cms/admin/api/demo/bootstrap` 명시. Next.js client-side fetch는 basePath 자동 prepend 안 함 (admin AGENTS.md 명시 정책) |
 | Storybook (`/_cms/storybook/admin`) 빈 화면 + manager asset 404 (sb-manager/sb-addons) | `.storybook/main.ts`에 base path 미설정 → vite preview만 절대 path 됨, manager builder는 `./sb-manager/...` relative 그대로 박힘 → trailing slash 없는 URL에서 부모 디렉토리로 resolve | `bundle-storybooks.mjs`가 4-layer 처리: (1) `STORYBOOK_BASE_PATH` env로 viteFinal `config.base` 주입 (2) HTML `src=`/`href=` 절대 path 치환 (3) inline ES module `import './...'` 절대 path 치환 (4) `<base href>` 명시 주입 |
 | Storybook 사이드 메뉴 오류 + 콘솔에 `NEXT_REDIRECT;/demo-bootstrap?next=%2F_cms%2Fstorybook%2Findex.json` | Storybook이 stories 목록용 `fetch('./index.json')` 호출 → base URL이 sub-dir 부모로 해석되어 `/_cms/storybook/index.json` 요청 → web Next.js layout gate가 splash로 redirect | bundle-storybooks 4-layer fix의 `<base href>` 주입(4)이 모든 JS fetch / CSS url() 안전망 — index.html에 `<base href="/_cms/storybook/{name}/" />` 1줄 |
 | `pnpm db:push` P1013 `invalid port number in database URL`              | 비밀번호 특수문자(`:`, `@`, `/`, `?`, `#`) 미인코딩 또는 Supabase 복사 시 `[YOUR-PASSWORD]` placeholder 미치환 | Supabase Dashboard → Project Settings → Database → **Reset database password** → 영숫자만 사용. `.env` 양쪽 URL과 Vercel admin/web 환경변수 동시 갱신 |
@@ -713,6 +713,6 @@ dotenv -e .env.demo -- pnpm demo:import ./snapshot.json
 
 ## 참고
 
-- 시연 모드 정책 단일 출처: 루트 `CLAUDE.md` "시연 모드 격리 인프라" 섹션
-- 상세 명세: `C:\Users\ddock\.claude\plans\cms-purrfect-lerdorf.md` (v3 — Supabase 단일 PostgreSQL 스택)
-- PR별 진행 상황: 루트 `CLAUDE.md`의 "진행 단계 (시연 모드 구현 로드맵)" 표
+- 시연 모드 정책 단일 출처: 루트 `AGENTS.md` "시연 모드 격리 인프라" 섹션
+- 상세 명세: `docs/react-cms-시연모드-배포-가이드.md` (v3 — Supabase 단일 PostgreSQL 스택)
+- PR별 진행 상황: 루트 `AGENTS.md`의 "진행 단계 (시연 모드 구현 로드맵)" 표

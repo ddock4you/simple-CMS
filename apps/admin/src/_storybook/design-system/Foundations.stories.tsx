@@ -230,7 +230,7 @@ export const SsotPolicy: Story = {
               { src: 'Runtime (실제 렌더)', file: 'apps/admin/app/globals.css', cons: 'shadcn 28개 컴포넌트 · 모든 utility class' },
               { src: '디자이너/PM 합의', file: 'apps/admin/design.md (YAML frontmatter)', cons: 'design:verify · 디자이너 리뷰 · Stage 진행 결정' },
               { src: '카탈로그 인덱스', file: 'src/_storybook/design-system/lib/tokenList.ts', cons: 'Storybook stories (이 페이지 포함)' },
-              { src: '운영 정책', file: 'apps/admin/CLAUDE.md', cons: '에이전트 · 신규 기능 개발 가이드' },
+              { src: '운영 정책', file: 'apps/admin/AGENTS.md', cons: '에이전트 · 신규 기능 개발 가이드' },
               { src: 'wrapper 게이트', file: 'eslint.config.* (no-restricted-imports)', cons: 'shadcn 원본 직접 import 차단' },
             ].map((row, i) => (
               <tr key={row.file} className={i === 0 ? '' : 'border-t'}>

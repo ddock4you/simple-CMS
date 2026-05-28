@@ -169,7 +169,7 @@ await fetch(BOOTSTRAP_ENDPOINT, { method: 'POST' });
 // → page origin 기준 → https://web/api/demo/bootstrap → 404
 ```
 
-이전 코드의 주석에 "admin은 basePath 자동 prepend"라는 **잘못된 가정**이 박혀 있었음. admin CLAUDE.md에는 명확히 "Next.js fetch는 basePath 자동 prepend 안 함"이 명시되어 있지만, 코드 주석이 반대로 적혀 있어 발견되기 어려운 함정.
+이전 코드의 주석에 "admin은 basePath 자동 prepend"라는 **잘못된 가정**이 박혀 있었음. admin AGENTS.md에는 명확히 "Next.js fetch는 basePath 자동 prepend 안 함"이 명시되어 있지만, 코드 주석이 반대로 적혀 있어 발견되기 어려운 함정.
 
 #### 프로젝트 코드에서의 적용
 
@@ -520,7 +520,7 @@ Vercel은 모든 PR에 preview deploy를 자동 생성합니다. master에 push�
 - **이 프로젝트의 단일 출처**:
   - `docs/learning/2-develop/특별편-시연배포실전-Vercel모노레포-Storybook서브디렉토리-사전학습.md` — 개념 + 동작 원리 + 레거시 대조표
   - `docs/react-cms-시연모드-배포-가이드.md` 부록 B "실전 배포 디버깅" — 11종 함정 표
-  - 루트 `CLAUDE.md` "Storybook 시연 동봉" + "실전 Vercel 배포 함정" 섹션
+  - 루트 `AGENTS.md` "Storybook 시연 동봉" + "실전 Vercel 배포 함정" 섹션
   - 메모리 `project_demo_deployment_pitfalls.md` — 배포 전 체크리스트
 - **외부 문서**:
   - [Vercel Monorepos 가이드](https://vercel.com/docs/monorepos) — Root Directory · Build Command 동작

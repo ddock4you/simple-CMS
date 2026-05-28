@@ -14,7 +14,7 @@
   - `apps/web/app/api/feedback/route.ts` 신규 `POST` 엔드포인트, runtime nodejs (createHash 사용)
   - 검증 순서: (1) Zod body 파싱 → (2) preview 쿠키 헤더 차단 (운영자 미리보기에서 통계 오염 방지) → (3) `subpage.status === 'PUBLISHED' && feedbackEnabled === true` 게이트 → (4) `(ipAddressHash, subpageId, createdAt >= now-24h)` rate limit (DB 쿼리, 429) → (5) `positiveReasons` 화이트리스트 subset 검증 → (6) `sha256(ip + FEEDBACK_IP_SALT)` 해시화 → (7) `prisma.subpageFeedback.create`
   - **IP raw 저장 금지** — 한국 공공 사이트 컴플라이언스. `.env.example`에 `FEEDBACK_IP_SALT=replace-me-with-strong-random-hex` 추가, 운영 배포 전 강한 랜덤 값으로 교체. salt rotation 시 기존 24h rate limit 윈도우는 초기화됨 (의도적 — rotation은 운영 사고 대응이라 rate limit이 다소 느슨해져도 보안 우선)
-  - **감사 로그 생략**: 익명 사용자의 입수 이벤트는 관리 액션이 아니므로 route handler 상단에 `// 감사 로그 생략: 익명 사용자의 피드백 입수 이벤트` 주석 명시 (CLAUDE.md "기본 로깅 원칙"의 예외 사례)
+  - **감사 로그 생략**: 익명 사용자의 입수 이벤트는 관리 액션이 아니므로 route handler 상단에 `// 감사 로그 생략: 익명 사용자의 피드백 입수 이벤트` 주석 명시 (AGENTS.md "기본 로깅 원칙"의 예외 사례)
   - **rate limit 미적용 케이스**: IP 추출 실패 시 ipAddressHash=null로 저장하되 rate limit 쿼리는 skip. 보안 민감 시점에는 IP 누락 자체를 403 거부할 수도 있으나 현재는 관대 쪽
 
 - **Phase 3 — Web 위젯 (KRDS 스타일)**
@@ -77,4 +77,4 @@
   - admin에서 피드백 DELETE → audit log `SUBPAGE_FEEDBACK DELETE` 이벤트 + before 스냅샷 표시 — 수동 검증 항목
   - **recharts ResponsiveContainer**: Next.js 16 + React 19.2 + Turbopack 환경에서 hydration warning 또는 client-only 마운트 race 가능성 → 첫 dev 서버 기동 시 console 확인 권장
 
-- 상세 계획 문서: [`C:/Users/ddock/.claude/plans/snuggly-wobbling-whisper.md`](../../../Users/ddock/.claude/plans/snuggly-wobbling-whisper.md)
+- 상세 계획 문서: [`C:/Users/ddock/local plan files/snuggly-wobbling-whisper.md`](../../../Users/ddock/local plan files/snuggly-wobbling-whisper.md)

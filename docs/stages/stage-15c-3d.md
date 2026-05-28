@@ -16,7 +16,7 @@ design.md §7 spec(`{components.card}`: `{rounded.lg}` + 24px padding, `{typogra
 | `apps/admin/src/features/subpage-feedback/ui/FeedbackBySubpageTable.tsx` | CardTitle `className="text-base"` 제거 |
 | `apps/admin/src/features/subpage-version/ui/RecentVersionsCard.tsx` | CardTitle `className="... text-base"` 에서 `text-base` 제거 |
 | `apps/admin/design.md` | §7 Card + Field 패턴에 StatCard 예외 1줄 추가 |
-| `CLAUDE.md` (루트) | Stage 15c-3d 행 추가 |
+| `AGENTS.md` (루트) | Stage 15c-3d 행 추가 |
 | `docs/stages/stage-15c-3d.md` | 이 파일 (신규) |
 
 ## 변경 상세

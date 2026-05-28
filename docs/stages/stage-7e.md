@@ -14,4 +14,4 @@
   - swiper의 `observer`/`observeParents` 옵션은 사용 안 함 (내부 observer + update가 race 시 22M로 갱신되는 케이스 회피). `watchOverflow`만 유지
 - **Hero 전용 CSS width guard**: Hero는 `slidesPerView=1` 고정이므로 `<section data-hero-carousel>` + globals.css의 `[data-hero-carousel] .swiper-slide { width: 100% !important; flex-shrink: 0; }` 이중 안전망
 - **Recommended 섹션 breakpoint별 width guard**: `slidesPerView` 가변(mobile 1 / tablet 2 / desktop 3)이라 `.home-recommended .swiper-slide`에 viewport별 `calc()` width 강제 (`768px+: calc((100% - 16px) / 2)`, `1024px+: calc((100% - 40px) / 3)`). RecommendedSection.tsx의 `breakpoints` prop + `spaceBetween`과 1:1 동기화 필요 — 변경 시 globals.css도 함께 수정
-- **진단 경험**: 변환 전엔 정상이었던 이유가 legacy CSS가 있어서가 아니라 swiper의 mount 측정이 우연히 안정된 layout에 걸렸던 것. 재방문(client-side nav) 시에는 layout이 이미 안정화돼 있어 mount 측정이 항상 성공 — 이 패턴이 "첫 방문 vs 재방문" 증상 차이의 원인 ([계획 문서](../../../Users/ddock/.claude/plans/krds-encapsulated-wind.md) 참조)
+- **진단 경험**: 변환 전엔 정상이었던 이유가 legacy CSS가 있어서가 아니라 swiper의 mount 측정이 우연히 안정된 layout에 걸렸던 것. 재방문(client-side nav) 시에는 layout이 이미 안정화돼 있어 mount 측정이 항상 성공 — 이 패턴이 "첫 방문 vs 재방문" 증상 차이의 원인 ([계획 문서](../../../Users/ddock/local plan files/krds-encapsulated-wind.md) 참조)

@@ -35,12 +35,12 @@
   - `playwright.config.ts`의 CI retries `1 → 2` (flakiness buffer)
   - **워크플로우 분리 결정**: e2e는 평균 15-20분 + Playwright + server spawn이라 `cancel-in-progress: false` 필요. ci.yml의 PR-level fast feedback과 lifecycle 정책이 달라 분리. demo-keepalive도 짧고 자주 도는 ping이라 별도
 
-- **8d — 운영 self-host 배포 가이드 + README + CLAUDE.md Docker 섹션**
+- **8d — 운영 self-host 배포 가이드 + README + AGENTS.md Docker 섹션**
   - `docs/react-cms-운영-배포-가이드.md` 신설 (10장 + 3 부록, 시연 가이드 형식 차용)
     - 0 사전 준비물 → 1 Quick start 5분 → 2 환경변수 마스터 → 3 초기 배포 상세 → 4 Storage 모드 선택(local volume vs Supabase) → 5 PGroonga 검증/재구축 → 6 `db:push → migrate deploy` 전환(baseline) → 7 백업/복원 → 8 모니터링 → 9 업데이트 → 10 문제 해결 9건
     - 부록: A 호스트별 명령(Win/Linux/macOS), B 보안 체크리스트 9개, C 관련 문서
   - `README.md` (루트 신설) — two-track quick start (운영 docker compose / 시연 Vercel) + 개발 명령어 + 기술 스택 + 프로젝트 구조
-  - `apps/admin/CLAUDE.md` + `apps/web/CLAUDE.md` "Docker 배포 (Stage 8a)" 섹션 추가 — Dockerfile 구조 + next.config standalone 핵심 옵션 + storage 어댑터 Docker 환경 분기 (admin) / `public/` COPY 필수 + `/uploads/*` 정적 서빙 + DB 접근 독립성 유지 (web)
+  - `apps/admin/AGENTS.md` + `apps/web/AGENTS.md` "Docker 배포 (Stage 8a)" 섹션 추가 — Dockerfile 구조 + next.config standalone 핵심 옵션 + storage 어댑터 Docker 환경 분기 (admin) / `public/` COPY 필수 + `/uploads/*` 정적 서빙 + DB 접근 독립성 유지 (web)
   - **자동화 < 명시 절차의 사례 기록**: pgroonga-setup의 initdb.d 자동화 포기 → 가이드 3장 절차 명시 + 10장 문제 해결로 등록. "자동화 안 함"도 설계 결정
 
 ## 핵심 함정 메모
@@ -61,7 +61,7 @@
 | 8a | — | Dockerfile 2개 + .dockerignore + docker-compose 확장 + next.config standalone + .env.example 보강 |
 | 8b | 무관 (병행 가능) | ci.yml build matrix + packages-typecheck job + cache step + packages tsconfig/package.json + snapshotWalker.test 수정 |
 | 8c | 8a 의존 (e2e가 db/admin/web 환경 활용) | e2e.yml + demo-keepalive.yml + ci.yml e2e 제거 + auth.spec.ts + playwright.config |
-| 8d | 8a~c (검증된 인프라 기반) | 운영 가이드 + README + admin/web CLAUDE.md Docker 섹션 |
+| 8d | 8a~c (검증된 인프라 기반) | 운영 가이드 + README + admin/web AGENTS.md Docker 섹션 |
 
 실제 진행은 8a → 8b → 8c → 8d 순차. 8a 검증으로 docker compose 3-컨테이너 동작 확인 후 나머지 진행. 8b는 8a와 병행 가능하나 분리 commit 단위로 명확화.
 

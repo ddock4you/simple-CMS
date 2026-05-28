@@ -23,8 +23,8 @@
 | `apps/admin/src/features/subpage-version/ui/RecentVersionsCard.tsx` | text-amber-600 → text-warning (pin 아이콘) |
 | `apps/admin/src/features/subpage-version/ui/VersionHistoryDialog.tsx` | text-amber-600 → text-warning (pin 아이콘) |
 | `apps/admin/src/features/subpage-version/ui/VersionDetailDialog.tsx` | bg-red-50/60 + bg-emerald-50/60 → bg-destructive/10 + bg-success/10 (diff 셀) |
-| `apps/admin/CLAUDE.md` | Badge wrapper + chartColors 패턴 안내 추가 |
-| `CLAUDE.md` (루트) | Stage 15c-3b 행 추가 |
+| `apps/admin/AGENTS.md` | Badge wrapper + chartColors 패턴 안내 추가 |
+| `AGENTS.md` (루트) | Stage 15c-3b 행 추가 |
 | `docs/stages/stage-15c-3b.md` | 이 파일 (신규) |
 
 ## B1 — Badge wrapper

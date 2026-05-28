@@ -15,7 +15,7 @@ playwright-report
 test-results
 
 # IDE/에디터/로컬 도구 잔재
-.claude
+.agents
 .vscode
 .idea
 *.log

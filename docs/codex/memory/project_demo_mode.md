@@ -63,4 +63,4 @@ originSessionId: 1a163919-6e9b-4728-9ba3-889a763293fa
 - PR7 완료: Admin UI (`/settings/demo-snapshot`)
 - 시연 가이드 + 코드 정합성은 `docs/react-cms-시연모드-배포-가이드.md` 11장 + 루트 AGENTS.md "시연 모드" 섹션 단일 출처
 - Storybook 시연 동봉은 별도 메모리 `project_build_demo_bundling.md` 참조 (PR5+와 직교)
-- 상세 명세: `C:\Users\ddock\.claude\plans\cms-purrfect-lerdorf.md`
+- 상세 명세: `docs/react-cms-시연모드-배포-가이드.md`

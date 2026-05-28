@@ -8,4 +8,4 @@
   - web `SubpageBlockRenderer.tsx` + `shared/lib/renderContent.ts`: 각 파일의 private `IFRAME_ALLOWED_HOSTS` + 자체 호스트 검증 헬퍼(`isIframeSrcAllowed`/`isAllowedIframeSrc`) 제거, `@simple-cms/types`의 `isIframeHostAllowed` import
   - 효과: 호스트 리스트 정책 변경 시 3곳 동기화 필요 → 1곳으로 수렴. Stage 7b "공유 모듈 추출은 Stage 8+ 과제" 약속을 실제로 이행
 - **stale artifact 주의**: admin의 `.next/types/validator.ts`가 기존 `/api/home-popups/references/route.js` 참조를 캐싱하고 있어 rename 후 typecheck 실패. `rm -rf apps/admin/.next/types` 후 재검증으로 해소
-- **검증**: `pnpm typecheck` + `pnpm lint` 모두 녹색 (admin 56 + web 33 = **89 tests 유지**). `rg "/api/home-popups/references"` 결과 CLAUDE.md/route.ts 주석 제외 실행 코드 0건, `rg "IFRAME_ALLOWED_HOSTS"` 정의 1곳(packages/types) + re-export/import만 남음
+- **검증**: `pnpm typecheck` + `pnpm lint` 모두 녹색 (admin 56 + web 33 = **89 tests 유지**). `rg "/api/home-popups/references"` 결과 AGENTS.md/route.ts 주석 제외 실행 코드 0건, `rg "IFRAME_ALLOWED_HOSTS"` 정의 1곳(packages/types) + re-export/import만 남음

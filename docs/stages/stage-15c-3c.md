@@ -15,8 +15,8 @@
 | `apps/admin/src/pages/profile/ui/ProfilePage.tsx` | `<h1 className="text-2xl font-bold">` + `<p>` → `<PageHeader title description />` |
 | `apps/admin/src/pages/navigation-management/ui/NavigationEditClient.tsx` | `<h1>` + ArrowLeft + `<p>` → `<PageHeader back title description actions />` |
 | 24개 호출처 | import 경로 1줄 (`shadcn/alert-dialog` → `AlertDialog`) |
-| `apps/admin/CLAUDE.md` | AlertDialog wrapper 패턴 안내 추가 |
-| `CLAUDE.md` (루트) | Stage 15c-3c 행 추가 |
+| `apps/admin/AGENTS.md` | AlertDialog wrapper 패턴 안내 추가 |
+| `AGENTS.md` (루트) | Stage 15c-3c 행 추가 |
 | `docs/stages/stage-15c-3c.md` | 이 파일 (신규) |
 
 ### 24개 호출처 파일 목록

@@ -8,7 +8,7 @@ import { createSettingsCache } from './createSettingsCache';
  *
  * SiteSettings 6개 키 + 3개 Media join 결과를 인메모리 캐시.
  * admin → web 별 인스턴스라 즉시 invalidate 불가.
- * TTL 만료 후 자연 갱신. UI/CLAUDE.md에 "최대 1분 후 반영" 명시.
+ * TTL 만료 후 자연 갱신. UI/AGENTS.md에 "최대 1분 후 반영" 명시.
  */
 export interface Branding {
   siteName: string;

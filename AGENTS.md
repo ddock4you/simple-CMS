@@ -445,7 +445,7 @@ apps/{앱}/
 
 **`__SEED__` 미존재 시**: cloneSeedToSession이 `SeedNotFoundError` throw → bootstrap API 503 + `{code:'SEED_NOT_FOUND'}` → splash가 운영자 안내 + [다시 시도] 표시. 운영자가 `pnpm db:demo-seed` 실행 후 재시도.
 
-상세 명세: `C:\Users\ddock\.claude\plans\cms-purrfect-lerdorf.md`
+상세 명세: `docs/react-cms-시연모드-배포-가이드.md`
 
 ## 라우팅
 
@@ -666,7 +666,7 @@ apps/{앱}/
 
 ### 진행 방식 (PR4~7 패턴 일관)
 
-1. **plan 단계로 시작** — `claude /plan` 또는 plan mode 진입. 사용자가 명시적으로 plan을 요청하지 않더라도 큰 Stage라 plan 작성이 안전
+1. **계획 단계로 시작** — 큰 Stage는 사용자가 명시적으로 계획을 요청하지 않더라도 먼저 작업 계획을 작성하는 편이 안전
 2. Explore agent 1~2개로 현재 인프라 파악:
    - `docker/docker-compose.yml`(이미 PGroonga 컨테이너 존재) + `apps/{admin,web}/Dockerfile` 유무
    - `.github/workflows/` 디렉토리 (Stage 7j에서 만든 admin/web × {lint, typecheck, test} 6 job — 이미 있는지 확인)
@@ -699,8 +699,8 @@ apps/{앱}/
 ### Stage 8 시작 시 첫 명령
 
 ```bash
-# 1. plan mode 진입
-claude /plan
+# 1. 계획 수립
+# Codex에서 먼저 작업 범위와 검증 순서를 정리
 
 # 2. 현재 Docker 인프라 파악 (Explore agent에 위임 권장)
 ls docker/

@@ -31,4 +31,4 @@
   - Post / HomePopup 버전 관리 (동일 패턴 복제)
   - 버전 목록 Excel export
   - debounced 자동 저장 (세션 단위)
-- 상세 계획: [`C:/Users/ddock/.claude/plans/modular-singing-toast.md`](../../../Users/ddock/.claude/plans/modular-singing-toast.md)
+- 상세 계획: [`C:/Users/ddock/local plan files/modular-singing-toast.md`](../../../Users/ddock/local plan files/modular-singing-toast.md)

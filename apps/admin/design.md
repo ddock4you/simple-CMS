@@ -126,7 +126,7 @@ components:
 | 문서 | 책임 |
 |---|---|
 | `apps/admin/design.md` (이 파일) | 시각 결정 (색·타이포·간격·라운드·primitives) · Stitch lint 가능 |
-| `apps/admin/CLAUDE.md` | 운영 정책 (권한·감사로그·페이지 레이아웃 패턴·Stage 진행) |
+| `apps/admin/AGENTS.md` | 운영 정책 (권한·감사로그·페이지 레이아웃 패턴·Stage 진행) |
 | `apps/admin/.storybook/` | 실물 컴포넌트 시각 검증 · 인터랙션 회귀 |
 
 - **runtime 진실원**: `apps/admin/app/globals.css` — oklch 토큰, `:root` + `.dark` 페어. 이 파일이 실제 렌더링을 결정한다.

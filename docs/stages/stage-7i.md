@@ -3,7 +3,7 @@
 Stage 7h에서 이관된 "Swiper 22M 회귀 자동 감지"와 "커스텀 래퍼 showcase"를 처리하고, 사용자 결정에 따라 범위를 **LinkTargetInput의 popup→entities 승격 + home-management 5개 fields 실제 적용**까지 확장. advisor의 "container resize 방식" 제안을 수용해 22M 회귀 감지기의 실효성을 확보.
 
 - **Swiper 22M 회귀 자동 감지 — container resize 방식**: `Web/Shared/Carousel > Regression22M` play function이 `canvasElement.querySelector('.krds-carousel')`의 `style.width`를 400px→800px로 두 번 변경해 **`ResizeObserver` 경로를 강제 트리거**한 뒤 `.swiper-slide`의 `style.width`가 `> 0 && < 2000`인지 assert. `window.resizeTo`는 Playwright Chromium headless에서 동작하지 않으므로 채택 안 함. **진짜 회귀 감지**: Stage 7e 버그는 Pretendard CDN + KRDS Header async layout shift race condition에 의존했는데 Storybook 환경에선 timing이 안정적이라 단순 mount만으론 재현 불가 — container resize로 3층 defensive triggers 중 최소 하나(ResizeObserver.observe)를 실제로 밟아야 회귀 감지기 역할 충족 (advisor 피드백). Carousel.tsx 컴포넌트는 변경 없음, 기존 `containerRef`/`swiperRef`는 internal 유지
-- **LinkTargetInput 승격 (popup-management → entities/link-target)**: CLAUDE.md Stage 5b가 "popup/section 양쪽 재사용"을 의도했으나 section은 raw `<Input register('items.X.url')>` 자유 입력만 쓰던 상태였음. Stage 7i에서 실제로 양쪽 재사용 구조 완성:
+- **LinkTargetInput 승격 (popup-management → entities/link-target)**: AGENTS.md Stage 5b가 "popup/section 양쪽 재사용"을 의도했으나 section은 raw `<Input register('items.X.url')>` 자유 입력만 쓰던 상태였음. Stage 7i에서 실제로 양쪽 재사용 구조 완성:
   - 컴포넌트: `apps/admin/src/features/popup-management/ui/LinkTargetInput.tsx` → `apps/admin/src/entities/link-target/ui/LinkTargetInput.tsx` (FSD 규칙: features 간 import 금지 → entities가 정답)
   - 쿼리: `homePopupReferencesOptions` → `linkTargetReferencesOptions` (이름 변경 + `apps/admin/src/entities/link-target/api/linkTargetReferencesQueries.ts`로 이동)
   - API endpoint `/api/home-popups/references`는 **그대로 유지** (경로 rename은 별도 작업 — entities가 fetch URL string에 의존하는 건 FSD 위반 아님)
