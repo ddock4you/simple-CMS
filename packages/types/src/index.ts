@@ -119,6 +119,18 @@ export type {
 
 export type { SiteSettingKey } from './domain/siteSettings.types';
 export { SITE_SETTING_KEYS } from './domain/siteSettings.types';
+export type {
+  SiteFooterBottomLink,
+  SiteFooterConfig,
+  SiteFooterContact,
+  SiteFooterQuickLink,
+  SiteFooterSocialLink,
+  SiteFooterSocialPlatform,
+} from './domain/footer.types';
+export {
+  DEFAULT_SITE_FOOTER_CONFIG,
+  DEFAULT_SITE_FOOTER_IDENTIFIER_TEXT,
+} from './domain/footer.types';
 
 export type {
   CclType,

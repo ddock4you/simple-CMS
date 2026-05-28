@@ -6,6 +6,7 @@ import './krds-normalized.css';
 import { getMenusBySlots } from '@/entities/navigation/api/getNavigation';
 import { getCachedBranding } from '@/shared/lib/brandingCache';
 import { ensureDemoSession } from '@/shared/lib/ensureDemoSession';
+import { getCachedFooterConfig } from '@/shared/lib/footerConfigCache';
 import { getCurrentPathname } from '@/shared/lib/getCurrentPathname';
 import { getSiteUrl } from '@/shared/lib/siteUrl';
 import {
@@ -18,6 +19,10 @@ import { ErrorReporterMount } from '@/shared/ui/ErrorReporterMount';
 import { PageLayout } from '@/widgets/layout/ui/PageLayout';
 
 import './globals.css';
+
+// Footer/branding/site settings are DB-backed but should refresh without redeploy.
+// Keep static rendering benefits while allowing ISR to pick up admin changes.
+export const revalidate = 60;
 
 /**
  * 동적 메타데이터 (Stage 7l).
@@ -78,9 +83,10 @@ export default async function RootLayout({
     ? await ensureDemoSession(await getCurrentPathname())
     : null;
 
-  const [menus, branding, baseUrl] = await Promise.all([
+  const [menus, branding, footerConfig, baseUrl] = await Promise.all([
     getMenusBySlots(['HEADER', 'FOOTER', 'SIDEBAR']),
     getCachedBranding(),
+    getCachedFooterConfig(),
     getSiteUrl(),
   ]);
   const headerMenu = menus.HEADER;
@@ -108,7 +114,9 @@ export default async function RootLayout({
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationJsonLd) }}
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd(organizationJsonLd),
+          }}
         />
         <script
           type="application/ld+json"
@@ -127,6 +135,7 @@ export default async function RootLayout({
               : null
           }
           branding={branding}
+          footerConfig={footerConfig}
         >
           {children}
         </PageLayout>

@@ -216,7 +216,7 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
   - 하나의 메뉴가 여러 슬롯에 동시 배치 가능 (예: 같은 메뉴를 헤더+푸터에 사용)
   - 조회: `getMenuBySlot(slot)` → `prisma.findFirst({ where: { slots: { has: slot } } })`
 - 헤더: `slots`에 HEADER 포함된 메뉴 렌더링 (KRDS Header.MainMenu, 3depth 지원)
-- 푸터: `slots`에 FOOTER 포함된 메뉴 렌더링 (KRDS Footer links)
+- 푸터: KRDS Footer Default 구조 사용. `SITE_FOOTER_CONFIG`가 address/contacts/quickLinks/socialLinks/bottomLinks/identifier/copyright를 제공하고, `slots`에 FOOTER 포함된 메뉴는 KRDS Footer `links`로 렌더링
 - **우측 사이드바 (Stage 7d)**: `slots`에 SIDEBAR 포함된 메뉴가 있을 때만 전체 페이지 우측에 KRDS `InPageNavigation` **스타일**로 렌더
   - KRDS 원본 `InPageNavigation` 컴포넌트는 items의 href를 `document.querySelector(href)`로 소비하는 페이지 내 앵커 전용(외부/경로 URL을 넣으면 SyntaxError). 페이지 링크 네비게이션에는 부적합
   - `widgets/layout/ui/RightSidebar.tsx` — KRDS 원본 컴포넌트 대신 동일 DOM 구조(`.krds-in-page-navigation-type`/`-area`/`.in-page-navigation-header`/`.in-page-navigation-list`)와 CSS 클래스를 차용한 커스텀 JSX로 렌더, `<Link>`/`<a>`로 실제 라우팅
@@ -519,9 +519,14 @@ src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 
 - `openGraph.images = [{ url: ogImageUrl, width: 1200, height: 630, alt: siteName }]`
 - `RootLayout`도 같은 `getCachedBranding()` 호출 — 인메모리 TTL 캐시(60s/5s)로 dedup, 첫 호출만 DB hit
 
-### 푸터 copyright 동기화
+### KRDS Footer 설정
 
-- `PageLayout`이 `branding` prop을 받아 `copyright={`© ${branding.siteName}. All rights reserved.`}` 동적 생성
+- `PageLayout`이 `footerConfig` prop을 받아 KRDS Footer Default 구조(`quickLinks`, `address`, `contacts`, `links`, `socialLinks`, `bottomLinks`, `identifierText`, `copyright`)로 렌더링
+- `apps/web/src/shared/lib/footerConfigCache.ts`가 `SITE_FOOTER_CONFIG` JSON을 인메모리 캐시(60s prod / 5s dev TTL)로 조회. 파싱 실패/조회 실패 시 중립 기본값으로 fallback하며 페이지 렌더를 차단하지 않음
+- `apps/web/app/layout.tsx`는 `export const revalidate = 60`을 명시한다. 운영 모드에서 `/` 정적 prerender 장점을 유지하면서 DB 기반 footer/branding/site settings가 빌드 시점 값으로 영구 고정되지 않게 하는 ISR 안전장치
+- `copyright` 미설정 시 `© ${branding.siteName}. All rights reserved.` 자동 생성
+- `identifierText` 미설정 시 `이 누리집은 공공서비스 제공을 위한 누리집입니다.` fallback
+- 일반 푸터 탐색 링크는 `FOOTER` 슬롯 메뉴에서 관리하고, `bottomLinks`는 개인정보처리방침/저작권 정책 같은 정책 링크 전용
 - Masthead 정부 공식 문구는 무변경
 
 ### `app/favicon.ico` 파일 컨벤션 충돌 주의

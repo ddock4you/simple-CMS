@@ -1,6 +1,6 @@
 'use client';
 
-import { boardKeys } from '@/shared/api/queryKeys';
+import { boardKeys, homeKeys, linkTargetKeys } from '@/shared/api/queryKeys';
 import { createCrudMutations } from '@/shared/api/crudMutations';
 import { createToggleMutation } from '@/shared/api/toggleMutation';
 import type { CreateBoardData, UpdateBoardData } from '../model/boardSchemas';
@@ -18,6 +18,11 @@ const {
   useDelete: useDeleteBoard,
 } = createCrudMutations<CreateBoardData, UpdateBoardData, { id: string }>({
   keys: boardKeys,
+  extraInvalidateKeys: [
+    boardKeys.options(),
+    homeKeys.references(),
+    linkTargetKeys.references(),
+  ],
   endpoints: {
     create: createBoard,
     update: updateBoard,

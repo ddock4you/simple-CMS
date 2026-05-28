@@ -18,11 +18,13 @@ export function createCrudMutations<
   TCreateResult extends { id: string },
 >({
   keys,
+  extraInvalidateKeys,
   endpoints,
   messages,
   routerPaths,
 }: {
   keys: CrudKeys;
+  extraInvalidateKeys?: QueryKey[];
   endpoints: {
     create: (data: TCreateData) => Promise<TCreateResult>;
     update: (id: string, data: TUpdateData) => Promise<unknown>;
@@ -43,6 +45,9 @@ export function createCrudMutations<
       mutationFn: (data: TCreateData) => endpoints.create(data),
       onSuccess: (result) => {
         queryClient.invalidateQueries({ queryKey: keys.lists() });
+        for (const queryKey of extraInvalidateKeys ?? []) {
+          queryClient.invalidateQueries({ queryKey });
+        }
         toast.success(messages.create);
         router.push(routerPaths.afterCreate(result));
       },
@@ -61,6 +66,9 @@ export function createCrudMutations<
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: keys.lists() });
         queryClient.invalidateQueries({ queryKey: keys.detail(id) });
+        for (const queryKey of extraInvalidateKeys ?? []) {
+          queryClient.invalidateQueries({ queryKey });
+        }
         toast.success(messages.update);
         router.push(routerPaths.afterUpdate(id));
       },
@@ -78,6 +86,9 @@ export function createCrudMutations<
       mutationFn: (id: string) => endpoints.delete(id),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: keys.lists() });
+        for (const queryKey of extraInvalidateKeys ?? []) {
+          queryClient.invalidateQueries({ queryKey });
+        }
         toast.success(messages.delete);
         router.push(routerPaths.afterDelete);
       },

@@ -7,6 +7,7 @@ import type { BoardSkinType } from '@simple-cms/db';
 import { KrdsTable } from '@/shared/ui/KrdsTable';
 import { PaginationNav } from '@/shared/ui/PaginationNav';
 import { getPostListNumber } from '../lib/getPostListNumber';
+import { BoardEmptyState } from './BoardEmptyState';
 
 interface PostItem {
   id: string;
@@ -172,7 +173,7 @@ export function BoardPage({ board, posts }: BoardPageProps) {
           />
         </>
       ) : (
-        <p className="empty-message">아직 게시된 글이 없습니다.</p>
+        <BoardEmptyState boardName={board.name} />
       )}
     </div>
   );

@@ -9,6 +9,7 @@ import type {
   BrandingAssetKind,
   UpdateBrandingData,
   UpdateDomainData,
+  UpdateFooterData,
   UpdateSecurityData,
   UpdateSeoData,
   UpdateUploadData,
@@ -19,6 +20,7 @@ import {
   deleteDomainSettings,
   updateBrandingSettings,
   updateDomainSettings,
+  updateFooterSettings,
   updateSecuritySettings,
   updateSeoSettings,
   updateUploadSettings,
@@ -33,7 +35,9 @@ export function useUpdateDomain() {
       queryClient.invalidateQueries({ queryKey: settingsKeys.domain() });
       toast.success('도메인이 저장되었습니다.');
     },
-    onError: (error: FetchError) => { toast.error(error.message); },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
   });
 }
 
@@ -45,7 +49,9 @@ export function useDeleteDomain() {
       queryClient.invalidateQueries({ queryKey: settingsKeys.domain() });
       toast.success('도메인이 삭제되었습니다.');
     },
-    onError: (error: FetchError) => { toast.error(error.message); },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
   });
 }
 
@@ -55,9 +61,15 @@ export function useCheckDns() {
     mutationFn: () => checkDns(),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.domain() });
-      toast.success(result.verified ? 'DNS 검증 성공' : 'DNS 검증 실패 — 레코드를 확인해주세요.');
+      toast.success(
+        result.verified
+          ? 'DNS 검증 성공'
+          : 'DNS 검증 실패 — 레코드를 확인해주세요.',
+      );
     },
-    onError: (error: FetchError) => { toast.error(error.message); },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
   });
 }
 
@@ -70,7 +82,9 @@ export function useUpdateSecurity() {
       queryClient.invalidateQueries({ queryKey: settingsKeys.security() });
       toast.success('보안 설정이 저장되었습니다.');
     },
-    onError: (error: FetchError) => { toast.error(error.message); },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
   });
 }
 
@@ -83,7 +97,9 @@ export function useUpdateUpload() {
       queryClient.invalidateQueries({ queryKey: settingsKeys.upload() });
       toast.success('업로드 설정이 저장되었습니다.');
     },
-    onError: (error: FetchError) => { toast.error(error.message); },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
   });
 }
 
@@ -94,9 +110,13 @@ export function useUpdateBranding() {
     mutationFn: (data: UpdateBrandingData) => updateBrandingSettings(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.branding() });
-      toast.success('브랜딩 설정이 저장되었습니다. 공개 웹에 최대 1분 후 반영됩니다.');
+      toast.success(
+        '브랜딩 설정이 저장되었습니다. 공개 웹에 최대 1분 후 반영됩니다.',
+      );
     },
-    onError: (error: FetchError) => { toast.error(error.message); },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
   });
 }
 
@@ -107,9 +127,13 @@ export function useUpdateSeo() {
     mutationFn: (data: UpdateSeoData) => updateSeoSettings(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.seo() });
-      toast.success('SEO 설정이 저장되었습니다. 공개 웹에 최대 1분 후 반영됩니다.');
+      toast.success(
+        'SEO 설정이 저장되었습니다. 공개 웹에 최대 1분 후 반영됩니다.',
+      );
     },
-    onError: (error: FetchError) => { toast.error(error.message); },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
   });
 }
 
@@ -119,9 +143,29 @@ export function useDeleteBrandingAsset() {
     mutationFn: (kind: BrandingAssetKind) => deleteBrandingAsset(kind),
     onSuccess: (_data, kind) => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.branding() });
-      const label = kind === 'logo' ? '로고' : kind === 'favicon' ? '파비콘' : 'OG 이미지';
+      const label =
+        kind === 'logo' ? '로고' : kind === 'favicon' ? '파비콘' : 'OG 이미지';
       toast.success(`${label}가 제거되었습니다.`);
     },
-    onError: (error: FetchError) => { toast.error(error.message); },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+// Footer
+export function useUpdateFooter() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: UpdateFooterData) => updateFooterSettings(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: settingsKeys.footer() });
+      toast.success(
+        '푸터 설정이 저장되었습니다. 공개 웹에 최대 1분 후 반영됩니다.',
+      );
+    },
+    onError: (error: FetchError) => {
+      toast.error(error.message);
+    },
   });
 }

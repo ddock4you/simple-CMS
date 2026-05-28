@@ -158,6 +158,7 @@ apps/{앱}/
 - 커스텀 도메인: admin에서 공개 웹 도메인을 설정하면 재배포 없이 반영
 - 도메인 설정 시 DNS 검증 기능 제공 (정보성, 차단 아님)
 - 도메인 미설정 시 `NEXT_PUBLIC_SITE_URL` 환경변수로 폴백
+- 공개 웹 푸터: `SITE_FOOTER_CONFIG` JSON 문자열로 KRDS Footer의 address/contacts/quickLinks/socialLinks/bottomLinks/identifier/copyright 표시 데이터를 관리. 일반 푸터 탐색 링크는 기존 메뉴 관리의 `FOOTER` 슬롯을 계속 사용. web 루트 layout은 `revalidate = 60`으로 ISR 반영되어 관리자 변경 후 재배포 없이 최대 1분 내 반영
 - 상세 명세: `docs/react-cms-커스텀-도메인-명세서.md`
 
 ### 동시 로그인 정책
@@ -460,7 +461,8 @@ apps/{앱}/
 `/media`, `/users`, `/profile`,
 `/subpage-feedback`,
 `/audit-logs`, `/error-logs`,
-`/settings`, `/settings/domain`, `/settings/security`, `/settings/upload`, `/settings/roles`
+`/settings`, `/settings/domain`, `/settings/security`, `/settings/upload`, `/settings/roles`,
+`/settings/branding`, `/settings/footer`, `/settings/seo`, `/settings/demo-snapshot`
 
 (에러 로그 상세는 별도 라우트 없이 목록 내 Dialog로 표시)
 

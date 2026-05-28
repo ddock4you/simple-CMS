@@ -4,6 +4,7 @@ import { settingsKeys } from '@/shared/api/queryKeys';
 import {
   getBrandingSettings,
   getDomainSettings,
+  getFooterSettings,
   getSecuritySettings,
   getSeoSettings,
   getUploadSettings,
@@ -31,6 +32,12 @@ export const brandingSettingsOptions = () =>
   queryOptions({
     queryKey: settingsKeys.branding(),
     queryFn: () => getBrandingSettings(),
+  });
+
+export const footerSettingsOptions = () =>
+  queryOptions({
+    queryKey: settingsKeys.footer(),
+    queryFn: () => getFooterSettings(),
   });
 
 export const seoSettingsOptions = () =>

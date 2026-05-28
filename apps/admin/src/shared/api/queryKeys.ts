@@ -36,7 +36,8 @@ export const postKeys = {
 export const navigationKeys = {
   all: ['navigation'] as const,
   lists: () => [...navigationKeys.all, 'list'] as const,
-  detail: (menuId: string) => [...navigationKeys.all, 'detail', menuId] as const,
+  detail: (menuId: string) =>
+    [...navigationKeys.all, 'detail', menuId] as const,
 };
 
 export const homeKeys = {
@@ -73,8 +74,10 @@ export const errorLogKeys = {
 export const subpageFeedbackKeys = {
   all: ['subpage-feedback'] as const,
   lists: () => [...subpageFeedbackKeys.all, 'list'] as const,
-  list: (filters: unknown) => [...subpageFeedbackKeys.lists(), filters] as const,
-  stats: (filters: unknown) => [...subpageFeedbackKeys.all, 'stats', filters] as const,
+  list: (filters: unknown) =>
+    [...subpageFeedbackKeys.lists(), filters] as const,
+  stats: (filters: unknown) =>
+    [...subpageFeedbackKeys.all, 'stats', filters] as const,
 };
 
 export const settingsKeys = {
@@ -83,6 +86,7 @@ export const settingsKeys = {
   security: () => [...settingsKeys.all, 'security'] as const,
   upload: () => [...settingsKeys.all, 'upload'] as const,
   branding: () => [...settingsKeys.all, 'branding'] as const,
+  footer: () => [...settingsKeys.all, 'footer'] as const,
   seo: () => [...settingsKeys.all, 'seo'] as const,
 };
 
@@ -96,8 +100,7 @@ export const mediaKeys = {
 
 export const blockKeys = {
   all: ['blocks'] as const,
-  lists: (subpageId: string) =>
-    [...blockKeys.all, 'list', subpageId] as const,
+  lists: (subpageId: string) => [...blockKeys.all, 'list', subpageId] as const,
   detail: (subpageId: string, blockId: string) =>
     [...blockKeys.all, 'detail', subpageId, blockId] as const,
 };

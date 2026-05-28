@@ -875,6 +875,61 @@ a.home-notice-link:hover {
   font-weight: 700;
 }
 
+.board-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  width: 100%;
+  padding: 32px;
+  border-radius: 12px;
+  background: #f4f5f6;
+}
+
+.board-empty-title {
+  margin: 0;
+  color: #1e2124;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.board-empty-highlight {
+  color: #1e694e;
+}
+
+.board-empty-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #464c53;
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.board-empty-list li::before {
+  content: '- ';
+}
+
+@media (max-width: 600px) {
+  .board-empty-state {
+    padding: 24px 20px;
+    border-radius: 10px;
+  }
+
+  .board-empty-title {
+    font-size: 18px;
+  }
+
+  .board-empty-list {
+    font-size: 16px;
+    line-height: 1.7;
+  }
+}
+
 /* GALLERY 스킨: 카드 그리드 */
 .gallery-grid {
   display: grid;

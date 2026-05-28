@@ -3,7 +3,16 @@
 import type { ReactNode } from 'react';
 
 import { Footer, Header, Masthead, SkipLink } from 'krds-react';
-import type { FooterLink } from 'krds-react';
+import type {
+  FooterBottomLink,
+  FooterLink,
+  FooterQuickLink,
+  FooterSocialLink,
+} from 'krds-react';
+import {
+  DEFAULT_SITE_FOOTER_IDENTIFIER_TEXT,
+  type SiteFooterConfig,
+} from '@simple-cms/types';
 
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import { getMenuItemHref } from '@/entities/navigation/lib/getMenuItemHref';
@@ -18,6 +27,7 @@ interface PageLayoutProps {
   footerMenuItems: FilteredMenuItem[];
   rightSidebar: { name: string; items: FilteredMenuItem[] } | null;
   branding: Branding;
+  footerConfig: SiteFooterConfig;
 }
 
 function buildDesktopMenu(items: FilteredMenuItem[]) {
@@ -126,6 +136,53 @@ function buildFooterLinks(items: FilteredMenuItem[]): FooterLink[] {
     text: item.label,
     href: getMenuItemHref(item),
     target: item.openInNewTab ? ('_blank' as const) : ('_self' as const),
+    rel: item.openInNewTab ? 'noopener noreferrer' : undefined,
+  }));
+}
+
+function buildFooterQuickLinks(
+  items: SiteFooterConfig['quickLinks'],
+): FooterQuickLink[] {
+  return items.map((item) => ({
+    title: item.title,
+    onClick: () => {
+      if (item.openInNewTab) {
+        window.open(item.url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      window.location.href = item.url;
+    },
+  }));
+}
+
+function getLinkTarget(openInNewTab?: boolean): '_blank' | '_self' {
+  return openInNewTab ? '_blank' : '_self';
+}
+
+function getLinkRel(openInNewTab?: boolean): string | undefined {
+  return openInNewTab ? 'noopener noreferrer' : undefined;
+}
+
+function buildFooterSocialLinks(
+  items: SiteFooterConfig['socialLinks'],
+): FooterSocialLink[] {
+  return items.map((item) => ({
+    platform: item.platform,
+    href: item.href,
+    target: getLinkTarget(item.openInNewTab),
+    rel: getLinkRel(item.openInNewTab),
+  }));
+}
+
+function buildFooterBottomLinks(
+  items: SiteFooterConfig['bottomLinks'],
+): FooterBottomLink[] {
+  return items.map((item) => ({
+    text: item.text,
+    href: item.href,
+    target: getLinkTarget(item.openInNewTab),
+    rel: getLinkRel(item.openInNewTab),
+    isHighlighted: item.isHighlighted,
   }));
 }
 
@@ -135,6 +192,7 @@ export function PageLayout({
   footerMenuItems,
   rightSidebar,
   branding,
+  footerConfig,
 }: PageLayoutProps) {
   const hasHeaderMenu = headerMenuItems.length > 0;
   const hasRightSidebar = !!rightSidebar && rightSidebar.items.length > 0;
@@ -174,14 +232,30 @@ export function PageLayout({
         <main id="main-content">{children}</main>
       )}
       <Footer
+        quickLinks={
+          footerConfig.hideQuickLinks
+            ? undefined
+            : buildFooterQuickLinks(footerConfig.quickLinks)
+        }
+        address={footerConfig.address ?? undefined}
+        contacts={footerConfig.contacts}
         links={
           footerMenuItems.length > 0
             ? buildFooterLinks(footerMenuItems)
             : undefined
         }
-        copyright={`© ${branding.siteName}. All rights reserved.`}
-        hideQuickLinks
-        hideIdentifier
+        socialLinks={buildFooterSocialLinks(footerConfig.socialLinks)}
+        bottomLinks={buildFooterBottomLinks(footerConfig.bottomLinks)}
+        copyright={
+          footerConfig.copyright ??
+          `© ${branding.siteName}. All rights reserved.`
+        }
+        identifierText={
+          footerConfig.identifierText ?? DEFAULT_SITE_FOOTER_IDENTIFIER_TEXT
+        }
+        hideQuickLinks={footerConfig.hideQuickLinks}
+        hideIdentifier={footerConfig.hideIdentifier}
+        defaultLinkTarget="_self"
       />
     </>
   );

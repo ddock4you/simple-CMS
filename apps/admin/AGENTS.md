@@ -723,7 +723,7 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 ### 사이트 설정 관리
 
-- **SettingsNav 6탭**: 도메인 | 보안 | 업로드 | 권한 | 브랜딩 | SEO (탭은 Stage 2f · Stage 7l · Stage 9에 걸쳐 확장됨)
+- **SettingsNav 8탭**: 도메인 | 보안 | 업로드 | 권한 | 브랜딩 | 푸터 | SEO | 시연 스냅샷 (탭은 Stage 2f 이후 점진 확장됨)
 - DB 헬퍼: `packages/db/src/siteSettings.ts` (getSiteSetting/setSiteSetting), `packages/db/src/uploadRestriction.ts` (getUploadRestrictions/validateFileUpload)
 - 라우트: `/settings/domain`
 - FSD: `features/site-settings/` (api, model, ui)
@@ -985,6 +985,17 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 
 - `entityType: SITE_SETTINGS`, `entityId: ROBOTS_ADDITIONAL_DISALLOW`, `entityTitle: 'SEO 설정 (robots.txt)'`
 - 변경 전후 정렬 비교로 no-op 시 audit 기록 skip (브랜딩 패턴 일관성)
+
+### 푸터 설정 관리
+
+- 라우트: `/settings/footer` (SettingsNav 브랜딩 다음 탭)
+- FSD: `features/site-settings/` (도메인/보안/업로드/브랜딩/SEO와 동일 SiteSettings 슬라이스)
+- 권한: 기존 `settings:read|update` 재사용
+- SiteSettings 키: `SITE_FOOTER_CONFIG` JSON 문자열
+- 관리 필드: `address`, `contacts[]`, `quickLinks[]`, `socialLinks[]`, `bottomLinks[]`, `identifierText`, `copyright`, `hideQuickLinks`, `hideIdentifier`
+- 일반 푸터 탐색 링크는 이 화면에서 관리하지 않고 메뉴 관리의 `FOOTER` 슬롯을 KRDS Footer `links`로 매핑한다. `bottomLinks`는 개인정보처리방침/저작권 정책 같은 법적·정책 링크 전용
+- API Routes: `GET/PATCH /api/settings/footer` (`settings:read|update`), Zod 검증 후 `setSiteSetting`, 변경 시 `SITE_SETTINGS UPDATE` 감사 로그 기록
+- 공개 웹 반영: `apps/web/src/shared/lib/footerConfigCache.ts` 인메모리 60s prod / 5s dev TTL. UI에는 "최대 1분 후 반영" 안내
 
 ### 사용자 피드백 관리 (Stage 10)
 

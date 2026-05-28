@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { SiteFooterConfig } from '@simple-cms/types';
+
 export const updateDomainSchema = z.object({
   domain: z
     .string()
@@ -22,12 +24,22 @@ export type UpdateSecurityData = z.infer<typeof updateSecuritySchema>;
 export const updateUploadSchema = z.object({
   allowedExtensions: z
     .array(
-      z.string().regex(/^\.[a-z0-9]+$/, '확장자는 .으로 시작하고 소문자 영숫자만 허용됩니다.'),
+      z
+        .string()
+        .regex(
+          /^\.[a-z0-9]+$/,
+          '확장자는 .으로 시작하고 소문자 영숫자만 허용됩니다.',
+        ),
     )
     .min(1, '허용 확장자를 최소 1개 이상 입력해주세요.'),
   allowedMimeTypes: z
     .array(
-      z.string().regex(/^[a-z]+\/[a-z0-9.+\-]+$/, 'MIME 타입 형식이 올바르지 않습니다.'),
+      z
+        .string()
+        .regex(
+          /^[a-z]+\/[a-z0-9.+\-]+$/,
+          'MIME 타입 형식이 올바르지 않습니다.',
+        ),
     )
     .min(1, '허용 MIME 타입을 최소 1개 이상 입력해주세요.'),
   maxFileSizeMb: z
@@ -78,6 +90,87 @@ export const updateSeoSchema = z.object({
 });
 
 export type UpdateSeoData = z.infer<typeof updateSeoSchema>;
+
+const footerUrlSchema = z
+  .string()
+  .trim()
+  .min(1, 'URL을 입력해주세요.')
+  .max(500, 'URL은 500자 이내로 입력해주세요.')
+  .regex(/^(\/|https:\/\/)/, '내부 경로 또는 https URL만 입력해주세요.');
+
+export const updateFooterSchema = z.object({
+  address: z
+    .string()
+    .trim()
+    .max(200, '주소는 200자 이내로 입력해주세요.')
+    .nullable(),
+  contacts: z
+    .array(
+      z.object({
+        title: z
+          .string()
+          .trim()
+          .min(1, '연락처 제목을 입력해주세요.')
+          .max(80, '연락처 제목은 80자 이내로 입력해주세요.'),
+        description: z
+          .string()
+          .trim()
+          .min(1, '연락처 설명을 입력해주세요.')
+          .max(120, '연락처 설명은 120자 이내로 입력해주세요.'),
+      }),
+    )
+    .max(4, '연락처는 최대 4개까지 등록할 수 있습니다.'),
+  quickLinks: z
+    .array(
+      z.object({
+        title: z
+          .string()
+          .trim()
+          .min(1, '퀵 링크 제목을 입력해주세요.')
+          .max(60, '퀵 링크 제목은 60자 이내로 입력해주세요.'),
+        url: footerUrlSchema,
+        openInNewTab: z.boolean().optional(),
+      }),
+    )
+    .max(4, '퀵 링크는 최대 4개까지 등록할 수 있습니다.'),
+  socialLinks: z
+    .array(
+      z.object({
+        platform: z.enum(['instagram', 'youtube', 'x', 'facebook', 'blog']),
+        href: footerUrlSchema,
+        openInNewTab: z.boolean().optional(),
+      }),
+    )
+    .max(5, '소셜 링크는 최대 5개까지 등록할 수 있습니다.'),
+  bottomLinks: z
+    .array(
+      z.object({
+        text: z
+          .string()
+          .trim()
+          .min(1, '하단 링크명을 입력해주세요.')
+          .max(60, '하단 링크명은 60자 이내로 입력해주세요.'),
+        href: footerUrlSchema,
+        openInNewTab: z.boolean().optional(),
+        isHighlighted: z.boolean().optional(),
+      }),
+    )
+    .max(6, '하단 링크는 최대 6개까지 등록할 수 있습니다.'),
+  identifierText: z
+    .string()
+    .trim()
+    .max(120, '식별자 문구는 120자 이내로 입력해주세요.')
+    .nullable(),
+  copyright: z
+    .string()
+    .trim()
+    .max(120, '저작권 문구는 120자 이내로 입력해주세요.')
+    .nullable(),
+  hideQuickLinks: z.boolean(),
+  hideIdentifier: z.boolean(),
+});
+
+export type UpdateFooterData = z.infer<typeof updateFooterSchema>;
 
 // API 응답 타입
 export interface DomainSettingsData {
@@ -133,3 +226,5 @@ export interface SeoSettingsData {
   baseUrl: string;
   sitemapUrl: string;
 }
+
+export type FooterSettingsData = SiteFooterConfig;

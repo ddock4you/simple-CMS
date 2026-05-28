@@ -4,10 +4,12 @@ import type {
   BrandingSettingsData,
   DnsCheckResult,
   DomainSettingsData,
+  FooterSettingsData,
   SecuritySettingsData,
   SeoSettingsData,
   UpdateBrandingData,
   UpdateDomainData,
+  UpdateFooterData,
   UpdateSecurityData,
   UpdateSeoData,
   UpdateUploadData,
@@ -41,7 +43,9 @@ export function getSecuritySettings(): Promise<SecuritySettingsData> {
   return fetchClient<SecuritySettingsData>('/api/settings/security');
 }
 
-export function updateSecuritySettings(data: UpdateSecurityData): Promise<null> {
+export function updateSecuritySettings(
+  data: UpdateSecurityData,
+): Promise<null> {
   return fetchClient<null>('/api/settings/security', {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -77,6 +81,18 @@ export function updateBrandingSettings(
 export function deleteBrandingAsset(kind: BrandingAssetKind): Promise<null> {
   return fetchClient<null>(`/api/settings/branding?kind=${kind}`, {
     method: 'DELETE',
+  });
+}
+
+// Footer
+export function getFooterSettings(): Promise<FooterSettingsData> {
+  return fetchClient<FooterSettingsData>('/api/settings/footer');
+}
+
+export function updateFooterSettings(data: UpdateFooterData): Promise<null> {
+  return fetchClient<null>('/api/settings/footer', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
   });
 }
 
