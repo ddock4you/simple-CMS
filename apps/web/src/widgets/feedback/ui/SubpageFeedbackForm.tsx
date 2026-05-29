@@ -125,7 +125,7 @@ export function SubpageFeedbackForm({
 
   return (
     <section
-      className="subpage-feedback rounded-[12px] bg-[#f4f5f6] p-[24px] tablet:p-[48px]"
+      className="subpage-feedback rounded-[12px] bg-[#f4f5f6] p-[24px] medium:p-[48px]"
       aria-labelledby={titleId}
       aria-describedby={messageId}
     >
@@ -140,7 +140,7 @@ export function SubpageFeedbackForm({
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-7">
-          <div className="flex flex-col gap-4 tablet:flex-row tablet:items-center tablet:justify-between">
+          <div className="flex flex-col gap-[16px] medium:flex-row medium:items-center medium:justify-between">
             <h2 id={titleId} className="text-[17px] leading-[1.5] font-bold text-[#1e2124]">
               이 페이지에 만족하시나요?
             </h2>

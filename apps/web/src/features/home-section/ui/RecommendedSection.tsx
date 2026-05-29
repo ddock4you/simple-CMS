@@ -14,8 +14,8 @@ interface RecommendedSectionProps {
  * 디바이스별 동시 표시 개수. 이 개수를 초과하면 Carousel, 이하면 그리드.
  */
 const MOBILE_COUNT = 1;
-const TABLET_COUNT = 2;
-const DESKTOP_COUNT = 3;
+const MEDIUM_COUNT = 2;
+const LARGE_COUNT = 3;
 
 export function RecommendedSection({ section }: RecommendedSectionProps) {
   const { heading, description, items, slideOptions } = section.config;
@@ -24,7 +24,7 @@ export function RecommendedSection({ section }: RecommendedSectionProps) {
     return null;
   }
 
-  const useCarousel = items.length > DESKTOP_COUNT;
+  const useCarousel = items.length > LARGE_COUNT;
 
   return (
     <section
@@ -48,8 +48,9 @@ export function RecommendedSection({ section }: RecommendedSectionProps) {
           options={slideOptions}
           breakpoints={{
             0: { slidesPerView: MOBILE_COUNT, spaceBetween: 16 },
-            768: { slidesPerView: TABLET_COUNT, spaceBetween: 16 },
-            1024: { slidesPerView: DESKTOP_COUNT, spaceBetween: 20 },
+            768: { slidesPerView: MEDIUM_COUNT, spaceBetween: 16 },
+            1024: { slidesPerView: LARGE_COUNT, spaceBetween: 24 },
+            1280: { slidesPerView: LARGE_COUNT, spaceBetween: 24 },
           }}
           ariaLabel="추천 콘텐츠 슬라이드"
         />

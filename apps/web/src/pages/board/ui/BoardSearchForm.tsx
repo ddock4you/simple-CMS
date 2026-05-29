@@ -14,7 +14,7 @@ export function BoardSearchForm({ boardSlug, query }: BoardSearchFormProps) {
       role="search"
       action={`/board/${boardSlug}`}
       method="get"
-      className="w-full desktop:max-w-[588px]"
+      className="w-full large:max-w-[588px]"
     >
       <div className="relative w-full [&_.form-conts]:relative [&_.form-tit]:sr-only [&_input]:h-14 [&_input]:w-full [&_input]:rounded-[8px] [&_input]:border-[#58616A] [&_input]:bg-white [&_input]:px-4 [&_input]:pr-12 [&_input]:text-[19px] [&_input]:leading-[1.5] [&_input]:text-[#1E2124] [&_input::placeholder]:text-[#8A949E]">
         <TextInput

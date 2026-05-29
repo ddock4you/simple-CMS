@@ -80,10 +80,10 @@ admin에 새 URL 입력 필드를 추가할 때:
 
 ### 공개 웹 스타일링 (Stage 7e — apps/web 한정)
 
-- [ ] **web Tailwind/KRDS 병행 정책**: 새 web 컴포넌트는 KRDS Tailwind plugin utility를 쓰지 않는다. Tailwind 기본 utility를 우선하고, KRDS 고정값이 필요하면 arbitrary value 또는 CSS variable을 명시한다 (`bg-[#256ef4]`, `text-[17px] leading-[1.5]`, `rounded-[12px]` 등)
-- [ ] **KRDS 브레이크포인트만 사용**: `mobile:`(360+)/`tablet:`(601+)/`desktop:`(1025+)만 사용. `md:`/`lg:`/`xl:`/`sm:` 같은 default Tailwind 브레이크포인트는 KRDS plugin이 `theme.screens`를 override해서 **컴파일되지 않음** — 사용 시 런타임 무반응 버그
-- [ ] **색상 매핑**: `var(--krds-color-*)` 또는 hex를 새로 쓰지 말고 plugin 토큰 사용. 정확 매핑이 없는 hex는 가까운 `gray-*`/`point-*`로. arbitrary `bg-[#XXX]`는 최후 수단
-- [ ] **spacing scale 혼동 금지**: KRDS spacing은 `p-3`=8px, `p-7`=24px 등 **default Tailwind와 값이 다름** (admin은 default, web은 KRDS). 앱 간 코드 이동 시 spacing 숫자 재매핑
+- [ ] **web Tailwind/KRDS 병행 정책**: 새 web 컴포넌트는 KRDS Tailwind plugin utility를 쓰지 않는다. KRDS 고정값이 필요하면 arbitrary value 또는 CSS variable을 명시한다 (`bg-[#256ef4]`, `text-[17px] leading-[1.5]`, `rounded-[12px]`, `gap-[24px]` 등)
+- [ ] **KRDS 표준형 브레이크포인트만 사용**: `small:`(360+)/`medium:`(768+)/`large:`(1024+)/`xlarge:`(1280+)만 사용. Tailwind 기본 `sm:`/`md:`/`lg:`/`xl:` 및 레거시 `tablet:`/`desktop:`은 사용 금지. 직접 `min-[...]`/`max-[...]` breakpoint는 예외 사유 주석 필요
+- [ ] **색상 매핑**: `var(--krds-color-*)` 또는 hex/arbitrary value를 명시한다. KRDS Tailwind plugin 토큰은 런타임에서 사용하지 않는다
+- [ ] **spacing scale 혼동 금지**: 공개 web은 KRDS 표준형 screen margin(16/24), gutter(16/24), card/modal padding(16/24), layout gap(40/64)을 기준으로 한다. KRDS 정확값이 필요한 곳은 `p-[24px]`/`var(--krds-*)`처럼 명시하고 Tailwind 숫자 축약에 의존하지 않는다
 - [ ] **CMS HTML 렌더링 경계 확인**: Tiptap 본문은 `TiptapContent` wrapper의 Tailwind Typography + descendant utility가 단일 진실원이다. 자식 HTML에 직접 class를 붙일 수 없으므로 wrapper class에 `[&_ul]`/`prose-ul:*` 패턴을 모으고, KRDS reset과 충돌하는 `font-size`/`list-style`/이미지 정렬은 px arbitrary value + `!` modifier 사용. 자유 HTML 블록의 사용자 CSS 스코프 처리는 `scopeCustomCss`/제한 CSS로 유지
 
 ### 시연 모드 빌드 (apps/web — `build:demo`)

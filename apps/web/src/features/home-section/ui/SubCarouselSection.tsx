@@ -15,8 +15,8 @@ interface SubCarouselSectionProps {
  * globals.css의 .home-sub-carousel .swiper-slide calc()와 1:1 동기화 필수.
  */
 const MOBILE_COUNT = 1;
-const TABLET_COUNT = 2;
-const DESKTOP_COUNT = 4;
+const MEDIUM_COUNT = 2;
+const LARGE_COUNT = 4;
 
 export function SubCarouselSection({ section }: SubCarouselSectionProps) {
   const { tagline, mainHeading, subHeading, description, items, slideOptions } =
@@ -56,8 +56,9 @@ export function SubCarouselSection({ section }: SubCarouselSectionProps) {
         options={slideOptions}
         breakpoints={{
           0: { slidesPerView: MOBILE_COUNT, spaceBetween: 16 },
-          768: { slidesPerView: TABLET_COUNT, spaceBetween: 20 },
-          1024: { slidesPerView: DESKTOP_COUNT, spaceBetween: 24 },
+          768: { slidesPerView: MEDIUM_COUNT, spaceBetween: 16 },
+          1024: { slidesPerView: LARGE_COUNT, spaceBetween: 24 },
+          1280: { slidesPerView: LARGE_COUNT, spaceBetween: 24 },
         }}
         ariaLabel="서브 캐러셀 슬라이드"
       />

@@ -52,7 +52,7 @@ export function HeroSection({ section }: HeroSectionProps) {
 function renderSlide(slide: HeroSlide): ReactNode {
   const content = (
     <div
-      className="relative flex w-full min-h-[280px] items-end overflow-hidden rounded-[12px] bg-[#1a2b4a] bg-cover bg-center bg-no-repeat text-white tablet:min-h-[360px] desktop:min-h-[440px]"
+      className="relative flex w-full min-h-[280px] items-end overflow-hidden rounded-[12px] bg-[#1a2b4a] bg-cover bg-center bg-no-repeat text-white medium:min-h-[360px] large:min-h-[440px]"
       style={
         slide.imageUrl
           ? { backgroundImage: `url(${escapeUrl(slide.imageUrl)})` }
@@ -63,12 +63,12 @@ function renderSlide(slide: HeroSlide): ReactNode {
         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-black/10"
         aria-hidden="true"
       />
-      <div className="relative z-10 max-w-[720px] px-8 pt-8 pb-9 tablet:px-9 tablet:pt-9 tablet:pb-10">
-        <h2 className="mb-4 text-[28px] leading-[1.2] font-extrabold tracking-[-0.02em] [text-shadow:0_2px_12px_rgba(0,0,0,0.35)] tablet:text-[36px] desktop:text-[44px] group-hover:underline group-hover:underline-offset-4">
+      <div className="relative z-10 max-w-[720px] px-[32px] pt-[32px] pb-[40px] medium:px-[40px] medium:pt-[40px]">
+        <h2 className="mb-[16px] text-[28px] leading-[1.2] font-extrabold tracking-[-0.02em] [text-shadow:0_2px_12px_rgba(0,0,0,0.35)] medium:text-[36px] large:text-[44px] group-hover:underline group-hover:underline-offset-4">
           {slide.title}
         </h2>
         {slide.description && (
-          <p className="text-[15px] leading-[1.6] opacity-95 [text-shadow:0_1px_8px_rgba(0,0,0,0.3)] tablet:text-[17px]">
+          <p className="text-[15px] leading-[1.6] opacity-95 [text-shadow:0_1px_8px_rgba(0,0,0,0.3)] medium:text-[17px]">
             {slide.description}
           </p>
         )}

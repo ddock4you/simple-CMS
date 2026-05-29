@@ -215,7 +215,7 @@ export const CarouselWidthGuard: Story = {
         >
           <GroupHeader
             title="Recommended (slidesPerView 가변)"
-            description="mobile 1 / tablet 2 / desktop 3 — RecommendedSection.tsx의 breakpoints prop과 1:1 동기화 필요."
+            description="base 1 / medium 2 / large 3 — RecommendedSection.tsx의 breakpoints prop과 1:1 동기화 필요."
           />
           <pre
             className="overflow-x-auto p-[16px] font-mono text-[12px] leading-relaxed"
@@ -232,7 +232,35 @@ export const CarouselWidthGuard: Story = {
 }
 @media (min-width: 1024px) {
   .home-recommended .swiper-slide {
-    width: calc((100% - 40px) / 3) !important;
+    width: calc((100% - 48px) / 3) !important;
+  }
+}`}
+          </pre>
+        </div>
+        <div
+          className="p-[20px]"
+          style={{ borderRadius: 8, border: '1px solid #E4E4E4', backgroundColor: '#FFFFFF' }}
+        >
+          <GroupHeader
+            title="SubCarousel (slidesPerView 가변)"
+            description="base 1 / medium 2 / large 4 — SubCarouselSection.tsx의 breakpoints prop과 1:1 동기화 필요."
+          />
+          <pre
+            className="overflow-x-auto p-[16px] font-mono text-[12px] leading-relaxed"
+            style={{ backgroundColor: '#F8F8F8', borderRadius: 4 }}
+          >
+{`.home-sub-carousel .swiper-slide {
+  width: 100% !important;
+  flex-shrink: 0;
+}
+@media (min-width: 768px) {
+  .home-sub-carousel .swiper-slide {
+    width: calc((100% - 16px) / 2) !important;
+  }
+}
+@media (min-width: 1024px) {
+  .home-sub-carousel .swiper-slide {
+    width: calc((100% - 72px) / 4) !important;
   }
 }`}
           </pre>

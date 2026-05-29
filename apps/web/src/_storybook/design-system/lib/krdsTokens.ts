@@ -245,14 +245,36 @@ export interface KrdsBreakpoint {
   name: string;
   minWidth: number;
   utility: string;
+  columns: number;
+  gutter: number;
+  screenMargin: number;
   description: string;
 }
 
 export const KRDS_BREAKPOINTS: KrdsBreakpoint[] = [
-  { name: 'mobile', minWidth: 360, utility: 'mobile:', description: '~600px: 모바일' },
-  { name: 'tablet', minWidth: 601, utility: 'tablet:', description: '601px~1024px: 태블릿' },
-  { name: 'desktop', minWidth: 1025, utility: 'desktop:', description: '1025px~: 데스크톱' },
+  { name: 'small', minWidth: 360, utility: 'small:', columns: 4, gutter: 16, screenMargin: 16, description: '360px~: 표준형 mobile 기준' },
+  { name: 'medium', minWidth: 768, utility: 'medium:', columns: 8, gutter: 16, screenMargin: 24, description: '768px~: 태블릿 및 소형 디바이스' },
+  { name: 'large', minWidth: 1024, utility: 'large:', columns: 12, gutter: 24, screenMargin: 24, description: '1024px~: 일반 데스크톱' },
+  { name: 'xlarge', minWidth: 1280, utility: 'xlarge:', columns: 12, gutter: 24, screenMargin: 24, description: '1280px~: 넓은 데스크톱' },
 ];
+
+export const KRDS_CONTENT_MAX_WIDTH = 1200;
+
+export const KRDS_LAYOUT_SPACING = [
+  { name: 'Header-Breadcrumb', pc: 24, mobile: 24, description: '헤더 아래 현재 경로 시작 간격' },
+  { name: 'Breadcrumb-H1', pc: 40, mobile: 32, description: '현재 경로와 페이지 제목 사이 간격' },
+  { name: 'Left-Contents', pc: 64, mobile: null, description: '좌측 메뉴와 본문 사이 간격' },
+  { name: 'Contents-Right', pc: 40, mobile: null, description: '본문과 우측 메뉴 사이 간격' },
+  { name: 'Contents-Footer', pc: 64, mobile: 40, description: '본문 하단과 푸터 사이 간격' },
+] as const;
+
+export const KRDS_COMPONENT_SPACING = [
+  { name: 'Card list gap', pc: 24, mobile: 16, description: '카드 리스트 및 주요 grid gutter' },
+  { name: 'Input group gap', pc: 16, mobile: 16, description: '인풋과 인풋, 인풋과 버튼 사이 간격' },
+  { name: 'Card padding', pc: 24, mobile: 16, description: '카드 내부 여백' },
+  { name: 'Modal padding', pc: 24, mobile: 16, description: '팝업/모달 본문 여백' },
+  { name: 'Info box padding', pc: 24, mobile: 16, description: '알림/안내 박스 내부 여백' },
+] as const;
 
 // ── Font Weight ──────────────────────────────────────────────────────
 

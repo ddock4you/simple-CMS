@@ -38,10 +38,10 @@ export function HeaderBranding({
             <img
               src={branding.logoUrl}
               alt=""
-              className="block max-h-full w-auto max-w-[200px] object-contain max-[767px]:max-w-[148px]"
+              className="block max-h-full w-auto max-w-[148px] object-contain medium:max-w-[200px]"
             />
           ) : (
-            <span className="inline-block whitespace-nowrap text-[18px] leading-[1.3] font-bold text-[#1f2937] max-[767px]:text-[16px]">
+            <span className="inline-block whitespace-nowrap text-[16px] leading-[1.3] font-bold text-[#1f2937] medium:text-[18px]">
               {branding.siteName}
             </span>
           )}
@@ -49,7 +49,7 @@ export function HeaderBranding({
       </h2>
       <div
         id={desktopMenuPortalId}
-        className="min-[1024px]:block min-[1024px]:min-w-0 min-[1024px]:flex-1 max-[1023px]:hidden"
+        className="hidden large:block large:min-w-0 large:flex-1"
       />
       <Header.Navi className="ml-auto shrink-0">
         <Link

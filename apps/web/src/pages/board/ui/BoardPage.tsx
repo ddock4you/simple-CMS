@@ -147,7 +147,7 @@ function BoardListToolbar({
   boardSlug: string;
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 desktop:flex-row desktop:items-center desktop:justify-between">
+    <div className="mb-[24px] flex flex-col gap-[16px] large:flex-row large:items-center large:justify-between">
       <p className="m-0 text-[19px] font-bold leading-[1.8] text-[#1E2124]">
         {query ? '검색 결과 ' : '총 '}
         <strong className="text-[#1E694E]">

@@ -11,7 +11,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'web 디자인 시스템의 기반 — 정규화 KRDS CSS · CSS layer 순서 · Pretendard CDN · Tailwind v4 preflight 정책. ' +
+          'web 디자인 시스템의 기반 — 정규화 KRDS CSS · KRDS 표준형 breakpoint/spacing · CSS layer 순서 · Pretendard CDN. ' +
           'globals.css 상단 9줄과 `layout.tsx`의 import 순서가 권위.',
       },
     },
@@ -75,9 +75,16 @@ export const LayerOrder: Story = {
 /* preflight는 import 안 함 — KRDS button/input 스타일과 충돌 방지 */
 
 @theme {
-  --breakpoint-mobile: 360px;
-  --breakpoint-tablet: 601px;
-  --breakpoint-desktop: 1025px;
+  --breakpoint-small: 360px;
+  --breakpoint-medium: 768px;
+  --breakpoint-large: 1024px;
+  --breakpoint-xlarge: 1280px;
+
+  --krds-content-max-width: 1200px;
+  --krds-screen-margin-small: 16px;
+  --krds-screen-margin-medium: 24px;
+  --krds-gutter-small: 16px;
+  --krds-gutter-large: 24px;
 }
 
 @plugin "@tailwindcss/typography";`}

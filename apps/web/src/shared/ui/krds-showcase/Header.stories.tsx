@@ -56,7 +56,7 @@ export const Branded: Story = {
       mobileMenuTriggerPortalId="storybook-header-mobile-trigger"
     >
       <Header.Container>
-        <Header.Utilities className="max-[1023px]:!hidden">
+        <Header.Utilities className="!hidden large:!block">
           {utilityLinks.map((item) => (
             <Header.Utility key={item.id}>
               <a
@@ -166,7 +166,7 @@ export const WithMainMenu: Story = {
         mobileMenuTriggerPortalId="storybook-header-menu-mobile-trigger"
       >
         <Header.Container>
-          <Header.Utilities className="max-[1023px]:!hidden">
+          <Header.Utilities className="!hidden large:!block">
             {utilityLinks.map((item) => (
               <Header.Utility key={item.id}>
                 <a

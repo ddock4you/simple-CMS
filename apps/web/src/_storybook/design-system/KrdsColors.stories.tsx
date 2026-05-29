@@ -38,7 +38,7 @@ const Section = ({
       {palettes.map((p) => (
         <div key={p.name}>
           <GroupHeader title={p.name} description={p.description} />
-          <div className="grid grid-cols-2 tablet:grid-cols-3 desktop:grid-cols-6 gap-[16px]">
+          <div className="grid grid-cols-2 gap-[16px] medium:grid-cols-3 large:grid-cols-6 large:gap-[24px]">
             {p.shades.map((shade) => (
               <ColorSwatch
                 key={shade}

@@ -112,9 +112,16 @@ src/
   @import 'tailwindcss/theme.css' layer(theme);
   @import 'tailwindcss/utilities.css' layer(utilities);
   @theme {
-    --breakpoint-mobile: 360px;
-    --breakpoint-tablet: 601px;
-    --breakpoint-desktop: 1025px;
+    --breakpoint-small: 360px;
+    --breakpoint-medium: 768px;
+    --breakpoint-large: 1024px;
+    --breakpoint-xlarge: 1280px;
+
+    --krds-content-max-width: 1200px;
+    --krds-screen-margin-small: 16px;
+    --krds-screen-margin-medium: 24px;
+    --krds-gutter-small: 16px;
+    --krds-gutter-large: 24px;
   }
   @plugin "@tailwindcss/typography";
   ```
@@ -129,18 +136,44 @@ src/
 |----------|-----------|------|
 | 색상 | hex/arbitrary value 또는 `var(--krds-color-*)` | `bg-[#256ef4]`, `text-[#1e2124]` |
 | 타이포 | px arbitrary + line-height 명시 | `text-[17px] leading-[1.5]` |
-| spacing | 표준 Tailwind 또는 px arbitrary | `p-4`, `p-[24px]` |
+| spacing | KRDS 정확값은 px arbitrary 또는 CSS variable | `gap-[16px]`, `p-[24px]`, `var(--krds-gutter-large)` |
 | radius | px arbitrary | `rounded-[8px]`, `rounded-[12px]` |
-| 브레이크포인트 | `@theme` 등록 modifier | `mobile:`(360+), `tablet:`(601+), `desktop:`(1025+) |
+| 브레이크포인트 | KRDS 표준형 `@theme` modifier | `small:`(360+), `medium:`(768+), `large:`(1024+), `xlarge:`(1280+) |
+
+### KRDS 표준형 레이아웃 기준
+
+| name | viewport | column | gutter | screen margin |
+| ---- | -------- | ------ | ------ | ------------- |
+| small | 360px~ | 4 | 16px | 16px |
+| medium | 768px~ | 8 | 16px | 24px |
+| large | 1024px~ | 12 | 24px | 24px |
+| xlarge | 1280px~ | 12 | 24px | 24px |
+
+- 기본 class는 xsmall 포함 mobile base로 작성한다. `small:`은 360px 이상에서 별도 보정이 필요할 때만 사용한다.
+- 표준형 콘텐츠 영역은 `max-width: 1200px` + screen margin `16px/24px`로 관리한다.
+- layout/card grid gutter는 small/medium `16px`, large/xlarge `24px` 기준이다.
+- `tablet:`/`desktop:` 및 Tailwind 기본 `sm:`/`md:`/`lg:`는 공개 web 런타임 코드에서 사용하지 않는다.
+
+### KRDS 간격 적용 기준
+
+- Header-Breadcrumb: `24px`
+- Breadcrumb-H1: PC `40px`, mobile `32px`
+- Left-Contents: PC `64px`
+- Contents-Right: PC `40px`
+- Contents-Footer: PC `64px`, mobile `40px`
+- Card list gap: PC `24px`, mobile `16px`
+- Input group gap: `16px`
+- Card/Modal/Info padding: PC `24px`, mobile `16px`
+- Tiptap 본문 계층은 H2 `mt 40/mb 16`, H3 `mt 32/mb 12`, 문단/리스트 `16px`, blockquote/pre/table/media `24px`를 기준으로 한다.
 
 ### 마이그레이션 룰 (Hero 섹션 선행)
 
 globals.css의 기존 클래스를 utility로 옮길 때 적용하는 매핑:
 
 - **색상**: `var(--krds-color-*)` 및 hex → arbitrary value. `#fff` → `text-white`. 정확 매핑 없는 hex는 가까운 Tailwind 기본 `gray-*` 또는 hex 직접 사용
-- **spacing**: 표준 Tailwind spacing을 기본으로 사용. KRDS scale 고정값이 필요하면 arbitrary `p-[24px]`
+- **spacing**: KRDS scale 고정값은 arbitrary `p-[24px]` 또는 `var(--krds-*)` CSS variable로 명시
 - **radius**: KRDS radius 고정값이 필요하면 `rounded-[8px]`, `rounded-[12px]`
-- **브레이크포인트**: globals.css의 `768px` 기준 → `tablet:`(601+) 매핑 (일부 구간에서 시각 변화 허용)
+- **브레이크포인트**: KRDS 표준형 modifier(`small:/medium:/large:/xlarge:`)로 매핑. 모바일 기본은 prefix 없이 작성
 - **fontSize**: `text-[17px] leading-[1.5]`처럼 px/arbitrary value + line-height/tracking 보존
 - **`.parent:hover .child`**: `group` + `group-hover:` 패턴 (Link wrapper에 `group`, 자식에 `group-hover:`)
 
@@ -155,9 +188,9 @@ globals.css의 기존 클래스를 utility로 옮길 때 적용하는 매핑:
 - 추가 CSS guard:
   - **Hero(slidesPerView=1)**: `<section data-hero-carousel>` + `[data-hero-carousel] .swiper-slide { width: 100% !important; }`
   - **Recommended(slidesPerView 가변)**: `.home-recommended .swiper-slide`에 breakpoint별 `calc()` width 강제. swiper formula `(container - spaceBetween*(n-1))/n`에 맞춰:
-    - mobile 기본: `100%` (1 per view)
+    - base/small 기본: `100%` (1 per view)
     - `@media (min-width: 768px)`: `calc((100% - 16px) / 2)` (2 per view, spaceBetween 16)
-    - `@media (min-width: 1024px)`: `calc((100% - 40px) / 3)` (3 per view, spaceBetween 20)
+    - `@media (min-width: 1024px)`: `calc((100% - 48px) / 3)` (3 per view, spaceBetween 24)
   - `RecommendedSection.tsx`의 `breakpoints` prop + `spaceBetween`과 globals.css의 guard는 **1:1 동기화 필요** (변경 시 양쪽 수정)
 
 ### 향후 마이그레이션 (Stage 7e+)
@@ -189,15 +222,16 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
   - `Web/KRDS/{Header, Footer, SideNavigation, Pagination, Breadcrumb, Masthead, SkipLink}` — `apps/web/src/shared/ui/krds-showcase/`에 **런타임 import 없는 story 전용** 디렉토리. 실제 사용하는 variant만 등록(advisor 지적: SkipLink 추가, RightSidebar는 커스텀 JSX라 KRDS 아닌 Widgets로 분류)
   - `Web/Design System/KRDS Colors` (Brand / Neutral / Status / Extended / All) — 31개 팔레트 카탈로그. 런타임 plugin utility가 아닌 token label + inline style로 시각화 (Stage 17)
   - `Web/Design System/KRDS Typography` (Display / Heading / Title / Body / DetailLabelLink / FontWeight / FontFamily) — ~50개 타이포 값 카탈로그 (Stage 17)
-  - `Web/Design System/KRDS Spacing & Radius` (Spacing / Radius / TailwindVsKrds) — KRDS scale 참고표 + Tailwind 기본값 대비 표 (Stage 17)
-  - `Web/Design System/Breakpoints` (Tokens / ModifierExample / TailwindComparison) — mobile:360 / tablet:601 / desktop:1025; Tailwind `sm/md/lg`와의 차이 정리 (Stage 17)
+  - `Web/Design System/KRDS Spacing & Radius` (Spacing / Radius / TailwindVsKrds / LayoutSpacing / ContentHierarchy / ComponentListSpacing / ComponentPadding) — KRDS scale 참고표 + 간격 적용 기준 (Stage 17)
+  - `Web/Design System/Breakpoints` (Tokens / ModifierExample / TailwindComparison) — KRDS 표준형 small/medium/large/xlarge + column/gutter/screen margin 정리 (Stage 17)
+  - `Web/Design System/KRDS Layout` (StandardContainer / ResponsiveGrid / ScreenMargins / Gutters) — 표준형 1200px 콘텐츠 영역 + grid 시각화
   - `Web/Design System/Web Customs` (FontStack / DemoBannerVariable / ScopedClasses / CarouselWidthGuard) — web 전용 CSS 변수·패턴 (Stage 17)
   - `Web/Design System/Foundations` (CSS import 순서 / @layer 순서 / Pretendard CDN 로드 / 페이지 컨테이너) — KRDS 스타일 레이어 구조 (Stage 17)
 - **명령**: `pnpm --filter @simple-cms/web storybook` (port 6007), `pnpm --filter @simple-cms/web test`, `pnpm --filter @simple-cms/web build-storybook`
 - **시연 모드 Storybook 동봉 (`build:demo`)**: 시연 Vercel web 프로젝트는 `pnpm --filter @simple-cms/web build:demo`를 호출. `pnpm bundle-storybooks && next build` 순서로 실행되어 admin/web Storybook을 `apps/web/public/_cms/storybook/{admin,web}/`에 동봉 → 단일 도메인(`demo.example.com/_cms/storybook/{admin,web}/`)에서 정적 서빙. 운영(`pnpm build`)에는 영향 없음. 스크립트 위치: `apps/web/scripts/bundle-storybooks.mjs`. 자세한 정책은 `docs/react-cms-시연모드-배포-가이드.md` 10장
 - **Stage 7i 결과 — Swiper 22M 회귀 자동 감지**: `Web/Shared/Carousel > Regression22M` variant 신규 추가. play function이 `canvasElement.querySelector('.krds-carousel')`의 `style.width`를 400px→800px로 두 번 변경해 **`ResizeObserver` 경로를 강제 트리거**한 뒤 `.swiper-slide`의 `style.width`가 `> 0 && < 2000`인지 assert. `window.resizeTo`는 Playwright Chromium headless에서 동작하지 않으므로 채택 안 함. 단순 mount 후 width assert는 방어 로직을 제거해도 통과하므로(Storybook 환경은 Pretendard race condition이 재현되지 않음) 회귀 감지기 역할 불가 — container resize로 3층 defensive triggers 중 최소 하나(ResizeObserver.observe)를 실제로 밟아야 함. 총 변동 — web 12 files / **33 tests** (32 → +1). Stage 17에서 `Web/Design System/*` 6파일 26 stories 추가 → **59 tests**. `readyState='loading'` 시뮬레이션, viewport 360/768/1024 cycle, MSW 검색/팝업 시나리오는 Stage 7i 범위에서 제외 (후속 과제)
 - **Stage 17 후속 — KRDS root 정규화**: web Design System stories도 앱과 동일하게 `krds-normalized.css`를 사용한다. 과거 `storyShellDecorator`의 `useLayoutEffect` 기반 `html/body 16px !important` 보정은 제거됨. 외부 padding은 story shell inline style로만 유지해 Tailwind source scanning과 무관하게 안정화한다.
-- **responsive modifier**: `@theme`에 `mobile/tablet/desktop`을 등록해 사용한다. Tailwind 기본 `sm/md/lg`도 기본 의미로 유지되지만, 공개 web의 KRDS 기준 반응형은 `mobile:/tablet:/desktop:` 우선 사용.
+- **responsive modifier**: `@theme`에 KRDS 표준형 `small/medium/large/xlarge`를 등록해 사용한다. Tailwind 기본 `sm/md/lg/xl`과 레거시 `tablet/desktop`은 공개 web 코드에서 사용하지 않는다.
 - **Tiptap `optimizeDeps.include` pnpm 해석 규칙 (2026-05-27)**: `renderContent.ts`가 사용하는 Tiptap 패키지는 web의 직접 dependency가 아니라 workspace package `@simple-cms/editor`의 dependency다. 따라서 `vite.config.ts`에서 `'@tiptap/html'`처럼 직접 include하면 Storybook dev의 Vite optimizer가 `apps/web` 기준으로 해석하다 `Failed to resolve dependency: @tiptap/*`를 반복 출력하고 preview가 비어 보일 수 있다. 선제 최적화가 필요할 때는 Vite nested dependency 표기인 `'@simple-cms/editor > @tiptap/html'` / `'@simple-cms/editor > @tiptap/core'` 형태로만 추가한다. 검증은 `pnpm --filter @simple-cms/web typecheck`와 `pnpm --filter @simple-cms/web build-storybook`을 실행하고, dev 실행 로그에 Tiptap resolve warning이 없는지 확인한다.
 - **Stage 7g에서 만난 이슈 — addon-vitest dep cache**: admin과 동일 증상으로 첫 실행 `Failed to fetch dynamically imported module` 발생. `node_modules/.cache/storybook + .vite` 삭제 후 성공
 - **Story meta decorator로 실사용처 맥락 재현 패턴**: `SubpageBlockRenderer`처럼 부모 wrapper(`<article>` + CSS 클래스)에 의존하는 컴포넌트는 `layout: 'padded'`만으론 시각적으로 묻힘. `meta.decorators`에 실제 rendering 환경을 축약 재현한 wrapper를 추가해 story 레벨에서도 동등한 맥락 확보. 가치는 (a) 단독 variant의 시각 확인 용이, (b) 렌더 실패 vs 묻힘 구분 명확화
@@ -501,7 +535,7 @@ src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 
 - KRDS `Header.Branding`이 `children`을 `.logo`(`<h2>`) **밖**에 렌더하므로 로고 이미지를 클릭 가능 영역(`<a href="/">`) 안에 두려면 그대로 사용 불가
 - Stage 7d `RightSidebar`/`SubpageSideNavigation` 동일 패턴 — KRDS DOM 클래스(`.header-branding > h2.logo > a`)는 차용하되, 일반 시각 스타일은 Tailwind utility로 작성
 - 헤더 행 구조: `PageLayout`이 `<Header desktopMenuPortalId mobileMenuTriggerPortalId>`를 지정하고, `HeaderBranding` 내부의 desktop portal slot + `Header.Navi`가 `로고 + PC 메뉴 + 통합검색 + 모바일 전체메뉴`를 한 행에 배치한다. `Header.Navi`를 제거하면 `Header.MainMenu`의 모바일 전체메뉴 버튼이 body로 빠져 아이콘 CSS 스코프가 깨지므로 유지 필수
-- PC 메뉴/모바일 트리거 분기는 KRDS 기준과 맞추기 위해 Tailwind `desktop:`(1025px) 대신 `min-[1024px]` / `max-[1023px]` arbitrary breakpoint를 사용
+- PC 메뉴/모바일 트리거 분기는 KRDS 표준형 `large:`(1024px~) 기준으로 통일한다
 - 통합검색은 커스텀 SVG가 아니라 KRDS `btn-navi sch navi-row` 클래스를 사용해 아이콘/상태 스타일을 위임하고 `/search`로 이동한다
 - 헤더와 모바일 전체메뉴 유틸리티에는 코드 상수(`HEADER_UTILITY_LINKS`)로 `KRDS 소개`(`https://www.krds.go.kr/`)를 노출한다. 데스크톱 링크는 새 창(`target="_blank" rel="noopener noreferrer"`), 모바일 유틸리티는 KRDS `MobileUtilityItem` 타입 제약상 `href`만 전달
 - 폴백: logoUrl 미설정 시 sr-only 대신 Tailwind-styled siteName 텍스트를 표시
