@@ -134,12 +134,12 @@ export function SubpageFeedbackForm({
           <p className="text-[17px] leading-[1.5] font-bold text-[#1e2124]">
             의견을 남겨주셔서 감사합니다.
           </p>
-          <p className="mt-2 text-[15px] leading-[1.5] text-[#464c53]">
+          <p className="mt-[8px] text-[15px] leading-[1.5] text-[#464c53]">
             보내주신 소중한 의견은 페이지 개선에 도움이 됩니다.
           </p>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-7">
+        <form onSubmit={handleSubmit} className="space-y-[24px] large:space-y-[28px]">
           <div className="flex flex-col gap-[16px] medium:flex-row medium:items-center medium:justify-between">
             <h2 id={titleId} className="text-[17px] leading-[1.5] font-bold text-[#1e2124]">
               이 페이지에 만족하시나요?
@@ -183,11 +183,11 @@ export function SubpageFeedbackForm({
 
           {showQuestions && (
             <div
-              className="space-y-6 border-t border-[#b1b8be] pt-6"
+              className="space-y-[24px] border-t border-[#b1b8be] pt-[24px]"
               aria-live="polite"
             >
               {showPositiveReasons && (
-                <fieldset className="flex flex-col gap-3">
+                <fieldset className="flex flex-col gap-[12px]">
                   <legend className="text-[17px] leading-[1.5] font-medium text-[#1e2124]">
                     1. 이 페이지의 어떤 점에 만족하셨나요?{' '}
                     <span className="text-[#58616a]">(선택 입력)</span>
@@ -216,7 +216,7 @@ export function SubpageFeedbackForm({
                 </fieldset>
               )}
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-[8px]">
                 <label
                   htmlFor={`${titleId}-comment`}
                   className="text-[17px] leading-[1.5] font-medium text-[#1e2124]"
@@ -255,7 +255,7 @@ export function SubpageFeedbackForm({
                 </p>
               )}
 
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-[8px]">
                 <Button
                   variant="tertiary"
                   size="medium"

@@ -26,12 +26,12 @@ export function PreviewBanner({ label = '미리보기 모드' }: PreviewBannerPr
   };
 
   return (
-    <div className="preview-banner" role="status" aria-live="polite">
-      <div className="preview-banner-inner">
-        <span className="preview-banner-label">{label} — DRAFT 포함</span>
+    <div className="sticky top-0 z-[1000] border-b border-[#98690a] bg-[#ffb724] text-[#1e2124] shadow-[0_1px_3px_rgba(0,0,0,0.08)]" role="status" aria-live="polite">
+      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-[12px] px-[16px] py-[6px] text-[13px] leading-[1.5] font-semibold medium:px-[24px] medium:py-[8px] medium:text-[14px]">
+        <span>{label} — DRAFT 포함</span>
         <button
           type="button"
-          className="preview-banner-exit"
+          className="rounded-[4px] border-0 bg-[#1e2124] px-[12px] py-[4px] text-[13px] leading-[1.5] font-medium text-white hover:bg-[#131416] disabled:cursor-not-allowed disabled:opacity-60"
           onClick={handleExit}
           disabled={isExiting}
         >

@@ -54,12 +54,12 @@ function SubpageArticle({
   const hasBlocks = subpage.blocks.length > 0;
   return (
     // id="subpage-{id}"는 HTML 블록의 CSS 스코프(`#subpage-{id}` prefix)가 적용될 루트
-    <article id={`subpage-${subpage.id}`} className="subpage-article">
-      <header className="subpage-header">
-        <h1 className="subpage-title">{subpage.title}</h1>
+    <article id={`subpage-${subpage.id}`} className="pt-[32px] pb-[40px] large:pt-[40px] large:pb-[64px]">
+      <header className="mb-[32px] border-b border-[#e4e4e4] pb-[20px]">
+        <h1 className="mb-[12px] text-[32px] leading-[1.3] font-bold text-[#1e2124]">{subpage.title}</h1>
         {subpage.publishedAt && (
           <time
-            className="subpage-date"
+            className="text-[14px] leading-[1.5] text-[#717171]"
             dateTime={subpage.publishedAt.toISOString()}
           >
             {subpage.publishedAt.toLocaleDateString('ko-KR', {
@@ -77,7 +77,7 @@ function SubpageArticle({
           showHidden={showHidden}
         />
       ) : (
-        <p className="empty-content">콘텐츠가 준비 중입니다.</p>
+        <p className="py-[40px] text-center text-[#8a949e]">콘텐츠가 준비 중입니다.</p>
       )}
       <KoglFooter cclType={subpage.cclType} cclAi={subpage.cclAi} />
       <ErrorBoundary boundaryName="SubpageFeedback" fallback={null}>

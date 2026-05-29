@@ -25,32 +25,15 @@ export default function GlobalError({
   return (
     <html lang="ko">
       <body>
-        <div
-          style={{
-            minHeight: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '1rem',
-            padding: '1.5rem',
-            fontFamily: 'sans-serif',
-          }}
-        >
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+        <div className="flex min-h-screen flex-col items-center justify-center gap-[16px] p-[24px] text-center font-sans">
+          <h2 className="text-[20px] leading-[1.4] font-semibold text-[#1e2124]">
             치명적인 오류가 발생했습니다
           </h2>
-          <p style={{ color: '#666' }}>잠시 후 다시 시도해 주세요.</p>
+          <p className="text-[#555555]">잠시 후 다시 시도해 주세요.</p>
           <button
             type="button"
             onClick={reset}
-            style={{
-              padding: '0.5rem 1rem',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              background: '#fff',
-              cursor: 'pointer',
-            }}
+            className="cursor-pointer rounded-[4px] border border-[#cdd1d5] bg-white px-[16px] py-[8px]"
           >
             다시 시도
           </button>

@@ -26,7 +26,7 @@ export function HeaderBranding({
   desktopMenuPortalId?: string;
 }) {
   return (
-    <div className="header-branding !flex !w-full !items-center !gap-6">
+    <div className="header-branding !flex !w-full !items-center !gap-[24px]">
       <h2 className="logo !m-0 !shrink-0">
         <Link
           href="/"

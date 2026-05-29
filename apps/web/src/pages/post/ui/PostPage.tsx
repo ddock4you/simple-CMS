@@ -23,16 +23,15 @@ export function PostPage({ post }: PostPageProps) {
     <div className="page-container">
       <Breadcrumb items={breadcrumbItems} ariaLabel="현재 위치" />
 
-      <article className="post-article">
-        <header className="post-header">
-          <h1 className="post-title">{post.title}</h1>
-          <div className="post-meta">
+      <article className="pt-[32px] pb-[40px] large:pt-[40px] large:pb-[64px]">
+        <header className="mb-[32px] border-b border-[#e4e4e4] pb-[20px]">
+          <h1 className="mb-[12px] text-[28px] leading-[1.3] font-bold text-[#1e2124] medium:text-[32px]">{post.title}</h1>
+          <div className="flex items-center gap-[12px] text-[14px] leading-[1.5] text-[#717171]">
             {post.author && (
-              <span className="post-author">{post.author.name}</span>
+              <span className="font-medium text-[#555555] after:ml-[12px] after:content-['·']">{post.author.name}</span>
             )}
             {post.publishedAt && (
               <time
-                className="post-date"
                 dateTime={post.publishedAt.toISOString()}
               >
                 {post.publishedAt.toLocaleDateString('ko-KR', {
@@ -47,7 +46,7 @@ export function PostPage({ post }: PostPageProps) {
         {post.contentHtml ? (
           <TiptapContent html={post.contentHtml} />
         ) : (
-          <p className="empty-content">콘텐츠가 준비 중입니다.</p>
+          <p className="py-[40px] text-center text-[#8a949e]">콘텐츠가 준비 중입니다.</p>
         )}
       </article>
     </div>

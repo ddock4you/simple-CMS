@@ -224,7 +224,7 @@ export function PageLayout({
         desktopMenuPortalId={WEB_HEADER_DESKTOP_MENU_ID}
         mobileMenuTriggerPortalId={WEB_HEADER_MOBILE_TRIGGER_ID}
       >
-        <Header.Container className="[&>.inner]:!flex [&>.inner]:!flex-col [&>.inner]:!gap-1 [&>.inner]:!px-4 [&>.inner]:!py-3 large:[&>.inner]:!px-0 large:[&>.inner]:!py-3">
+        <Header.Container className="[&>.inner]:!flex [&>.inner]:!flex-col [&>.inner]:!gap-[4px] [&>.inner]:!px-[16px] [&>.inner]:!py-[12px] large:[&>.inner]:!px-0 large:[&>.inner]:!py-[12px]">
           <Header.Utilities className="!hidden large:!block">
             {HEADER_UTILITY_LINKS.map((item) => (
               <Header.Utility key={item.id}>

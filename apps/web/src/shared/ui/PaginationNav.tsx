@@ -27,7 +27,7 @@ export function PaginationNav({ totalPages, currentPage }: PaginationNavProps) {
   };
 
   return (
-    <nav className="pagination-wrapper" aria-label="페이지 탐색">
+    <nav className="flex justify-center py-[40px]" aria-label="페이지 탐색">
       <Pagination
         totalPages={totalPages}
         currentPage={currentPage}

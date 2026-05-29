@@ -86,7 +86,7 @@ function PostListTable({
             <KrdsTable.Tr key={post.id}>
               <KrdsTable.Td style={{ textAlign: 'center' }}>
                 {post.isImportant ? (
-                  <span className="post-important-label">중요</span>
+                  <span className="inline-block rounded-[4px] bg-[#fff8e9] px-[8px] py-[2px] text-[12px] leading-[1.5] font-bold text-[#98690a]">중요</span>
                 ) : (
                   number
                 )}
@@ -94,7 +94,7 @@ function PostListTable({
               <KrdsTable.Td>
                 <Link
                   href={`/board/${boardSlug}/${post.slug}`}
-                  className="post-title-link"
+                  className="font-medium text-[#33363d] no-underline hover:text-[#256ef4] hover:underline"
                 >
                   {post.title}
                 </Link>
@@ -117,17 +117,17 @@ function PostGalleryGrid({
   boardSlug: string;
 }) {
   return (
-    <div className="gallery-grid">
+    <div className="grid grid-cols-2 gap-[16px] medium:grid-cols-3 large:gap-[24px]">
       {posts.map((post) => (
         <Link
           key={post.id}
           href={`/board/${boardSlug}/${post.slug}`}
-          className="gallery-card"
+          className="flex flex-col overflow-hidden rounded-[8px] border border-[#e4e4e4] text-inherit no-underline transition-shadow duration-150 hover:shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
         >
-          <div className="gallery-card-thumb" />
-          <div className="gallery-card-body">
-            <h3 className="gallery-card-title">{post.title}</h3>
-            <span className="gallery-card-date">
+          <div className="aspect-video bg-[#f4f5f6]" />
+          <div className="p-[16px] large:p-[24px]">
+            <h3 className="line-clamp-2 overflow-hidden text-[16px] leading-[1.4] font-semibold text-[#1e2124]">{post.title}</h3>
+            <span className="mt-[8px] block text-[13px] leading-[1.5] text-[#8a949e]">
               {formatDate(post.publishedAt)}
             </span>
           </div>
@@ -148,9 +148,9 @@ function BoardListToolbar({
 }) {
   return (
     <div className="mb-[24px] flex flex-col gap-[16px] large:flex-row large:items-center large:justify-between">
-      <p className="m-0 text-[19px] font-bold leading-[1.8] text-[#1E2124]">
+      <p className="m-0 text-[19px] leading-[1.8] font-bold text-[#1e2124]">
         {query ? '검색 결과 ' : '총 '}
-        <strong className="text-[#1E694E]">
+        <strong className="text-[#1e694e]">
           {total.toLocaleString('ko-KR')}
         </strong>
         건
@@ -171,10 +171,10 @@ export function BoardPage({ board, posts, query = '' }: BoardPageProps) {
         ]}
         ariaLabel="현재 위치"
       />
-      <header className="board-header">
-        <h1 className="board-title">{board.name}</h1>
+      <header className="pt-[40px] pb-[24px]">
+        <h1 className="text-[32px] leading-[1.3] font-bold text-[#1e2124]">{board.name}</h1>
         {board.description && (
-          <p className="board-description">{board.description}</p>
+          <p className="mt-[8px] text-[16px] leading-[1.6] text-[#555555]">{board.description}</p>
         )}
       </header>
 

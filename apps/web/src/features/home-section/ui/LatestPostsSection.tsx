@@ -15,27 +15,27 @@ export function LatestPostsSection({ section }: LatestPostsSectionProps) {
       className="home-latest-posts"
       aria-labelledby={`latest-posts-${section.id}`}
     >
-      <div className="home-section-header">
-        <h2 id={`latest-posts-${section.id}`} className="home-section-title">
+      <div className="mb-[24px]">
+        <h2 id={`latest-posts-${section.id}`} className="text-[28px] leading-[1.3] font-bold text-[#1e2124]">
           {heading}
         </h2>
         {description && (
-          <p className="home-section-description">{description}</p>
+          <p className="mt-[8px] text-[16px] leading-[1.6] text-[#555555]">{description}</p>
         )}
       </div>
 
       {items.length === 0 ? (
-        <p className="home-empty-message">아직 게시글이 없습니다.</p>
+        <p className="py-[24px] text-center text-[#717171]">아직 게시글이 없습니다.</p>
       ) : (
         <>
-          <ul className="home-latest-posts-list">
+          <ul className="list-none border-t-2 border-[#256ef4] p-0">
             {items.map((item) => (
-              <li key={item.id} className="home-latest-posts-item">
-                <Link href={item.href} className="home-latest-posts-link">
-                  <span className="home-latest-posts-title">{item.title}</span>
+              <li key={item.id} className="border-b border-[#e4e4e4]">
+                <Link href={item.href} className="flex items-center justify-between gap-[16px] py-[16px] text-inherit no-underline transition-[background-color,padding] duration-150 hover:bg-[#f8f8f8] hover:px-[8px]">
+                  <span className="flex-1 truncate text-[16px] leading-[1.5] font-medium text-[#1e2124]">{item.title}</span>
                   {item.publishedAt && (
                     <time
-                      className="home-latest-posts-date"
+                      className="shrink-0 text-[13px] leading-[1.5] text-[#8a949e]"
                       dateTime={item.publishedAt.toISOString()}
                     >
                       {item.publishedAt.toLocaleDateString('ko-KR')}
@@ -46,10 +46,10 @@ export function LatestPostsSection({ section }: LatestPostsSectionProps) {
             ))}
           </ul>
           {boardSlug && (
-            <div className="home-section-more">
+            <div className="mt-[20px] text-right">
               <Link
                 href={`/board/${boardSlug}`}
-                className="home-section-more-link"
+                className="text-[15px] leading-[1.5] font-medium text-[#256ef4] no-underline hover:underline"
               >
                 {boardName ?? '게시판'} 전체 보기 →
               </Link>

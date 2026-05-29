@@ -9,12 +9,12 @@ const EMPTY_STATE_GUIDES = [
 
 export function BoardEmptyState({ boardName }: BoardEmptyStateProps) {
   return (
-    <section className="board-empty-state" aria-labelledby="board-empty-title">
-      <h2 id="board-empty-title" className="board-empty-title">
-        <span className="board-empty-highlight">{boardName}</span>에 등록된 게시글이
+    <section className="flex w-full flex-col items-stretch gap-[16px] rounded-[10px] bg-[#f4f5f6] p-[16px] large:rounded-[12px] large:p-[24px]" aria-labelledby="board-empty-title">
+      <h2 id="board-empty-title" className="m-0 text-[18px] leading-[1.5] font-bold text-[#1e2124] large:text-[19px]">
+        <span className="text-[#1e694e]">{boardName}</span>에 등록된 게시글이
         없습니다.
       </h2>
-      <ul className="board-empty-list">
+      <ul className="m-0 flex list-none flex-col gap-[4px] p-0 text-[16px] leading-[1.7] text-[#464c53] large:text-[17px] large:leading-[1.8] [&_li::before]:content-['-_']">
         {EMPTY_STATE_GUIDES.map((guide) => (
           <li key={guide}>{guide}</li>
         ))}

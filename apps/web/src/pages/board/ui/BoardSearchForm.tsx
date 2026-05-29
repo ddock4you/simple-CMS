@@ -16,7 +16,7 @@ export function BoardSearchForm({ boardSlug, query }: BoardSearchFormProps) {
       method="get"
       className="w-full large:max-w-[588px]"
     >
-      <div className="relative w-full [&_.form-conts]:relative [&_.form-tit]:sr-only [&_input]:h-14 [&_input]:w-full [&_input]:rounded-[8px] [&_input]:border-[#58616A] [&_input]:bg-white [&_input]:px-4 [&_input]:pr-12 [&_input]:text-[19px] [&_input]:leading-[1.5] [&_input]:text-[#1E2124] [&_input::placeholder]:text-[#8A949E]">
+      <div className="relative w-full [&_.form-conts]:relative [&_.form-tit]:sr-only [&_input]:h-[56px] [&_input]:w-full [&_input]:rounded-[8px] [&_input]:border-[#58616a] [&_input]:bg-white [&_input]:px-[16px] [&_input]:pr-[48px] [&_input]:text-[19px] [&_input]:leading-[1.5] [&_input]:text-[#1e2124] [&_input::placeholder]:text-[#8a949e]">
         <TextInput
           id="board-search-input"
           name="q"
@@ -28,10 +28,10 @@ export function BoardSearchForm({ boardSlug, query }: BoardSearchFormProps) {
         />
         <button
           type="submit"
-          className="absolute right-4 top-1/2 inline-flex size-6 -translate-y-1/2 items-center justify-center text-[#1E2124] hover:text-[#1E694E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#256EF4]"
+          className="absolute top-1/2 right-[16px] inline-flex size-[24px] -translate-y-1/2 items-center justify-center text-[#1e2124] hover:text-[#1e694e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#256ef4]"
           aria-label="검색"
         >
-          <Search className="size-5" aria-hidden="true" strokeWidth={2} />
+          <Search className="size-[20px]" aria-hidden="true" strokeWidth={2} />
         </button>
       </div>
     </form>

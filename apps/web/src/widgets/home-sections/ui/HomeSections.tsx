@@ -19,14 +19,14 @@ export async function HomeSections({ sections: providedSections }: HomeSectionsP
 
   if (sections.length === 0) {
     return (
-      <div className="home-empty-wrapper">
-        <p className="home-empty-message">표시할 섹션이 없습니다.</p>
+      <div className="page-container py-[64px]">
+        <p className="py-[24px] text-center text-[#717171]">표시할 섹션이 없습니다.</p>
       </div>
     );
   }
 
   return (
-    <div className="home-sections">
+    <div className="page-container flex flex-col gap-[40px] py-[32px] pb-[40px] large:gap-[64px] large:py-[40px] large:pb-[64px]">
       {sections.map((section) => {
         switch (section.sectionType) {
           case 'HERO':

@@ -81,14 +81,14 @@ export function HomePopupModal({ popups }: HomePopupModalProps) {
         <img
           src={popup.imageUrl}
           alt={popup.imageAlt ?? ''}
-          className="home-popup-image"
+          className="mx-auto block h-auto max-w-full rounded-[4px] object-contain"
         />
       );
       return popup.linkUrl ? (
         <a
           href={popup.linkUrl}
           onClick={close}
-          className="home-popup-image-link"
+          className="block cursor-pointer"
         >
           {img}
         </a>
@@ -98,7 +98,7 @@ export function HomePopupModal({ popups }: HomePopupModalProps) {
     }
     if (popup.popupType === 'CONTENT') {
       return (
-        <div className="home-popup-content-body">
+        <div className="flex flex-col gap-[12px]">
           {popup.contentHtml ? (
             <TiptapContent
               html={popup.contentHtml}
@@ -111,7 +111,7 @@ export function HomePopupModal({ popups }: HomePopupModalProps) {
             <a
               href={popup.linkUrl}
               onClick={close}
-              className="home-popup-button"
+              className="mt-[4px] self-start rounded-[6px] bg-[#256ef4] px-[20px] py-[12px] font-medium text-white no-underline hover:opacity-90"
             >
               {popup.buttonLabel}
             </a>
@@ -124,7 +124,7 @@ export function HomePopupModal({ popups }: HomePopupModalProps) {
 
   return (
     <div
-      className="home-popup-backdrop"
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/55 p-[16px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="home-popup-title"
@@ -132,14 +132,14 @@ export function HomePopupModal({ popups }: HomePopupModalProps) {
         if (e.target === e.currentTarget) close();
       }}
     >
-      <div ref={dialogRef} tabIndex={-1} className="home-popup-panel">
-        <div className="home-popup-header">
-          <h2 id="home-popup-title" className="home-popup-title">
+      <div ref={dialogRef} tabIndex={-1} className="flex max-h-[calc(100vh-32px)] w-full max-w-[640px] flex-col overflow-hidden rounded-[8px] bg-white shadow-[0_20px_48px_rgba(0,0,0,0.25)] outline-none medium:rounded-[12px]">
+        <div className="flex items-center justify-between border-b border-[#e4e4e4] p-[16px] large:p-[24px]">
+          <h2 id="home-popup-title" className="m-0 text-[18px] leading-[1.5] font-semibold text-[#1e2124]">
             {isSingle ? visiblePopups[0].title : '알림'}
           </h2>
           <button
             type="button"
-            className="home-popup-close"
+            className="inline-flex items-center justify-center rounded-[6px] border-0 bg-transparent p-[4px] text-[#6d7882] hover:bg-[#f4f5f6] hover:text-[#1e2124]"
             onClick={close}
             aria-label="팝업 닫기"
           >
@@ -147,14 +147,14 @@ export function HomePopupModal({ popups }: HomePopupModalProps) {
           </button>
         </div>
 
-        <div className="home-popup-body">
+        <div className="flex-1 overflow-auto p-[16px] large:p-[24px]">
           {isSingle ? (
             renderPopupBody(visiblePopups[0])
           ) : (
             <Carousel
               slides={visiblePopups.map((p) => (
-                <div key={p.id} className="home-popup-slide">
-                  <h3 className="home-popup-slide-title">{p.title}</h3>
+                <div key={p.id} className="flex flex-col gap-[8px]">
+                  <h3 className="m-0 text-[16px] leading-[1.5] font-semibold text-[#1e2124]">{p.title}</h3>
                   {renderPopupBody(p)}
                 </div>
               ))}
@@ -164,8 +164,8 @@ export function HomePopupModal({ popups }: HomePopupModalProps) {
           )}
         </div>
 
-        <div className="home-popup-footer">
-          <label className="home-popup-hide-today">
+        <div className="flex flex-wrap items-center justify-between gap-[12px] border-t border-[#e4e4e4] bg-[#f8f8f8] px-[16px] py-[12px] text-[14px] leading-[1.5] large:px-[24px]">
+          <label className="inline-flex cursor-pointer items-center gap-[8px] text-[#464c53]">
             <input
               type="checkbox"
               checked={hideToday}
@@ -175,7 +175,7 @@ export function HomePopupModal({ popups }: HomePopupModalProps) {
           </label>
           <button
             type="button"
-            className="home-popup-close-btn"
+            className="rounded-[6px] border border-[#cdd1d5] bg-white px-[16px] py-[8px] text-[14px] leading-[1.5] text-[#1e2124] hover:bg-[#f4f5f6]"
             onClick={close}
           >
             닫기

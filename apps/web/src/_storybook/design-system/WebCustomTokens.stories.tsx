@@ -108,7 +108,7 @@ export const ScopedClasses: Story = {
     <div className="max-w-4xl mx-auto">
       <SectionHeader
         title="globals.css 스코프 클래스"
-        description="Tailwind utility로 표현 불가한 영역(사용자 입력 HTML, 동적 콘텐츠)은 BEM 스타일 클래스로 관리. Stage 7e에서 점진 마이그레이션 중 — Hero/Recommended는 utility로 이동 완료."
+        description="globals.css는 reset/token/layout helper/Swiper guard/사용자 입력 HTML처럼 전역이어야 하는 영역만 담당한다. 화면별 시각 스타일은 TSX Tailwind utility로 관리한다."
       />
       <div className="space-y-[16px]">
         {[
@@ -119,28 +119,22 @@ export const ScopedClasses: Story = {
             note: 'utility 불가 — 사용자가 입력한 HTML 태그에 직접 적용',
           },
           {
-            scope: '.home-popup-*',
-            range: 'globals.css ~1345줄',
-            purpose: '메인 팝업 모달(backdrop, panel, header, body, footer)',
-            note: 'Stage 5b 컴포넌트. 시안 확정 시 컴포넌트와 함께 교체',
-          },
-          {
             scope: '.subpage-block-*',
-            range: 'globals.css ~1513줄',
+            range: 'globals.css 사용자 HTML/블록 영역',
             purpose: 'Stage 6 통합 블록 모델의 HTML/IMAGE/IFRAME 렌더 컨테이너',
             note: '데이터 구조는 안정, 스타일만 시안 확정 시 교체',
           },
           {
-            scope: '.preview-banner *',
-            range: 'globals.css ~1594줄',
-            purpose: 'Stage 7a draft 미리보기 모드 상단 banner + "숨김" 블록 outline',
-            note: 'sticky top-0 z-[1000], 노란색 강조',
+            scope: '.subpage-block-hidden-preview',
+            range: 'globals.css preview 숨김 블록 outline',
+            purpose: 'Stage 7a draft 미리보기에서 숨김 블록을 구분',
+            note: '블록 렌더러가 생성하는 pseudo label이라 전역 유지',
           },
           {
-            scope: '.header-branding *',
-            range: 'globals.css ~1321줄',
-            purpose: 'Stage 7l 동적 로고 이미지 + 텍스트 폴백 (max-height, object-fit)',
-            note: 'KRDS Header.Branding의 children 위치 한계 우회',
+            scope: '.home-recommended/.home-sub-carousel .swiper-slide',
+            range: 'globals.css Swiper width guard',
+            purpose: 'Swiper mount 측정 race로 인한 비정상 slide width 방어',
+            note: '컴포넌트 breakpoints와 1:1 동기화 필요',
           },
           {
             scope: '.kogl-mark',
