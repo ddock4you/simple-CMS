@@ -1,13 +1,13 @@
 import Link from 'next/link';
 
-import { Breadcrumb } from '@/shared/ui/KrdsBreadcrumb';
-
 import type { BoardSkinType } from '@simple-cms/db';
 
+import { Breadcrumb } from '@/shared/ui/KrdsBreadcrumb';
 import { KrdsTable } from '@/shared/ui/KrdsTable';
 import { PaginationNav } from '@/shared/ui/PaginationNav';
 import { getPostListNumber } from '../lib/getPostListNumber';
 import { BoardEmptyState } from './BoardEmptyState';
+import { BoardSearchForm } from './BoardSearchForm';
 
 interface PostItem {
   id: string;
@@ -33,6 +33,7 @@ interface BoardPageProps {
     page: number;
     pageSize: number;
   };
+  query?: string;
 }
 
 function formatDate(date: Date | null) {
@@ -136,7 +137,31 @@ function PostGalleryGrid({
   );
 }
 
-export function BoardPage({ board, posts }: BoardPageProps) {
+function BoardListToolbar({
+  total,
+  query,
+  boardSlug,
+}: {
+  total: number;
+  query: string;
+  boardSlug: string;
+}) {
+  return (
+    <div className="mb-6 flex flex-col gap-4 desktop:flex-row desktop:items-center desktop:justify-between">
+      <p className="m-0 text-[19px] font-bold leading-[1.8] text-[#1E2124]">
+        {query ? '검색 결과 ' : '총 '}
+        <strong className="text-[#1E694E]">
+          {total.toLocaleString('ko-KR')}
+        </strong>
+        건
+      </p>
+
+      <BoardSearchForm boardSlug={boardSlug} query={query} />
+    </div>
+  );
+}
+
+export function BoardPage({ board, posts, query = '' }: BoardPageProps) {
   return (
     <div className="page-container">
       <Breadcrumb
@@ -152,6 +177,12 @@ export function BoardPage({ board, posts }: BoardPageProps) {
           <p className="board-description">{board.description}</p>
         )}
       </header>
+
+      <BoardListToolbar
+        total={posts.total}
+        query={query}
+        boardSlug={board.slug}
+      />
 
       {posts.items.length > 0 ? (
         <>

@@ -13,7 +13,7 @@ import { BoardPage } from '@/pages/board/ui/BoardPage';
 
 interface PageProps {
   params: Promise<{ boardSlug: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -32,13 +32,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function Page({ params, searchParams }: PageProps) {
   const { boardSlug } = await params;
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, q: queryParam } = await searchParams;
 
   const board = await getPublishedBoard(boardSlug);
   if (!board) notFound();
 
+  const query = queryParam?.trim() || undefined;
   const page = Math.max(1, Number(pageParam) || 1);
-  const posts = await getPublishedPosts(board.id, page);
+  const posts = await getPublishedPosts(board.id, page, undefined, query);
 
   const [branding, baseUrl] = await Promise.all([
     getCachedBranding(),
@@ -57,7 +58,7 @@ export default async function Page({ params, searchParams }: PageProps) {
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
         />
       )}
-      <BoardPage board={board} posts={posts} />
+      <BoardPage board={board} posts={posts} query={query ?? ''} />
     </>
   );
 }
