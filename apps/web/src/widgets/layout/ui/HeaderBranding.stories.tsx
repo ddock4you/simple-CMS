@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { Header } from 'krds-react';
 import { expect, within } from 'storybook/test';
 
 import { HeaderBranding } from './HeaderBranding';
@@ -7,6 +8,15 @@ const meta = {
   title: 'Web/Widgets/HeaderBranding',
   component: HeaderBranding,
   parameters: { layout: 'padded' },
+  decorators: [
+    (Story) => (
+      <Header>
+        <Header.Container>
+          <Story />
+        </Header.Container>
+      </Header>
+    ),
+  ],
 } satisfies Meta<typeof HeaderBranding>;
 
 export default meta;
@@ -38,13 +48,14 @@ export const WithLogo: Story = {
     const logoImg = canvasElement.querySelector('img');
     expect(logoImg).toBeInTheDocument();
     expect(logoImg).toHaveAttribute('alt', '');
-    expect(canvas.getByRole('link', { name: '검색' })).toBeInTheDocument();
+    expect(canvas.getByRole('link', { name: '통합검색' })).toBeInTheDocument();
+    expect(canvasElement.querySelector('#web-header-desktop-menu')).toBeInTheDocument();
   },
 };
 
 /**
  * Stage 12i — 로고 미설정 시 사이트명 텍스트 폴백 렌더.
- * logoUrl=null이면 .header-logo-text 스팬에 siteName 표시.
+ * logoUrl=null이면 siteName 텍스트 표시.
  */
 export const TextFallback: Story = {
   args: {

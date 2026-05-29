@@ -499,15 +499,19 @@ src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 
 
 - 위치: `src/widgets/layout/ui/HeaderBranding.tsx` (Stage 7l NEW)
 - KRDS `Header.Branding`이 `children`을 `.logo`(`<h2>`) **밖**에 렌더하므로 로고 이미지를 클릭 가능 영역(`<a href="/">`) 안에 두려면 그대로 사용 불가
-- Stage 7d `RightSidebar`/`SubpageSideNavigation` 동일 패턴 — KRDS DOM 클래스(`.header-branding > h2.logo > a`) 차용한 커스텀 JSX
-- 폴백: logoUrl 미설정 시 sr-only 대신 `.header-logo-text`로 사이트명 시각 표시
+- Stage 7d `RightSidebar`/`SubpageSideNavigation` 동일 패턴 — KRDS DOM 클래스(`.header-branding > h2.logo > a`)는 차용하되, 일반 시각 스타일은 Tailwind utility로 작성
+- 헤더 행 구조: `PageLayout`이 `<Header desktopMenuPortalId mobileMenuTriggerPortalId>`를 지정하고, `HeaderBranding` 내부의 desktop portal slot + `Header.Navi`가 `로고 + PC 메뉴 + 통합검색 + 모바일 전체메뉴`를 한 행에 배치한다. `Header.Navi`를 제거하면 `Header.MainMenu`의 모바일 전체메뉴 버튼이 body로 빠져 아이콘 CSS 스코프가 깨지므로 유지 필수
+- PC 메뉴/모바일 트리거 분기는 KRDS 기준과 맞추기 위해 Tailwind `desktop:`(1025px) 대신 `min-[1024px]` / `max-[1023px]` arbitrary breakpoint를 사용
+- 통합검색은 커스텀 SVG가 아니라 KRDS `btn-navi sch navi-row` 클래스를 사용해 아이콘/상태 스타일을 위임하고 `/search`로 이동한다
+- 헤더와 모바일 전체메뉴 유틸리티에는 코드 상수(`HEADER_UTILITY_LINKS`)로 `KRDS 소개`(`https://www.krds.go.kr/`)를 노출한다. 데스크톱 링크는 새 창(`target="_blank" rel="noopener noreferrer"`), 모바일 유틸리티는 KRDS `MobileUtilityItem` 타입 제약상 `href`만 전달
+- 폴백: logoUrl 미설정 시 sr-only 대신 Tailwind-styled siteName 텍스트를 표시
 - KRDS 메이저 업데이트 시 이 컴포넌트와 7d 2개를 함께 점검
 
-### globals.css 로고 클래스
+### 헤더 스타일링 원칙
 
-- `.header-branding .header-logo-image { max-height: 100%; width: auto; max-width: 200px; object-fit: contain; display: block }`
-- `.header-branding .header-logo-text { font-size: 1.125rem; font-weight: 700 }`
-- 와이드 로고도 헤더 height 깨지 않게 max-height/object-fit으로 fit
+- 헤더 로고/검색/행 배치 같은 일반 컴포넌트 스타일은 `globals.css`에 추가하지 않고 `HeaderBranding.tsx` / `PageLayout.tsx` Tailwind utility로 작성한다
+- KRDS 동작에 필요한 의미 클래스(`header-branding`, `logo`, `btn-navi`, `sch`, `navi-row`)만 JSX에 유지한다
+- `globals.css`에 헤더 전용 `.header-search-link`, `.header-logo-image`, `.header-logo-text` 류 클래스를 재도입하지 않는다. 정말 필요한 전역 override가 생기면 KRDS selector 충돌 사유를 주석으로 남긴다
 
 ### `generateMetadata` 동적화 (`apps/web/app/layout.tsx`)
 

@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react';
 import type { ComponentProps } from 'react';
 import { Header } from 'krds-react';
 
+import { HeaderBranding } from '@/widgets/layout/ui/HeaderBranding';
+
 type HeaderProps = ComponentProps<typeof Header>;
 
 /**
@@ -29,11 +31,49 @@ export default meta;
 
 type Story = StoryObj<HeaderProps>;
 
+const branding = {
+  siteName: 'Simple CMS',
+  siteDescription: '공개 웹',
+  logoUrl: null,
+  logoAlt: 'Simple CMS',
+  faviconUrl: null,
+  faviconMediaId: null,
+  ogImageUrl: null,
+};
+
+const utilityLinks = [
+  {
+    id: 'krds-intro',
+    label: 'KRDS 소개',
+    href: 'https://www.krds.go.kr/',
+  },
+];
+
 export const Branded: Story = {
   render: () => (
-    <Header>
+    <Header
+      desktopMenuPortalId="storybook-header-desktop-menu"
+      mobileMenuTriggerPortalId="storybook-header-mobile-trigger"
+    >
       <Header.Container>
-        <Header.Branding logoHref="/" logoAltText="Simple CMS" />
+        <Header.Utilities className="max-[1023px]:!hidden">
+          {utilityLinks.map((item) => (
+            <Header.Utility key={item.id}>
+              <a
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="krds-btn small text"
+              >
+                {item.label}
+              </a>
+            </Header.Utility>
+          ))}
+        </Header.Utilities>
+        <HeaderBranding
+          branding={branding}
+          desktopMenuPortalId="storybook-header-desktop-menu"
+        />
       </Header.Container>
     </Header>
   ),
@@ -82,6 +122,13 @@ export const WithMainMenu: Story = {
     };
 
     const mobileMenu = {
+      header: {
+        utilities: utilityLinks.map((item) => ({
+          id: item.id,
+          label: item.label,
+          href: item.href,
+        })),
+      },
       body: {
         mainItems: desktopMenu.items.map((item) => ({
           id: item.id,
@@ -114,9 +161,29 @@ export const WithMainMenu: Story = {
     };
 
     return (
-      <Header>
+      <Header
+        desktopMenuPortalId="storybook-header-menu-desktop"
+        mobileMenuTriggerPortalId="storybook-header-menu-mobile-trigger"
+      >
         <Header.Container>
-          <Header.Branding logoHref="/" logoAltText="Simple CMS" />
+          <Header.Utilities className="max-[1023px]:!hidden">
+            {utilityLinks.map((item) => (
+              <Header.Utility key={item.id}>
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="krds-btn small text"
+                >
+                  {item.label}
+                </a>
+              </Header.Utility>
+            ))}
+          </Header.Utilities>
+          <HeaderBranding
+            branding={branding}
+            desktopMenuPortalId="storybook-header-menu-desktop"
+          />
         </Header.Container>
         <Header.MainMenu desktop={desktopMenu} mobile={mobileMenu} />
       </Header>

@@ -21,6 +21,18 @@ import type { Branding } from '@/shared/lib/brandingCache';
 import { HeaderBranding } from './HeaderBranding';
 import { RightSidebar } from './RightSidebar';
 
+const KRDS_HOME_URL = 'https://www.krds.go.kr/';
+const WEB_HEADER_DESKTOP_MENU_ID = 'web-header-desktop-menu';
+const WEB_HEADER_MOBILE_TRIGGER_ID = 'web-header-mobile-trigger';
+
+const HEADER_UTILITY_LINKS = [
+  {
+    id: 'krds-intro',
+    label: 'KRDS 소개',
+    href: KRDS_HOME_URL,
+  },
+] as const;
+
 interface PageLayoutProps {
   children: ReactNode;
   headerMenuItems: FilteredMenuItem[];
@@ -82,6 +94,13 @@ function buildDesktopMenu(items: FilteredMenuItem[]) {
 
 function buildMobileMenu(items: FilteredMenuItem[]) {
   return {
+    header: {
+      utilities: HEADER_UTILITY_LINKS.map((item) => ({
+        id: item.id,
+        label: item.label,
+        href: item.href,
+      })),
+    },
     body: {
       mainItems: items.map((item) => ({
         id: item.id,
@@ -201,15 +220,35 @@ export function PageLayout({
     <>
       <SkipLink targetId="main-content">본문 바로가기</SkipLink>
       <Masthead text="이 누리집은 대한민국 공식 전자정부 누리집입니다." />
-      <Header>
-        <Header.Container>
+      <Header
+        desktopMenuPortalId={WEB_HEADER_DESKTOP_MENU_ID}
+        mobileMenuTriggerPortalId={WEB_HEADER_MOBILE_TRIGGER_ID}
+      >
+        <Header.Container className="[&>.inner]:!flex [&>.inner]:!flex-col [&>.inner]:!gap-1 [&>.inner]:!px-4 [&>.inner]:!py-3 min-[1024px]:[&>.inner]:!px-0 min-[1024px]:[&>.inner]:!py-3">
+          <Header.Utilities className="max-[1023px]:!hidden">
+            {HEADER_UTILITY_LINKS.map((item) => (
+              <Header.Utility key={item.id}>
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="krds-btn small text"
+                >
+                  {item.label}
+                </a>
+              </Header.Utility>
+            ))}
+          </Header.Utilities>
           {/*
             KRDS Header.Branding 대신 커스텀 HeaderBranding (Stage 7l).
             KRDS 원본은 children을 .logo 밖에 렌더하므로 로고 이미지를
             클릭 가능 영역(<a>) 안에 배치하지 못한다.
             Stage 7d RightSidebar/SubpageSideNavigation 동일 패턴 (KRDS DOM 클래스 차용).
           */}
-          <HeaderBranding branding={branding} />
+          <HeaderBranding
+            branding={branding}
+            desktopMenuPortalId={WEB_HEADER_DESKTOP_MENU_ID}
+          />
         </Header.Container>
         {hasHeaderMenu && (
           <Header.MainMenu

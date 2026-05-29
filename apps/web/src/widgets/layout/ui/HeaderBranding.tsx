@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Header } from 'krds-react';
 
 import type { Branding } from '@/shared/lib/brandingCache';
 
@@ -12,51 +13,53 @@ import type { Branding } from '@/shared/lib/brandingCache';
  * Stage 7d `RightSidebar`/`SubpageSideNavigation` 선례 동일 — KRDS DOM 클래스
  * (`.header-branding > h2.logo > a`)를 차용한 커스텀 JSX로 대체.
  *
- * 폴백 동작: logoUrl 없으면 sr-only 대신 시각적 사이트명 텍스트(`.header-logo-text`).
+ * 폴백 동작: logoUrl 없으면 sr-only 대신 시각적 사이트명 텍스트를 표시.
  * KRDS 메이저 업데이트 시 이 컴포넌트와 7d의 RightSidebar/SubpageSideNavigation 3곳을 함께 점검.
  */
 export function HeaderBranding({
   branding,
   searchHref = '/search',
+  desktopMenuPortalId = 'web-header-desktop-menu',
 }: {
   branding: Branding;
   searchHref?: string;
+  desktopMenuPortalId?: string;
 }) {
   return (
-    <div className="header-branding">
-      <h2 className="logo">
-        <Link href="/" aria-label={branding.logoAlt}>
+    <div className="header-branding !flex !w-full !items-center !gap-6">
+      <h2 className="logo !m-0 !shrink-0">
+        <Link
+          href="/"
+          aria-label={branding.logoAlt}
+          className="!flex !h-full !w-full !items-center !bg-none"
+        >
           {branding.logoUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={branding.logoUrl}
               alt=""
-              className="header-logo-image"
+              className="block max-h-full w-auto max-w-[200px] object-contain max-[767px]:max-w-[148px]"
             />
           ) : (
-            <span className="header-logo-text">{branding.siteName}</span>
+            <span className="inline-block whitespace-nowrap text-[18px] leading-[1.3] font-bold text-[#1f2937] max-[767px]:text-[16px]">
+              {branding.siteName}
+            </span>
           )}
         </Link>
       </h2>
-      <Link
-        href={searchHref}
-        className="header-search-link"
-        aria-label="검색"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
+      <div
+        id={desktopMenuPortalId}
+        className="min-[1024px]:block min-[1024px]:min-w-0 min-[1024px]:flex-1 max-[1023px]:hidden"
+      />
+      <Header.Navi className="ml-auto shrink-0">
+        <Link
+          href={searchHref}
+          className="btn-navi sch navi-row"
+          aria-label="통합검색"
         >
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-      </Link>
+          통합검색
+        </Link>
+      </Header.Navi>
     </div>
   );
 }
