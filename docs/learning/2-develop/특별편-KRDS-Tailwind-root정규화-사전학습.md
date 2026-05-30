@@ -10,6 +10,7 @@
 - Next.js App Router global CSS import — 앱 전역 CSS 로딩 경계
 - Storybook preview CSS — 컴포넌트 문서 환경의 전역 CSS 재현
 - pnpm script lifecycle — `prebuild`, `prestorybook` 같은 자동 생성 훅
+- Next.js public assets — CSS `url(...)`이 참조하는 KRDS 이미지 리소스 공개 경로
 
 ## 핵심 개념
 
@@ -35,11 +36,39 @@ Simple CMS 공개 web은 KRDS 컴포넌트를 유지해야 하지만, Tailwind u
 
 #### 동작 원리
 
-정규화 스크립트는 `require.resolve('krds-react/dist/index.css')`로 실제 설치된 KRDS CSS 경로를 찾고 파일 문자열을 읽는다. `--krds-font-size-base: 62.5%`를 `100%`로 바꾼 뒤 `(-?\d*\.?\d+)rem` 패턴을 찾아 숫자에 `0.625`를 곱한다. 결과적으로 KRDS의 `1.7rem`은 `1.0625rem`이 되어 16px root에서도 17px로 렌더된다.
+정규화 스크립트는 `krds-uiux`의 `resources/css/token/krds_tokens.css`, `resources/css/common/common.css`, `resources/css/component/component.css`를 순서대로 읽어 하나의 CSS로 조합한다. `krds-react/dist/index.css` 전체 번들은 사용하지 않는다. 해당 번들에는 `body, div, p, h1... { margin: 0; padding: 0; }` 같은 reset-heavy 규칙이 포함되어 Tailwind spacing utility를 다시 덮을 수 있기 때문이다. 조합된 CSS에서 `--krds-font-size-base: 62.5%`를 `100%`로 바꾼 뒤 `(-?\d*\.?\d+)rem` 패턴을 찾아 숫자에 `0.625`를 곱한다. 결과적으로 KRDS의 `1.7rem`은 `1.0625rem`이 되어 16px root에서도 17px로 렌더된다.
 
 #### 이 프로젝트에서의 적용
 
 `apps/web/package.json`의 `prepare:krds-css`가 이 변환을 수행한다. `predev`, `prebuild`, `prestorybook`, `prebuild-storybook`에 연결해 개발 서버, Next build, Storybook 모두 같은 CSS 산출물을 사용한다. 생성 파일은 Git에 포함해 설치 직후가 아니어도 CSS import가 깨지지 않도록 한다.
+
+### KRDS CSS layer와 Tailwind utility 우선순위
+
+#### 정의
+
+외부 컴포넌트 CSS를 Tailwind v4 layer 체계 안의 낮은 레이어에 배치해 앱 utility가 필요한 곳에서 정상 override되게 만드는 방식이다.
+
+#### 동작 원리
+
+Tailwind v4는 `@layer theme, base, components, utilities`처럼 cascade layer 순서를 명시할 수 있다. 이 프로젝트는 KRDS CSS를 `@layer krds-base { ... }`로 감싸고, `globals.css`에서 `@layer theme, krds-base, components, utilities;` 순서를 선언한다. 같은 specificity라면 뒤 레이어인 `utilities`가 앞 레이어인 `krds-base`보다 이긴다. 그래서 `p-[24px]`, `space-y-[24px]`, `text-[17px]` 같은 Tailwind utility가 KRDS 컴포넌트 보조 wrapper에서 정상 적용된다.
+
+#### 이 프로젝트에서의 적용
+
+`apps/web/app/layout.tsx`와 `.storybook/preview.tsx`는 모두 `krds-normalized.css`를 먼저 import하고 `globals.css`를 나중에 import한다. `globals.css`는 Tailwind preflight를 import하지 않아 KRDS form/button 기본 스타일과 충돌하지 않는다. 전역 `margin:0; padding:0` reset은 `krds-normalized.css`와 `globals.css` 양쪽 모두에서 금지한다.
+
+### KRDS 이미지 자산 publish 경로
+
+#### 정의
+
+패키지 내부에 있는 SVG/이미지 파일을 Next.js가 브라우저에 서빙할 수 있는 `public` 하위 경로로 복사하고, 생성 CSS의 `url(...)`을 그 공개 경로로 정규화하는 것이다.
+
+#### 동작 원리
+
+CSS의 `url(...)`은 Node.js 모듈 해석이 아니라 브라우저 HTTP 요청이다. `krds-react`나 `krds-uiux` 패키지 내부에 아이콘 파일이 존재해도, Next.js가 `node_modules` 내부 파일을 public URL로 자동 노출하지 않는다. 따라서 생성 CSS가 `/assets/krds/img/component/icon/ico_sch.svg`를 참조하려면 실제 파일이 `apps/web/public/assets/krds/img/component/icon/ico_sch.svg`에 있어야 한다.
+
+#### 이 프로젝트에서의 적용
+
+`normalize-krds-css.mjs`는 `krds-uiux/resources/img`를 `apps/web/public/assets/krds/img`로 동기화한다. CSS URL은 `../../img/...`와 `../../img/img/...` 두 원본 패턴을 모두 `/assets/krds/img/...`로 정규화한다. 예전 산출물인 `apps/web/public/krds`는 스크립트 실행 시 삭제해 `/krds/img/...`와 `/assets/krds/img/...` 경로가 동시에 남지 않게 한다.
 
 ### Tailwind plugin 제거와 arbitrary value
 
@@ -77,11 +106,15 @@ Storybook은 App Router의 `layout.tsx`를 그대로 실행하지 않는다. 그
 | px 기준 관리 | 대부분 px 직접 지정이라 root rem 영향이 작음 | Tailwind와 KRDS 모두 rem을 쓰므로 root 기준을 명확히 통제 |
 | 디자인 토큰 | 문서나 SCSS 변수에서 수동 참조 | Storybook token catalog와 arbitrary value 정책으로 문서화 |
 | 문서 환경 | 실제 페이지와 별도 스타일로 깨지는 경우가 많음 | Storybook preview가 앱과 같은 `krds-normalized.css`를 사용 |
+| 이미지 자산 | 서버 정적 폴더에 수동 복사하거나 상대경로를 맞춤 | `prepare:krds-css`가 `/assets/krds/img`로 자동 publish |
 
 ## 구현 시 주의할 점
 
 - KRDS 원본 CSS를 다시 직접 import하면 root 62.5% 문제가 재발한다.
+- `krds-react/dist/index.css` 전체 번들을 다시 쓰면 root 문제뿐 아니라 전역 margin/padding reset으로 Tailwind spacing utility가 다시 깨질 수 있다.
 - `@krds-ui/tailwindcss-plugin`을 되살리면 Tailwind spacing/screens 충돌이 다시 생긴다.
+- CSS `url(...)`은 패키지 내부 파일을 직접 읽지 않는다. KRDS 아이콘이 패키지에 있어도 `public/assets/krds/img` publish 단계가 필요하다.
+- 원본 CSS에는 `../../img/...`와 `../../img/img/...` 패턴이 섞일 수 있으므로 URL 정규화에서 중복 `img/img`를 방지해야 한다.
 - KRDS 컴포넌트 내부 텍스트를 바꾸는 것은 root 문제와 별개로 selector specificity 문제라서 필요 시 `text-[14px]!` 또는 child selector가 필요할 수 있다.
 - 생성 CSS는 `@charset`이 파일 첫 줄이어야 한다. banner comment가 먼저 오면 CSS parser 경고가 날 수 있다.
 - KRDS 버전 업그레이드 시 `prepare:krds-css`를 실행하고 Storybook KRDS showcase를 확인해야 한다.
@@ -93,3 +126,5 @@ Storybook은 App Router의 `layout.tsx`를 그대로 실행하지 않는다. 그
 - [ ] `!important` 보정과 CSS 사전 변환의 차이는 무엇인가?
 - [ ] KRDS Tailwind plugin을 제거한 뒤 KRDS 색상/간격/타이포 값을 어떻게 코드에 표현하는가?
 - [ ] Storybook preview와 Next.js layout의 CSS import 순서를 왜 맞춰야 하는가?
+- [ ] KRDS 아이콘이 패키지 안에 있는데도 왜 `public/assets/krds/img`로 복사해야 하는가?
+- [ ] `@layer krds-base`가 Tailwind utility override에 어떤 도움을 주는가?

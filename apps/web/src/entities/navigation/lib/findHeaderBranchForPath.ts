@@ -24,9 +24,14 @@ function subtreeContainsPath(
   pathname: string,
 ): boolean {
   const href = getMenuItemHref(node);
-  if (href !== '#' && href === pathname) return true;
+  if (href !== '#' && isPathMatch(href, pathname)) return true;
   for (const child of node.children) {
     if (subtreeContainsPath(child, pathname)) return true;
   }
   return false;
+}
+
+function isPathMatch(href: string, pathname: string): boolean {
+  if (href === pathname) return true;
+  return href.startsWith('/board/') && pathname.startsWith(`${href}/`);
 }

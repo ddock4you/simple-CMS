@@ -243,7 +243,7 @@ export function PageLayout({
             KRDS Header.Branding 대신 커스텀 HeaderBranding (Stage 7l).
             KRDS 원본은 children을 .logo 밖에 렌더하므로 로고 이미지를
             클릭 가능 영역(<a>) 안에 배치하지 못한다.
-            Stage 7d RightSidebar/SubpageSideNavigation 동일 패턴 (KRDS DOM 클래스 차용).
+            Stage 7d RightSidebar/ContentSideNavigation 동일 패턴 (KRDS DOM 클래스 차용).
           */}
           <HeaderBranding
             branding={branding}

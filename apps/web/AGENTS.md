@@ -102,15 +102,20 @@ src/
 ### 설정 구조
 
 - `apps/web/postcss.config.mjs` — `@tailwindcss/postcss`만 등록
-- `apps/web/scripts/normalize-krds-css.mjs` — `krds-react/dist/index.css`를 읽어 `apps/web/app/krds-normalized.css` 생성
+- `apps/web/scripts/normalize-krds-css.mjs` — `krds-uiux`의 token/common/component CSS를 조합해 `apps/web/app/krds-normalized.css` 생성
   - `--krds-font-size-base: 62.5%` → `100%`
   - KRDS CSS 내부 `rem` 값은 `0.625배`로 변환해 KRDS 컴포넌트의 실제 px 크기 보존
+  - `krds-react/dist/index.css`의 reset-heavy bundle은 사용하지 않음 — 전역 `margin:0; padding:0` reset이 Tailwind spacing utility를 덮는 문제 회피
+  - 생성 CSS는 `@layer krds-base` 안에 들어가며, token import 중복과 `@charset` 중복은 스크립트가 제거
+  - KRDS 컴포넌트 이미지 리소스는 `krds-uiux/resources/img`에서 `apps/web/public/assets/krds/img`로 동기화하고, 생성 CSS의 `url(...)`은 `/assets/krds/img/...` 절대 경로로 정규화
   - `predev` / `prebuild` / `prestorybook` / `prebuild-storybook`에서 자동 재생성
 - `apps/web/app/globals.css` 상단:
   ```css
   @layer theme, krds-base, components, utilities;
   @import 'tailwindcss/theme.css' layer(theme);
   @import 'tailwindcss/utilities.css' layer(utilities);
+  @source './';
+  @source '../src';
   @theme {
     --breakpoint-small: 360px;
     --breakpoint-medium: 768px;
@@ -126,6 +131,7 @@ src/
   @plugin "@tailwindcss/typography";
   ```
 - **Preflight 제외** 방식 (`tailwindcss/preflight.css` import 안 함) — KRDS 컴포넌트의 `<button>`/`<input>` 기본 스타일과 충돌 방지
+- 전역 margin/padding reset 금지. `krds-normalized.css`와 `globals.css` 어디에도 `* { margin:0; padding:0 }`류 reset을 추가하지 않는다. Tailwind `p-[24px]`, `space-y-[24px]` 같은 spacing utility를 덮기 때문이다
 - layout.tsx의 import 순서: `import './krds-normalized.css';` → `import './globals.css';` — utility가 KRDS CSS 위에 올라가 overrides 가능
 
 ### KRDS token 사용 원칙
@@ -258,10 +264,10 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
   - 외부 링크는 `<a>` + `target/rel`, 내부 링크는 `<Link>`(Next 클라이언트 라우팅)
   - `title = NavigationMenu.name`, `caption = `${name} 네비게이션``
   - `slots`에 SIDEBAR를 포함한 메뉴가 없으면 우측 사이드바 자체가 렌더되지 않음
-- **좌측 서브페이지 사이드바 (Stage 7d)**: `/p/[slug]`에서만 자동 렌더
-  - `entities/navigation/lib/findHeaderBranchForPath.ts`가 HEADER 메뉴에서 현재 경로가 속한 1뎁스 루트를 찾음
-  - 매칭 시 `widgets/subpage-sidebar/ui/SubpageSideNavigation.tsx`에 그 루트의 2/3뎁스 트리를 KRDS `SideNavigation`으로 렌더
-  - 메뉴 어디에도 없는 서브페이지는 서브페이지 제목만 `SideNavigation.Title`로 표시(하위 없음)
+- **좌측 콘텐츠 사이드바**: `/p/[slug]`, `/board/[boardSlug]`, `/board/[boardSlug]/[postSlug]`에서 자동 렌더
+  - `entities/navigation/lib/findHeaderBranchForPath.ts`가 HEADER 메뉴에서 현재 경로가 속한 1뎁스 루트를 찾음. 게시글 상세는 `/board/{boardSlug}` 부모 항목과 prefix 매칭
+  - 매칭 시 `widgets/content-layout/ui/ContentSideNavigation.tsx`에 그 루트의 2/3뎁스 트리를 KRDS `SideNavigation`으로 렌더
+  - 메뉴 어디에도 없는 콘텐츠는 현재 콘텐츠 제목만 `SideNavigation.Title`로 표시(하위 없음)
   - 슬롯 기반 수동 배정이 아닌 HEADER 메뉴에서 자동 파생
 - 메뉴 depth: 최대 3단계
 - 메뉴 레이아웃/반응형은 코드에서 통제
@@ -533,7 +539,7 @@ src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 
 
 - 위치: `src/widgets/layout/ui/HeaderBranding.tsx` (Stage 7l NEW)
 - KRDS `Header.Branding`이 `children`을 `.logo`(`<h2>`) **밖**에 렌더하므로 로고 이미지를 클릭 가능 영역(`<a href="/">`) 안에 두려면 그대로 사용 불가
-- Stage 7d `RightSidebar`/`SubpageSideNavigation` 동일 패턴 — KRDS DOM 클래스(`.header-branding > h2.logo > a`)는 차용하되, 일반 시각 스타일은 Tailwind utility로 작성
+- Stage 7d `RightSidebar`/`ContentSideNavigation` 동일 패턴 — KRDS DOM 클래스(`.header-branding > h2.logo > a`)는 차용하되, 일반 시각 스타일은 Tailwind utility로 작성
 - 헤더 행 구조: `PageLayout`이 `<Header desktopMenuPortalId mobileMenuTriggerPortalId>`를 지정하고, `HeaderBranding` 내부의 desktop portal slot + `Header.Navi`가 `로고 + PC 메뉴 + 통합검색 + 모바일 전체메뉴`를 한 행에 배치한다. `Header.Navi`를 제거하면 `Header.MainMenu`의 모바일 전체메뉴 버튼이 body로 빠져 아이콘 CSS 스코프가 깨지므로 유지 필수
 - PC 메뉴/모바일 트리거 분기는 KRDS 표준형 `large:`(1024px~) 기준으로 통일한다
 - 통합검색은 커스텀 SVG가 아니라 KRDS `btn-navi sch navi-row` 클래스를 사용해 아이콘/상태 스타일을 위임하고 `/search`로 이동한다

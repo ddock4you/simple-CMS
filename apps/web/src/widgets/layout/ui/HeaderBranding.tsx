@@ -10,11 +10,11 @@ import type { Branding } from '@/shared/lib/brandingCache';
  *
  * KRDS 원본 `<Header.Branding>`은 `children`을 `.logo`(<h2>) **밖**에 렌더하므로
  * 로고 이미지를 클릭 가능 영역(`<a href="/">`) 안에 두려면 그대로 사용 불가.
- * Stage 7d `RightSidebar`/`SubpageSideNavigation` 선례 동일 — KRDS DOM 클래스
+ * Stage 7d `RightSidebar`/`ContentSideNavigation` 선례 동일 — KRDS DOM 클래스
  * (`.header-branding > h2.logo > a`)를 차용한 커스텀 JSX로 대체.
  *
  * 폴백 동작: logoUrl 없으면 sr-only 대신 시각적 사이트명 텍스트를 표시.
- * KRDS 메이저 업데이트 시 이 컴포넌트와 7d의 RightSidebar/SubpageSideNavigation 3곳을 함께 점검.
+ * KRDS 메이저 업데이트 시 이 컴포넌트와 RightSidebar/ContentSideNavigation을 함께 점검.
  */
 export function HeaderBranding({
   branding,

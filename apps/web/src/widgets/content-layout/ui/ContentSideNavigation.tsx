@@ -7,15 +7,15 @@ import { SideNavigation } from 'krds-react';
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import { getMenuItemHref } from '@/entities/navigation/lib/getMenuItemHref';
 
-interface SubpageSideNavigationProps {
+interface ContentSideNavigationProps {
   rootLabel: string;
   items: FilteredMenuItem[];
 }
 
-export function SubpageSideNavigation({
+export function ContentSideNavigation({
   rootLabel,
   items,
-}: SubpageSideNavigationProps) {
+}: ContentSideNavigationProps) {
   const pathname = usePathname() ?? '';
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
@@ -37,7 +37,7 @@ export function SubpageSideNavigation({
 
   const isActive = (item: FilteredMenuItem) => {
     const href = getMenuItemHref(item);
-    return href !== '#' && pathname === href;
+    return href !== '#' && isPathActive(href, pathname);
   };
 
   return (
@@ -56,14 +56,12 @@ export function SubpageSideNavigation({
                     <SideNavigation.Toggle
                       expanded={expanded[item.id] ?? false}
                       onClick={() => toggleExpand(item.id)}
-                      aria-controls={`subpage-sidenav-${item.id}`}
+                      aria-controls={`content-sidenav-${item.id}`}
                     >
                       {item.label}
                     </SideNavigation.Toggle>
                     {(expanded[item.id] ?? false) && (
-                      <SideNavigation.SubMenu
-                        id={`subpage-sidenav-${item.id}`}
-                      >
+                      <SideNavigation.SubMenu id={`content-sidenav-${item.id}`}>
                         {item.children.map((child) => (
                           <SideNavigation.SubItem
                             key={child.id}
@@ -99,6 +97,11 @@ export function SubpageSideNavigation({
 
 function hasActiveChild(item: FilteredMenuItem, pathname: string): boolean {
   const href = getMenuItemHref(item);
-  if (href !== '#' && pathname === href) return true;
+  if (href !== '#' && isPathActive(href, pathname)) return true;
   return item.children.some((child) => hasActiveChild(child, pathname));
+}
+
+function isPathActive(href: string, pathname: string): boolean {
+  if (pathname === href) return true;
+  return href.startsWith('/board/') && pathname.startsWith(`${href}/`);
 }

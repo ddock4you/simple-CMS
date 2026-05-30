@@ -5,6 +5,8 @@
 @layer theme, krds-base, components, utilities;
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
+@source './';
+@source '../src';
 
 /* KRDS 표준형 스타일 토큰 — Tailwind v4 native breakpoint modifier와 런타임 CSS에서 함께 사용 */
 @theme {
@@ -51,39 +53,39 @@
    1. 기본 리셋 + 폰트
    ========================================================================== */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+@layer krds-base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-html {
-  font-size: 100%;
-}
+  html {
+    font-size: 100%;
+  }
 
-body {
-  font-family:
-    'Pretendard Variable',
-    Pretendard,
-    -apple-system,
-    BlinkMacSystemFont,
-    system-ui,
-    Roboto,
-    'Helvetica Neue',
-    'Segoe UI',
-    'Apple SD Gothic Neo',
-    'Noto Sans KR',
-    'Malgun Gothic',
-    'Apple Color Emoji',
-    'Segoe UI Emoji',
-    'Segoe UI Symbol',
-    sans-serif;
-  line-height: 1.6;
-  font-size: 1rem;
-  color: #333;
-  -webkit-font-smoothing: antialiased;
+  body {
+    font-family:
+      'Pretendard Variable',
+      Pretendard,
+      -apple-system,
+      BlinkMacSystemFont,
+      system-ui,
+      Roboto,
+      'Helvetica Neue',
+      'Segoe UI',
+      'Apple SD Gothic Neo',
+      'Noto Sans KR',
+      'Malgun Gothic',
+      'Apple Color Emoji',
+      'Segoe UI Emoji',
+      'Segoe UI Symbol',
+      sans-serif;
+    line-height: 1.6;
+    font-size: 1rem;
+    color: #333;
+    -webkit-font-smoothing: antialiased;
+  }
 }
 
 /* ==========================================================================

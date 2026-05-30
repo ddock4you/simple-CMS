@@ -12,7 +12,7 @@ const meta = {
       description: {
         component:
           'web 디자인 시스템의 기반 — 정규화 KRDS CSS · KRDS 표준형 breakpoint/spacing · CSS layer 순서 · Pretendard CDN. ' +
-          'globals.css 상단 9줄과 `layout.tsx`의 import 순서가 권위.',
+          'globals.css 상단 layer/source 선언과 `layout.tsx`의 import 순서가 권위.',
       },
     },
   },
@@ -39,14 +39,14 @@ export const CssImportOrder: Story = {
           style={{ backgroundColor: '#F8F8F8', borderRadius: 4 }}
         >
 {`// apps/web/app/layout.tsx
-import './krds-normalized.css'; // 1순위 — KRDS CSS(rem 0.625배 변환 + root 100%)
+import './krds-normalized.css'; // 1순위 — krds-uiux token/common/component 조합
 import './globals.css';         // 2순위 — Tailwind utilities + 자체 BEM 클래스
 
 // .storybook/preview.tsx도 동일 순서 강제`}
         </pre>
       </div>
       <p className="text-[14px] mt-[16px] leading-relaxed" style={{ color: '#555555' }}>
-        ⚠ <code className="font-mono text-[12px]">normalize-krds-css.mjs</code>가 KRDS의 10px root 전제를 CSS 파일 생성 시점에 흡수한다. KRDS의 button/input 기본 스타일과 Tailwind preflight가 충돌하지 않도록 preflight는 계속 제외.
+        ⚠ <code className="font-mono text-[12px]">normalize-krds-css.mjs</code>가 KRDS의 10px root 전제를 CSS 파일 생성 시점에 흡수하고, reset-heavy bundle 대신 token/common/component CSS만 조합한다. KRDS의 button/input 기본 스타일과 Tailwind preflight가 충돌하지 않도록 preflight는 계속 제외.
       </p>
     </div>
   ),

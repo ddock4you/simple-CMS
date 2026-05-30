@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { getPublishedBoard } from '@/entities/board/api/getBoard';
+import { resolveContentNavigation } from '@/entities/navigation/lib/resolveContentNavigation';
 import {
   getPublishedPost,
   getPostForPreview,
@@ -62,6 +63,10 @@ export default async function Page({ params }: PageProps) {
     const previewPost = await getPostForPreview(boardSlug, postSlug);
     if (previewPost && session.entityId === previewPost.id) {
       const contentHtml = renderTiptapContent(previewPost.contentJson);
+      const navigationBranch = await resolveContentNavigation(
+        `/board/${boardSlug}/${postSlug}`,
+        previewPost.board.name,
+      );
       return (
         <>
           <PreviewBanner label="게시글 미리보기" />
@@ -73,6 +78,7 @@ export default async function Page({ params }: PageProps) {
               author: previewPost.author,
               board: previewPost.board,
             }}
+            navigationBranch={navigationBranch}
           />
         </>
       );
@@ -85,7 +91,10 @@ export default async function Page({ params }: PageProps) {
   const post = await getPublishedPost(board.id, postSlug);
   if (!post) notFound();
 
-  const contentHtml = renderTiptapContent(post.contentJson);
+  const [contentHtml, navigationBranch] = await Promise.all([
+    Promise.resolve(renderTiptapContent(post.contentJson)),
+    resolveContentNavigation(`/board/${boardSlug}/${postSlug}`, board.name),
+  ]);
 
   const [branding, baseUrl] = await Promise.all([
     getCachedBranding(),
@@ -131,6 +140,7 @@ export default async function Page({ params }: PageProps) {
           author: post.author,
           board: post.board,
         }}
+        navigationBranch={navigationBranch}
       />
     </>
   );

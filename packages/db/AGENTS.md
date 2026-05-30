@@ -56,6 +56,12 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 앱에서 접근: `import { prisma } from '@simple-cms/db'`
 
+### Prisma query 로그
+
+- 개발 모드 기본 로그는 `error`, `warn`만 출력한다.
+- SQL query 로그가 필요할 때만 `PRISMA_QUERY_LOG=true pnpm dev`처럼 환경변수를 켠다.
+- 운영 모드는 query 로그를 출력하지 않고 `error`만 출력한다.
+
 ## PGroonga 관련
 
 - PGroonga raw query는 `src/search.ts`에 구현

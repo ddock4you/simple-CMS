@@ -2,9 +2,10 @@ import Link from 'next/link';
 
 import type { BoardSkinType } from '@simple-cms/db';
 
-import { Breadcrumb } from '@/shared/ui/KrdsBreadcrumb';
 import { KrdsTable } from '@/shared/ui/KrdsTable';
 import { PaginationNav } from '@/shared/ui/PaginationNav';
+import type { ContentNavigationBranch } from '@/widgets/content-layout/ui/PublicContentLayout';
+import { PublicContentLayout } from '@/widgets/content-layout/ui/PublicContentLayout';
 import { getPostListNumber } from '../lib/getPostListNumber';
 import { BoardEmptyState } from './BoardEmptyState';
 import { BoardSearchForm } from './BoardSearchForm';
@@ -34,6 +35,7 @@ interface BoardPageProps {
     pageSize: number;
   };
   query?: string;
+  navigationBranch: ContentNavigationBranch;
 }
 
 function formatDate(date: Date | null) {
@@ -86,7 +88,9 @@ function PostListTable({
             <KrdsTable.Tr key={post.id}>
               <KrdsTable.Td style={{ textAlign: 'center' }}>
                 {post.isImportant ? (
-                  <span className="inline-block rounded-[4px] bg-[#fff8e9] px-[8px] py-[2px] text-[12px] leading-[1.5] font-bold text-[#98690a]">중요</span>
+                  <span className="inline-block rounded-[4px] bg-[#fff8e9] px-[8px] py-[2px] text-[12px] leading-[1.5] font-bold text-[#98690a]">
+                    중요
+                  </span>
                 ) : (
                   number
                 )}
@@ -126,7 +130,9 @@ function PostGalleryGrid({
         >
           <div className="aspect-video bg-[#f4f5f6]" />
           <div className="p-[16px] large:p-[24px]">
-            <h3 className="line-clamp-2 overflow-hidden text-[16px] leading-[1.4] font-semibold text-[#1e2124]">{post.title}</h3>
+            <h3 className="line-clamp-2 overflow-hidden text-[16px] leading-[1.4] font-semibold text-[#1e2124]">
+              {post.title}
+            </h3>
             <span className="mt-[8px] block text-[13px] leading-[1.5] text-[#8a949e]">
               {formatDate(post.publishedAt)}
             </span>
@@ -161,20 +167,28 @@ function BoardListToolbar({
   );
 }
 
-export function BoardPage({ board, posts, query = '' }: BoardPageProps) {
+export function BoardPage({
+  board,
+  posts,
+  query = '',
+  navigationBranch,
+}: BoardPageProps) {
   return (
-    <div className="page-container">
-      <Breadcrumb
-        items={[
-          { text: '홈', href: '/' },
-          { text: board.name, href: '#' },
-        ]}
-        ariaLabel="현재 위치"
-      />
-      <header className="pt-[40px] pb-[24px]">
-        <h1 className="text-[32px] leading-[1.3] font-bold text-[#1e2124]">{board.name}</h1>
+    <PublicContentLayout
+      breadcrumbItems={[
+        { text: '홈', href: '/' },
+        { text: board.name, href: '#' },
+      ]}
+      navigationBranch={navigationBranch}
+    >
+      <header className="pb-[24px]">
+        <h1 className="text-[32px] leading-[1.3] font-bold text-[#1e2124]">
+          {board.name}
+        </h1>
         {board.description && (
-          <p className="mt-[8px] text-[16px] leading-[1.6] text-[#555555]">{board.description}</p>
+          <p className="mt-[8px] text-[16px] leading-[1.6] text-[#555555]">
+            {board.description}
+          </p>
         )}
       </header>
 
@@ -206,6 +220,6 @@ export function BoardPage({ board, posts, query = '' }: BoardPageProps) {
       ) : (
         <BoardEmptyState boardName={board.name} />
       )}
-    </div>
+    </PublicContentLayout>
   );
 }

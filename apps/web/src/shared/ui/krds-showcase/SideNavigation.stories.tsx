@@ -4,7 +4,7 @@ import { SideNavigation } from 'krds-react';
 /**
  * KRDS `SideNavigation` showcase.
  *
- * 실제 사용처: `apps/web/src/widgets/subpage-sidebar/ui/SubpageSideNavigation.tsx`
+ * 실제 사용처: `apps/web/src/widgets/content-layout/ui/ContentSideNavigation.tsx`
  * HEADER 메뉴에서 현재 경로의 루트를 찾아 그 루트의 2/3뎁스 트리를 렌더.
  */
 const meta = {
@@ -15,7 +15,7 @@ const meta = {
     docs: {
       description: {
         component:
-          '좌측 서브페이지 사이드바. `apps/web/src/widgets/subpage-sidebar/ui/SubpageSideNavigation.tsx`에서 사용.',
+          '좌측 콘텐츠 사이드바. `apps/web/src/widgets/content-layout/ui/ContentSideNavigation.tsx`에서 사용.',
       },
     },
   },

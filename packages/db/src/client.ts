@@ -1,6 +1,7 @@
 import { PrismaClient } from './generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { demoExtension } from './demo/clientExtension';
+import type { Prisma } from './generated/prisma/client';
 
 // DEMO_MODE에서만 extension을 적용. 운영 환경은 base 그대로 사용 (extension overhead 0).
 // sentinel sessionId='__PROD__'는 schema의 default라 모든 환경 데이터에 자동 적용됨.
@@ -19,13 +20,16 @@ function createPrismaClient(): PrismaClient {
   }
 
   const adapter = new PrismaPg({ connectionString });
+  const logLevels: Prisma.LogLevel[] =
+    process.env.NODE_ENV === 'development'
+      ? process.env.PRISMA_QUERY_LOG === 'true'
+        ? ['query', 'error', 'warn']
+        : ['error', 'warn']
+      : ['error'];
 
   const base = new PrismaClient({
     adapter,
-    log:
-      process.env.NODE_ENV === 'development'
-        ? ['query', 'error', 'warn']
-        : ['error'],
+    log: logLevels,
   });
 
   if (process.env.DEMO_MODE === 'true') {
