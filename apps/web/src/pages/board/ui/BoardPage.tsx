@@ -4,8 +4,11 @@ import type { BoardSkinType } from '@simple-cms/db';
 
 import { KrdsTable } from '@/shared/ui/KrdsTable';
 import { PaginationNav } from '@/shared/ui/PaginationNav';
-import type { ContentNavigationBranch } from '@/widgets/content-layout/ui/PublicContentLayout';
-import { PublicContentLayout } from '@/widgets/content-layout/ui/PublicContentLayout';
+import {
+  buildContentBreadcrumbItems,
+  type ContentNavigationBranch,
+  PublicContentLayout,
+} from '@/widgets/content-layout/ui/PublicContentLayout';
 import { getPostListNumber } from '../lib/getPostListNumber';
 import { BoardEmptyState } from './BoardEmptyState';
 import { BoardSearchForm } from './BoardSearchForm';
@@ -175,10 +178,10 @@ export function BoardPage({
 }: BoardPageProps) {
   return (
     <PublicContentLayout
-      breadcrumbItems={[
-        { text: '홈', href: '/' },
-        { text: board.name, href: '#' },
-      ]}
+      breadcrumbItems={buildContentBreadcrumbItems(navigationBranch, {
+        text: board.name,
+        href: `/board/${board.slug}`,
+      })}
       navigationBranch={navigationBranch}
     >
       <header className="pb-[24px]">

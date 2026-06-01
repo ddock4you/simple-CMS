@@ -8,6 +8,7 @@ import { ContentSideNavigation } from './ContentSideNavigation';
 export interface ContentNavigationBranch {
   rootLabel: string;
   items: FilteredMenuItem[];
+  breadcrumbItems: BreadcrumbItem[];
 }
 
 interface BreadcrumbItem {
@@ -40,4 +41,23 @@ export function PublicContentLayout({
       </div>
     </div>
   );
+}
+
+export function buildContentBreadcrumbItems(
+  navigationBranch: ContentNavigationBranch,
+  currentItem: BreadcrumbItem,
+): BreadcrumbItem[] {
+  const trail = navigationBranch.breadcrumbItems;
+  const hasCurrentInTrail = trail.some(
+    (item) =>
+      (currentItem.href !== '#' && item.href === currentItem.href) ||
+      item.text === currentItem.text,
+  );
+  const contentTrail = hasCurrentInTrail
+    ? trail.map((item, index) =>
+        index === trail.length - 1 ? { ...item, href: '#' } : item,
+      )
+    : [...trail, { ...currentItem, href: '#' }];
+
+  return [{ text: '홈', href: '/' }, ...contentTrail];
 }

@@ -11,24 +11,38 @@ export function findHeaderBranchForPath(
   headerItems: FilteredMenuItem[],
   pathname: string,
 ): FilteredMenuItem | null {
+  return findHeaderMatchForPath(headerItems, pathname)?.root ?? null;
+}
+
+export interface HeaderPathMatch {
+  root: FilteredMenuItem;
+  trail: FilteredMenuItem[];
+}
+
+export function findHeaderMatchForPath(
+  headerItems: FilteredMenuItem[],
+  pathname: string,
+): HeaderPathMatch | null {
   for (const root of headerItems) {
-    if (subtreeContainsPath(root, pathname)) {
-      return root;
-    }
+    const trail = findPathTrail(root, pathname);
+    if (trail) return { root, trail };
   }
   return null;
 }
 
-function subtreeContainsPath(
+function findPathTrail(
   node: FilteredMenuItem,
   pathname: string,
-): boolean {
+): FilteredMenuItem[] | null {
   const href = getMenuItemHref(node);
-  if (href !== '#' && isPathMatch(href, pathname)) return true;
+  if (href !== '#' && isPathMatch(href, pathname)) return [node];
+
   for (const child of node.children) {
-    if (subtreeContainsPath(child, pathname)) return true;
+    const childTrail = findPathTrail(child, pathname);
+    if (childTrail) return [node, ...childTrail];
   }
-  return false;
+
+  return null;
 }
 
 function isPathMatch(href: string, pathname: string): boolean {

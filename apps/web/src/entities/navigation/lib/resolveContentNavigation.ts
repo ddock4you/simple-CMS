@@ -1,10 +1,17 @@
 import { getMenuBySlot } from '../api/getNavigation';
 import type { FilteredMenuItem } from './filterMenuItems';
-import { findHeaderBranchForPath } from './findHeaderBranchForPath';
+import { findHeaderMatchForPath } from './findHeaderBranchForPath';
+import { getMenuItemHref } from './getMenuItemHref';
+
+export interface ContentBreadcrumbItem {
+  text: string;
+  href: string;
+}
 
 export interface ResolvedContentNavigation {
   rootLabel: string;
   items: FilteredMenuItem[];
+  breadcrumbItems: ContentBreadcrumbItem[];
 }
 
 export async function resolveContentNavigation(
@@ -13,11 +20,18 @@ export async function resolveContentNavigation(
 ): Promise<ResolvedContentNavigation> {
   const headerMenu = await getMenuBySlot('HEADER');
   const headerItems = headerMenu?.items ?? [];
-  const branch = findHeaderBranchForPath(headerItems, pathname);
+  const match = findHeaderMatchForPath(headerItems, pathname);
 
-  if (branch) {
-    return { rootLabel: branch.label, items: branch.children };
+  if (match) {
+    return {
+      rootLabel: match.root.label,
+      items: match.root.children,
+      breadcrumbItems: match.trail.map((item) => ({
+        text: item.label,
+        href: getMenuItemHref(item),
+      })),
+    };
   }
 
-  return { rootLabel: fallbackTitle, items: [] };
+  return { rootLabel: fallbackTitle, items: [], breadcrumbItems: [] };
 }

@@ -10,7 +10,10 @@ import {
 import { PreviewBanner } from '@/features/preview/ui/PreviewBanner';
 import { getPreviewSession } from '@/shared/lib/previewSession';
 import { ErrorBoundary } from '@/shared/ui/ErrorBoundary';
-import { PublicContentLayout } from '@/widgets/content-layout/ui/PublicContentLayout';
+import {
+  buildContentBreadcrumbItems,
+  PublicContentLayout,
+} from '@/widgets/content-layout/ui/PublicContentLayout';
 import { KoglFooter } from '@/widgets/subpage-content/ui/KoglFooter';
 import { SubpageBlockRenderer } from '@/widgets/subpage-content/ui/SubpageBlockRenderer';
 import { SubpageFeedback } from '@/widgets/feedback/ui/SubpageFeedback';
@@ -102,10 +105,10 @@ export async function SubpagePage({ slug }: SubpagePageProps) {
         <>
           <PreviewBanner label="서브 페이지 미리보기" />
           <PublicContentLayout
-            breadcrumbItems={[
-              { text: '홈', href: '/' },
-              { text: previewSubpage.title, href: '#' },
-            ]}
+            breadcrumbItems={buildContentBreadcrumbItems(branch, {
+              text: previewSubpage.title,
+              href: `/p/${slug}`,
+            })}
             navigationBranch={branch}
           >
             <SubpageArticle subpage={previewSubpage} showHidden previewMode />
@@ -123,10 +126,10 @@ export async function SubpagePage({ slug }: SubpagePageProps) {
   const branch = await resolveContentNavigation(`/p/${slug}`, subpage.title);
   return (
     <PublicContentLayout
-      breadcrumbItems={[
-        { text: '홈', href: '/' },
-        { text: subpage.title, href: '#' },
-      ]}
+      breadcrumbItems={buildContentBreadcrumbItems(branch, {
+        text: subpage.title,
+        href: `/p/${slug}`,
+      })}
       navigationBranch={branch}
     >
       <SubpageArticle

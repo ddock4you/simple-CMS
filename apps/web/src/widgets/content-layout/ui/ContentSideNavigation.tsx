@@ -46,53 +46,67 @@ export function ContentSideNavigation({
         <SideNavigation.Title>{rootLabel}</SideNavigation.Title>
         {items.length > 0 && (
           <SideNavigation.Menu>
-            {items.map((item) => (
-              <SideNavigation.Item
-                key={item.id}
-                active={isActive(item) || hasActiveChild(item, pathname)}
-              >
-                {item.children.length > 0 ? (
-                  <>
-                    <SideNavigation.Toggle
-                      expanded={expanded[item.id] ?? false}
-                      onClick={() => toggleExpand(item.id)}
-                      aria-controls={`content-sidenav-${item.id}`}
+            {items.map((item) => {
+              const itemActive = isActive(item);
+              const itemExpanded = expanded[item.id] ?? false;
+
+              return (
+                <SideNavigation.Item key={item.id} active={itemExpanded}>
+                  {item.children.length > 0 ? (
+                    <>
+                      <SideNavigation.Toggle
+                        active={itemActive}
+                        expanded={itemExpanded}
+                        onClick={() => toggleExpand(item.id)}
+                        aria-controls={`content-sidenav-${item.id}`}
+                        className={getActiveClassName(itemActive)}
+                      >
+                        {item.label}
+                      </SideNavigation.Toggle>
+                      {itemExpanded && (
+                        <SideNavigation.SubMenu id={`content-sidenav-${item.id}`}>
+                          {item.children.map((child) => {
+                            const childActive = isActive(child);
+
+                            return (
+                              <SideNavigation.SubItem
+                                key={child.id}
+                                active={childActive}
+                              >
+                                <SideNavigation.Link
+                                  href={getMenuItemHref(child)}
+                                  current={childActive}
+                                  className={getActiveClassName(childActive)}
+                                >
+                                  {child.label}
+                                </SideNavigation.Link>
+                              </SideNavigation.SubItem>
+                            );
+                          })}
+                        </SideNavigation.SubMenu>
+                      )}
+                    </>
+                  ) : (
+                    <SideNavigation.Link
+                      href={getMenuItemHref(item)}
+                      current={itemActive}
+                      className={getActiveClassName(itemActive)}
                     >
                       {item.label}
-                    </SideNavigation.Toggle>
-                    {(expanded[item.id] ?? false) && (
-                      <SideNavigation.SubMenu id={`content-sidenav-${item.id}`}>
-                        {item.children.map((child) => (
-                          <SideNavigation.SubItem
-                            key={child.id}
-                            active={isActive(child)}
-                          >
-                            <SideNavigation.Link
-                              href={getMenuItemHref(child)}
-                              current={isActive(child)}
-                            >
-                              {child.label}
-                            </SideNavigation.Link>
-                          </SideNavigation.SubItem>
-                        ))}
-                      </SideNavigation.SubMenu>
-                    )}
-                  </>
-                ) : (
-                  <SideNavigation.Link
-                    href={getMenuItemHref(item)}
-                    current={isActive(item)}
-                  >
-                    {item.label}
-                  </SideNavigation.Link>
-                )}
-              </SideNavigation.Item>
-            ))}
+                    </SideNavigation.Link>
+                  )}
+                </SideNavigation.Item>
+              );
+            })}
           </SideNavigation.Menu>
         )}
       </SideNavigation>
     </aside>
   );
+}
+
+function getActiveClassName(isActive: boolean): string | undefined {
+  return isActive ? 'active selected' : undefined;
 }
 
 function hasActiveChild(item: FilteredMenuItem, pathname: string): boolean {

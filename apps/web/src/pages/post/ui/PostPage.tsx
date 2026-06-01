@@ -1,6 +1,9 @@
 import { TiptapContent } from '@/shared/ui/TiptapContent';
-import type { ContentNavigationBranch } from '@/widgets/content-layout/ui/PublicContentLayout';
-import { PublicContentLayout } from '@/widgets/content-layout/ui/PublicContentLayout';
+import {
+  buildContentBreadcrumbItems,
+  type ContentNavigationBranch,
+  PublicContentLayout,
+} from '@/widgets/content-layout/ui/PublicContentLayout';
 
 interface PostPageProps {
   post: {
@@ -14,11 +17,10 @@ interface PostPageProps {
 }
 
 export function PostPage({ post, navigationBranch }: PostPageProps) {
-  const breadcrumbItems = [
-    { text: '홈', href: '/' },
-    { text: post.board.name, href: `/board/${post.board.slug}` },
-    { text: post.title, href: '#' },
-  ];
+  const breadcrumbItems = buildContentBreadcrumbItems(navigationBranch, {
+    text: post.title,
+    href: '#',
+  });
 
   return (
     <PublicContentLayout
