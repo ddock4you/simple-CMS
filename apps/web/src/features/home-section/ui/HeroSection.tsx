@@ -21,7 +21,7 @@ export function HeroSection({ section }: HeroSectionProps) {
   if (slides.length === 1) {
     return (
       <section
-        className="block w-full overflow-hidden rounded-[12px]"
+        className="relative left-1/2 block w-screen -translate-x-1/2 overflow-hidden"
         aria-label="메인 히어로"
       >
         {renderSlide(slides[0])}
@@ -33,7 +33,7 @@ export function HeroSection({ section }: HeroSectionProps) {
   return (
     <section
       data-hero-carousel
-      className="block w-full min-w-0 overflow-hidden rounded-[12px]"
+      className="relative left-1/2 block w-screen min-w-0 -translate-x-1/2 overflow-hidden"
       aria-label="메인 히어로"
     >
       <Carousel
@@ -50,51 +50,42 @@ export function HeroSection({ section }: HeroSectionProps) {
 }
 
 function renderSlide(slide: HeroSlide): ReactNode {
-  const content = (
-    <div
-      className="relative flex w-full min-h-[280px] items-end overflow-hidden rounded-[12px] bg-[#1a2b4a] bg-cover bg-center bg-no-repeat text-white medium:min-h-[360px] large:min-h-[440px]"
-      style={
-        slide.imageUrl
-          ? { backgroundImage: `url(${escapeUrl(slide.imageUrl)})` }
-          : undefined
-      }
-    >
+  return (
+    <div className="relative flex min-h-[520px] w-full overflow-hidden bg-[#1e2124] text-white large:min-h-[560px]">
+      {slide.imageUrl && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={slide.imageUrl}
+          alt={slide.imageAlt}
+          loading="eager"
+          decoding="async"
+          className="absolute inset-0 size-full object-cover"
+        />
+      )}
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-black/10"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/75 via-black/55 to-black/25 large:from-black/70 large:via-black/45 large:to-black/15"
         aria-hidden="true"
       />
-      <div className="relative z-10 max-w-[720px] px-[32px] pt-[32px] pb-[40px] medium:px-[40px] medium:pt-[40px]">
-        <h2 className="mb-[16px] text-[28px] leading-[1.2] font-extrabold tracking-[-0.02em] [text-shadow:0_2px_12px_rgba(0,0,0,0.35)] medium:text-[36px] large:text-[44px] group-hover:underline group-hover:underline-offset-4">
-          {slide.title}
-        </h2>
-        {slide.description && (
-          <p className="text-[15px] leading-[1.6] opacity-95 [text-shadow:0_1px_8px_rgba(0,0,0,0.3)] medium:text-[17px]">
-            {slide.description}
-          </p>
-        )}
+      <div className="relative z-10 mx-auto flex w-full max-w-[1200px] items-center px-[16px] py-[64px] medium:px-[24px] large:py-[96px]">
+        <div className="max-w-[588px]">
+          <h2 className="whitespace-pre-line text-[32px] leading-[1.5] font-bold tracking-[0.0313em] [text-shadow:0_2px_16px_rgba(0,0,0,0.35)] large:text-[36px] large:tracking-[0.0278em]">
+            {slide.title}
+          </h2>
+          {slide.description && (
+            <p className="mt-[20px] text-[17px] leading-[1.8] text-white/95 [text-shadow:0_1px_10px_rgba(0,0,0,0.32)] medium:text-[19px]">
+              {slide.description}
+            </p>
+          )}
+          {slide.url && (
+            <Link
+              href={slide.url}
+              className="mt-[40px] inline-flex h-[64px] items-center justify-center rounded-[8px] bg-[#247B5C] px-[24px] text-[19px] leading-[1.5] font-normal text-white no-underline transition-colors hover:bg-[#1f6b50] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              자세히 보러가기
+            </Link>
+          )}
+        </div>
       </div>
-      {/* SR 전용 alt: 배경 이미지는 presentation이므로 별도 알림 */}
-      <span className="sr-only">{slide.imageAlt}</span>
     </div>
   );
-
-  if (slide.url) {
-    return (
-      <Link
-        href={slide.url}
-        className="group block text-inherit no-underline"
-      >
-        {content}
-      </Link>
-    );
-  }
-  return content;
-}
-
-/**
- * url() 안에서 깨지는 문자를 최소한 방어 (완전 sanitize 아님).
- * admin에서 Zod로 검증된 URL이므로 악성 입력은 드묾.
- */
-function escapeUrl(url: string): string {
-  return url.replace(/["'()\\]/g, (ch) => `\\${ch}`);
 }

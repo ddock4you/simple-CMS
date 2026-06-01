@@ -1,9 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Swiper as SwiperInstance } from 'swiper';
-import { A11y, Autoplay, Keyboard, Navigation, Pagination } from 'swiper/modules';
+import {
+  A11y,
+  Autoplay,
+  Keyboard,
+  Navigation,
+  Pagination,
+} from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 
@@ -19,7 +25,10 @@ interface CarouselProps {
   /** 슬라이드 옵션 (admin에서 설정한 값) */
   options: SlideOptions;
   /** 디바이스별 slidesPerView (기본: 1) */
-  breakpoints?: Record<number, { slidesPerView: number; spaceBetween?: number }>;
+  breakpoints?: Record<
+    number,
+    { slidesPerView: number; spaceBetween?: number }
+  >;
   /** loop 모드 (기본 true) */
   loop?: boolean;
   /** 기본 slidesPerView (breakpoints가 없는 경우, 기본 1) */
@@ -55,6 +64,8 @@ export function Carousel({
 }: CarouselProps) {
   const swiperRef = useRef<SwiperInstance | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const paginationRef = useRef<HTMLDivElement>(null);
+  const paginationClassName = `krds-carousel-dots-${useId().replace(/:/g, '')}`;
   const [isPlaying, setIsPlaying] = useState<boolean>(
     options.showPlayPause && options.autoPlay,
   );
@@ -150,6 +161,14 @@ export function Carousel({
       aria-label={ariaLabel}
     >
       <Swiper
+        onBeforeInit={(swiper) => {
+          if (!options.showDots || !paginationRef.current) return;
+
+          const { pagination } = swiper.params;
+          if (pagination && typeof pagination !== 'boolean') {
+            pagination.el = paginationRef.current;
+          }
+        }}
         onSwiper={(swiper) => {
           swiperRef.current = swiper;
         }}
@@ -168,7 +187,7 @@ export function Carousel({
         navigation={false}
         pagination={
           options.showDots
-            ? { clickable: true, el: '.krds-carousel-dots' }
+            ? { clickable: true, el: `.${paginationClassName}` }
             : false
         }
         autoplay={autoplayConfig}
@@ -179,9 +198,7 @@ export function Carousel({
         ))}
       </Swiper>
 
-      {(options.showPrevNext ||
-        options.showPlayPause ||
-        options.showDots) && (
+      {(options.showPrevNext || options.showPlayPause || options.showDots) && (
         <div className="krds-carousel-controls">
           {options.showPrevNext && (
             <button
@@ -212,7 +229,8 @@ export function Carousel({
 
           {options.showDots && (
             <div
-              className="krds-carousel-dots"
+              ref={paginationRef}
+              className={`krds-carousel-dots ${paginationClassName}`}
               role="group"
               aria-label="슬라이드 인디케이터"
             />

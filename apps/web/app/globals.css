@@ -190,10 +190,69 @@
   width: 100%;
   max-width: 100%;
 }
+
+[data-hero-carousel] .krds-carousel .swiper {
+  border-radius: 0;
+}
+
 [data-hero-carousel] .swiper-slide {
   width: 100% !important;
   max-width: 100%;
   flex-shrink: 0;
+}
+
+[data-hero-carousel] .krds-carousel-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  z-index: 20;
+  margin-top: 0;
+  gap: 8px;
+  transform: translateX(-50%);
+}
+
+@media (min-width: 1024px) {
+  [data-hero-carousel] .krds-carousel-controls {
+    bottom: 32px;
+  }
+}
+
+[data-hero-carousel] .krds-carousel-btn {
+  width: 40px;
+  height: 40px;
+  border-color: #cdd1d5;
+  background: #fff;
+  color: #1e2124;
+}
+
+[data-hero-carousel] .krds-carousel-btn:hover {
+  border-color: #247b5c;
+  background: #eff8f4;
+}
+
+[data-hero-carousel] .krds-carousel-dots {
+  display: inline-flex;
+  height: 40px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 9999px;
+  background: #fff;
+  padding: 16px;
+}
+
+[data-hero-carousel] .krds-carousel-dots .swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #6d7882;
+  opacity: 1;
+  transform: none;
+}
+
+[data-hero-carousel] .krds-carousel-dots .swiper-pagination-bullet-active {
+  width: 20px;
+  background: #1e2124;
+  transform: none;
 }
 
 /* Carousel 모드 (RECOMMENDED) — swiper slide에 카드 형태 유지 */
@@ -257,6 +316,7 @@
   transition:
     border-color 0.15s,
     background-color 0.15s;
+  flex-shrink: 0;
 }
 
 .krds-carousel-btn:hover {
