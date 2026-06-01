@@ -50,7 +50,9 @@ async function main() {
   // 1. System role (총괄 관리자) — permissions는 항상 FULL로 동기화 (새 리소스 추가 시 반영)
   // composite @@unique([sessionId, name]) 사용 — sentinel '__PROD__'로 명시 (운영 시드)
   const systemRole = await prisma.role.upsert({
-    where: { sessionId_name: { sessionId: PROD_SENTINEL, name: '총괄 관리자' } },
+    where: {
+      sessionId_name: { sessionId: PROD_SENTINEL, name: '총괄 관리자' },
+    },
     update: { permissions: FULL_PERMISSIONS },
     create: {
       name: '총괄 관리자',
@@ -64,7 +66,9 @@ async function main() {
 
   // 2. Default role (일반 관리자)
   const defaultRole = await prisma.role.upsert({
-    where: { sessionId_name: { sessionId: PROD_SENTINEL, name: '일반 관리자' } },
+    where: {
+      sessionId_name: { sessionId: PROD_SENTINEL, name: '일반 관리자' },
+    },
     update: {},
     create: {
       name: '일반 관리자',
@@ -103,7 +107,10 @@ async function main() {
   // 4. Initial SiteSettings
   await prisma.siteSettings.upsert({
     where: {
-      sessionId_key: { sessionId: PROD_SENTINEL, key: 'CONCURRENT_LOGIN_ENABLED' },
+      sessionId_key: {
+        sessionId: PROD_SENTINEL,
+        key: 'CONCURRENT_LOGIN_ENABLED',
+      },
     },
     update: {},
     create: {
@@ -120,7 +127,11 @@ async function main() {
     description: string;
     slots: ('HEADER' | 'FOOTER' | 'SIDEBAR')[];
   }> = [
-    { name: 'Header Main', description: '헤더 메인 네비게이션', slots: ['HEADER'] },
+    {
+      name: 'Header Main',
+      description: '헤더 메인 네비게이션',
+      slots: ['HEADER'],
+    },
     { name: 'Footer', description: '푸터 네비게이션', slots: ['FOOTER'] },
     { name: 'Quick Links', description: '빠른 링크 모음', slots: [] },
   ];
@@ -131,7 +142,9 @@ async function main() {
       update: { slots: menu.slots },
       create: menu,
     });
-    console.log(`✓ NavigationMenu: ${created.name} (slots: ${created.slots.join(', ') || 'none'})`);
+    console.log(
+      `✓ NavigationMenu: ${created.name} (slots: ${created.slots.join(', ') || 'none'})`,
+    );
   }
 
   // 6. Initial HomeSections (6 fixed sections, idempotent)
@@ -208,9 +221,14 @@ async function main() {
     },
     {
       sectionType: 'NOTICE' as const,
-      title: '공지사항',
+      title: '대표 게시판',
       displayOrder: 6,
-      configJson: { heading: '공지사항', description: null, items: [] },
+      configJson: {
+        heading: '공지 알림',
+        description: null,
+        boardId: null,
+        limit: 4,
+      },
     },
   ];
 

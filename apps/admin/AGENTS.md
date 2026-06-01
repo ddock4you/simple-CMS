@@ -2,6 +2,7 @@
 Codex migration note: this file is a Codex-friendly instruction/reference file.
 Codex automatically reads AGENTS.md files by directory scope.
 -->
+
 > Codex: also read `apps/admin/design.md` for the admin design system before changing admin UI.
 
 # apps/admin — 관리자 CMS
@@ -428,7 +429,7 @@ src/
   - **SHORTCUT**: heading, description?, items[]: `{label, description?, url}` (최대 8개)
   - **LATEST_POSTS**: heading, description?, boardId(nullable), limit(1~10) — 지정 게시판 최신 N개 자동 표시
   - **CTA**: heading, description?, buttonLabel, buttonUrl
-  - **NOTICE**: heading, description?, items[]: `{label, url?, date?}` (최대 5개)
+  - **NOTICE (대표 게시판)**: heading, description?, boardId(nullable), limit(1~10) — 선택한 게시판의 중요 게시글 최신 1건 + 일반 최신글 N개 자동 표시
 - **SlideOptions 공통 스키마** (HERO, RECOMMENDED):
   - `showPrevNext`, `showPlayPause`, `showDots`: boolean 토글
   - `autoPlay`, `autoPlayInterval`(ms, 1000~30000): `showPlayPause=true`일 때만 의미
@@ -1409,15 +1410,15 @@ entities → shared                   ✅
 
 ### entities 슬라이스 목록 (Stage 16e 기준)
 
-| 슬라이스 | 핵심 파일 | 역할 |
-|---|---|---|
-| `entities/auth/` | `lib/`, `ui/PermissionProvider` | 인증·인가 |
-| `entities/editor/` | `ui/TiptapEditor` | Tiptap 에디터 래퍼 |
-| `entities/link-target/` | `ui/LinkTargetInput`, `api/linkTargetReferencesQueries` | URL 분기 입력 |
-| `entities/media/` | `ui/MediaPicker`, `ui/ImageUrlInput` | 미디어 선택·업로드 |
-| `entities/preview/` | `ui/PreviewButton`, `api/usePreviewMutations` | 미리보기 토큰 |
-| `entities/form-fields/` | `ui/SlugField` | 공용 slug 입력 (자동 생성 + 변경 경고). `warningWhen`/`warningMessage` prop으로 도메인별 분기 |
-| `entities/content-status/` | `ui/StatusBadge` | `ContentStatusBadge` — DRAFT/PUBLISHED 공용 Badge |
+| 슬라이스                   | 핵심 파일                                               | 역할                                                                                          |
+| -------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `entities/auth/`           | `lib/`, `ui/PermissionProvider`                         | 인증·인가                                                                                     |
+| `entities/editor/`         | `ui/TiptapEditor`                                       | Tiptap 에디터 래퍼                                                                            |
+| `entities/link-target/`    | `ui/LinkTargetInput`, `api/linkTargetReferencesQueries` | URL 분기 입력                                                                                 |
+| `entities/media/`          | `ui/MediaPicker`, `ui/ImageUrlInput`                    | 미디어 선택·업로드                                                                            |
+| `entities/preview/`        | `ui/PreviewButton`, `api/usePreviewMutations`           | 미리보기 토큰                                                                                 |
+| `entities/form-fields/`    | `ui/SlugField`                                          | 공용 slug 입력 (자동 생성 + 변경 경고). `warningWhen`/`warningMessage` prop으로 도메인별 분기 |
+| `entities/content-status/` | `ui/StatusBadge`                                        | `ContentStatusBadge` — DRAFT/PUBLISHED 공용 Badge                                             |
 
 ## 유효성 검사 규칙
 

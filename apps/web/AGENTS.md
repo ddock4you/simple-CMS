@@ -2,6 +2,7 @@
 Codex migration note: this file is a Codex-friendly instruction/reference file.
 Codex automatically reads AGENTS.md files by directory scope.
 -->
+
 # apps/web — 공개 웹
 
 일반 사용자 대상 공개 웹 애플리케이션. 콘텐츠 소비 중심이며, SSR/SEO를 최우선으로 한다.
@@ -110,6 +111,7 @@ src/
   - KRDS 컴포넌트 이미지 리소스는 `krds-uiux/resources/img`에서 `apps/web/public/assets/krds/img`로 동기화하고, 생성 CSS의 `url(...)`은 `/assets/krds/img/...` 절대 경로로 정규화
   - `predev` / `prebuild` / `prestorybook` / `prebuild-storybook`에서 자동 재생성
 - `apps/web/app/globals.css` 상단:
+
   ```css
   @layer theme, krds-base, components, utilities;
   @import 'tailwindcss/theme.css' layer(theme);
@@ -130,6 +132,7 @@ src/
   }
   @plugin "@tailwindcss/typography";
   ```
+
 - **Preflight 제외** 방식 (`tailwindcss/preflight.css` import 안 함) — KRDS 컴포넌트의 `<button>`/`<input>` 기본 스타일과 충돌 방지
 - 전역 margin/padding reset 금지. `krds-normalized.css`와 `globals.css` 어디에도 `* { margin:0; padding:0 }`류 reset을 추가하지 않는다. Tailwind `p-[24px]`, `space-y-[24px]` 같은 spacing utility를 덮기 때문이다
 - layout.tsx의 import 순서: `import './krds-normalized.css';` → `import './globals.css';` — utility가 KRDS CSS 위에 올라가 overrides 가능
@@ -138,22 +141,22 @@ src/
 
 `@krds-ui/tailwindcss-plugin`은 `theme.extend.{colors,fontSize,fontWeight,spacing,borderRadius}`뿐 아니라 spacing/screens를 Tailwind 기본과 다르게 만드는 부작용이 있어 web 런타임에서 사용하지 않는다. KRDS 값이 필요하면 hex/arbitrary value 또는 CSS variable을 명시한다.
 
-| 카테고리 | 사용 방식 | 예시 |
-|----------|-----------|------|
-| 색상 | hex/arbitrary value 또는 `var(--krds-color-*)` | `bg-[#256ef4]`, `text-[#1e2124]` |
-| 타이포 | px arbitrary + line-height 명시 | `text-[17px] leading-[1.5]` |
-| spacing | KRDS 정확값은 px arbitrary 또는 CSS variable | `gap-[16px]`, `p-[24px]`, `var(--krds-gutter-large)` |
-| radius | px arbitrary | `rounded-[8px]`, `rounded-[12px]` |
-| 브레이크포인트 | KRDS 표준형 `@theme` modifier | `small:`(360+), `medium:`(768+), `large:`(1024+), `xlarge:`(1280+) |
+| 카테고리       | 사용 방식                                      | 예시                                                               |
+| -------------- | ---------------------------------------------- | ------------------------------------------------------------------ |
+| 색상           | hex/arbitrary value 또는 `var(--krds-color-*)` | `bg-[#256ef4]`, `text-[#1e2124]`                                   |
+| 타이포         | px arbitrary + line-height 명시                | `text-[17px] leading-[1.5]`                                        |
+| spacing        | KRDS 정확값은 px arbitrary 또는 CSS variable   | `gap-[16px]`, `p-[24px]`, `var(--krds-gutter-large)`               |
+| radius         | px arbitrary                                   | `rounded-[8px]`, `rounded-[12px]`                                  |
+| 브레이크포인트 | KRDS 표준형 `@theme` modifier                  | `small:`(360+), `medium:`(768+), `large:`(1024+), `xlarge:`(1280+) |
 
 ### KRDS 표준형 레이아웃 기준
 
-| name | viewport | column | gutter | screen margin |
-| ---- | -------- | ------ | ------ | ------------- |
-| small | 360px~ | 4 | 16px | 16px |
-| medium | 768px~ | 8 | 16px | 24px |
-| large | 1024px~ | 12 | 24px | 24px |
-| xlarge | 1280px~ | 12 | 24px | 24px |
+| name   | viewport | column | gutter | screen margin |
+| ------ | -------- | ------ | ------ | ------------- |
+| small  | 360px~   | 4      | 16px   | 16px          |
+| medium | 768px~   | 8      | 16px   | 24px          |
+| large  | 1024px~  | 12     | 24px   | 24px          |
+| xlarge | 1280px~  | 12     | 24px   | 24px          |
 
 - 기본 class는 xsmall 포함 mobile base로 작성한다. `small:`은 360px 이상에서 별도 보정이 필요할 때만 사용한다.
 - 표준형 콘텐츠 영역은 `max-width: 1200px` + screen margin `16px/24px`로 관리한다.
@@ -289,6 +292,7 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
 - **7개 섹션 타입**: HERO, SUB_CAROUSEL, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
 - **SSR Server Component 중심**: 섹션 컴포넌트는 Server, 슬라이드 컨트롤만 Client (`Carousel`)
 - **자체 커스텀 디자인** (시안 확정 전): `apps/web/app/globals.css`의 `.home-*` 클래스로 스코프된 스타일. 시안 확정 시 섹션 컴포넌트 교체 전제, admin 데이터 구조는 안정
+- **NOTICE(대표 게시판)**: 운영자가 선택한 게시판 1개의 중요 게시글 최신 1건과 일반 최신글 N건을 Figma 공지알림 카드 UI로 렌더한다. 기존 수동 `items[]` configJson은 persisted data 보호용 legacy fallback으로만 렌더한다.
 
 ### HERO / RECOMMENDED 슬라이드
 
@@ -331,7 +335,7 @@ src/shared/ui/Carousel.tsx                       # Swiper 기반 공통 캐러�
 
 1. `isVisible: true` 섹션을 `displayOrder asc`로 조회
 2. 각 섹션의 `configJson`을 타입별로 Zod safeParse — 실패 시 skip
-3. LATEST_POSTS의 boardId만 배치 조회 (Promise.all, N+1 방지). RECOMMENDED/HERO는 외부 참조 없음
+3. LATEST_POSTS와 NOTICE의 boardId를 배치 조회 (Promise.all, N+1 방지). NOTICE는 중요글 1건과 일반글 N건을 분리 조회한다. RECOMMENDED/HERO는 외부 참조 없음
 4. dead reference (삭제된/비공개 게시판 등)는 자동 skip — 에러 없이 나머지 렌더
 
 ### 엣지케이스

@@ -64,22 +64,14 @@ const heroSlideSchema = z.object({
 });
 
 export const heroConfigSchema = z.object({
-  slides: z
-    .array(heroSlideSchema)
-    .max(10, '최대 10개까지 등록할 수 있습니다.'),
+  slides: z.array(heroSlideSchema).max(10, '최대 10개까지 등록할 수 있습니다.'),
   slideOptions: slideOptionsSchema,
 });
 export type HeroConfigData = z.infer<typeof heroConfigSchema>;
 
 const recommendedItemSchema = z.object({
-  imageUrl: z
-    .string()
-    .min(1, '이미지 URL을 입력해주세요.')
-    .max(2000),
-  imageAlt: z
-    .string()
-    .min(1, '이미지 대체 텍스트를 입력해주세요.')
-    .max(200),
+  imageUrl: z.string().min(1, '이미지 URL을 입력해주세요.').max(2000),
+  imageAlt: z.string().min(1, '이미지 대체 텍스트를 입력해주세요.').max(200),
   title: z.string().min(1, '제목을 입력해주세요.').max(200),
   description: z.string().max(500).nullable().optional(),
   url: optionalUrlString,
@@ -134,24 +126,14 @@ export type CtaConfigData = z.infer<typeof ctaConfigSchema>;
 export const noticeConfigSchema = z.object({
   heading: z.string().min(1, '섹션 제목을 입력해주세요.').max(200),
   description: z.string().max(500).nullable().optional(),
-  items: z
-    .array(
-      z.object({
-        label: z.string().min(1, '제목을 입력해주세요.').max(200),
-        url: z.string().max(2000).nullable().optional(),
-        date: z.string().max(25).nullable().optional(),
-      }),
-    )
-    .max(5, '최대 5개까지 등록할 수 있습니다.'),
+  boardId: z.string().nullable(),
+  limit: z.number().int().min(1).max(10),
 });
 export type NoticeConfigData = z.infer<typeof noticeConfigSchema>;
 
 const subCarouselItemSchema = z.object({
   imageUrl: z.string().min(1, '이미지 URL을 입력해주세요.').max(2000),
-  imageAlt: z
-    .string()
-    .min(1, '이미지 대체 텍스트를 입력해주세요.')
-    .max(200),
+  imageAlt: z.string().min(1, '이미지 대체 텍스트를 입력해주세요.').max(200),
   title: z.string().min(1, '이름을 입력해주세요.').max(200),
   subtitle: z.string().max(200).nullable().optional(),
   url: optionalUrlString,
@@ -224,9 +206,10 @@ export const defaultConfigByType = {
     buttonUrl: '',
   } satisfies CtaConfigData,
   NOTICE: {
-    heading: '',
+    heading: '공지 알림',
     description: null,
-    items: [],
+    boardId: null,
+    limit: 4,
   } satisfies NoticeConfigData,
 } as const;
 

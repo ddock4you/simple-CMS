@@ -6,7 +6,10 @@ import { GripVertical, Eye, EyeOff, Pencil } from 'lucide-react';
 
 import { Button } from '@/shared/ui/Button';
 
-import { SECTION_TYPE_DESCRIPTIONS } from '../model/sectionLabels';
+import {
+  SECTION_TYPE_DESCRIPTIONS,
+  SECTION_TYPE_LABELS,
+} from '../model/sectionLabels';
 import type { HomeSectionListItem } from '../model/home.types';
 import { SectionTypeBadge } from './SectionTypeBadge';
 
@@ -61,17 +64,20 @@ export function SortableSectionCard({
           <SectionTypeBadge sectionType={section.sectionType} />
           <span
             className={`truncate font-medium ${
-              !section.isVisible
-                ? 'text-muted-foreground line-through'
-                : ''
+              !section.isVisible ? 'text-muted-foreground line-through' : ''
             }`}
           >
-            {section.title}
+            {SECTION_TYPE_LABELS[section.sectionType]}
           </span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
           {SECTION_TYPE_DESCRIPTIONS[section.sectionType]}
         </p>
+        {section.title !== SECTION_TYPE_LABELS[section.sectionType] && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            관리용 제목: {section.title}
+          </p>
+        )}
       </div>
 
       <div className="flex shrink-0 items-center gap-1">

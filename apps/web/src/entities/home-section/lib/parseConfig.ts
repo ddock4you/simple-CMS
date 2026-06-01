@@ -86,6 +86,13 @@ const ctaSchema = z.object({
 const noticeSchema = z.object({
   heading: z.string(),
   description: z.string().nullable().optional(),
+  boardId: z.string().nullable(),
+  limit: z.number().int().min(1).max(10),
+});
+
+const legacyNoticeSchema = z.object({
+  heading: z.string(),
+  description: z.string().nullable().optional(),
   items: z.array(
     z.object({
       label: z.string(),
@@ -110,9 +117,7 @@ export function parseShortcutConfig(raw: unknown): ShortcutConfig | null {
   return result.success ? (result.data as ShortcutConfig) : null;
 }
 
-export function parseLatestPostsConfig(
-  raw: unknown,
-): LatestPostsConfig | null {
+export function parseLatestPostsConfig(raw: unknown): LatestPostsConfig | null {
   const result = latestPostsSchema.safeParse(raw);
   return result.success ? (result.data as LatestPostsConfig) : null;
 }
@@ -124,7 +129,22 @@ export function parseCtaConfig(raw: unknown): CtaConfig | null {
 
 export function parseNoticeConfig(raw: unknown): NoticeConfig | null {
   const result = noticeSchema.safeParse(raw);
-  return result.success ? (result.data as NoticeConfig) : null;
+  if (result.success) {
+    return result.data as NoticeConfig;
+  }
+
+  const legacyResult = legacyNoticeSchema.safeParse(raw);
+  if (!legacyResult.success) {
+    return null;
+  }
+
+  return {
+    heading: legacyResult.data.heading,
+    description: legacyResult.data.description,
+    boardId: null,
+    limit: Math.max(1, Math.min(legacyResult.data.items.length, 10)),
+    items: legacyResult.data.items,
+  } satisfies NoticeConfig;
 }
 
 const subCarouselSchema = z.object({

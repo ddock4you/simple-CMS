@@ -123,7 +123,7 @@ export interface CtaConfig {
   buttonUrl: string;
 }
 
-export interface NoticeItem {
+export interface LegacyNoticeItem {
   label: string;
   url?: string | null;
   date?: string | null;
@@ -132,7 +132,10 @@ export interface NoticeItem {
 export interface NoticeConfig {
   heading: string;
   description?: string | null;
-  items: NoticeItem[];
+  boardId: string | null;
+  limit: number;
+  /** Legacy manual notice items kept only to render persisted configJson safely. */
+  items?: LegacyNoticeItem[];
 }
 
 export type HomeSectionConfig =

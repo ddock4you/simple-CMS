@@ -15,10 +15,10 @@ Next.js 기반의 관리자 CMS와 공개 웹을 하나의 모노레포에서 �
 
 ## 시연용 링크
 
-- **web**: `<DEMO_URL>`
-- **admin**: `<DEMO_URL>/_cms/admin/login`
-- **web Storyboook**: `<DEMO_URL>/_cms/admin/login`
-- **admin Storybook**: `<DEMO_URL>/_cms/admin/login`
+- **web**: [https://simple-cms-web-demo.vercel.app](https://simple-cms-web-demo.vercel.app/)
+- **admin**: [https://simple-cms-web-demo.vercel.app/\_cms/admin/login](https://simple-cms-web-demo.vercel.app/_cms/admin/login)
+- **web Storyboook**: [https://simple-cms-web-demo.vercel.app/\_cms/storybook/web](https://simple-cms-web-demo.vercel.app/_cms/storybook/web)
+- **admin Storybook**: [https://simple-cms-web-demo.vercel.app/\_cms/storybook/admin](https://simple-cms-web-demo.vercel.app/_cms/storybook/admin)
 
 ### 추천 확인 흐름
 

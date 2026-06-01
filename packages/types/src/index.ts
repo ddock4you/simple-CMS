@@ -27,7 +27,7 @@ export type {
   ShortcutConfig,
   LatestPostsConfig,
   CtaConfig,
-  NoticeItem,
+  LegacyNoticeItem,
   NoticeConfig,
   HomeSectionConfig,
 } from './domain/home.types';

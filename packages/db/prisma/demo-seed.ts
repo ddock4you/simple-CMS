@@ -264,9 +264,14 @@ async function main() {
     },
     {
       sectionType: 'NOTICE' as const,
-      title: '공지사항',
+      title: '대표 게시판',
       displayOrder: 6,
-      configJson: { heading: '공지사항', description: null, items: [] },
+      configJson: {
+        heading: '공지 알림',
+        description: null,
+        boardId: noticeBoard.id,
+        limit: 4,
+      },
     },
   ];
   for (const section of homeSections) {
@@ -531,7 +536,12 @@ async function upsertNavigationMenuItemSeed(
   },
 ) {
   const existing = await prisma.navigationMenuItem.findFirst({
-    where: { sessionId: SEED_SENTINEL, menuId, label, displayOrder: data.displayOrder },
+    where: {
+      sessionId: SEED_SENTINEL,
+      menuId,
+      label,
+      displayOrder: data.displayOrder,
+    },
   });
   if (existing) {
     return prisma.navigationMenuItem.update({

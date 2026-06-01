@@ -2,6 +2,7 @@
 Codex migration note: this file is a Codex-friendly instruction/reference file.
 Codex automatically reads AGENTS.md files by directory scope.
 -->
+
 # packages/db — Prisma + PostgreSQL
 
 Prisma schema 정의, Client 생성, query helper를 관리하는 공용 데이터베이스 패키지.
@@ -72,8 +73,8 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 ### 검색 헬퍼 (`src/search.ts`)
 
-| 함수 | 설명 |
-| --- | --- |
+| 함수                                     | 설명                                                         |
+| ---------------------------------------- | ------------------------------------------------------------ |
 | `searchContent(query, page?, pageSize?)` | Subpage + Post 통합 검색, PGroonga `&@~` 연산자, 관련도 정렬 |
 
 - 검색 대상: `PUBLISHED` 상태의 Subpage(title + content) + Post(title + content, 공개 게시판만)
@@ -176,11 +177,11 @@ pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
 
 ### 에러 로그 헬퍼 (`src/errorLog.ts`)
 
-| 함수 | 설명 |
-| --- | --- |
-| `logWebError(input)` | 에러 기록 + fingerprint 자동 계산, fire-and-forget (내부 try-catch) |
-| `cleanupErrorLogs(retentionDays?)` | 보존 기간 초과 레코드 삭제 (기본 90일) |
-| `computeErrorFingerprint(source, url, message)` | SHA-256 hex 앞 16자, 유닛 테스트/외부 재사용용 |
+| 함수                                            | 설명                                                                |
+| ----------------------------------------------- | ------------------------------------------------------------------- |
+| `logWebError(input)`                            | 에러 기록 + fingerprint 자동 계산, fire-and-forget (내부 try-catch) |
+| `cleanupErrorLogs(retentionDays?)`              | 보존 기간 초과 레코드 삭제 (기본 90일)                              |
+| `computeErrorFingerprint(source, url, message)` | SHA-256 hex 앞 16자, 유닛 테스트/외부 재사용용                      |
 
 - fingerprint 정규화: UUID → `{uuid}`, 숫자 → `{n}`, 문자열 리터럴 → `{str}`, 메시지 200자 제한
 - URL 정규화: URL 파싱 후 pathname만 사용, UUID/숫자 세그먼트 치환
@@ -310,7 +311,7 @@ pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
 - 17 모델에 `sessionId String @default("__PROD__")` — NOT NULL + sentinel
 - 운영 환경(`DEMO_MODE` 미설정): 모든 row가 `'__PROD__'`. composite unique가 글로벌 unique와 동일 동작
 - 시연 환경(`DEMO_MODE=true`): visitor cuid 또는 `'__SEED__'`(seed 원본)가 sessionId로 저장
-- 호환 보호: 신규 기존 운영 DB는 `prisma/backfill-session-id.ts` 1회 실행으로 NULL → '__PROD__' 백필 (멱등)
+- 호환 보호: 신규 기존 운영 DB는 `prisma/backfill-session-id.ts` 1회 실행으로 NULL → '**PROD**' 백필 (멱등)
 
 ### composite unique 8개 모델
 
@@ -322,49 +323,49 @@ pnpm db:pgroonga    # PGroonga 확장 + 검색 인덱스 설정
 
 `import { demo } from '@simple-cms/db'`로 진입.
 
-| 함수 | 시그니처 | 용도 |
-|---|---|---|
-| `demo.runWith(ctx, fn)` | `(ctx: DemoContext, fn: () => Promise<T>) => Promise<T>` | 콜백 스코프 안에서만 sessionId 활성화. cron / 스크립트 / 특수 경로용 |
-| `demo.runWithBypass(fn)` | `(fn: () => Promise<T>) => Promise<T>` | extension의 sessionId 주입을 skip. 인증 부트스트랩 / seed / cron cleanup 용도 |
-| `demo.enterWith(ctx)` | `(ctx: DemoContext) => void` | 현재 async 컨텍스트에 즉시 부착. layout 진입부에서만 사용 (이후 모든 await 적용) |
-| `demo.getCurrentSessionId()` | `() => string` | 컨텍스트 미진입 시 `'__PROD__'` fallback. raw SQL WHERE 절에 사용 |
-| `demo.isBypassed()` | `() => boolean` | extension 자체 분기에 사용 |
-| `demo.PROD_SENTINEL` / `demo.SEED_SENTINEL` | `const string` | `'__PROD__'` / `'__SEED__'` 문자열 상수 |
+| 함수                                        | 시그니처                                                 | 용도                                                                             |
+| ------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `demo.runWith(ctx, fn)`                     | `(ctx: DemoContext, fn: () => Promise<T>) => Promise<T>` | 콜백 스코프 안에서만 sessionId 활성화. cron / 스크립트 / 특수 경로용             |
+| `demo.runWithBypass(fn)`                    | `(fn: () => Promise<T>) => Promise<T>`                   | extension의 sessionId 주입을 skip. 인증 부트스트랩 / seed / cron cleanup 용도    |
+| `demo.enterWith(ctx)`                       | `(ctx: DemoContext) => void`                             | 현재 async 컨텍스트에 즉시 부착. layout 진입부에서만 사용 (이후 모든 await 적용) |
+| `demo.getCurrentSessionId()`                | `() => string`                                           | 컨텍스트 미진입 시 `'__PROD__'` fallback. raw SQL WHERE 절에 사용                |
+| `demo.isBypassed()`                         | `() => boolean`                                          | extension 자체 분기에 사용                                                       |
+| `demo.PROD_SENTINEL` / `demo.SEED_SENTINEL` | `const string`                                           | `'__PROD__'` / `'__SEED__'` 문자열 상수                                          |
 
 ### Prisma extension 동작 (`DEMO_MODE=true`만)
 
 `packages/db/src/demo/clientExtension.ts`의 `processOperation` named export로 구현. `Prisma.defineExtension({ query: { $allModels: { $allOperations } } })`이 모든 모델·작업을 가로챈다.
 
-| Operation | 동작 |
-|---|---|
-| `findMany`/`findFirst`/`count`/`aggregate`/`groupBy`/`updateMany`/`deleteMany` | `args.where`에 `AND: [원래where, { sessionId }]` 추가 |
-| `create` | `args.data`에 `sessionId` 자동 주입 |
-| `createMany`/`createManyAndReturn` | `args.data` 배열 각 element에 `sessionId` 주입 |
-| `findUnique`/`findUniqueOrThrow` | id 등 글로벌 unique 통과 → result hook에서 `result.sessionId` 검증. **`select`에서 sessionId 빠뜨려도 강제 추가 후 응답에서 strip** (cross-tenant 차단 + 호출자 contract 보존) |
-| `update`/`delete` | 사전 `findFirst`로 sessionId 일치 검증 → 일치 시 원래 query 진행, 불일치 시 P2025 throw (cross-tenant write 차단) |
-| `upsert` | `console.warn` + 그대로 통과. helper에서 `findFirst → update | create`로 명시 분기하는 것이 표준 |
-| **EXCLUDED_MODELS**: `Session` / `PreviewToken` | extension 격리 적용 안 됨 — 인증 인프라 (글로벌 token unique) |
+| Operation                                                                      | 동작                                                                                                                                                                           |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| `findMany`/`findFirst`/`count`/`aggregate`/`groupBy`/`updateMany`/`deleteMany` | `args.where`에 `AND: [원래where, { sessionId }]` 추가                                                                                                                          |
+| `create`                                                                       | `args.data`에 `sessionId` 자동 주입                                                                                                                                            |
+| `createMany`/`createManyAndReturn`                                             | `args.data` 배열 각 element에 `sessionId` 주입                                                                                                                                 |
+| `findUnique`/`findUniqueOrThrow`                                               | id 등 글로벌 unique 통과 → result hook에서 `result.sessionId` 검증. **`select`에서 sessionId 빠뜨려도 강제 추가 후 응답에서 strip** (cross-tenant 차단 + 호출자 contract 보존) |
+| `update`/`delete`                                                              | 사전 `findFirst`로 sessionId 일치 검증 → 일치 시 원래 query 진행, 불일치 시 P2025 throw (cross-tenant write 차단)                                                              |
+| `upsert`                                                                       | `console.warn` + 그대로 통과. helper에서 `findFirst → update                                                                                                                   | create`로 명시 분기하는 것이 표준 |
+| **EXCLUDED_MODELS**: `Session` / `PreviewToken`                                | extension 격리 적용 안 됨 — 인증 인프라 (글로벌 token unique)                                                                                                                  |
 
 ### 호출 측 관습 (master 단일 스택)
 
-| 패턴 | 코드 |
-|---|---|
-| 단일 필드 unique lookup | `findFirst({ where: { slug } })` (extension이 sessionId 자동 추가) |
-| `id` 기반 lookup | `findUnique({ where: { id } })` 그대로 (extension result hook 검증) |
-| upsert | helper에서 `findFirst → update | create` 명시 분기 (`siteSettings.ts` 패턴 참조) |
-| Raw SQL | `WHERE "sessionId" = ${demo.getCurrentSessionId()}` 명시 추가 (`$queryRaw`는 extension hook 우회) |
-| 인증 부트스트랩 | `demo.runWithBypass(() => getSessionUser(token))` |
-| Seed / 일회성 스크립트 | composite where 명시 (`{ sessionId_key: { sessionId: '__PROD__', key } }`) |
+| 패턴                    | 코드                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| 단일 필드 unique lookup | `findFirst({ where: { slug } })` (extension이 sessionId 자동 추가)                                |
+| `id` 기반 lookup        | `findUnique({ where: { id } })` 그대로 (extension result hook 검증)                               |
+| upsert                  | helper에서 `findFirst → update                                                                    | create` 명시 분기 (`siteSettings.ts` 패턴 참조) |
+| Raw SQL                 | `WHERE "sessionId" = ${demo.getCurrentSessionId()}` 명시 추가 (`$queryRaw`는 extension hook 우회) |
+| 인증 부트스트랩         | `demo.runWithBypass(() => getSessionUser(token))`                                                 |
+| Seed / 일회성 스크립트  | composite where 명시 (`{ sessionId_key: { sessionId: '__PROD__', key } }`)                        |
 
 ### 시연 자동 진입 — `__SEED__` prefill + clone (PR4)
 
 PR4가 도입한 두 진입점. 세부 동작은 루트 AGENTS.md "PR4 visitor 진입 흐름" 참조.
 
-| 함수 | 위치 | 역할 |
-|---|---|---|
-| `cloneSeedToSession(newSessionId)` | `packages/db/src/demo/cloneSeedToSession.ts` | `__SEED__` row 14모델을 새 sessionId로 in-memory remap 클론. `prisma.$transaction(timeout 30s)` 안에서 `findMany → cuid2 사전 생성 → createMany` 순서. NavigationMenuItem.parentId는 2-pass(1차 null, 2차 update). 호출자는 반드시 `demo.runWithBypass(...)`로 감싸야 함. 반환: `{ stats, demoAdminId }` |
-| `SeedNotFoundError` | `packages/db/src/demo/SeedNotFoundError.ts` | `code: 'SEED_NOT_FOUND'`. `__SEED__` Role 0건 또는 `demo_admin` User 부재 시 throw. bootstrap API가 503으로 변환 |
-| `DEMO_ADMIN_USERNAME = 'demo_admin'` | 동일 | demo-seed.ts와 cloneSeedToSession이 공유하는 username 상수 |
+| 함수                                 | 위치                                         | 역할                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cloneSeedToSession(newSessionId)`   | `packages/db/src/demo/cloneSeedToSession.ts` | `__SEED__` row 14모델을 새 sessionId로 in-memory remap 클론. `prisma.$transaction(timeout 30s)` 안에서 `findMany → cuid2 사전 생성 → createMany` 순서. NavigationMenuItem.parentId는 2-pass(1차 null, 2차 update). 호출자는 반드시 `demo.runWithBypass(...)`로 감싸야 함. 반환: `{ stats, demoAdminId }` |
+| `SeedNotFoundError`                  | `packages/db/src/demo/SeedNotFoundError.ts`  | `code: 'SEED_NOT_FOUND'`. `__SEED__` Role 0건 또는 `demo_admin` User 부재 시 throw. bootstrap API가 503으로 변환                                                                                                                                                                                         |
+| `DEMO_ADMIN_USERNAME = 'demo_admin'` | 동일                                         | demo-seed.ts와 cloneSeedToSession이 공유하는 username 상수                                                                                                                                                                                                                                               |
 
 **clone 대상 14모델 의존성 순서**: Role → User → Media → SiteSettings → NavigationMenu → Board → HomeSection → Subpage → Post → PageBlock → HomePopup → NavigationMenuItem → SubpageVersion → SubpageFeedback. `Session` / `PreviewToken`은 EXCLUDED. `AuditLog` / `ErrorLog`는 누적 로그라 클론 의미 왜곡으로 제외.
 
@@ -372,15 +373,16 @@ PR4가 도입한 두 진입점. 세부 동작은 루트 AGENTS.md "PR4 visitor �
 
 ### `__SEED__` prefill 스크립트 (`prisma/demo-seed.ts`)
 
-`pnpm db:demo-seed` 실행 시 sessionId='__SEED__'로 22 row 멱등 생성:
+`pnpm db:demo-seed` 실행 시 sessionId='**SEED**'로 22 row 멱등 생성:
+
 - Role x2 (`총괄 관리자` / `일반 관리자`)
 - User x1 (`demo_admin` / `demo_password` ACTIVE 총괄)
-- SiteSettings x6 (CONCURRENT_LOGIN_ENABLED, SITE_NAME='시연 CMS', SITE_DESCRIPTION, UPLOAD_*)
+- SiteSettings x6 (CONCURRENT*LOGIN_ENABLED, SITE_NAME='시연 CMS', SITE_DESCRIPTION, UPLOAD*\*)
 - NavigationMenu x2 (Header Main + Footer)
 - Board x1 (`notice`)
 - Subpage x1 (`about`, PUBLISHED)
 - PageBlock x1 (about Subpage RICH_TEXT)
-- HomeSection x6 (HERO/RECOMMENDED/SHORTCUT/LATEST_POSTS/CTA/NOTICE)
+- HomeSection x7 (HERO/SUB_CAROUSEL/RECOMMENDED/SHORTCUT/LATEST_POSTS/CTA/NOTICE 대표 게시판)
 - NavigationMenuItem x2 (about 링크 Header + Footer)
 
 운영 seed.ts와 별개 — 자체 PrismaClient + PrismaPg 어댑터 사용 (extension 미적용). 모든 query에 `sessionId: SEED_SENTINEL` 명시 + `findFirst → update | create` (upsert 회피 룰 일관).

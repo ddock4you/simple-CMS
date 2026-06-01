@@ -8,7 +8,7 @@ export type {
   ShortcutConfig,
   LatestPostsConfig,
   CtaConfig,
-  NoticeItem,
+  LegacyNoticeItem,
   NoticeConfig,
   HomeSectionConfig,
   HomeSectionListItem,

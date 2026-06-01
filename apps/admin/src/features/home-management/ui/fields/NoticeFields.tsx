@@ -1,19 +1,20 @@
 'use client';
 
-import type {
-  Control,
-  FieldErrors,
-  UseFormRegister,
-} from 'react-hook-form';
-import { Controller, useFieldArray } from 'react-hook-form';
-import { Plus, Trash2 } from 'lucide-react';
+import type { Control, FieldErrors, UseFormRegister } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
 
-import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
-import { LinkTargetInput } from '@/entities/link-target/ui/LinkTargetInput';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from '@/shared/ui/Select';
 
+import { homeReferencesOptions } from '../../api/homeQueries';
 import type { NoticeConfigData } from '../../model/homeSchemas';
 
 interface NoticeFieldsProps {
@@ -22,15 +23,9 @@ interface NoticeFieldsProps {
   errors: FieldErrors<NoticeConfigData>;
 }
 
-export function NoticeFields({
-  register,
-  control,
-  errors,
-}: NoticeFieldsProps) {
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'items',
-  });
+export function NoticeFields({ register, control, errors }: NoticeFieldsProps) {
+  const { data: references } = useQuery(homeReferencesOptions());
+  const boards = references?.boards ?? [];
 
   return (
     <div className="space-y-4">
@@ -39,7 +34,7 @@ export function NoticeFields({
         <Input
           id="heading"
           {...register('heading')}
-          placeholder="예: 공지사항"
+          placeholder="예: 공지 알림"
         />
         {errors.heading && (
           <p className="text-sm text-destructive">{errors.heading.message}</p>
@@ -57,84 +52,76 @@ export function NoticeFields({
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label>공지 항목 (최대 5개)</Label>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={fields.length >= 5}
-            onClick={() =>
-              append({ label: '', url: null, date: null })
-            }
-          >
-            <Plus className="size-4" />
-            추가
-          </Button>
-        </div>
+        <Label>대표 게시판 선택 *</Label>
+        <Controller
+          name="boardId"
+          control={control}
+          render={({ field }) => {
+            const selected = boards.find((board) => board.id === field.value);
+            const deadReference = field.value && !selected;
 
-        {fields.length === 0 ? (
-          <p className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
-            공지 항목이 없습니다.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="space-y-2 rounded-md border p-3"
+            return (
+              <Select
+                value={field.value ?? ''}
+                onValueChange={(value) => field.onChange(value || null)}
               >
-                <div className="flex items-start gap-2">
-                  <div className="flex-1 space-y-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">제목 *</Label>
-                      <Input
-                        {...register(`items.${index}.label`)}
-                        placeholder="공지 제목"
-                      />
-                      {errors.items?.[index]?.label && (
-                        <p className="text-xs text-destructive">
-                          {errors.items[index]?.label?.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <div className="space-y-1">
-                        <Controller
-                          control={control}
-                          name={`items.${index}.url`}
-                          render={({ field }) => (
-                            <LinkTargetInput
-                              value={field.value ?? ''}
-                              onChange={field.onChange}
-                              label="링크 (선택)"
-                            />
-                          )}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">날짜 (선택)</Label>
-                        <Input
-                          type="date"
-                          {...register(`items.${index}.date`)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => remove(index)}
-                    title="제거"
+                <SelectTrigger
+                  className={deadReference ? 'border-destructive' : undefined}
+                >
+                  <span
+                    className={deadReference ? 'text-destructive' : undefined}
                   >
-                    <Trash2 className="size-4 text-destructive" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+                    {selected?.name ??
+                      (deadReference
+                        ? '삭제된 게시판'
+                        : field.value
+                          ? '선택'
+                          : '게시판을 선택하세요')}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  {boards.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">
+                      공개 게시판이 없습니다.
+                    </div>
+                  ) : (
+                    boards.map((board) => (
+                      <SelectItem key={board.id} value={board.id}>
+                        {board.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            );
+          }}
+        />
+        <p className="text-xs text-muted-foreground">
+          선택한 게시판의 중요 게시글 최신 1건과 일반 최신글을 메인에
+          표시합니다.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          상단 강조 영역은 게시글 관리의 &quot;중요 게시글&quot; 체크 여부를
+          따릅니다.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="limit">일반 게시글 표시 개수</Label>
+        <Input
+          id="limit"
+          type="number"
+          min={1}
+          max={10}
+          {...register('limit', { valueAsNumber: true })}
+        />
+        {errors.limit && (
+          <p className="text-sm text-destructive">{errors.limit.message}</p>
         )}
+        <p className="text-xs text-muted-foreground">
+          일반 게시글은 1~10개까지 표시할 수 있습니다. 중요 게시글은 별도
+          1건으로 표시됩니다.
+        </p>
       </div>
     </div>
   );

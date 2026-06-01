@@ -7,7 +7,7 @@ export const SECTION_TYPE_LABELS: Record<HomeSectionType, string> = {
   SHORTCUT: '바로가기',
   LATEST_POSTS: '최신 게시글',
   CTA: '콜투액션 (CTA)',
-  NOTICE: '공지사항',
+  NOTICE: '대표 게시판',
 };
 
 export const SECTION_TYPE_DESCRIPTIONS: Record<HomeSectionType, string> = {
@@ -17,7 +17,7 @@ export const SECTION_TYPE_DESCRIPTIONS: Record<HomeSectionType, string> = {
   SHORTCUT: '바로가기 카드 모음 (내부/외부 링크)',
   LATEST_POSTS: '지정한 게시판의 최신 게시글을 자동 표시',
   CTA: '방문자 행동 유도 배너 (버튼 포함)',
-  NOTICE: '공지사항 리스트 (제목/링크/날짜)',
+  NOTICE: '선택한 게시판의 중요글과 최신글을 메인에 표시',
 };
 
 export const SECTION_TYPE_ORDER: HomeSectionType[] = [

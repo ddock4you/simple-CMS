@@ -64,6 +64,14 @@ export interface ResolvedLatestPostsSection {
   items: ResolvedLatestPostsItem[];
 }
 
+export interface ResolvedNoticePostItem {
+  id: string;
+  title: string;
+  href: string;
+  publishedAt: Date | null;
+  description: string | null;
+}
+
 export interface ResolvedCtaSection {
   id: string;
   sectionType: 'CTA';
@@ -74,6 +82,10 @@ export interface ResolvedNoticeSection {
   id: string;
   sectionType: 'NOTICE';
   config: NoticeConfig;
+  boardName: string | null;
+  boardSlug: string | null;
+  featuredItem: ResolvedNoticePostItem | null;
+  items: ResolvedNoticePostItem[];
 }
 
 export interface ResolvedSubCarouselSection {
@@ -91,6 +103,17 @@ export type ResolvedSection =
   | ResolvedCtaSection
   | ResolvedNoticeSection;
 
+interface NoticePostRecord {
+  id: string;
+  title: string;
+  slug: string;
+  seoDescription: string | null;
+  content: string | null;
+  publishedAt: Date | null;
+  boardId: string;
+  board: { slug: string; name: string };
+}
+
 export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
   // 1. 섹션 목록 조회
   const rawSections = await prisma.homeSection.findMany({
@@ -106,6 +129,8 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
   // 2. 참조 엔티티 ID 수집 (LATEST_POSTS만 해당)
   const latestPostsBoardIds = new Set<string>();
   const latestPostsLimitByBoard = new Map<string, number>();
+  const noticeBoardIds = new Set<string>();
+  const noticeLimitByBoard = new Map<string, number>();
 
   const parsedSections: Array<{
     id: string;
@@ -165,6 +190,13 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
       case 'NOTICE': {
         const config = parseNoticeConfig(section.configJson);
         if (!config) continue;
+        if (config.boardId) {
+          noticeBoardIds.add(config.boardId);
+          noticeLimitByBoard.set(
+            config.boardId,
+            Math.max(noticeLimitByBoard.get(config.boardId) ?? 0, config.limit),
+          );
+        }
         parsedSections.push({ ...section, config });
         break;
       }
@@ -177,8 +209,14 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
     }
   }
 
-  // 3. LATEST_POSTS 참조 배치 조회 (N+1 방지)
-  const [boards, latestPostGroups] = await Promise.all([
+  // 3. 게시판 참조 배치 조회 (LATEST_POSTS + NOTICE, N+1 방지)
+  const [
+    boards,
+    latestPostGroups,
+    noticeBoards,
+    noticeImportantGroups,
+    noticeRegularGroups,
+  ] = await Promise.all([
     latestPostsBoardIds.size > 0
       ? prisma.board.findMany({
           where: {
@@ -211,6 +249,67 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
           ),
         )
       : Promise.resolve([]),
+    noticeBoardIds.size > 0
+      ? prisma.board.findMany({
+          where: {
+            id: { in: Array.from(noticeBoardIds) },
+            isPublic: true,
+          },
+          select: { id: true, name: true, slug: true },
+        })
+      : Promise.resolve([]),
+    noticeBoardIds.size > 0
+      ? Promise.all(
+          Array.from(noticeBoardIds).map((boardId) =>
+            prisma.post.findMany({
+              where: {
+                boardId,
+                status: 'PUBLISHED',
+                isImportant: true,
+                board: { isPublic: true },
+              },
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                seoDescription: true,
+                content: true,
+                publishedAt: true,
+                boardId: true,
+                board: { select: { slug: true, name: true } },
+              },
+              orderBy: { publishedAt: 'desc' },
+              take: 1,
+            }),
+          ),
+        )
+      : Promise.resolve([]),
+    noticeBoardIds.size > 0
+      ? Promise.all(
+          Array.from(noticeBoardIds).map((boardId) =>
+            prisma.post.findMany({
+              where: {
+                boardId,
+                status: 'PUBLISHED',
+                isImportant: false,
+                board: { isPublic: true },
+              },
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                seoDescription: true,
+                content: true,
+                publishedAt: true,
+                boardId: true,
+                board: { select: { slug: true, name: true } },
+              },
+              orderBy: { publishedAt: 'desc' },
+              take: noticeLimitByBoard.get(boardId) ?? 0,
+            }),
+          ),
+        )
+      : Promise.resolve([]),
   ]);
 
   const boardMap = new Map(boards.map((b) => [b.id, b]));
@@ -221,6 +320,14 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
     existing.push(post);
     postsByBoard.set(post.boardId, existing);
   }
+
+  const noticeBoardMap = new Map(noticeBoards.map((b) => [b.id, b]));
+  const importantNoticePostsByBoard = groupPostsByBoard(
+    noticeImportantGroups.flat(),
+  );
+  const regularNoticePostsByBoard = groupPostsByBoard(
+    noticeRegularGroups.flat(),
+  );
 
   // 4. 섹션별 최종 결과 조립
   const resolved: ResolvedSection[] = [];
@@ -276,13 +383,32 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
           config: section.config as CtaConfig,
         });
         break;
-      case 'NOTICE':
+      case 'NOTICE': {
+        const config = section.config as NoticeConfig;
+        const board = config.boardId
+          ? noticeBoardMap.get(config.boardId)
+          : null;
+        const importantPost = config.boardId
+          ? (importantNoticePostsByBoard.get(config.boardId)?.[0] ?? null)
+          : null;
+        const regularPosts = config.boardId
+          ? (regularNoticePostsByBoard.get(config.boardId) ?? []).slice(
+              0,
+              config.limit,
+            )
+          : [];
+
         resolved.push({
           id: section.id,
           sectionType: 'NOTICE',
-          config: section.config as NoticeConfig,
+          config,
+          boardName: board?.name ?? null,
+          boardSlug: board?.slug ?? null,
+          featuredItem: importantPost ? toNoticePostItem(importantPost) : null,
+          items: regularPosts.map(toNoticePostItem),
         });
         break;
+      }
       case 'SUB_CAROUSEL':
         resolved.push({
           id: section.id,
@@ -295,3 +421,31 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
 
   return resolved;
 });
+
+function groupPostsByBoard<T extends { boardId: string }>(
+  posts: T[],
+): Map<string, T[]> {
+  const grouped = new Map<string, T[]>();
+  for (const post of posts) {
+    const existing = grouped.get(post.boardId) ?? [];
+    existing.push(post);
+    grouped.set(post.boardId, existing);
+  }
+  return grouped;
+}
+
+function toNoticePostItem(post: NoticePostRecord): ResolvedNoticePostItem {
+  return {
+    id: post.id,
+    title: post.title,
+    href: `/board/${post.board.slug}/${post.slug}`,
+    publishedAt: post.publishedAt,
+    description: normalizeSummary(post.seoDescription ?? post.content),
+  };
+}
+
+function normalizeSummary(value: string | null | undefined): string | null {
+  const summary = value?.replace(/\s+/g, ' ').trim();
+  if (!summary) return null;
+  return summary.length > 120 ? `${summary.slice(0, 120)}...` : summary;
+}
