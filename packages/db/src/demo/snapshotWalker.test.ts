@@ -96,6 +96,43 @@ describe('walkSnapshotForRemap — HomeSection', () => {
     expect(cfg.items[0]!.mediaId).toBe('m-new');
   });
 
+  it('FREQUENT_MENU items[].iconMediaId 재매핑', () => {
+    const payload = emptyPayload();
+    payload.models.HomeSection.push({
+      id: 'sec-frequent-menu',
+      sectionType: 'FREQUENT_MENU',
+      title: 'test-section',
+      configJson: {
+        heading: '자주찾는 메뉴',
+        items: [
+          {
+            title: '증명서',
+            itemType: 'CUSTOM',
+            url: '/certificates',
+            isVisible: true,
+            openInNewTab: false,
+            iconUrl: '/u/icon.png',
+            iconAlt: '증명서 아이콘',
+            iconMediaId: 'm-icon',
+          },
+        ],
+      },
+      isVisible: true,
+      displayOrder: 2,
+    });
+
+    walkSnapshotForRemap(
+      payload,
+      new Map([['m-icon', 'm-icon-new']]),
+      'mediaId',
+    );
+
+    const cfg = payload.models.HomeSection[0]!.configJson as {
+      items: Array<{ iconMediaId: string }>;
+    };
+    expect(cfg.items[0]!.iconMediaId).toBe('m-icon-new');
+  });
+
   it('LATEST_POSTS boardId 재매핑 (kind=boardId)', () => {
     const payload = emptyPayload();
     payload.models.HomeSection.push({

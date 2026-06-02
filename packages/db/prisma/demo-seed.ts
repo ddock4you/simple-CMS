@@ -202,7 +202,7 @@ async function main() {
   });
   console.log(`✓ PageBlock: about RICH_TEXT (displayOrder 0)`);
 
-  // ─── 8. HomeSection x7 ─────────────────────────────────
+  // ─── 8. HomeSection x8 ─────────────────────────────────
   const homeSections = [
     {
       sectionType: 'HERO' as const,
@@ -224,9 +224,18 @@ async function main() {
       },
     },
     {
+      sectionType: 'FREQUENT_MENU' as const,
+      title: '자주찾는 메뉴',
+      displayOrder: 2,
+      configJson: {
+        heading: '자주찾는 메뉴',
+        items: [],
+      },
+    },
+    {
       sectionType: 'RECOMMENDED' as const,
       title: '추천 콘텐츠',
-      displayOrder: 2,
+      displayOrder: 3,
       configJson: {
         heading: '추천 콘텐츠',
         description: null,
@@ -237,13 +246,13 @@ async function main() {
     {
       sectionType: 'SHORTCUT' as const,
       title: '바로가기',
-      displayOrder: 3,
+      displayOrder: 4,
       configJson: { heading: '바로가기', description: null, items: [] },
     },
     {
       sectionType: 'LATEST_POSTS' as const,
       title: '최신 게시글',
-      displayOrder: 4,
+      displayOrder: 5,
       configJson: {
         heading: '최신 게시글',
         description: null,
@@ -254,7 +263,7 @@ async function main() {
     {
       sectionType: 'CTA' as const,
       title: 'CTA 섹션',
-      displayOrder: 5,
+      displayOrder: 6,
       configJson: {
         heading: '지금 시작하세요',
         description: null,
@@ -265,7 +274,7 @@ async function main() {
     {
       sectionType: 'NOTICE' as const,
       title: '대표 게시판',
-      displayOrder: 6,
+      displayOrder: 7,
       configJson: {
         heading: '공지 알림',
         description: null,
@@ -282,7 +291,7 @@ async function main() {
       isVisible: true,
     });
   }
-  console.log('✓ HomeSection: 7 sections');
+  console.log('✓ HomeSection: 8 sections');
 
   // ─── 9. NavigationMenuItem x2: about 링크 (Header + Footer) ───
   await upsertNavigationMenuItemSeed(headerMenu.id, '소개', {
@@ -500,6 +509,7 @@ async function upsertHomeSectionSeed(
     | 'HERO'
     | 'RECOMMENDED'
     | 'SUB_CAROUSEL'
+    | 'FREQUENT_MENU'
     | 'SHORTCUT'
     | 'LATEST_POSTS'
     | 'CTA'

@@ -4,6 +4,8 @@ export type {
   HeroConfig,
   RecommendedItem,
   RecommendedConfig,
+  FrequentMenuItem,
+  FrequentMenuConfig,
   ShortcutItem,
   ShortcutConfig,
   LatestPostsConfig,

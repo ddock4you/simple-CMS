@@ -105,6 +105,7 @@ const homeSectionRowSchema = z.object({
     'HERO',
     'RECOMMENDED',
     'SUB_CAROUSEL',
+    'FREQUENT_MENU',
     'SHORTCUT',
     'LATEST_POSTS',
     'CTA',

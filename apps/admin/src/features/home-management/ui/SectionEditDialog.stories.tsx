@@ -69,16 +69,36 @@ export const EditShortcut: Story = {
 
 /**
  * Stage 12f — NOTICE 섹션 폼 분기 검증.
- * NoticeFields가 마운트되어 "공지 항목 (최대 5개)" 라벨이 보이는지 확인.
+ * NoticeFields가 마운트되어 대표 게시판 선택 필드가 보이는지 확인.
  */
 export const EditNotice: Story = {
   args: { section: makeSection('NOTICE') },
   play: async ({ canvasElement: _ }) => {
     const body = within(document.body);
     expect(
-      await body.findByRole('heading', { name: /공지사항.*섹션 편집/ }),
+      await body.findByRole('heading', { name: /대표 게시판.*섹션 편집/ }),
     ).toBeInTheDocument();
-    expect(body.getByText('공지 항목 (최대 5개)')).toBeInTheDocument();
+    expect(body.getByText('대표 게시판 선택 *')).toBeInTheDocument();
+  },
+};
+
+/**
+ * 자주찾는 메뉴 섹션 폼 분기 검증.
+ * 메뉴 관리와 유사한 연결 타입 + 아이콘 이미지 입력 UI가 노출되는지 확인.
+ */
+export const EditFrequentMenu: Story = {
+  args: { section: makeSection('FREQUENT_MENU') },
+  play: async ({ canvasElement: _ }) => {
+    const body = within(document.body);
+    expect(
+      await body.findByRole('heading', { name: /자주찾는 메뉴.*섹션 편집/ }),
+    ).toBeInTheDocument();
+    expect(body.getByText('메뉴 항목')).toBeInTheDocument();
+    expect(
+      body.getByText(
+        '최대 6개까지 등록할 수 있습니다. 시작일/종료일은 사용하지 않습니다.',
+      ),
+    ).toBeInTheDocument();
   },
 };
 

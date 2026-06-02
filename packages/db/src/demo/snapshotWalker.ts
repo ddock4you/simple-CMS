@@ -76,14 +76,23 @@ function remapHomeSectionConfig(
         }
       }
     }
-    // RECOMMENDED / SUB_CAROUSEL items[].mediaId
-    if ((sectionType === 'RECOMMENDED' || sectionType === 'SUB_CAROUSEL') && Array.isArray(cfg.items)) {
+    // RECOMMENDED / SUB_CAROUSEL items[].mediaId, FREQUENT_MENU items[].iconMediaId
+    if (
+      (sectionType === 'RECOMMENDED' ||
+        sectionType === 'SUB_CAROUSEL' ||
+        sectionType === 'FREQUENT_MENU') &&
+      Array.isArray(cfg.items)
+    ) {
       for (const item of cfg.items) {
         if (item && typeof item === 'object') {
-          const i = item as { mediaId?: unknown };
+          const i = item as { mediaId?: unknown; iconMediaId?: unknown };
           if (typeof i.mediaId === 'string') {
             const newId = idMap.get(i.mediaId);
             if (newId) i.mediaId = newId;
+          }
+          if (typeof i.iconMediaId === 'string') {
+            const newId = idMap.get(i.iconMediaId);
+            if (newId) i.iconMediaId = newId;
           }
         }
       }
@@ -191,7 +200,12 @@ export function walkSnapshotForRemap(
 
   // HomeSection
   for (const section of payload.models.HomeSection) {
-    remapHomeSectionConfig(section.sectionType, section.configJson, idMap, kind);
+    remapHomeSectionConfig(
+      section.sectionType,
+      section.configJson,
+      idMap,
+      kind,
+    );
   }
 
   if (kind !== 'mediaId') return; // boardId는 HomeSection까지만

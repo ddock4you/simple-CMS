@@ -9,6 +9,7 @@ export type HomeSectionType =
   | 'HERO'
   | 'RECOMMENDED'
   | 'SUB_CAROUSEL'
+  | 'FREQUENT_MENU'
   | 'SHORTCUT'
   | 'LATEST_POSTS'
   | 'CTA'
@@ -109,6 +110,27 @@ export interface ShortcutConfig {
   items: ShortcutItem[];
 }
 
+export type FrequentMenuItemType = 'SUBPAGE' | 'BOARD' | 'EXTERNAL' | 'CUSTOM';
+
+export interface FrequentMenuItem {
+  title: string;
+  itemType: FrequentMenuItemType;
+  subpageId?: string | null;
+  boardId?: string | null;
+  url?: string | null;
+  isVisible: boolean;
+  openInNewTab: boolean;
+  iconUrl: string;
+  iconAlt: string;
+  iconMediaId?: string | null;
+  iconOriginalName?: string | null;
+}
+
+export interface FrequentMenuConfig {
+  heading: string;
+  items: FrequentMenuItem[];
+}
+
 export interface LatestPostsConfig {
   heading: string;
   description?: string | null;
@@ -142,6 +164,7 @@ export type HomeSectionConfig =
   | ({ sectionType: 'HERO' } & { config: HeroConfig })
   | ({ sectionType: 'RECOMMENDED' } & { config: RecommendedConfig })
   | ({ sectionType: 'SUB_CAROUSEL' } & { config: SubCarouselConfig })
+  | ({ sectionType: 'FREQUENT_MENU' } & { config: FrequentMenuConfig })
   | ({ sectionType: 'SHORTCUT' } & { config: ShortcutConfig })
   | ({ sectionType: 'LATEST_POSTS' } & { config: LatestPostsConfig })
   | ({ sectionType: 'CTA' } & { config: CtaConfig })

@@ -8,9 +8,16 @@ import {
 } from './mediaBearingSettings';
 
 /** Tiptap JSON 노드 트리에 특정 mediaId를 가진 image 노드가 있는지 재귀 탐색한다. */
-export function containsMediaReference(node: unknown, mediaId: string): boolean {
+export function containsMediaReference(
+  node: unknown,
+  mediaId: string,
+): boolean {
   if (!node || typeof node !== 'object') return false;
-  const n = node as { type?: string; attrs?: { mediaId?: unknown }; content?: unknown };
+  const n = node as {
+    type?: string;
+    attrs?: { mediaId?: unknown };
+    content?: unknown;
+  };
   if (n.type === 'image' && n.attrs?.mediaId === mediaId) return true;
   if (Array.isArray(n.content)) {
     for (const child of n.content) {
@@ -74,7 +81,8 @@ export async function findMediaReferences(
   }
 
   // ─── 3. HomeSection.configJson (JSONB containment) ───────────
-  // HERO: configJson.slides[i].mediaId, RECOMMENDED: configJson.items[i].mediaId
+  // HERO: configJson.slides[i].mediaId, RECOMMENDED/SUB_CAROUSEL: configJson.items[i].mediaId,
+  // FREQUENT_MENU: configJson.items[i].iconMediaId
   // PostgreSQL의 jsonb @> 연산자는 배열 안 객체 부분 매칭을 지원한다.
   type HomeSectionRaw = {
     id: string;
@@ -88,7 +96,8 @@ export async function findMediaReferences(
     FROM "HomeSection"
     WHERE "sessionId" = ${sessionId}
       AND (("configJson" -> 'slides') @> ${JSON.stringify([{ mediaId }])}::jsonb
-        OR ("configJson" -> 'items') @> ${JSON.stringify([{ mediaId }])}::jsonb)
+        OR ("configJson" -> 'items') @> ${JSON.stringify([{ mediaId }])}::jsonb
+        OR ("configJson" -> 'items') @> ${JSON.stringify([{ iconMediaId: mediaId }])}::jsonb)
   `;
   for (const sec of homeSectionMatches) {
     references.push({

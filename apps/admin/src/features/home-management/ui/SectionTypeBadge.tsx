@@ -10,6 +10,7 @@ const VARIANT_BY_TYPE: Record<
   HERO: 'default',
   RECOMMENDED: 'default',
   SUB_CAROUSEL: 'default',
+  FREQUENT_MENU: 'secondary',
   SHORTCUT: 'secondary',
   LATEST_POSTS: 'secondary',
   CTA: 'outline',

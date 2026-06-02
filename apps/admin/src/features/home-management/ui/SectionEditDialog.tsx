@@ -20,6 +20,7 @@ import type { HomeSectionListItem } from '../model/home.types';
 import { HeroSectionForm } from './forms/HeroSectionForm';
 import { RecommendedSectionForm } from './forms/RecommendedSectionForm';
 import { SubCarouselSectionForm } from './forms/SubCarouselSectionForm';
+import { FrequentMenuSectionForm } from './forms/FrequentMenuSectionForm';
 import { ShortcutSectionForm } from './forms/ShortcutSectionForm';
 import { LatestPostsSectionForm } from './forms/LatestPostsSectionForm';
 import { CtaSectionForm } from './forms/CtaSectionForm';
@@ -99,6 +100,14 @@ function SectionFormSwitch({
     case 'SUB_CAROUSEL':
       return (
         <SubCarouselSectionForm
+          section={section}
+          onClose={onClose}
+          onDirtyChange={onDirtyChange}
+        />
+      );
+    case 'FREQUENT_MENU':
+      return (
+        <FrequentMenuSectionForm
           section={section}
           onClose={onClose}
           onDirtyChange={onDirtyChange}

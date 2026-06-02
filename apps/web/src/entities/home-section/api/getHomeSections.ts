@@ -6,6 +6,7 @@ import type {
   HeroConfig,
   RecommendedConfig,
   SubCarouselConfig,
+  FrequentMenuConfig,
   ShortcutConfig,
   LatestPostsConfig,
   CtaConfig,
@@ -14,6 +15,7 @@ import type {
 
 import {
   parseCtaConfig,
+  parseFrequentMenuConfig,
   parseHeroConfig,
   parseLatestPostsConfig,
   parseNoticeConfig,
@@ -46,6 +48,21 @@ export interface ResolvedShortcutSection {
   id: string;
   sectionType: 'SHORTCUT';
   config: ShortcutConfig;
+}
+
+export interface ResolvedFrequentMenuItem {
+  title: string;
+  href: string;
+  openInNewTab: boolean;
+  iconUrl: string;
+  iconAlt: string;
+}
+
+export interface ResolvedFrequentMenuSection {
+  id: string;
+  sectionType: 'FREQUENT_MENU';
+  config: FrequentMenuConfig;
+  items: ResolvedFrequentMenuItem[];
 }
 
 export interface ResolvedLatestPostsItem {
@@ -98,6 +115,7 @@ export type ResolvedSection =
   | ResolvedHeroSection
   | ResolvedRecommendedSection
   | ResolvedSubCarouselSection
+  | ResolvedFrequentMenuSection
   | ResolvedShortcutSection
   | ResolvedLatestPostsSection
   | ResolvedCtaSection
@@ -131,6 +149,8 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
   const latestPostsLimitByBoard = new Map<string, number>();
   const noticeBoardIds = new Set<string>();
   const noticeLimitByBoard = new Map<string, number>();
+  const frequentMenuSubpageIds = new Set<string>();
+  const frequentMenuBoardIds = new Set<string>();
 
   const parsedSections: Array<{
     id: string;
@@ -139,6 +159,7 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
       | HeroConfig
       | RecommendedConfig
       | SubCarouselConfig
+      | FrequentMenuConfig
       | ShortcutConfig
       | LatestPostsConfig
       | CtaConfig
@@ -162,6 +183,21 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
       case 'SHORTCUT': {
         const config = parseShortcutConfig(section.configJson);
         if (!config) continue;
+        parsedSections.push({ ...section, config });
+        break;
+      }
+      case 'FREQUENT_MENU': {
+        const config = parseFrequentMenuConfig(section.configJson);
+        if (!config) continue;
+        for (const item of config.items) {
+          if (!item.isVisible) continue;
+          if (item.itemType === 'SUBPAGE' && item.subpageId) {
+            frequentMenuSubpageIds.add(item.subpageId);
+          }
+          if (item.itemType === 'BOARD' && item.boardId) {
+            frequentMenuBoardIds.add(item.boardId);
+          }
+        }
         parsedSections.push({ ...section, config });
         break;
       }
@@ -216,6 +252,8 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
     noticeBoards,
     noticeImportantGroups,
     noticeRegularGroups,
+    frequentMenuSubpages,
+    frequentMenuBoards,
   ] = await Promise.all([
     latestPostsBoardIds.size > 0
       ? prisma.board.findMany({
@@ -310,6 +348,24 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
           ),
         )
       : Promise.resolve([]),
+    frequentMenuSubpageIds.size > 0
+      ? prisma.subpage.findMany({
+          where: {
+            id: { in: Array.from(frequentMenuSubpageIds) },
+            status: 'PUBLISHED',
+          },
+          select: { id: true, slug: true },
+        })
+      : Promise.resolve([]),
+    frequentMenuBoardIds.size > 0
+      ? prisma.board.findMany({
+          where: {
+            id: { in: Array.from(frequentMenuBoardIds) },
+            isPublic: true,
+          },
+          select: { id: true, slug: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   const boardMap = new Map(boards.map((b) => [b.id, b]));
@@ -327,6 +383,12 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
   );
   const regularNoticePostsByBoard = groupPostsByBoard(
     noticeRegularGroups.flat(),
+  );
+  const frequentMenuSubpageSlugMap = new Map(
+    frequentMenuSubpages.map((item) => [item.id, item.slug]),
+  );
+  const frequentMenuBoardSlugMap = new Map(
+    frequentMenuBoards.map((item) => [item.id, item.slug]),
   );
 
   // 4. 섹션별 최종 결과 조립
@@ -354,6 +416,20 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
           config: section.config as ShortcutConfig,
         });
         break;
+      case 'FREQUENT_MENU': {
+        const config = section.config as FrequentMenuConfig;
+        resolved.push({
+          id: section.id,
+          sectionType: 'FREQUENT_MENU',
+          config,
+          items: resolveFrequentMenuItems(
+            config,
+            frequentMenuSubpageSlugMap,
+            frequentMenuBoardSlugMap,
+          ),
+        });
+        break;
+      }
       case 'LATEST_POSTS': {
         const config = section.config as LatestPostsConfig;
         const board = config.boardId ? boardMap.get(config.boardId) : null;
@@ -442,6 +518,51 @@ function toNoticePostItem(post: NoticePostRecord): ResolvedNoticePostItem {
     publishedAt: post.publishedAt,
     description: normalizeSummary(post.seoDescription ?? post.content),
   };
+}
+
+function resolveFrequentMenuItems(
+  config: FrequentMenuConfig,
+  subpageSlugMap: Map<string, string>,
+  boardSlugMap: Map<string, string>,
+): ResolvedFrequentMenuItem[] {
+  return config.items
+    .slice(0, 6)
+    .flatMap((item): ResolvedFrequentMenuItem[] => {
+      if (!item.isVisible || !item.iconUrl || !item.title) return [];
+
+      const href = resolveFrequentMenuHref(item, subpageSlugMap, boardSlugMap);
+      if (!href) return [];
+
+      return [
+        {
+          title: item.title,
+          href,
+          openInNewTab: item.openInNewTab,
+          iconUrl: item.iconUrl,
+          iconAlt: item.iconAlt || `${item.title} 아이콘`,
+        },
+      ];
+    });
+}
+
+function resolveFrequentMenuHref(
+  item: FrequentMenuConfig['items'][number],
+  subpageSlugMap: Map<string, string>,
+  boardSlugMap: Map<string, string>,
+): string | null {
+  switch (item.itemType) {
+    case 'SUBPAGE': {
+      const slug = item.subpageId ? subpageSlugMap.get(item.subpageId) : null;
+      return slug ? `/p/${slug}` : null;
+    }
+    case 'BOARD': {
+      const slug = item.boardId ? boardSlugMap.get(item.boardId) : null;
+      return slug ? `/board/${slug}` : null;
+    }
+    case 'EXTERNAL':
+    case 'CUSTOM':
+      return item.url?.trim() || null;
+  }
 }
 
 function normalizeSummary(value: string | null | undefined): string | null {

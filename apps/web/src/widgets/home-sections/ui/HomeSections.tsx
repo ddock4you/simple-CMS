@@ -5,6 +5,7 @@ import {
 import { HeroSection } from '@/features/home-section/ui/HeroSection';
 import { RecommendedSection } from '@/features/home-section/ui/RecommendedSection';
 import { SubCarouselSection } from '@/features/home-section/ui/SubCarouselSection';
+import { FrequentMenuSection } from '@/features/home-section/ui/FrequentMenuSection';
 import { ShortcutSection } from '@/features/home-section/ui/ShortcutSection';
 import { LatestPostsSection } from '@/features/home-section/ui/LatestPostsSection';
 import { CtaSection } from '@/features/home-section/ui/CtaSection';
@@ -39,6 +40,8 @@ export async function HomeSections({
             return <RecommendedSection key={section.id} section={section} />;
           case 'SUB_CAROUSEL':
             return <SubCarouselSection key={section.id} section={section} />;
+          case 'FREQUENT_MENU':
+            return <FrequentMenuSection key={section.id} section={section} />;
           case 'SHORTCUT':
             return <ShortcutSection key={section.id} section={section} />;
           case 'LATEST_POSTS':

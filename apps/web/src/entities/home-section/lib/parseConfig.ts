@@ -8,6 +8,7 @@ import type {
   CtaConfig,
   NoticeConfig,
   SubCarouselConfig,
+  FrequentMenuConfig,
 } from '@simple-cms/types';
 
 /**
@@ -69,6 +70,25 @@ const shortcutSchema = z.object({
   ),
 });
 
+const frequentMenuSchema = z.object({
+  heading: z.string(),
+  items: z.array(
+    z.object({
+      title: z.string(),
+      itemType: z.enum(['SUBPAGE', 'BOARD', 'EXTERNAL', 'CUSTOM']),
+      subpageId: z.string().nullable().optional(),
+      boardId: z.string().nullable().optional(),
+      url: z.string().nullable().optional(),
+      isVisible: z.boolean(),
+      openInNewTab: z.boolean(),
+      iconUrl: z.string(),
+      iconAlt: z.string(),
+      iconMediaId: z.string().nullable().optional(),
+      iconOriginalName: z.string().nullable().optional(),
+    }),
+  ),
+});
+
 const latestPostsSchema = z.object({
   heading: z.string(),
   description: z.string().nullable().optional(),
@@ -115,6 +135,13 @@ export function parseRecommendedConfig(raw: unknown): RecommendedConfig | null {
 export function parseShortcutConfig(raw: unknown): ShortcutConfig | null {
   const result = shortcutSchema.safeParse(raw);
   return result.success ? (result.data as ShortcutConfig) : null;
+}
+
+export function parseFrequentMenuConfig(
+  raw: unknown,
+): FrequentMenuConfig | null {
+  const result = frequentMenuSchema.safeParse(raw);
+  return result.success ? (result.data as FrequentMenuConfig) : null;
 }
 
 export function parseLatestPostsConfig(raw: unknown): LatestPostsConfig | null {
