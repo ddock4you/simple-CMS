@@ -29,7 +29,11 @@ const source = cssFiles
 
 let normalized = source
   .replace(/@charset\s+["'][^"']+["'];\s*/g, '')
-  .replace(/@import\s+["']\.\.\/\.\.\/css\/token\/krds_tokens\.css["'];?\s*/g, '')
+  .replace(/\/\*#\s*sourceMappingURL=[^*]*\*\//g, '')
+  .replace(
+    /@import\s+["']\.\.\/\.\.\/css\/token\/krds_tokens\.css["'];?\s*/g,
+    '',
+  )
   .replace(
     /url\((['"]?)(?:\.\.\/)+img\/(?:img\/)?([^'")]+)\1\)/g,
     'url(/assets/krds/img/$2)',

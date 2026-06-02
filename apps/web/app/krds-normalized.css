@@ -2215,7 +2215,7 @@ caption {
     color: var(--krds-high-contrast-color-link-visited);
   }
 }
-/*# sourceMappingURL=common.css.map */
+
 
 /* 버튼 / 링크 */
 /* icon 버튼 사이즈 */
@@ -14025,6 +14025,6 @@ label {
     --krds-language--top-title-sub-color: var(--krds-high-contrast-color-text-subtle);
   }
 }
-/*# sourceMappingURL=component.css.map */
+
 
 }
