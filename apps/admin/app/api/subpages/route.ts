@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse, PaginatedResponse } from '@simple-cms/types';
-import { generateSlug } from '@simple-cms/editor';
 import type { z } from 'zod';
 
 import { createSubpageSchema, subpageListQuerySchema } from '@/features/subpage-management/model/subpageSchemas';
 import type { SubpageListItem } from '@/features/subpage-management/model/subpageFilters';
 import { defineRoute } from '@/shared/api/defineRoute';
+import { createUniqueSubpageSlug } from '@/shared/lib/opaqueSlug';
 
 export const GET = defineRoute<undefined, PaginatedResponse<SubpageListItem>>({
   resource: 'subpages',
@@ -77,22 +77,7 @@ export const POST = defineRoute<z.infer<typeof createSubpageSchema>, null>({
   schema: createSubpageSchema,
   handler: async ({ user, parsed, auditCtx }) => {
     const { title, seoTitle, seoDescription, status, cclType, cclAi, feedbackEnabled } = parsed;
-    const slug = parsed.slug?.trim() || generateSlug(title);
-
-    if (!slug) {
-      return NextResponse.json(
-        { success: false, error: 'slug을 입력해주세요.' } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
-    }
-
-    const existing = await prisma.subpage.findFirst({ where: { slug } });
-    if (existing) {
-      return NextResponse.json(
-        { success: false, error: '이미 사용 중인 slug입니다.' } satisfies ApiResponse<never>,
-        { status: 409 },
-      );
-    }
+    const slug = await createUniqueSubpageSlug();
 
     const maxOrder = await prisma.subpage.aggregate({ _max: { displayOrder: true } });
     const displayOrder = (maxOrder._max.displayOrder ?? -1) + 1;

@@ -20,8 +20,9 @@ type: project
   - search는 점수 기반 정렬 유지
 - 공개 LIST 스킨은 번호 열을 표시한다. 중요글은 번호 대신 `중요`, 일반글 번호는 `isImportant=false` 공개글 총 개수 기준 역순.
 - 신규 Post 작성 UX:
-  - 빈 slug는 제목 기반 자동 생성
-  - 수동 수정 후 자동 동기화 중단
+  - slug 입력 필드는 제거됨
+  - 생성 시 서버가 opaque random slug를 자동 발급
+  - 편집 저장 시 기존 slug 유지
   - `seoTitle`은 제목, `seoDescription`은 본문 plain text 160자 요약으로 자동 입력
   - 기존 데이터 backfill 없음
 - 공개 Tiptap 렌더링:

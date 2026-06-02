@@ -13,7 +13,6 @@ export const createPostSchema = z.object({
     .string()
     .min(1, '제목을 입력해주세요.')
     .max(200, '제목은 200자 이하여야 합니다.'),
-  slug: z.string().max(200).optional(),
   boardId: z.string().min(1, '게시판을 선택해주세요.'),
   seoTitle: z
     .string()
@@ -37,7 +36,6 @@ export const updatePostSchema = z.object({
     .min(1, '제목을 입력해주세요.')
     .max(200, '제목은 200자 이하여야 합니다.')
     .optional(),
-  slug: z.string().max(200).optional(),
   boardId: z.string().min(1).optional(),
   seoTitle: z
     .string()

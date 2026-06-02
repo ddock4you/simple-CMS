@@ -15,10 +15,6 @@ export function buildPostPatchDiff(parsed: UpdatePostData, prev: Post): Diff {
     before.title = prev.title;
     after.title = parsed.title;
   }
-  if (parsed.slug !== undefined && parsed.slug !== prev.slug) {
-    before.slug = prev.slug;
-    after.slug = parsed.slug;
-  }
   if (parsed.boardId !== undefined && parsed.boardId !== prev.boardId) {
     before.boardId = prev.boardId;
     after.boardId = parsed.boardId;

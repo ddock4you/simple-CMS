@@ -130,10 +130,9 @@ apps/{앱}/
 
 - Subpage, Board, Post 각 도메인별 slug 관리
 - 같은 공개 경로 체계 내 slug 중복 불가
-- 제목 기반 자동 생성 + 수동 수정 가능
-- `published` 상태에서 slug 변경 시 경고
+- Subpage/Post slug는 생성 시 서버가 opaque random slug를 자동 발급한다. 관리자 작성/편집 폼에서 직접 입력하지 않으며, 편집 저장 시 기존 slug를 유지한다.
+- Board slug는 이름 기반 자동 생성 + 수동 수정 가능하며, 공개 게시판 slug 변경 시 경고한다.
 - Post slug는 게시판 단위 unique (`boardSlug + postSlug`)
-- Post 작성 UX: 신규 작성의 빈 slug는 제목 기반으로 자동 생성하고, 사용자가 slug를 직접 수정하면 자동 동기화를 중단한다. 편집 화면의 저장된 slug는 초기 렌더에서 덮어쓰지 않는다.
 
 ### 게시글 중요 표시 정책
 
@@ -744,6 +743,13 @@ pnpm db:pgroonga      # PGroonga 확장 + 검색 인덱스 설정
 2. **코드 재사용성 + 단일 소스 원칙**: 동일 로직의 중복을 피하고, 하나의 정의가 하나의 진실을 담당한다
 3. **외부 라이브러리 문서 우선 조회**: 라이브러리/API 문서, 설정, 코드 생성이 필요할 때는 Context7 MCP를 먼저 사용한다
 
+### Git worktree 운영 메모
+
+- 기능 작업을 별도 git worktree에서 진행할 때, 서버 구동에 필요한 untracked 환경 파일(`.env`, 필요 시 `.env.local`)은 원본 worktree의 파일을 심볼릭 링크로 연결한다.
+- 예: `ln -s /home/ddock4you/project/simple-CMS/.env /home/ddock4you/project/simple-CMS-{작업명}/.env`
+- worktree 제거 시 링크 파일만 함께 삭제되고 원본 `.env`는 유지된다. 단, 원본 `.env` 경로를 변경하면 링크가 깨질 수 있으므로 `git status --short`와 서버 구동으로 확인한다.
+- `.env`는 gitignore 대상이어야 하며, 링크 생성 후 `git status --short`에 노출되지 않는지 확인한다.
+
 ## 코딩 컨벤션
 
 - TypeScript strict 모드
@@ -840,7 +846,7 @@ entities/auth/
 └── model/auth.types.ts         # SessionUser 타입 (role + permissions 포함)
 
 entities/form-fields/
-└── ui/SlugField.tsx            # 공용 slug 입력 필드 (자동 생성 + 변경 경고). warningWhen/warningMessage prop으로 도메인별 경고 분기 (Stage 16e)
+└── ui/SlugField.tsx            # 공용 slug 입력 필드 (자동 생성 + 변경 경고). 현재 BoardForm에서 사용, Subpage/Post는 서버 발급 opaque slug 정책으로 미사용
 
 entities/content-status/
 └── ui/StatusBadge.tsx          # ContentStatusBadge — DRAFT/PUBLISHED 공용 Badge (Stage 16e)
