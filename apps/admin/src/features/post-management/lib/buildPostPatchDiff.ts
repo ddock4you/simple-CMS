@@ -48,6 +48,13 @@ export function buildPostPatchDiff(parsed: UpdatePostData, prev: Post): Diff {
       after.seoDescription = normalized;
     }
   }
+  if (parsed.featuredImageId !== undefined) {
+    const normalized = parsed.featuredImageId || null;
+    if (normalized !== prev.featuredImageId) {
+      before.featuredImageId = prev.featuredImageId;
+      after.featuredImageId = normalized;
+    }
+  }
 
   return { before, after };
 }

@@ -19,6 +19,8 @@ interface PostItem {
   slug: string;
   isImportant: boolean;
   publishedAt: Date | null;
+  thumbnailUrl: string | null;
+  thumbnailAlt: string | null;
   author: { name: string } | null;
 }
 
@@ -129,9 +131,24 @@ function PostGalleryGrid({
         <Link
           key={post.id}
           href={`/board/${boardSlug}/${post.slug}`}
-          className="flex flex-col overflow-hidden rounded-[8px] border border-[#e4e4e4] text-inherit no-underline transition-shadow duration-150 hover:shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
+          className="group flex flex-col overflow-hidden rounded-[8px] border border-[#e4e4e4] text-inherit no-underline transition-shadow duration-150 hover:shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
         >
-          <div className="aspect-video bg-[#f4f5f6]" />
+          <div className="aspect-video overflow-hidden bg-[#f4f5f6]">
+            {post.thumbnailUrl ? (
+              // 외부 URL도 가능하므로 next/image 대신 일반 img
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={post.thumbnailUrl}
+                alt={post.thumbnailAlt ?? `${post.title} 썸네일`}
+                loading="lazy"
+                className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-[13px] leading-[1.5] text-[#8a949e]">
+                이미지 없음
+              </div>
+            )}
+          </div>
           <div className="p-[16px] large:p-[24px]">
             <h3 className="line-clamp-2 overflow-hidden text-[16px] leading-[1.4] font-semibold text-[#1e2124]">
               {post.title}

@@ -7,6 +7,7 @@ import { ArrowLeft, Pencil } from 'lucide-react';
 
 import { Button } from '@/shared/ui/Button';
 import { renderTiptapContentForAdmin } from '@/shared/lib/renderContent';
+import { resolveMediaPreviewUrl } from '@/shared/lib/mediaUrl';
 import {
   Card,
   CardContent,
@@ -112,6 +113,33 @@ export function PostView({ id }: PostViewProps) {
         </div>
 
         <div className="space-y-6">
+          {data.featuredImageUrl && (
+            <Card>
+              <CardHeader>
+                <CardTitle>썸네일 이미지</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="overflow-hidden rounded-md border bg-muted">
+                  {/* 외부 스토리지 URL도 가능하므로 next/image 대신 일반 img */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={resolveMediaPreviewUrl(data.featuredImageUrl)}
+                    alt={data.featuredImageAlt ?? '게시글 썸네일'}
+                    className="aspect-video w-full object-cover"
+                  />
+                </div>
+                {data.featuredImageOriginalFilename && (
+                  <p
+                    className="truncate text-xs text-muted-foreground"
+                    title={data.featuredImageOriginalFilename}
+                  >
+                    {data.featuredImageOriginalFilename}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>정보</CardTitle>

@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ImageOff, Library, X } from 'lucide-react';
 import { extractTextFromTiptap } from '@simple-cms/editor';
+import type { MediaListItem, UploadMediaResponse } from '@simple-cms/types';
 
 import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/shadcn/input';
@@ -30,6 +31,10 @@ import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { BooleanSwitchField } from '@/shared/ui/BooleanSwitchField';
+import { MediaPicker } from '@/entities/media/ui/MediaPicker';
+import { MediaUploadButton } from '@/entities/media/ui/MediaUploadButton';
+import { resolveMediaPreviewUrl } from '@/shared/lib/mediaUrl';
+import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
 import type { PostDetail } from '../model/postFilters';
 import {
@@ -53,11 +58,27 @@ interface PostFormProps {
   defaultBoardId?: string;
 }
 
+const POST_THUMBNAIL_ACCEPT_MIME = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+];
+
+interface ThumbnailSelection {
+  id: string;
+  url: string;
+  alt: string | null;
+  originalFilename: string | null;
+}
+
 export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
   const createMutation = useCreatePost();
   const updateMutation = useUpdatePost(initialData?.id ?? '');
   const deleteMutation = useDeletePost();
   const { data: boards } = useQuery(boardOptionsQuery());
+  const canReadMedia = usePermission('media', 'read');
 
   const isCreate = mode === 'create';
   const schema = isCreate ? createPostSchema : updatePostSchema;
@@ -78,6 +99,7 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
       seoTitle: initialData?.seoTitle ?? '',
       seoDescription: initialData?.seoDescription ?? '',
       contentJson: initialData?.contentJson ?? undefined,
+      featuredImageId: initialData?.featuredImageId ?? null,
       isImportant: initialData?.isImportant ?? false,
       status: initialData?.status ?? 'DRAFT',
     },
@@ -86,7 +108,19 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
   const title = watch('title') ?? '';
   const slug = watch('slug') ?? '';
   const seoTitle = watch('seoTitle') ?? '';
+  const featuredImageId = watch('featuredImageId');
   const initialStatus = initialData?.status ?? 'DRAFT';
+  const [thumbnail, setThumbnail] = useState<ThumbnailSelection | null>(
+    initialData?.featuredImageId && initialData.featuredImageUrl
+      ? {
+          id: initialData.featuredImageId,
+          url: initialData.featuredImageUrl,
+          alt: initialData.featuredImageAlt,
+          originalFilename: initialData.featuredImageOriginalFilename,
+        }
+      : null,
+  );
+  const [pickerOpen, setPickerOpen] = useState(false);
   const seoTitleEdited = useRef(!isCreate || Boolean(initialData?.seoTitle));
   const seoDescriptionEdited = useRef(
     !isCreate || Boolean(initialData?.seoDescription),
@@ -117,6 +151,24 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
   const { confirmDialogProps: leaveDialogProps } = useDirtyGuard(isDirty);
 
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+
+  const selectThumbnail = useCallback(
+    (media: MediaListItem | UploadMediaResponse) => {
+      setValue('featuredImageId', media.id, { shouldDirty: true });
+      setThumbnail({
+        id: media.id,
+        url: media.url,
+        alt: media.alt,
+        originalFilename: media.originalFilename,
+      });
+    },
+    [setValue],
+  );
+
+  const clearThumbnail = useCallback(() => {
+    setValue('featuredImageId', null, { shouldDirty: true });
+    setThumbnail(null);
+  }, [setValue]);
 
   const confirmPublish = useCallback(() => {
     setPublishConfirmOpen(false);
@@ -348,6 +400,86 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
                   )}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>썸네일 이미지</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                갤러리형 게시판 카드에 우선 표시됩니다. 선택하지 않으면 본문 첫
+                이미지가 사용됩니다.
+              </p>
+
+              {thumbnail && featuredImageId ? (
+                <div className="overflow-hidden rounded-md border bg-muted">
+                  {/* 외부 스토리지 URL도 가능하므로 next/image 대신 일반 img */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={resolveMediaPreviewUrl(thumbnail.url)}
+                    alt={thumbnail.alt ?? '썸네일 미리보기'}
+                    className="aspect-video w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="flex aspect-video items-center justify-center rounded-md border border-dashed bg-muted text-sm text-muted-foreground">
+                  <ImageOff className="mr-2 size-4" aria-hidden="true" />
+                  선택된 썸네일이 없습니다.
+                </div>
+              )}
+
+              {thumbnail?.originalFilename && featuredImageId && (
+                <p
+                  className="truncate text-xs text-muted-foreground"
+                  title={thumbnail.originalFilename}
+                >
+                  {thumbnail.originalFilename}
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                <MediaUploadButton
+                  category="post-thumbnail"
+                  acceptMimeTypes={POST_THUMBNAIL_ACCEPT_MIME}
+                  variant="outline"
+                  label="업로드"
+                  onUploaded={selectThumbnail}
+                />
+                {canReadMedia && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setPickerOpen(true)}
+                  >
+                    <Library className="size-4" />
+                    라이브러리
+                  </Button>
+                )}
+                {featuredImageId && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearThumbnail}
+                  >
+                    <X className="size-4" />
+                    제거
+                  </Button>
+                )}
+              </div>
+
+              <MediaPicker
+                open={pickerOpen}
+                onOpenChange={setPickerOpen}
+                onSelect={selectThumbnail}
+                category="post-thumbnail"
+                acceptMimeTypes={POST_THUMBNAIL_ACCEPT_MIME}
+                disabledReason="게시글 썸네일에는 이미지 파일만 선택할 수 있습니다."
+                title="게시글 썸네일 선택"
+                description="갤러리 카드에 표시할 이미지를 선택하세요."
+              />
             </CardContent>
           </Card>
 

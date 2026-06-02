@@ -21,6 +21,9 @@ export const GET = defineRoute<undefined, PostDetail>({
       include: {
         board: { select: { id: true, name: true, slug: true } },
         author: { select: { id: true, name: true } },
+        featuredImage: {
+          select: { url: true, alt: true, originalFilename: true },
+        },
       },
     });
 
@@ -44,6 +47,11 @@ export const GET = defineRoute<undefined, PostDetail>({
       seoTitle: post.seoTitle,
       seoDescription: post.seoDescription,
       contentJson: post.contentJson,
+      featuredImageId: post.featuredImageId,
+      featuredImageUrl: post.featuredImage?.url ?? null,
+      featuredImageAlt: post.featuredImage?.alt ?? null,
+      featuredImageOriginalFilename:
+        post.featuredImage?.originalFilename ?? null,
       status: post.status,
       isImportant: post.isImportant,
       authorId: post.author?.id ?? null,
@@ -87,6 +95,7 @@ export const PATCH = defineRoute<z.infer<typeof updatePostSchema>, PatchResult>(
         seoTitle,
         seoDescription,
         contentJson,
+        featuredImageId,
         isImportant,
         status,
       } = parsed;
@@ -121,6 +130,21 @@ export const PATCH = defineRoute<z.infer<typeof updatePostSchema>, PatchResult>(
         }
       }
 
+      if (featuredImageId) {
+        const media = await prisma.media.findUnique({
+          where: { id: featuredImageId },
+        });
+        if (!media) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: '썸네일 이미지를 찾을 수 없습니다.',
+            } satisfies ApiResponse<never>,
+            { status: 400 },
+          );
+        }
+      }
+
       const updateData: Record<string, unknown> = {};
       if (title !== undefined) updateData.title = title;
       if (slug !== undefined) updateData.slug = slug;
@@ -129,6 +153,8 @@ export const PATCH = defineRoute<z.infer<typeof updatePostSchema>, PatchResult>(
         updateData.seoTitle = seoTitle?.trim() || null;
       if (seoDescription !== undefined)
         updateData.seoDescription = seoDescription?.trim() || null;
+      if (featuredImageId !== undefined)
+        updateData.featuredImageId = featuredImageId || null;
       if (isImportant !== undefined) updateData.isImportant = isImportant;
       if (contentJson !== undefined) {
         updateData.contentJson = contentJson;

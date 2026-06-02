@@ -24,6 +24,7 @@ export const createPostSchema = z.object({
     .max(500, 'SEO 설명은 500자 이내로 입력해주세요.')
     .optional(),
   contentJson: z.any().optional(),
+  featuredImageId: z.string().nullable().optional(),
   isImportant: z.boolean().optional().default(false),
   status: z.enum(['DRAFT', 'PUBLISHED']).optional().default('DRAFT'),
 });
@@ -49,6 +50,7 @@ export const updatePostSchema = z.object({
     .optional()
     .nullable(),
   contentJson: z.any().optional(),
+  featuredImageId: z.string().nullable().optional(),
   isImportant: z.boolean().optional(),
   status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
 });

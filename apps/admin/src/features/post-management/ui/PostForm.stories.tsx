@@ -18,6 +18,10 @@ const draftPost: PostDetail = {
   seoTitle: null,
   seoDescription: null,
   contentJson: null,
+  featuredImageId: null,
+  featuredImageUrl: null,
+  featuredImageAlt: null,
+  featuredImageOriginalFilename: null,
   status: 'DRAFT',
   isImportant: false,
   authorId: 'story-author-1',
@@ -37,6 +41,17 @@ const publishedPost: PostDetail = {
   isImportant: true,
   publishedAt: '2026-04-11T00:00:00.000Z',
   updatedAt: '2026-04-11T00:00:00.000Z',
+};
+
+const postWithThumbnail: PostDetail = {
+  ...publishedPost,
+  id: 'story-post-3',
+  title: '썸네일이 있는 게시글',
+  slug: 'notice-with-thumbnail',
+  featuredImageId: 'story-media-1',
+  featuredImageUrl: '/uploads/post-thumbnail/story-thumbnail.jpg',
+  featuredImageAlt: '게시글 썸네일 예시',
+  featuredImageOriginalFilename: 'story-thumbnail.jpg',
 };
 
 const meta = {
@@ -69,5 +84,12 @@ export const Published: Story = {
   args: {
     mode: 'edit',
     initialData: publishedPost,
+  },
+};
+
+export const WithThumbnail: Story = {
+  args: {
+    mode: 'edit',
+    initialData: postWithThumbnail,
   },
 };

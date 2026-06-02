@@ -40,6 +40,10 @@ export interface PostDetail {
   seoTitle: string | null;
   seoDescription: string | null;
   contentJson: unknown;
+  featuredImageId: string | null;
+  featuredImageUrl: string | null;
+  featuredImageAlt: string | null;
+  featuredImageOriginalFilename: string | null;
   status: ContentStatus;
   isImportant: boolean;
   authorId: string | null;

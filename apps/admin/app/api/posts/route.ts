@@ -95,6 +95,7 @@ export const POST = defineRoute<z.infer<typeof createPostSchema>, null>({
       seoTitle,
       seoDescription,
       contentJson,
+      featuredImageId,
       isImportant,
       status,
     } = parsed;
@@ -132,6 +133,21 @@ export const POST = defineRoute<z.infer<typeof createPostSchema>, null>({
       );
     }
 
+    if (featuredImageId) {
+      const media = await prisma.media.findUnique({
+        where: { id: featuredImageId },
+      });
+      if (!media) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: '썸네일 이미지를 찾을 수 없습니다.',
+          } satisfies ApiResponse<never>,
+          { status: 400 },
+        );
+      }
+    }
+
     const maxOrder = await prisma.post.aggregate({
       _max: { displayOrder: true },
     });
@@ -151,6 +167,7 @@ export const POST = defineRoute<z.infer<typeof createPostSchema>, null>({
         seoDescription: normalizedSeoDescription,
         contentJson: contentJson ?? undefined,
         content,
+        featuredImageId: featuredImageId ?? null,
         status,
         isImportant,
         publishedAt,
@@ -171,6 +188,7 @@ export const POST = defineRoute<z.infer<typeof createPostSchema>, null>({
           boardId,
           status,
           isImportant,
+          featuredImageId: featuredImageId ?? null,
           seoTitle: normalizedSeoTitle,
           seoDescription: normalizedSeoDescription,
         },
