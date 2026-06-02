@@ -34,6 +34,7 @@ enum HomeSectionType {
   LATEST_POSTS
   CTA
   NOTICE
+  GALLERY_COLLECTION
 }
 
 enum HomePopupType {

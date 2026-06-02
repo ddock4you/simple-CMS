@@ -110,6 +110,7 @@ const homeSectionRowSchema = z.object({
     'LATEST_POSTS',
     'CTA',
     'NOTICE',
+    'GALLERY_COLLECTION',
   ]),
   title: z.string(), // NOT NULL in schema
   configJson: jsonValueSchema,

@@ -13,6 +13,7 @@ const VARIANT_BY_TYPE: Record<
   FREQUENT_MENU: 'secondary',
   SHORTCUT: 'secondary',
   LATEST_POSTS: 'secondary',
+  GALLERY_COLLECTION: 'secondary',
   CTA: 'outline',
   NOTICE: 'outline',
 };

@@ -9,6 +9,7 @@ import type {
   NoticeConfig,
   SubCarouselConfig,
   FrequentMenuConfig,
+  GalleryCollectionConfig,
 } from '@simple-cms/types';
 
 /**
@@ -110,6 +111,13 @@ const noticeSchema = z.object({
   limit: z.number().int().min(1).max(10),
 });
 
+const galleryCollectionSchema = z.object({
+  heading: z.string(),
+  description: z.string().nullable().optional(),
+  boardIds: z.array(z.string()).min(1).max(12),
+  limit: z.number().int().min(1).max(12),
+});
+
 const legacyNoticeSchema = z.object({
   heading: z.string(),
   description: z.string().nullable().optional(),
@@ -172,6 +180,13 @@ export function parseNoticeConfig(raw: unknown): NoticeConfig | null {
     limit: Math.max(1, Math.min(legacyResult.data.items.length, 10)),
     items: legacyResult.data.items,
   } satisfies NoticeConfig;
+}
+
+export function parseGalleryCollectionConfig(
+  raw: unknown,
+): GalleryCollectionConfig | null {
+  const result = galleryCollectionSchema.safeParse(raw);
+  return result.success ? (result.data as GalleryCollectionConfig) : null;
 }
 
 const subCarouselSchema = z.object({

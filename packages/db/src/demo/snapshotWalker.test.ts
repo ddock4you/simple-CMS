@@ -160,6 +160,40 @@ describe('walkSnapshotForRemap — HomeSection', () => {
     expect(cfg.boardId).toBe('board-new');
   });
 
+  it('GALLERY_COLLECTION boardIds 재매핑 (kind=boardId)', () => {
+    const payload = emptyPayload();
+    payload.models.HomeSection.push({
+      id: 'sec-gallery',
+      sectionType: 'GALLERY_COLLECTION',
+      title: 'test-section',
+      configJson: {
+        heading: '갤러리 모아보기',
+        boardIds: ['board-old-a', 'board-old-b', 'board-unknown'],
+        limit: 4,
+      },
+      isVisible: true,
+      displayOrder: 3,
+    });
+
+    walkSnapshotForRemap(
+      payload,
+      new Map([
+        ['board-old-a', 'board-new-a'],
+        ['board-old-b', 'board-new-b'],
+      ]),
+      'boardId',
+    );
+
+    const cfg = payload.models.HomeSection[0]!.configJson as {
+      boardIds: string[];
+    };
+    expect(cfg.boardIds).toEqual([
+      'board-new-a',
+      'board-new-b',
+      'board-unknown',
+    ]);
+  });
+
   it('LATEST_POSTS boardId — kind=mediaId면 변경 안 됨', () => {
     const payload = emptyPayload();
     payload.models.HomeSection.push({

@@ -7,6 +7,7 @@ import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import {
   defaultConfigByType,
   type FrequentMenuConfigData,
+  type GalleryCollectionConfigData,
   type HeroConfigData,
   type LatestPostsConfigData,
   type NoticeConfigData,
@@ -28,6 +29,7 @@ type DefaultHomeSectionConfig =
   | FrequentMenuConfigData
   | ShortcutConfigData
   | LatestPostsConfigData
+  | GalleryCollectionConfigData
   | CtaConfigData
   | NoticeConfigData;
 

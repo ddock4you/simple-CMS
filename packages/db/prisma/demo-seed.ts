@@ -9,7 +9,7 @@
  *   - Board x1 (slug='notice')
  *   - Subpage x1 (slug='about', PUBLISHED)
  *   - PageBlock x1 (about Subpage의 RICH_TEXT 본문)
- *   - HomeSection x6 (운영 seed와 동일 6타입)
+ *   - HomeSection x9 (운영 seed와 동일 9타입)
  *   - NavigationMenuItem x2 (about 링크를 Header + Footer에 배치)
  *
  * cloneSeedToSession이 이 17 row 세트를 매 시연 방문자의 새 sessionId로 in-memory remap 클론한다.
@@ -202,7 +202,7 @@ async function main() {
   });
   console.log(`✓ PageBlock: about RICH_TEXT (displayOrder 0)`);
 
-  // ─── 8. HomeSection x8 ─────────────────────────────────
+  // ─── 8. HomeSection x9 ─────────────────────────────────
   const homeSections = [
     {
       sectionType: 'HERO' as const,
@@ -261,9 +261,20 @@ async function main() {
       },
     },
     {
+      sectionType: 'GALLERY_COLLECTION' as const,
+      title: '갤러리 모아보기',
+      displayOrder: 6,
+      configJson: {
+        heading: '갤러리 모아보기',
+        description: null,
+        boardIds: [noticeBoard.id],
+        limit: 4,
+      },
+    },
+    {
       sectionType: 'CTA' as const,
       title: 'CTA 섹션',
-      displayOrder: 6,
+      displayOrder: 7,
       configJson: {
         heading: '지금 시작하세요',
         description: null,
@@ -274,7 +285,7 @@ async function main() {
     {
       sectionType: 'NOTICE' as const,
       title: '대표 게시판',
-      displayOrder: 7,
+      displayOrder: 8,
       configJson: {
         heading: '공지 알림',
         description: null,
@@ -291,7 +302,7 @@ async function main() {
       isVisible: true,
     });
   }
-  console.log('✓ HomeSection: 8 sections');
+  console.log('✓ HomeSection: 9 sections');
 
   // ─── 9. NavigationMenuItem x2: about 링크 (Header + Footer) ───
   await upsertNavigationMenuItemSeed(headerMenu.id, '소개', {
@@ -512,6 +523,7 @@ async function upsertHomeSectionSeed(
     | 'FREQUENT_MENU'
     | 'SHORTCUT'
     | 'LATEST_POSTS'
+    | 'GALLERY_COLLECTION'
     | 'CTA'
     | 'NOTICE',
   data: {
