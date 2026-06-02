@@ -9,9 +9,8 @@ type HeaderProps = ComponentProps<typeof Header>;
 /**
  * KRDS `Header` showcase.
  *
- * 실제 사용처: `apps/web/src/widgets/layout/ui/PageLayout.tsx`
- * 이 프로젝트에서 쓰는 variant만 등록 (KRDS 모든 variant 전수 등록은 scope 외).
- * PageLayout에서 Header.Container + Header.Branding (+옵션 Header.MainMenu)로 조합.
+ * KRDS 원본 컴포넌트 동작 확인용 showcase.
+ * 실제 공개 웹 런타임 헤더는 `Web/Widgets/HeaderChrome` 스토리에서 확인한다.
  */
 const meta: Meta<HeaderProps> = {
   title: 'Web/KRDS/Header',
@@ -21,7 +20,7 @@ const meta: Meta<HeaderProps> = {
     docs: {
       description: {
         component:
-          '정부 디자인 시스템 표준 헤더. `apps/web/src/widgets/layout/ui/PageLayout.tsx`에서 사용.',
+          '정부 디자인 시스템 표준 헤더 showcase. 실제 공개 웹 헤더는 `HeaderChrome`이 KRDS DOM 클래스를 직접 렌더한다.',
       },
     },
   },

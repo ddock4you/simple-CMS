@@ -5,6 +5,8 @@ const DEFAULT_PAGE_SIZE = 20;
 const MAX_QUERY_LENGTH = 200;
 const EXCERPT_LENGTH = 200;
 
+export type SearchContentType = 'all' | 'subpage' | 'post';
+
 export interface SearchResult {
   id: string;
   type: 'subpage' | 'post';
@@ -20,19 +22,32 @@ export interface SearchResult {
 export interface SearchResponse {
   items: SearchResult[];
   total: number;
+  counts: Record<SearchContentType, number>;
   totalPages: number;
   page: number;
   pageSize: number;
+  type: SearchContentType;
 }
 
 export async function searchContent(
   query: string,
   page = 1,
   pageSize = DEFAULT_PAGE_SIZE,
+  type: SearchContentType = 'all',
 ): Promise<SearchResponse> {
   const trimmed = query.trim().slice(0, MAX_QUERY_LENGTH);
+  const emptyResponse = {
+    items: [],
+    total: 0,
+    counts: { all: 0, subpage: 0, post: 0 },
+    totalPages: 0,
+    page,
+    pageSize,
+    type,
+  } satisfies SearchResponse;
+
   if (!trimmed) {
-    return { items: [], total: 0, totalPages: 0, page, pageSize };
+    return emptyResponse;
   }
 
   const offset = (page - 1) * pageSize;
@@ -43,8 +58,48 @@ export async function searchContent(
   const sessionId = getCurrentSessionId();
 
   try {
-    const [items, countResult] = await Promise.all([
-      prisma.$queryRaw<SearchResult[]>`
+    const itemQuery =
+      type === 'subpage'
+        ? prisma.$queryRaw<SearchResult[]>`
+          SELECT
+            s.id,
+            'subpage'::text AS type,
+            s.title,
+            LEFT(s.content, ${EXCERPT_LENGTH}) AS excerpt,
+            s.slug,
+            s."publishedAt",
+            pgroonga_score(s.tableoid, s.ctid) AS score,
+            NULL::text AS "boardName",
+            NULL::text AS "boardSlug"
+          FROM "Subpage" s
+          WHERE s.status = 'PUBLISHED'
+            AND s."sessionId" = ${sessionId}
+            AND (s.title &@~ ${trimmed} OR s.content &@~ ${trimmed})
+          ORDER BY score DESC, "publishedAt" DESC NULLS LAST
+          LIMIT ${pageSize} OFFSET ${offset}
+        `
+        : type === 'post'
+          ? prisma.$queryRaw<SearchResult[]>`
+            SELECT
+              p.id,
+              'post'::text AS type,
+              p.title,
+              LEFT(p.content, ${EXCERPT_LENGTH}) AS excerpt,
+              p.slug,
+              p."publishedAt",
+              pgroonga_score(p.tableoid, p.ctid) AS score,
+              b.name AS "boardName",
+              b.slug AS "boardSlug"
+            FROM "Post" p
+            JOIN "Board" b ON b.id = p."boardId" AND b."sessionId" = ${sessionId}
+            WHERE p.status = 'PUBLISHED'
+              AND b."isPublic" = true
+              AND p."sessionId" = ${sessionId}
+              AND (p.title &@~ ${trimmed} OR p.content &@~ ${trimmed})
+            ORDER BY score DESC, "publishedAt" DESC NULLS LAST
+            LIMIT ${pageSize} OFFSET ${offset}
+          `
+          : prisma.$queryRaw<SearchResult[]>`
         (
           SELECT
             s.id,
@@ -82,36 +137,64 @@ export async function searchContent(
         )
         ORDER BY score DESC, "publishedAt" DESC NULLS LAST
         LIMIT ${pageSize} OFFSET ${offset}
-      `,
-      prisma.$queryRaw<[{ total: bigint }]>`
+      `;
+
+    const [items, countResult] = await Promise.all([
+      itemQuery,
+      prisma.$queryRaw<[
+        { subpage: bigint; post: bigint; all: bigint },
+      ]>`
         SELECT
           (
             SELECT COUNT(*) FROM "Subpage" s
             WHERE s.status = 'PUBLISHED'
               AND s."sessionId" = ${sessionId}
               AND (s.title &@~ ${trimmed} OR s.content &@~ ${trimmed})
-          ) + (
+          ) AS subpage,
+          (
             SELECT COUNT(*) FROM "Post" p
             JOIN "Board" b ON b.id = p."boardId" AND b."sessionId" = ${sessionId}
             WHERE p.status = 'PUBLISHED'
               AND b."isPublic" = true
               AND p."sessionId" = ${sessionId}
               AND (p.title &@~ ${trimmed} OR p.content &@~ ${trimmed})
-          ) AS total
+          ) AS post,
+          (
+            (
+              SELECT COUNT(*) FROM "Subpage" s
+              WHERE s.status = 'PUBLISHED'
+                AND s."sessionId" = ${sessionId}
+                AND (s.title &@~ ${trimmed} OR s.content &@~ ${trimmed})
+            ) + (
+              SELECT COUNT(*) FROM "Post" p
+              JOIN "Board" b ON b.id = p."boardId" AND b."sessionId" = ${sessionId}
+              WHERE p.status = 'PUBLISHED'
+                AND b."isPublic" = true
+                AND p."sessionId" = ${sessionId}
+                AND (p.title &@~ ${trimmed} OR p.content &@~ ${trimmed})
+            )
+          ) AS all
       `,
     ]);
 
-    const total = Number(countResult[0]?.total ?? 0);
+    const counts = {
+      all: Number(countResult[0]?.all ?? 0),
+      subpage: Number(countResult[0]?.subpage ?? 0),
+      post: Number(countResult[0]?.post ?? 0),
+    } satisfies Record<SearchContentType, number>;
+    const total = counts[type];
 
     return {
       items,
       total,
+      counts,
       totalPages: Math.ceil(total / pageSize),
       page,
       pageSize,
+      type,
     };
   } catch (error) {
     console.error('Search query failed:', error);
-    return { items: [], total: 0, totalPages: 0, page, pageSize };
+    return emptyResponse;
   }
 }

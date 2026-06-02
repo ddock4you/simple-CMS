@@ -129,7 +129,11 @@ function DesktopSubPanel({
 
   if (item.children.length === 0) {
     return (
-      <li className={hasSiblingSubmenu ? 'large:col-start-1 large:w-auto' : undefined}>
+      <li
+        className={
+          hasSiblingSubmenu ? 'large:col-start-1 large:w-auto' : undefined
+        }
+      >
         {renderDesktopLeaf(item)}
       </li>
     );
@@ -160,9 +164,7 @@ function DesktopSubPanel({
                     href={childHref}
                     className={depth3LinkClassName}
                     target={child.openInNewTab ? '_blank' : undefined}
-                    rel={
-                      child.openInNewTab ? 'noopener noreferrer' : undefined
-                    }
+                    rel={child.openInNewTab ? 'noopener noreferrer' : undefined}
                     title={childExternal ? '새 창 열림' : undefined}
                   >
                     {child.label}
@@ -202,9 +204,7 @@ function DesktopMainMenu({ items }: { items: FilteredMenuItem[] }) {
                     href={href}
                     className="gnb-main-trigger is-link"
                     target={item.openInNewTab ? '_blank' : undefined}
-                    rel={
-                      item.openInNewTab ? 'noopener noreferrer' : undefined
-                    }
+                    rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
                     title={external ? '새 창 열림' : undefined}
                   >
                     {item.label}
@@ -258,10 +258,7 @@ function DesktopMainMenu({ items }: { items: FilteredMenuItem[] }) {
   );
 }
 
-export function HeaderChrome({
-  branding,
-  headerMenuItems,
-}: HeaderChromeProps) {
+export function HeaderChrome({ branding, headerMenuItems }: HeaderChromeProps) {
   return (
     <>
       <div id="krds-skip-link">
@@ -281,8 +278,8 @@ export function HeaderChrome({
       <header id="krds-header">
         <div className="header-in">
           <div className="header-container web-header-container">
-            <div className="inner !flex !flex-col !gap-[4px] !px-[16px] !py-[12px] large:!px-0">
-              <div className="header-utility !hidden large:!block">
+            <div className="inner">
+              <div className="header-utility">
                 <ul className="utility-list">
                   {HEADER_UTILITY_LINKS.map((item) => (
                     <li key={item.id}>

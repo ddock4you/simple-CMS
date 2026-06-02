@@ -226,6 +226,7 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
   - `Web/Shared/Carousel` (Default / WithAutoplay — Stage 7f)
   - `Web/Widgets/SubpageBlockRenderer` (Mixed / RichTextOnly / HtmlOnly / Empty — 블록 타입별 렌더 검증. **meta decorator로 실사용처 wrapper(`<article id="subpage-{id}">` + max-width 820px + dashed border + min-height 160px)를 story 레벨에서 재현** — 단독 variant에서 텍스트 블록이 Canvas 좌상단에 묻히는 현상 방지 + 렌더 실패 시 wrapper만 보여 원인 구분 쉬움)
   - `Web/Widgets/HomePopupModal` (ContentSingle / ImageSingle / SwiperMultiple / NoPopups)
+  - `Web/Widgets/HeaderChrome` (Default / WithLogo — 실제 공개 웹 런타임 헤더. 통합검색 trigger + 모바일 전체메뉴 + PC GNB 3depth 포함)
   - `Web/Widgets/RightSidebar` (ThreeItems / FiveItems / Empty)
   - `Web/Widgets/KoglFooter` (Type0 / Type1 / **Type2** / **Type3** / Type4 / WithAI / Hidden — 7g 후속에서 Type2/Type3 누락 보완. `CclType` 전체 5단계 모두 커버)
   - `Web/KRDS/{Header, Footer, SideNavigation, Pagination, Breadcrumb, Masthead, SkipLink}` — `apps/web/src/shared/ui/krds-showcase/`에 **런타임 import 없는 story 전용** 디렉토리. 실제 사용하는 variant만 등록(advisor 지적: SkipLink 추가, RightSidebar는 커스텀 JSX라 KRDS 아닌 Widgets로 분류)
@@ -484,8 +485,11 @@ admin에서 발급한 토큰을 교환해 **draft 콘텐츠**를 공개 웹 렌�
 
 - **PGroonga 기반 한글 검색**
 - 검색 대상: Subpage(제목+본문) + Post(제목+본문) — `content` 필드는 Tiptap JSON에서 추출한 plain text
+- 게시판(Board)은 통합검색 결과에 포함하지 않는다. 게시판명 검색은 향후 별도 요구가 있을 때 확장한다
 - `published` 상태만 인덱싱/검색 (Post는 `board.isPublic = true` 추가 필터)
-- 라우트: `/search?q=...` (`force-dynamic`, SSR)
+- 라우트: `/search?q=...&type=all|subpage|post` (`force-dynamic`, SSR)
+- 헤더 통합검색 트리거는 `/search` fallback href를 유지하지만 클릭 시 전체 화면 검색 모달을 연다. 검색 제출 후에만 `/search?q=...` 결과 페이지로 이동한다
+- 검색 결과 탭은 `전체/페이지/게시글` 3개이며 `searchContent()`가 `counts: { all, subpage, post }`를 함께 반환한다
 - 결과에 타입 구분 뱃지 표시 (페이지 / 게시글)
 - 게시글 결과에 게시판 정보 함께 표시
 - 관련도 중심 정렬 (`pgroonga_score`) + 최신순 보조 (`publishedAt DESC`)
@@ -495,12 +499,16 @@ admin에서 발급한 토큰을 교환해 **draft 콘텐츠**를 공개 웹 렌�
 ```
 app/search/page.tsx                           # 라우트 (Server Component, force-dynamic)
 src/entities/search/api/getSearchResults.ts   # React.cache() 래핑 → @simple-cms/db searchContent
-src/features/search/ui/SearchForm.tsx         # Client Component (검색 입력 폼, useRouter)
-src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 + PaginationNav)
+src/features/search/ui/SearchInputForm.tsx    # 공용 검색 입력 폼 (게시판/통합검색/FAQ 등 재사용)
+src/features/search/ui/SearchOverlay.tsx      # 헤더 통합검색 full-screen modal (body portal)
+src/features/search/ui/HeaderSearchTrigger.tsx # 헤더 검색 트리거 + fallback link
+src/features/search/ui/SearchForm.tsx         # 검색 페이지 호환 wrapper
+src/pages/search/ui/SearchPage.tsx            # Server Component (검색 폼 + 탭 + 결과 목록)
+src/pages/search/ui/SearchResultItem.tsx      # 결과 리스트 아이템
 ```
 
-- 데이터: `@simple-cms/db`의 `searchContent()` — PGroonga `&@~` 연산자, `$queryRaw` 사용
-- 헤더: `PageLayout.tsx`에 `/search` 링크 아이콘 추가
+- 데이터: `@simple-cms/db`의 `searchContent(query, page?, pageSize?, type?)` — PGroonga `&@~` 연산자, `$queryRaw` 사용. raw SQL이므로 DEMO `sessionId` 조건을 함수 내부에 명시한다
+- 헤더: `HeaderSearchTrigger`가 KRDS `btn-navi sch navi-row` 링크를 렌더하고, full-screen modal은 `SearchOverlay`가 `document.body` portal로 렌더한다
 
 ### 검색 반영 규칙
 
@@ -510,7 +518,6 @@ src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 
 
 ### 2차 확장 후보
 
-- 필터(전체/페이지/게시글)
 - 하이라이트 스니펫
 - 자동완성
 - 인기 검색어
@@ -544,10 +551,10 @@ src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 
 - 위치: `src/widgets/layout/ui/HeaderChrome.tsx`, `FooterChrome.tsx`, `HeaderBranding.tsx`, `MobileMenuIsland.tsx`, `DesktopGnbBehavior.tsx`
 - 공개 웹 공통 레이아웃의 헤더/푸터는 KRDS React 컴포넌트에 전부 위임하지 않고, 서버 컴포넌트(`HeaderChrome`, `FooterChrome`)가 KRDS DOM 클래스와 의미 구조를 직접 렌더한다. 목적은 페이지 전환 시 헤더/푸터 HTML이 늦게 주입되어 생기는 CLS/깜빡임을 줄이는 것이다.
 - `HeaderBranding`은 서버 컴포넌트다. KRDS `Header.Branding`이 `children`을 `.logo`(`<h2>`) **밖**에 렌더하므로 로고 이미지를 클릭 가능 영역(`<a href="/">`) 안에 두려면 그대로 사용 불가하다. Stage 7d `RightSidebar`/`ContentSideNavigation` 동일 패턴으로 KRDS DOM 클래스(`.header-branding > h2.logo > a`)는 차용하되 일반 시각 스타일은 Tailwind utility로 작성한다.
-- 모바일 전체메뉴만 `MobileMenuIsland` 클라이언트 island로 분리한다. 모바일 overlay open/close, ESC 닫기, body scroll lock처럼 상호작용이 필요한 부분만 클라이언트에 둔다.
+- 모바일 전체메뉴만 `MobileMenuIsland` 클라이언트 island로 분리한다. 모바일 overlay open/close, ESC 닫기, body scroll lock처럼 상호작용이 필요한 부분만 클라이언트에 둔다. 전체메뉴 dialog는 헤더 CSS 스코프/containing block 영향을 피하기 위해 `document.body` portal로 렌더한다.
 - 데스크톱 GNB hover 안정화는 `DesktopGnbBehavior`가 담당한다. 서버에서 렌더된 GNB DOM에 `pointerenter`/`focusin` 이벤트를 붙여 최근 열린 `.web-gnb-dropdown`에 `data-active="true"`를 유지한다. GNB 항목 사이 gap에 커서가 있어도 최근 메뉴가 유지되고, nav 영역을 완전히 벗어나거나 포커스가 빠지면 닫힌다.
 - PC 메뉴/모바일 트리거 분기는 KRDS 표준형 `large:`(1024px~) 기준으로 통일한다.
-- 통합검색은 커스텀 SVG가 아니라 KRDS `btn-navi sch navi-row` 클래스를 사용해 아이콘/상태 스타일을 위임하고 `/search`로 이동한다.
+- 통합검색은 커스텀 SVG가 아니라 KRDS `btn-navi sch navi-row` 클래스를 사용해 아이콘/상태 스타일을 위임한다. 링크의 `href="/search"`는 JS 실패 fallback으로 유지하고, 정상 클릭 시 `HeaderSearchTrigger`가 `SearchOverlay`를 열어 현재 페이지 위에서 검색 모달을 표시한다. 검색 모달도 `document.body` portal로 렌더한다.
 - 헤더와 모바일 전체메뉴 유틸리티에는 코드 상수(`HEADER_UTILITY_LINKS`)로 `KRDS 소개`(`https://www.krds.go.kr/`)를 노출한다. 데스크톱 링크는 새 창(`target="_blank" rel="noopener noreferrer"`)으로 연다.
 - 폴백: logoUrl 미설정 시 sr-only 대신 Tailwind-styled siteName 텍스트를 표시한다.
 - KRDS 메이저 업데이트 시 `HeaderChrome`, `FooterChrome`, `HeaderBranding`, `RightSidebar`, `ContentSideNavigation`을 함께 점검한다.
@@ -557,6 +564,7 @@ src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 
 - 헤더 로고/검색/행 배치, CLS guard, 데스크톱 3depth 레이아웃, 모바일 메뉴 보정 같은 일반 컴포넌트 스타일은 `globals.css`에 추가하지 않고 `HeaderChrome.tsx` / `HeaderBranding.tsx` / `MobileMenuIsland.tsx` Tailwind utility로 작성한다.
 - KRDS 동작에 필요한 의미 클래스(`header-branding`, `logo`, `btn-navi`, `sch`, `navi-row`, `krds-main-menu`, `gnb-*`, `f-*`)는 JSX에 유지한다.
 - 데스크톱 3depth 메뉴는 KRDS 기본 `.gnb-sub-list` 절대 위치 패널을 쓰지 않는다. 절대 위치 패널은 부모 dropdown 높이 계산에 참여하지 않아 긴 3depth 메뉴가 잘릴 수 있다. `web-gnb-depth3-panel` + Tailwind grid/flex class로 정적 레이아웃을 구성해 dropdown 높이가 실제 콘텐츠를 포함하도록 한다.
+- full-screen layer(통합검색 모달, 모바일 전체메뉴)는 헤더 내부 DOM에 직접 렌더하지 않는다. 헤더 내부에 직접 렌더하면 KRDS 헤더 CSS 스코프/containing block 때문에 `position: fixed`가 viewport 전체가 아닌 헤더 높이 기준으로 보일 수 있다.
 - `globals.css`에 헤더 전용 `.header-search-link`, `.header-logo-image`, `.header-logo-text`, `.web-gnb-*` 류 클래스를 재도입하지 않는다. 정말 필요한 전역 override가 생기면 KRDS selector 충돌 사유를 주석으로 남긴다.
 
 ### `generateMetadata` 동적화 (`apps/web/app/layout.tsx`)

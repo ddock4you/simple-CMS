@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
+import { HeaderSearchTrigger } from '@/features/search/ui/HeaderSearchTrigger';
 import type { Branding } from '@/shared/lib/brandingCache';
 
 import { MobileMenuIsland } from './MobileMenuIsland';
@@ -54,13 +55,7 @@ export function HeaderBranding({
       </h2>
       <div className="web-header-desktop-menu-slot hidden large:block large:min-h-[var(--krds-size-height-8)] large:min-w-0 large:flex-1" />
       <div className="header-actions ml-auto shrink-0">
-        <Link
-          href={searchHref}
-          className="btn-navi sch navi-row"
-          aria-label="통합검색"
-        >
-          통합검색
-        </Link>
+        <HeaderSearchTrigger href={searchHref} />
         <MobileMenuIsland
           items={headerMenuItems}
           utilityLinks={utilityLinks}

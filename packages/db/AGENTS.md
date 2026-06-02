@@ -75,11 +75,11 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 | 함수                                     | 설명                                                         |
 | ---------------------------------------- | ------------------------------------------------------------ |
-| `searchContent(query, page?, pageSize?)` | Subpage + Post 통합 검색, PGroonga `&@~` 연산자, 관련도 정렬 |
+| `searchContent(query, page?, pageSize?, type?)` | Subpage + Post 통합 검색, PGroonga `&@~` 연산자, 관련도 정렬. `type`: `all`/`subpage`/`post` |
 
 - 검색 대상: `PUBLISHED` 상태의 Subpage(title + content) + Post(title + content, 공개 게시판만)
 - `UNION ALL`로 통합 쿼리, `pgroonga_score()` 관련도 + `publishedAt DESC` 보조 정렬
-- 반환: `SearchResponse { items: SearchResult[], total, totalPages, page, pageSize }`
+- 반환: `SearchResponse { items: SearchResult[], total, counts: { all, subpage, post }, totalPages, page, pageSize, type }`
 - 빈 쿼리 → 빈 결과, 쿼리 최대 200자 제한
 - 쿼리 실패 시 빈 결과 반환 (에러 로깅만, throw 안 함)
 

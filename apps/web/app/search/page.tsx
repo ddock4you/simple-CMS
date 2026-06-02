@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
+import type { SearchContentType } from '@simple-cms/db';
+
 import { getSearchResults } from '@/entities/search/api/getSearchResults';
 import { SearchPage } from '@/pages/search/ui/SearchPage';
 
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; type?: string }>;
+}
+
+function parseSearchType(type?: string): SearchContentType {
+  return type === 'subpage' || type === 'post' ? type : 'all';
 }
 
 export async function generateMetadata({
@@ -19,10 +25,11 @@ export async function generateMetadata({
 }
 
 export default async function Page({ searchParams }: PageProps) {
-  const { q, page: pageParam } = await searchParams;
+  const { q, page: pageParam, type: typeParam } = await searchParams;
   const query = q?.trim() ?? '';
   const page = Math.max(1, Number(pageParam) || 1);
-  const results = query ? await getSearchResults(query, page) : null;
+  const type = parseSearchType(typeParam);
+  const results = query ? await getSearchResults(query, page, type) : null;
 
-  return <SearchPage query={query} results={results} />;
+  return <SearchPage query={query} results={results} type={type} />;
 }

@@ -1,116 +1,152 @@
 import Link from 'next/link';
 
+import type { SearchContentType, SearchResponse } from '@simple-cms/db';
+
+import { SearchInputForm } from '@/features/search/ui/SearchInputForm';
+import { PaginationNav } from '@/shared/ui/PaginationNav';
 import { Breadcrumb } from '@/shared/ui/KrdsBreadcrumb';
 
-import type { SearchResponse } from '@simple-cms/db';
-
-import { PaginationNav } from '@/shared/ui/PaginationNav';
-import { SearchForm } from '@/features/search/ui/SearchForm';
+import { SearchResultItem } from './SearchResultItem';
 
 interface SearchPageProps {
   query: string;
   results: SearchResponse | null;
+  type: SearchContentType;
 }
 
-function formatDate(date: Date | null) {
-  if (!date) return '';
-  return new Date(date).toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
+const SEARCH_TABS = [
+  { type: 'all', label: '전체' },
+  { type: 'subpage', label: '페이지' },
+  { type: 'post', label: '게시글' },
+] satisfies readonly { type: SearchContentType; label: string }[];
+
+function buildTabHref(query: string, type: SearchContentType) {
+  const params = new URLSearchParams();
+  params.set('q', query);
+  if (type !== 'all') params.set('type', type);
+  return `/search?${params.toString()}`;
 }
 
-export function SearchPage({ query, results }: SearchPageProps) {
+function getCount(results: SearchResponse | null, type: SearchContentType) {
+  return results?.counts[type] ?? 0;
+}
+
+function SearchTabs({
+  query,
+  results,
+  activeType,
+}: {
+  query: string;
+  results: SearchResponse | null;
+  activeType: SearchContentType;
+}) {
   return (
-    <div className="page-container">
-      <Breadcrumb
-        items={[
-          { text: '홈', href: '/' },
-          { text: '검색', href: '#' },
-        ]}
-        ariaLabel="현재 위치"
-      />
+    <nav aria-label="검색 결과 유형" className="w-full overflow-x-auto">
+      <ul className="m-0 flex min-w-max list-none rounded-[8px] border border-[#b1b8be] p-0">
+        {SEARCH_TABS.map((tab, index) => {
+          const active = tab.type === activeType;
+          const count = getCount(results, tab.type).toLocaleString('ko-KR');
+          const roundedClass =
+            index === 0
+              ? 'rounded-l-[8px]'
+              : index === SEARCH_TABS.length - 1
+                ? 'rounded-r-[8px]'
+                : '';
 
-      <header className="pb-[24px]">
-        <h1 className="mb-[24px] text-[32px] leading-[1.3] font-bold text-[#1e2124]">
-          검색
-        </h1>
-        <SearchForm defaultValue={query} />
-      </header>
+          return (
+            <li key={tab.type} className="flex-1">
+              <Link
+                href={buildTabHref(query, tab.type)}
+                aria-current={active ? 'page' : undefined}
+                className={`flex h-[48px] items-center justify-center whitespace-nowrap px-[12px] text-[17px] leading-[1.5] font-bold no-underline large:h-[56px] large:px-[16px] large:text-[19px] ${roundedClass} ${
+                  active
+                    ? 'bg-[#063a74] text-white'
+                    : 'border-r border-[#b1b8be] text-[#464c53] hover:bg-[#f4f5f6]'
+                }`}
+              >
+                {tab.label}({count})
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
 
-      {!query ? (
-        <p className="py-[40px] text-center text-[#717171]">
-          검색어를 입력해 주세요.
-        </p>
-      ) : !results || results.total === 0 ? (
-        <p className="py-[40px] text-center text-[#717171]">
-          &ldquo;{query}&rdquo;에 대한 검색 결과가 없습니다.
-        </p>
-      ) : (
-        <>
-          <p className="border-b-2 border-[#256ef4] pb-[20px] text-[15px] leading-[1.6] text-[#555555]">
-            &ldquo;{query}&rdquo;에 대한 결과 <strong>{results.total}</strong>건
-          </p>
-          <ul className="list-none p-0">
-            {results.items.map((item) => {
-              const href =
-                item.type === 'subpage'
-                  ? `/p/${item.slug}`
-                  : `/board/${item.boardSlug}/${item.slug}`;
+export function SearchPage({ query, results, type }: SearchPageProps) {
+  const hasResults = Boolean(results && results.total > 0);
 
-              return (
-                <li
-                  key={`${item.type}-${item.id}`}
-                  className="border-b border-[#e4e4e4] py-[24px]"
-                >
-                  <div className="mb-[8px] flex items-center gap-[8px]">
-                    <span
-                      className={
-                        item.type === 'subpage'
-                          ? 'inline-block rounded-[4px] bg-[#eff5ff] px-[8px] py-[2px] text-[12px] leading-[1.5] font-semibold text-[#256ef4]'
-                          : 'inline-block rounded-[4px] bg-[#eef7f0] px-[8px] py-[2px] text-[12px] leading-[1.5] font-semibold text-[#008a1e]'
-                      }
-                    >
-                      {item.type === 'subpage' ? '페이지' : '게시글'}
-                    </span>
-                    {item.type === 'post' &&
-                      item.boardName &&
-                      item.boardSlug && (
-                        <Link
-                          href={`/board/${item.boardSlug}`}
-                          className="text-[13px] leading-[1.5] text-[#8a949e] no-underline hover:underline"
-                        >
-                          {item.boardName}
-                        </Link>
-                      )}
-                  </div>
-                  <Link
-                    href={href}
-                    className="block text-[18px] leading-[1.4] font-semibold text-[#33363d] no-underline hover:text-[#256ef4] hover:underline"
-                  >
-                    {item.title}
-                  </Link>
-                  {item.excerpt && (
-                    <p className="mt-[8px] line-clamp-2 overflow-hidden text-[14px] leading-[1.6] text-[#555555]">
-                      {item.excerpt}
-                    </p>
-                  )}
-                  {item.publishedAt && (
-                    <span className="mt-[8px] block text-[13px] leading-[1.5] text-[#8a949e]">
-                      {formatDate(item.publishedAt)}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-          <PaginationNav
-            totalPages={results.totalPages}
-            currentPage={results.page}
+  return (
+    <div className="pb-[64px]">
+      <div className="page-container">
+        <div className="pb-[32px] large:pb-[40px]">
+          <div className="py-[16px] pb-[32px] large:py-[24px] large:pb-[40px]">
+            <Breadcrumb
+              items={[
+                { text: '홈', href: '/' },
+                { text: '통합검색', href: '/search' },
+              ]}
+              ariaLabel="현재 위치"
+            />
+          </div>
+          <h1 className="m-0 text-[32px] leading-[1.5] font-bold tracking-[0.0313em] text-[#1e2124]">
+            통합검색
+          </h1>
+        </div>
+      </div>
+
+      <section className="bg-[#eef2f7] py-[24px] large:py-[64px]">
+        <div className="mx-auto w-full px-[16px] large:w-[792px] large:px-0">
+          <SearchInputForm
+            action="/search"
+            defaultValue={query}
+            inputId="search-result-input"
+            label="통합검색"
+            variant="xlarge"
+            hiddenFields={type === 'all' ? undefined : { type }}
           />
-        </>
-      )}
+        </div>
+      </section>
+
+      <section className="page-container py-[40px] large:py-[64px]">
+        {!query ? (
+          <p className="m-0 py-[40px] text-center text-[17px] leading-[1.5] text-[#464c53]">
+            검색어를 입력해 주세요.
+          </p>
+        ) : (
+          <div className="flex flex-col items-center gap-[32px] large:gap-[40px]">
+            <SearchTabs query={query} results={results} activeType={type} />
+
+            {!hasResults ? (
+              <p className="m-0 py-[40px] text-center text-[17px] leading-[1.5] text-[#464c53]">
+                &ldquo;{query}&rdquo;에 대한 검색 결과가 없습니다.
+              </p>
+            ) : (
+              <>
+                <p className="sr-only">
+                  &ldquo;{query}&rdquo;에 대한 {results?.total ?? 0}건의 검색
+                  결과
+                </p>
+                <ul className="m-0 flex w-full list-none flex-col gap-[32px] p-0 large:gap-[40px]">
+                  {results?.items.map((item) => (
+                    <SearchResultItem
+                      key={`${item.type}-${item.id}`}
+                      item={item}
+                    />
+                  ))}
+                </ul>
+                {results && (
+                  <PaginationNav
+                    totalPages={results.totalPages}
+                    currentPage={results.page}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
