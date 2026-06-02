@@ -743,6 +743,13 @@ pnpm db:pgroonga      # PGroonga 확장 + 검색 인덱스 설정
 2. **코드 재사용성 + 단일 소스 원칙**: 동일 로직의 중복을 피하고, 하나의 정의가 하나의 진실을 담당한다
 3. **외부 라이브러리 문서 우선 조회**: 라이브러리/API 문서, 설정, 코드 생성이 필요할 때는 Context7 MCP를 먼저 사용한다
 
+### Git worktree 운영 메모
+
+- 기능 작업을 별도 git worktree에서 진행할 때, 서버 구동에 필요한 untracked 환경 파일(`.env`, 필요 시 `.env.local`)은 원본 worktree의 파일을 심볼릭 링크로 연결한다.
+- 예: `ln -s /home/ddock4you/project/simple-CMS/.env /home/ddock4you/project/simple-CMS-{작업명}/.env`
+- worktree 제거 시 링크 파일만 함께 삭제되고 원본 `.env`는 유지된다. 단, 원본 `.env` 경로를 변경하면 링크가 깨질 수 있으므로 `git status --short`와 서버 구동으로 확인한다.
+- `.env`는 gitignore 대상이어야 하며, 링크 생성 후 `git status --short`에 노출되지 않는지 확인한다.
+
 ## 코딩 컨벤션
 
 - TypeScript strict 모드
