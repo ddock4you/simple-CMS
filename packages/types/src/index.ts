@@ -19,6 +19,7 @@ export type {
   SlideOptions,
   HeroSlide,
   HeroConfig,
+  BriefIntroConfig,
   RecommendedItem,
   RecommendedConfig,
   SubCarouselItem,

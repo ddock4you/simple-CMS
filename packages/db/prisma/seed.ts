@@ -147,7 +147,7 @@ async function main() {
     );
   }
 
-  // 6. Initial HomeSections (8 fixed sections, idempotent)
+  // 6. Initial HomeSections (9 fixed sections, idempotent)
   // sectionType은 unique 아님 → findFirst + create 패턴 (upsert 금지: 관리자 수정본 덮어쓰기 방지)
   const DEFAULT_SLIDE_OPTIONS = {
     showPrevNext: true,
@@ -168,9 +168,24 @@ async function main() {
       },
     },
     {
+      sectionType: 'BRIEF_INTRO' as const,
+      title: '간략 소개',
+      displayOrder: 1,
+      configJson: {
+        heading: '간략 소개',
+        content: '',
+        detailEnabled: false,
+        detailUrl: null,
+        imageUrl: null,
+        imageAlt: null,
+        imageOriginalName: null,
+        mediaId: null,
+      },
+    },
+    {
       sectionType: 'SUB_CAROUSEL' as const,
       title: '서브 캐러셀',
-      displayOrder: 1,
+      displayOrder: 2,
       configJson: {
         tagline: null,
         mainHeading: '',
@@ -183,7 +198,7 @@ async function main() {
     {
       sectionType: 'FREQUENT_MENU' as const,
       title: '자주찾는 메뉴',
-      displayOrder: 2,
+      displayOrder: 3,
       configJson: {
         heading: '자주찾는 메뉴',
         items: [],
@@ -192,7 +207,7 @@ async function main() {
     {
       sectionType: 'RECOMMENDED' as const,
       title: '추천 콘텐츠',
-      displayOrder: 3,
+      displayOrder: 4,
       configJson: {
         heading: '추천 콘텐츠',
         description: null,
@@ -203,13 +218,13 @@ async function main() {
     {
       sectionType: 'SHORTCUT' as const,
       title: '바로가기',
-      displayOrder: 4,
+      displayOrder: 5,
       configJson: { heading: '바로가기', description: null, items: [] },
     },
     {
       sectionType: 'LATEST_POSTS' as const,
       title: '최신 게시글',
-      displayOrder: 5,
+      displayOrder: 6,
       configJson: {
         heading: '최신 게시글',
         description: null,
@@ -220,7 +235,7 @@ async function main() {
     {
       sectionType: 'CTA' as const,
       title: 'CTA 섹션',
-      displayOrder: 6,
+      displayOrder: 7,
       configJson: {
         heading: '지금 시작하세요',
         description: null,
@@ -231,7 +246,7 @@ async function main() {
     {
       sectionType: 'NOTICE' as const,
       title: '대표 게시판',
-      displayOrder: 7,
+      displayOrder: 8,
       configJson: {
         heading: '공지 알림',
         description: null,

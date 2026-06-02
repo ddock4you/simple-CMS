@@ -1,12 +1,13 @@
 /**
  * HomeSection 도메인 타입
  *
- * 공개 웹 메인 페이지는 섹션 기반 랜딩 페이지. 6개 고정 타입 섹션을
+ * 공개 웹 메인 페이지는 섹션 기반 랜딩 페이지. 고정 타입 섹션을
  * 운영자가 admin에서 관리한다. 섹션 추가/삭제는 불가, 편집/노출/순서만 관리.
  */
 
 export type HomeSectionType =
   | 'HERO'
+  | 'BRIEF_INTRO'
   | 'RECOMMENDED'
   | 'SUB_CAROUSEL'
   | 'FREQUENT_MENU'
@@ -51,6 +52,17 @@ export interface HeroSlide {
 export interface HeroConfig {
   slides: HeroSlide[];
   slideOptions: SlideOptions;
+}
+
+export interface BriefIntroConfig {
+  heading: string;
+  content: string;
+  detailEnabled: boolean;
+  detailUrl?: string | null;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  imageOriginalName?: string | null;
+  mediaId?: string | null;
 }
 
 /**
@@ -162,6 +174,7 @@ export interface NoticeConfig {
 
 export type HomeSectionConfig =
   | ({ sectionType: 'HERO' } & { config: HeroConfig })
+  | ({ sectionType: 'BRIEF_INTRO' } & { config: BriefIntroConfig })
   | ({ sectionType: 'RECOMMENDED' } & { config: RecommendedConfig })
   | ({ sectionType: 'SUB_CAROUSEL' } & { config: SubCarouselConfig })
   | ({ sectionType: 'FREQUENT_MENU' } & { config: FrequentMenuConfig })

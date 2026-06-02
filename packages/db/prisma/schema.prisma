@@ -27,6 +27,7 @@ enum BoardSkinType {
 
 enum HomeSectionType {
   HERO
+  BRIEF_INTRO
   RECOMMENDED
   SUB_CAROUSEL
   FREQUENT_MENU

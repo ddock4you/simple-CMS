@@ -6,6 +6,7 @@ import type { ApiResponse, HomeSectionListItem } from '@simple-cms/types';
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import {
   defaultConfigByType,
+  type BriefIntroConfigData,
   type FrequentMenuConfigData,
   type HeroConfigData,
   type LatestPostsConfigData,
@@ -23,6 +24,7 @@ import {
 type FixedHomeSectionType = (typeof SECTION_TYPE_ORDER)[number];
 type DefaultHomeSectionConfig =
   | HeroConfigData
+  | BriefIntroConfigData
   | RecommendedConfigData
   | SubCarouselConfigData
   | FrequentMenuConfigData

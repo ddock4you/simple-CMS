@@ -4,6 +4,7 @@ import { prisma } from '@simple-cms/db';
 import type {
   HomeSectionType,
   HeroConfig,
+  BriefIntroConfig,
   RecommendedConfig,
   SubCarouselConfig,
   FrequentMenuConfig,
@@ -14,6 +15,7 @@ import type {
 } from '@simple-cms/types';
 
 import {
+  parseBriefIntroConfig,
   parseCtaConfig,
   parseFrequentMenuConfig,
   parseHeroConfig,
@@ -42,6 +44,12 @@ export interface ResolvedRecommendedSection {
   id: string;
   sectionType: 'RECOMMENDED';
   config: RecommendedConfig;
+}
+
+export interface ResolvedBriefIntroSection {
+  id: string;
+  sectionType: 'BRIEF_INTRO';
+  config: BriefIntroConfig;
 }
 
 export interface ResolvedShortcutSection {
@@ -113,6 +121,7 @@ export interface ResolvedSubCarouselSection {
 
 export type ResolvedSection =
   | ResolvedHeroSection
+  | ResolvedBriefIntroSection
   | ResolvedRecommendedSection
   | ResolvedSubCarouselSection
   | ResolvedFrequentMenuSection
@@ -157,6 +166,7 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
     sectionType: HomeSectionType;
     config:
       | HeroConfig
+      | BriefIntroConfig
       | RecommendedConfig
       | SubCarouselConfig
       | FrequentMenuConfig
@@ -176,6 +186,12 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
       }
       case 'RECOMMENDED': {
         const config = parseRecommendedConfig(section.configJson);
+        if (!config) continue;
+        parsedSections.push({ ...section, config });
+        break;
+      }
+      case 'BRIEF_INTRO': {
+        const config = parseBriefIntroConfig(section.configJson);
         if (!config) continue;
         parsedSections.push({ ...section, config });
         break;
@@ -407,6 +423,13 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
           id: section.id,
           sectionType: 'RECOMMENDED',
           config: section.config as RecommendedConfig,
+        });
+        break;
+      case 'BRIEF_INTRO':
+        resolved.push({
+          id: section.id,
+          sectionType: 'BRIEF_INTRO',
+          config: section.config as BriefIntroConfig,
         });
         break;
       case 'SHORTCUT':

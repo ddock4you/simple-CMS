@@ -18,6 +18,7 @@ import {
 } from '../model/sectionLabels';
 import type { HomeSectionListItem } from '../model/home.types';
 import { HeroSectionForm } from './forms/HeroSectionForm';
+import { BriefIntroSectionForm } from './forms/BriefIntroSectionForm';
 import { RecommendedSectionForm } from './forms/RecommendedSectionForm';
 import { SubCarouselSectionForm } from './forms/SubCarouselSectionForm';
 import { FrequentMenuSectionForm } from './forms/FrequentMenuSectionForm';
@@ -84,6 +85,14 @@ function SectionFormSwitch({
     case 'HERO':
       return (
         <HeroSectionForm
+          section={section}
+          onClose={onClose}
+          onDirtyChange={onDirtyChange}
+        />
+      );
+    case 'BRIEF_INTRO':
+      return (
+        <BriefIntroSectionForm
           section={section}
           onClose={onClose}
           onDirtyChange={onDirtyChange}

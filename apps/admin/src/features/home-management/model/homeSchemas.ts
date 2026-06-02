@@ -69,6 +69,35 @@ export const heroConfigSchema = z.object({
 });
 export type HeroConfigData = z.infer<typeof heroConfigSchema>;
 
+export const briefIntroConfigSchema = z
+  .object({
+    heading: z.string().min(1, '제목을 입력해주세요.').max(200),
+    content: z.string().min(1, '내용을 입력해주세요.').max(1000),
+    detailEnabled: z.boolean(),
+    detailUrl: optionalUrlString,
+    imageUrl: z.string().max(2000).nullable().optional(),
+    imageAlt: z.string().max(200).nullable().optional(),
+    imageOriginalName: z.string().max(255).nullable().optional(),
+    mediaId: z.string().max(64).nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.detailEnabled && !value.detailUrl?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['detailUrl'],
+        message: '자세히 보기 URL을 입력해주세요.',
+      });
+    }
+    if (value.imageUrl?.trim() && !value.imageAlt?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['imageAlt'],
+        message: '이미지 대체 텍스트를 입력해주세요.',
+      });
+    }
+  });
+export type BriefIntroConfigData = z.infer<typeof briefIntroConfigSchema>;
+
 const recommendedItemSchema = z.object({
   imageUrl: z.string().min(1, '이미지 URL을 입력해주세요.').max(2000),
   imageAlt: z.string().min(1, '이미지 대체 텍스트를 입력해주세요.').max(200),
@@ -180,6 +209,7 @@ export type SubCarouselConfigData = z.infer<typeof subCarouselConfigSchema>;
  */
 export const configSchemaByType = {
   HERO: heroConfigSchema,
+  BRIEF_INTRO: briefIntroConfigSchema,
   RECOMMENDED: recommendedConfigSchema,
   SUB_CAROUSEL: subCarouselConfigSchema,
   FREQUENT_MENU: frequentMenuConfigSchema,
@@ -197,6 +227,16 @@ export const defaultConfigByType = {
     slides: [],
     slideOptions: DEFAULT_SLIDE_OPTIONS,
   } satisfies HeroConfigData,
+  BRIEF_INTRO: {
+    heading: '',
+    content: '',
+    detailEnabled: false,
+    detailUrl: null,
+    imageUrl: null,
+    imageAlt: null,
+    imageOriginalName: null,
+    mediaId: null,
+  } satisfies BriefIntroConfigData,
   RECOMMENDED: {
     heading: '',
     description: null,

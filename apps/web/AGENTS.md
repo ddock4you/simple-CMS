@@ -290,10 +290,14 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
 
 ### 구현 (Stage 5a + Stage 19)
 
-- **7개 섹션 타입**: HERO, SUB_CAROUSEL, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
+- **9개 섹션 타입**: HERO, BRIEF_INTRO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
 - **SSR Server Component 중심**: 섹션 컴포넌트는 Server, 슬라이드 컨트롤만 Client (`Carousel`)
 - **자체 커스텀 디자인** (시안 확정 전): `apps/web/app/globals.css`의 `.home-*` 클래스로 스코프된 스타일. 시안 확정 시 섹션 컴포넌트 교체 전제, admin 데이터 구조는 안정
 - **NOTICE(대표 게시판)**: 운영자가 선택한 게시판 1개의 중요 게시글 최신 1건과 일반 최신글 N건을 Figma 공지알림 카드 UI로 렌더한다. 기존 수동 `items[]` configJson은 persisted data 보호용 legacy fallback으로만 렌더한다.
+
+### HERO / BRIEF_INTRO / RECOMMENDED
+
+- **BRIEF_INTRO**: Figma `인물소개` 패턴 기반 간략 소개 섹션. 배경 `#EEF2F7`은 `.page-container` 내부 폭에 갇히지 않도록 `w-screen` full-bleed로 렌더한다. 이미지가 없으면 이미지 프레임을 렌더하지 않고 텍스트 영역만 표시한다.
 
 ### HERO / RECOMMENDED 슬라이드
 

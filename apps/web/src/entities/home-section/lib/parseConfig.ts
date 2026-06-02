@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import type {
   HeroConfig,
+  BriefIntroConfig,
   RecommendedConfig,
   ShortcutConfig,
   LatestPostsConfig,
@@ -39,6 +40,17 @@ const heroSchema = z.object({
     }),
   ),
   slideOptions: slideOptionsSchema,
+});
+
+const briefIntroSchema = z.object({
+  heading: z.string(),
+  content: z.string(),
+  detailEnabled: z.boolean(),
+  detailUrl: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
+  imageAlt: z.string().nullable().optional(),
+  imageOriginalName: z.string().nullable().optional(),
+  mediaId: z.string().nullable().optional(),
 });
 
 const recommendedSchema = z.object({
@@ -125,6 +137,11 @@ const legacyNoticeSchema = z.object({
 export function parseHeroConfig(raw: unknown): HeroConfig | null {
   const result = heroSchema.safeParse(raw);
   return result.success ? (result.data as HeroConfig) : null;
+}
+
+export function parseBriefIntroConfig(raw: unknown): BriefIntroConfig | null {
+  const result = briefIntroSchema.safeParse(raw);
+  return result.success ? (result.data as BriefIntroConfig) : null;
 }
 
 export function parseRecommendedConfig(raw: unknown): RecommendedConfig | null {

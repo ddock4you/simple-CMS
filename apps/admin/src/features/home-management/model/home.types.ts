@@ -2,6 +2,7 @@ export type {
   HomeSectionType,
   HomeSectionButton,
   HeroConfig,
+  BriefIntroConfig,
   RecommendedItem,
   RecommendedConfig,
   FrequentMenuItem,

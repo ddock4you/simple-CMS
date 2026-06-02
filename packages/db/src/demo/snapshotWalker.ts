@@ -76,6 +76,11 @@ function remapHomeSectionConfig(
         }
       }
     }
+    // BRIEF_INTRO mediaId (top-level)
+    if (sectionType === 'BRIEF_INTRO' && typeof cfg.mediaId === 'string') {
+      const newId = idMap.get(cfg.mediaId);
+      if (newId) cfg.mediaId = newId;
+    }
     // RECOMMENDED / SUB_CAROUSEL items[].mediaId, FREQUENT_MENU items[].iconMediaId
     if (
       (sectionType === 'RECOMMENDED' ||

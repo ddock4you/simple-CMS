@@ -420,10 +420,11 @@ src/
 
 - 일반 서브 페이지와 분리된 **섹션 기반 관리**
 - 레이아웃은 코드에서 통제, 운영자는 섹션 데이터+순서 관리
-- **고정 세트 모델** (Stage 5a): 6개 타입 각 1개씩 seed로 생성, 추가/삭제 UI 없음 — R/U만 지원
-  - 타입: HERO, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
+- **고정 세트 모델** (Stage 5a 이후 확장): 9개 타입 각 1개씩 seed/자동 생성, 추가/삭제 UI 없음 — R/U만 지원
+  - 타입: HERO, BRIEF_INTRO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
 - 섹션별 `configJson` 스키마 (Zod, `features/home-management/model/homeSchemas.ts`):
   - **HERO**: slides[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 10개, 1개=단일 배너, 2개 이상=슬라이드) + slideOptions
+  - **BRIEF_INTRO**: heading, content, detailEnabled, detailUrl?, imageUrl?/imageAlt?/mediaId? — 공개 웹에서 full-bleed 회색 배경으로 렌더, 이미지 미설정 시 이미지 영역 생략
   - **RECOMMENDED**: heading, description?, items[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 12개, 자유 갤러리) + slideOptions
   - **SHORTCUT**: heading, description?, items[]: `{label, description?, url}` (최대 8개)
   - **LATEST_POSTS**: heading, description?, boardId(nullable), limit(1~10) — 지정 게시판 최신 N개 자동 표시
@@ -441,13 +442,13 @@ src/
 - 링크 URL은 optional — 입력 시 해당 슬라이드/카드 전체가 `<Link>`로 감싸짐. **Stage 7i부터 모든 fields(CTA/Hero/Recommended/Shortcut/Notice)의 URL 입력이 `@/entities/link-target/ui/LinkTargetInput` 공용 컴포넌트로 통합** — NONE/SUBPAGE/BOARD/EXTERNAL 분기 입력으로 slug 변경에 안전. CtaFields + ShortcutFields는 url 필수라 `allowNone={false}` 전달
 - URL은 내부 경로(`/about`)와 외부 URL(`https://...`) 모두 허용
 - **Tiptap 미사용** — 모든 섹션을 단순 text 필드로 관리
-- **UI**: `/home` 단일 페이지, 6개 섹션 카드 + dnd-kit 드래그 순서변경 + 노출토글 + 타입별 편집 Dialog
+- **UI**: `/home` 단일 페이지, 고정 섹션 카드 + dnd-kit 드래그 순서변경 + 노출토글 + 타입별 편집 Dialog
   - slides/items 순서 조정은 useFieldArray + 위/아래 화살표 버튼 (해당 폼 내부)
 - **권한 기반 UI**: 편집/순서변경/노출토글 버튼을 `usePermission('home', 'update')`로 게이팅
 - API Routes:
   - `GET /api/home` — 섹션 목록 (`home:read`)
   - `GET/PATCH /api/home/[id]` — 단건 상세/수정 (`home:read`/`home:update`)
-  - `PATCH /api/home/reorder` — 순서 변경, `length(6)` 검증 + 트랜잭션 루프 (`home:update`)
+  - `PATCH /api/home/reorder` — 순서 변경 + 트랜잭션 루프 (`home:update`)
   - `GET /api/home/references` — Edit Dialog 드롭다운용 `{subpages, boards, posts}` 묶음 (`home:read`)
 - 감사 로그 entityType: `HOME_SECTION`, action `UPDATE`만 사용
   - 편집: `{ before, after }` diff 기록 (변경 필드만)

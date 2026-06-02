@@ -103,6 +103,7 @@ const homeSectionRowSchema = z.object({
   id: cuidString,
   sectionType: z.enum([
     'HERO',
+    'BRIEF_INTRO',
     'RECOMMENDED',
     'SUB_CAROUSEL',
     'FREQUENT_MENU',

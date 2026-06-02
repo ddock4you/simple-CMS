@@ -2,6 +2,7 @@ import type { HomeSectionType } from './home.types';
 
 export const SECTION_TYPE_LABELS: Record<HomeSectionType, string> = {
   HERO: '히어로',
+  BRIEF_INTRO: '간략 소개',
   RECOMMENDED: '추천 콘텐츠',
   SUB_CAROUSEL: '서브 캐러셀',
   FREQUENT_MENU: '자주찾는 메뉴',
@@ -13,6 +14,7 @@ export const SECTION_TYPE_LABELS: Record<HomeSectionType, string> = {
 
 export const SECTION_TYPE_DESCRIPTIONS: Record<HomeSectionType, string> = {
   HERO: '메인 페이지 최상단 대표 영역 (큰 제목과 CTA 버튼)',
+  BRIEF_INTRO: '제목, 소개 문구, 선택 이미지와 자세히 보기 링크로 구성된 간략 소개 영역',
   RECOMMENDED: '운영자가 직접 선택한 추천 서브 페이지/게시글',
   SUB_CAROUSEL: '원형 썸네일과 카피로 구성된 감성 캐러셀 섹션',
   FREQUENT_MENU: '아이콘과 링크로 구성된 자주찾는 메뉴 카드 모음',
@@ -24,6 +26,7 @@ export const SECTION_TYPE_DESCRIPTIONS: Record<HomeSectionType, string> = {
 
 export const SECTION_TYPE_ORDER: HomeSectionType[] = [
   'HERO',
+  'BRIEF_INTRO',
   'SUB_CAROUSEL',
   'FREQUENT_MENU',
   'RECOMMENDED',
