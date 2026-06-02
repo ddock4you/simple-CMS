@@ -1,9 +1,9 @@
-'use client';
-
 import Link from 'next/link';
-import { Header } from 'krds-react';
 
+import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import type { Branding } from '@/shared/lib/brandingCache';
+
+import { MobileMenuIsland } from './MobileMenuIsland';
 
 /**
  * KRDS Header.Branding의 DOM 구조를 차용한 커스텀 브랜딩 컴포넌트 (Stage 7l).
@@ -18,16 +18,18 @@ import type { Branding } from '@/shared/lib/brandingCache';
  */
 export function HeaderBranding({
   branding,
+  headerMenuItems = [],
+  utilityLinks = [],
   searchHref = '/search',
-  desktopMenuPortalId = 'web-header-desktop-menu',
 }: {
   branding: Branding;
+  headerMenuItems?: FilteredMenuItem[];
+  utilityLinks?: readonly { id: string; label: string; href: string }[];
   searchHref?: string;
-  desktopMenuPortalId?: string;
 }) {
   return (
-    <div className="header-branding !flex !w-full !items-center !gap-[24px]">
-      <h2 className="logo !m-0 !shrink-0">
+    <div className="header-branding !flex !min-h-[var(--krds-size-height-6)] !w-full !items-center !gap-[24px] large:!min-h-[var(--krds-size-height-7)]">
+      <h2 className="logo !m-0 !h-[2rem] !w-[5.875rem] !shrink-0 medium:!h-[var(--krds-size-height-7)] medium:!w-[8.5625rem]">
         <Link
           href="/"
           aria-label={branding.logoAlt}
@@ -38,20 +40,20 @@ export function HeaderBranding({
             <img
               src={branding.logoUrl}
               alt=""
-              className="block max-h-full w-auto max-w-[148px] object-contain medium:max-w-[200px]"
+              width={200}
+              height={56}
+              decoding="async"
+              className="block h-full w-full object-contain"
             />
           ) : (
-            <span className="inline-block whitespace-nowrap text-[16px] leading-[1.3] font-bold text-[#1f2937] medium:text-[18px]">
+            <span className="block w-full truncate text-[16px] leading-[1.3] font-bold text-[#1f2937] medium:text-[18px]">
               {branding.siteName}
             </span>
           )}
         </Link>
       </h2>
-      <div
-        id={desktopMenuPortalId}
-        className="hidden large:block large:min-w-0 large:flex-1"
-      />
-      <Header.Navi className="ml-auto shrink-0">
+      <div className="web-header-desktop-menu-slot hidden large:block large:min-h-[var(--krds-size-height-8)] large:min-w-0 large:flex-1" />
+      <div className="header-actions ml-auto shrink-0">
         <Link
           href={searchHref}
           className="btn-navi sch navi-row"
@@ -59,7 +61,12 @@ export function HeaderBranding({
         >
           통합검색
         </Link>
-      </Header.Navi>
+        <MobileMenuIsland
+          items={headerMenuItems}
+          utilityLinks={utilityLinks}
+          searchHref={searchHref}
+        />
+      </div>
     </div>
   );
 }

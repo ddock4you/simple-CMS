@@ -49,7 +49,9 @@ export const WithLogo: Story = {
     expect(logoImg).toBeInTheDocument();
     expect(logoImg).toHaveAttribute('alt', '');
     expect(canvas.getByRole('link', { name: '통합검색' })).toBeInTheDocument();
-    expect(canvasElement.querySelector('#web-header-desktop-menu')).toBeInTheDocument();
+    expect(
+      canvasElement.querySelector('.web-header-desktop-menu-slot'),
+    ).toBeInTheDocument();
   },
 };
 

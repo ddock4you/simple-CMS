@@ -539,23 +539,25 @@ src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 
 - admin → web 별 인스턴스라 즉시 invalidate 불가 → "최대 1분 후 반영"
 - fetch 실패 시 폴백 객체 반환 (`siteName: 'Simple CMS'`, `siteDescription: '공개 웹'`, 나머지 null) — 페이지 렌더 차단 안 함
 
-### 헤더 커스텀 컴포넌트
+### 헤더/푸터 서버 렌더링 컴포넌트
 
-- 위치: `src/widgets/layout/ui/HeaderBranding.tsx` (Stage 7l NEW)
-- KRDS `Header.Branding`이 `children`을 `.logo`(`<h2>`) **밖**에 렌더하므로 로고 이미지를 클릭 가능 영역(`<a href="/">`) 안에 두려면 그대로 사용 불가
-- Stage 7d `RightSidebar`/`ContentSideNavigation` 동일 패턴 — KRDS DOM 클래스(`.header-branding > h2.logo > a`)는 차용하되, 일반 시각 스타일은 Tailwind utility로 작성
-- 헤더 행 구조: `PageLayout`이 `<Header desktopMenuPortalId mobileMenuTriggerPortalId>`를 지정하고, `HeaderBranding` 내부의 desktop portal slot + `Header.Navi`가 `로고 + PC 메뉴 + 통합검색 + 모바일 전체메뉴`를 한 행에 배치한다. `Header.Navi`를 제거하면 `Header.MainMenu`의 모바일 전체메뉴 버튼이 body로 빠져 아이콘 CSS 스코프가 깨지므로 유지 필수
-- PC 메뉴/모바일 트리거 분기는 KRDS 표준형 `large:`(1024px~) 기준으로 통일한다
-- 통합검색은 커스텀 SVG가 아니라 KRDS `btn-navi sch navi-row` 클래스를 사용해 아이콘/상태 스타일을 위임하고 `/search`로 이동한다
-- 헤더와 모바일 전체메뉴 유틸리티에는 코드 상수(`HEADER_UTILITY_LINKS`)로 `KRDS 소개`(`https://www.krds.go.kr/`)를 노출한다. 데스크톱 링크는 새 창(`target="_blank" rel="noopener noreferrer"`), 모바일 유틸리티는 KRDS `MobileUtilityItem` 타입 제약상 `href`만 전달
-- 폴백: logoUrl 미설정 시 sr-only 대신 Tailwind-styled siteName 텍스트를 표시
-- KRDS 메이저 업데이트 시 이 컴포넌트와 7d 2개를 함께 점검
+- 위치: `src/widgets/layout/ui/HeaderChrome.tsx`, `FooterChrome.tsx`, `HeaderBranding.tsx`, `MobileMenuIsland.tsx`, `DesktopGnbBehavior.tsx`
+- 공개 웹 공통 레이아웃의 헤더/푸터는 KRDS React 컴포넌트에 전부 위임하지 않고, 서버 컴포넌트(`HeaderChrome`, `FooterChrome`)가 KRDS DOM 클래스와 의미 구조를 직접 렌더한다. 목적은 페이지 전환 시 헤더/푸터 HTML이 늦게 주입되어 생기는 CLS/깜빡임을 줄이는 것이다.
+- `HeaderBranding`은 서버 컴포넌트다. KRDS `Header.Branding`이 `children`을 `.logo`(`<h2>`) **밖**에 렌더하므로 로고 이미지를 클릭 가능 영역(`<a href="/">`) 안에 두려면 그대로 사용 불가하다. Stage 7d `RightSidebar`/`ContentSideNavigation` 동일 패턴으로 KRDS DOM 클래스(`.header-branding > h2.logo > a`)는 차용하되 일반 시각 스타일은 Tailwind utility로 작성한다.
+- 모바일 전체메뉴만 `MobileMenuIsland` 클라이언트 island로 분리한다. 모바일 overlay open/close, ESC 닫기, body scroll lock처럼 상호작용이 필요한 부분만 클라이언트에 둔다.
+- 데스크톱 GNB hover 안정화는 `DesktopGnbBehavior`가 담당한다. 서버에서 렌더된 GNB DOM에 `pointerenter`/`focusin` 이벤트를 붙여 최근 열린 `.web-gnb-dropdown`에 `data-active="true"`를 유지한다. GNB 항목 사이 gap에 커서가 있어도 최근 메뉴가 유지되고, nav 영역을 완전히 벗어나거나 포커스가 빠지면 닫힌다.
+- PC 메뉴/모바일 트리거 분기는 KRDS 표준형 `large:`(1024px~) 기준으로 통일한다.
+- 통합검색은 커스텀 SVG가 아니라 KRDS `btn-navi sch navi-row` 클래스를 사용해 아이콘/상태 스타일을 위임하고 `/search`로 이동한다.
+- 헤더와 모바일 전체메뉴 유틸리티에는 코드 상수(`HEADER_UTILITY_LINKS`)로 `KRDS 소개`(`https://www.krds.go.kr/`)를 노출한다. 데스크톱 링크는 새 창(`target="_blank" rel="noopener noreferrer"`)으로 연다.
+- 폴백: logoUrl 미설정 시 sr-only 대신 Tailwind-styled siteName 텍스트를 표시한다.
+- KRDS 메이저 업데이트 시 `HeaderChrome`, `FooterChrome`, `HeaderBranding`, `RightSidebar`, `ContentSideNavigation`을 함께 점검한다.
 
 ### 헤더 스타일링 원칙
 
-- 헤더 로고/검색/행 배치 같은 일반 컴포넌트 스타일은 `globals.css`에 추가하지 않고 `HeaderBranding.tsx` / `PageLayout.tsx` Tailwind utility로 작성한다
-- KRDS 동작에 필요한 의미 클래스(`header-branding`, `logo`, `btn-navi`, `sch`, `navi-row`)만 JSX에 유지한다
-- `globals.css`에 헤더 전용 `.header-search-link`, `.header-logo-image`, `.header-logo-text` 류 클래스를 재도입하지 않는다. 정말 필요한 전역 override가 생기면 KRDS selector 충돌 사유를 주석으로 남긴다
+- 헤더 로고/검색/행 배치, CLS guard, 데스크톱 3depth 레이아웃, 모바일 메뉴 보정 같은 일반 컴포넌트 스타일은 `globals.css`에 추가하지 않고 `HeaderChrome.tsx` / `HeaderBranding.tsx` / `MobileMenuIsland.tsx` Tailwind utility로 작성한다.
+- KRDS 동작에 필요한 의미 클래스(`header-branding`, `logo`, `btn-navi`, `sch`, `navi-row`, `krds-main-menu`, `gnb-*`, `f-*`)는 JSX에 유지한다.
+- 데스크톱 3depth 메뉴는 KRDS 기본 `.gnb-sub-list` 절대 위치 패널을 쓰지 않는다. 절대 위치 패널은 부모 dropdown 높이 계산에 참여하지 않아 긴 3depth 메뉴가 잘릴 수 있다. `web-gnb-depth3-panel` + Tailwind grid/flex class로 정적 레이아웃을 구성해 dropdown 높이가 실제 콘텐츠를 포함하도록 한다.
+- `globals.css`에 헤더 전용 `.header-search-link`, `.header-logo-image`, `.header-logo-text`, `.web-gnb-*` 류 클래스를 재도입하지 않는다. 정말 필요한 전역 override가 생기면 KRDS selector 충돌 사유를 주석으로 남긴다.
 
 ### `generateMetadata` 동적화 (`apps/web/app/layout.tsx`)
 
@@ -569,7 +571,7 @@ src/pages/search/ui/SearchPage.tsx            # Client Component (결과 목록 
 
 ### KRDS Footer 설정
 
-- `PageLayout`이 `footerConfig` prop을 받아 KRDS Footer Default 구조(`quickLinks`, `address`, `contacts`, `links`, `socialLinks`, `bottomLinks`, `identifierText`, `copyright`)로 렌더링
+- `PageLayout`이 `footerConfig` prop을 받아 `FooterChrome` 서버 컴포넌트로 KRDS Footer Default 구조(`quickLinks`, `address`, `contacts`, `links`, `socialLinks`, `bottomLinks`, `identifierText`, `copyright`)를 렌더링
 - `apps/web/src/shared/lib/footerConfigCache.ts`가 `SITE_FOOTER_CONFIG` JSON을 인메모리 캐시(60s prod / 5s dev TTL)로 조회. 파싱 실패/조회 실패 시 중립 기본값으로 fallback하며 페이지 렌더를 차단하지 않음
 - `apps/web/app/layout.tsx`는 `export const revalidate = 60`을 명시한다. 운영 모드에서 `/` 정적 prerender 장점을 유지하면서 DB 기반 footer/branding/site settings가 빌드 시점 값으로 영구 고정되지 않게 하는 ISR 안전장치
 - `copyright` 미설정 시 `© ${branding.siteName}. All rights reserved.` 자동 생성

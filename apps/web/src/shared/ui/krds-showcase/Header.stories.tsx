@@ -70,10 +70,7 @@ export const Branded: Story = {
             </Header.Utility>
           ))}
         </Header.Utilities>
-        <HeaderBranding
-          branding={branding}
-          desktopMenuPortalId="storybook-header-desktop-menu"
-        />
+        <HeaderBranding branding={branding} />
       </Header.Container>
     </Header>
   ),
@@ -180,10 +177,7 @@ export const WithMainMenu: Story = {
               </Header.Utility>
             ))}
           </Header.Utilities>
-          <HeaderBranding
-            branding={branding}
-            desktopMenuPortalId="storybook-header-menu-desktop"
-          />
+          <HeaderBranding branding={branding} />
         </Header.Container>
         <Header.MainMenu desktop={desktopMenu} mobile={mobileMenu} />
       </Header>
