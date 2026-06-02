@@ -155,10 +155,11 @@ function GalleryCollectionCard({
         <h3 className="line-clamp-2 overflow-hidden text-[16px] leading-[1.4] font-semibold text-[#1e2124]">
           {item.title}
         </h3>
-        <span className="mt-[8px] block text-[13px] leading-[1.5] text-[#8a949e]">
-          {item.boardName}
-          {item.publishedAt ? ` · ${formatDate(item.publishedAt)}` : ''}
-        </span>
+        {item.publishedAt && (
+          <span className="mt-[8px] block text-[13px] leading-[1.5] text-[#8a949e]">
+            {formatDate(item.publishedAt)}
+          </span>
+        )}
       </div>
     </Link>
   );
