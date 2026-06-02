@@ -161,13 +161,12 @@ src/
 
 ### 서브 페이지 CRUD
 
-- 제목, slug, SEO title/description, Tiptap 본문
+- 제목, SEO title/description, Tiptap 본문
 - draft / published 상태 관리
-- slug: 제목 기반 자동 생성 + 수동 수정
-- `published` 상태 slug 변경 시 경고
+- slug: 생성 시 서버가 opaque random slug를 자동 발급. 작성/편집 폼에서 직접 입력하지 않으며 편집 저장 시 기존 slug 유지
 - 대표 이미지 필드
 - 미리보기 제공
-- 본문 편집: **통합 블록 모델** (Stage 6) — 제목·slug·SEO·상태만 SubpageForm에서 관리하고, 본문과 부가 요소는 모두 PageBlock으로 편집. SubpageForm 내 Tiptap 에디터는 제거됨
+- 본문 편집: **통합 블록 모델** (Stage 6) — 제목·SEO·상태만 SubpageForm에서 관리하고, 본문과 부가 요소는 모두 PageBlock으로 편집. SubpageForm 내 Tiptap 에디터는 제거됨
 - 편집 화면 구성: SubpageForm(상단) + BlockManager(하단) 세로 배치. 생성 모드(/subpages/new)는 SubpageForm만 노출, 저장 후 상세에서 블록 추가
 - **뷰/편집 분리**: `/subpages/[id]` = 메타데이터 + 블록 구성 목록 + **콘텐츠 카드**(각 블록 입력값 표시), `/subpages/[id]/edit` = 폼 + BlockManager
 - **뷰 페이지 콘텐츠 카드** (`features/block-management/ui/BlockContentView.tsx`): 블록 순서대로 각 블록의 입력값을 표시 — 공개 웹과 동일한 실물 렌더는 상단 [미리보기] 버튼이 담당
@@ -388,7 +387,7 @@ src/
 - 제목, 본문(Tiptap JSON), 게시판 소속, 작성자(자동 설정)
 - **SEO (Stage 9)**: `seoTitle String?`(max 200) / `seoDescription String? @db.Text`(max 500) 필드. PostForm 좌측 콘텐츠 컬럼 하단 "SEO" Card + PostView 우측에서 둘 중 하나라도 있을 때 SEO Card 조건부 렌더. 빈 문자열은 `.trim() || null`로 DB에 null 저장. audit diff(CREATE/UPDATE) 포함. 공개 웹 `generateMetadata`가 `seoTitle ?? title`, `seoDescription ?? summarizeContent(content)` 3단 폴백
 - draft / published 상태, 발행일 관리
-- slug: 게시판 단위 unique (`@@unique([boardId, slug])`)
+- slug: 게시판 단위 unique (`@@unique([boardId, slug])`), 생성 시 서버가 opaque random slug를 자동 발급. 작성/편집 폼에서 직접 입력하지 않으며 편집 저장 시 기존 slug 유지
 - 게시판 변경 허용 (편집 시 다른 게시판으로 이동 가능)
 - 목록 필터: 상태(전체/초안/발행) + 게시판(Select 드롭다운)
 - 대표 이미지: Media 관리 구현 후 연동 예정 (1차 생략)
@@ -1417,7 +1416,7 @@ entities → shared                   ✅
 | `entities/link-target/`    | `ui/LinkTargetInput`, `api/linkTargetReferencesQueries` | URL 분기 입력                                                                                 |
 | `entities/media/`          | `ui/MediaPicker`, `ui/ImageUrlInput`                    | 미디어 선택·업로드                                                                            |
 | `entities/preview/`        | `ui/PreviewButton`, `api/usePreviewMutations`           | 미리보기 토큰                                                                                 |
-| `entities/form-fields/`    | `ui/SlugField`                                          | 공용 slug 입력 (자동 생성 + 변경 경고). `warningWhen`/`warningMessage` prop으로 도메인별 분기 |
+| `entities/form-fields/`    | `ui/SlugField`                                          | 공용 slug 입력 (자동 생성 + 변경 경고). 현재 BoardForm에서 사용하며 Subpage/Post는 서버 발급 opaque slug 정책으로 미사용 |
 | `entities/content-status/` | `ui/StatusBadge`                                        | `ContentStatusBadge` — DRAFT/PUBLISHED 공용 Badge                                             |
 
 ## 유효성 검사 규칙
@@ -1431,7 +1430,7 @@ entities → shared                   ✅
 ### 대표 검증 항목
 
 - 서브 페이지/게시글 제목 필수
-- `published` 서브 페이지/게시글은 slug 필수
+- 서브 페이지/게시글 slug는 서버가 생성 시 자동 발급하며, 편집 저장 시 변경하지 않음
 - 게시판 slug 중복 불가
 - 이미지형 팝업 alt 필수
 - 메뉴 SUBPAGE 타입 → subpageId 필수 / BOARD → boardId / EXTERNAL·CUSTOM → url/경로 필수

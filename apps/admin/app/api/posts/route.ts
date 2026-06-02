@@ -3,9 +3,10 @@ import type { z } from 'zod';
 
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse, PaginatedResponse } from '@simple-cms/types';
-import { extractTextFromTiptap, generateSlug } from '@simple-cms/editor';
+import { extractTextFromTiptap } from '@simple-cms/editor';
 
 import { defineRoute } from '@/shared/api/defineRoute';
+import { createUniquePostSlug } from '@/shared/lib/opaqueSlug';
 import {
   postListQuerySchema,
   createPostSchema,
@@ -110,27 +111,7 @@ export const POST = defineRoute<z.infer<typeof createPostSchema>, null>({
       );
     }
 
-    const slug = parsed.slug?.trim() || generateSlug(title);
-    if (!slug) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'slug을 입력해주세요.',
-        } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
-    }
-
-    const existing = await prisma.post.findFirst({ where: { boardId, slug } });
-    if (existing) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: '이 게시판에서 이미 사용 중인 slug입니다.',
-        } satisfies ApiResponse<never>,
-        { status: 409 },
-      );
-    }
+    const slug = await createUniquePostSlug(boardId);
 
     const maxOrder = await prisma.post.aggregate({
       _max: { displayOrder: true },

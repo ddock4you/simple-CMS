@@ -82,7 +82,6 @@ export const PATCH = defineRoute<z.infer<typeof updatePostSchema>, PatchResult>(
 
       const {
         title,
-        slug,
         boardId,
         seoTitle,
         seoDescription,
@@ -105,10 +104,9 @@ export const PATCH = defineRoute<z.infer<typeof updatePostSchema>, PatchResult>(
       }
 
       const targetBoardId = boardId ?? post.boardId;
-      const targetSlug = slug ?? post.slug;
-      if (targetBoardId !== post.boardId || targetSlug !== post.slug) {
+      if (targetBoardId !== post.boardId) {
         const existing = await prisma.post.findFirst({
-          where: { boardId: targetBoardId, slug: targetSlug },
+          where: { boardId: targetBoardId, slug: post.slug },
         });
         if (existing && existing.id !== id) {
           return NextResponse.json(
@@ -123,7 +121,6 @@ export const PATCH = defineRoute<z.infer<typeof updatePostSchema>, PatchResult>(
 
       const updateData: Record<string, unknown> = {};
       if (title !== undefined) updateData.title = title;
-      if (slug !== undefined) updateData.slug = slug;
       if (boardId !== undefined) updateData.boardId = boardId;
       if (seoTitle !== undefined)
         updateData.seoTitle = seoTitle?.trim() || null;

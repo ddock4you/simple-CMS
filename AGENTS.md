@@ -130,10 +130,9 @@ apps/{앱}/
 
 - Subpage, Board, Post 각 도메인별 slug 관리
 - 같은 공개 경로 체계 내 slug 중복 불가
-- 제목 기반 자동 생성 + 수동 수정 가능
-- `published` 상태에서 slug 변경 시 경고
+- Subpage/Post slug는 생성 시 서버가 opaque random slug를 자동 발급한다. 관리자 작성/편집 폼에서 직접 입력하지 않으며, 편집 저장 시 기존 slug를 유지한다.
+- Board slug는 이름 기반 자동 생성 + 수동 수정 가능하며, 공개 게시판 slug 변경 시 경고한다.
 - Post slug는 게시판 단위 unique (`boardSlug + postSlug`)
-- Post 작성 UX: 신규 작성의 빈 slug는 제목 기반으로 자동 생성하고, 사용자가 slug를 직접 수정하면 자동 동기화를 중단한다. 편집 화면의 저장된 slug는 초기 렌더에서 덮어쓰지 않는다.
 
 ### 게시글 중요 표시 정책
 
@@ -840,7 +839,7 @@ entities/auth/
 └── model/auth.types.ts         # SessionUser 타입 (role + permissions 포함)
 
 entities/form-fields/
-└── ui/SlugField.tsx            # 공용 slug 입력 필드 (자동 생성 + 변경 경고). warningWhen/warningMessage prop으로 도메인별 경고 분기 (Stage 16e)
+└── ui/SlugField.tsx            # 공용 slug 입력 필드 (자동 생성 + 변경 경고). 현재 BoardForm에서 사용, Subpage/Post는 서버 발급 opaque slug 정책으로 미사용
 
 entities/content-status/
 └── ui/StatusBadge.tsx          # ContentStatusBadge — DRAFT/PUBLISHED 공용 Badge (Stage 16e)

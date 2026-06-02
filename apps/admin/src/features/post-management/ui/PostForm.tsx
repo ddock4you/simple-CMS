@@ -44,7 +44,6 @@ import {
   useDeletePost,
 } from '../api/usePostMutations';
 import { boardOptionsQuery } from '../api/postQueries';
-import { SlugField } from '@/entities/form-fields/ui/SlugField';
 import { DeletePostDialog } from './DeletePostDialog';
 
 interface PostFormProps {
@@ -73,7 +72,6 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
     resolver: zodResolver(schema),
     defaultValues: {
       title: initialData?.title ?? '',
-      slug: initialData?.slug ?? '',
       boardId: initialData?.boardId ?? defaultBoardId ?? '',
       seoTitle: initialData?.seoTitle ?? '',
       seoDescription: initialData?.seoDescription ?? '',
@@ -84,7 +82,6 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
   });
 
   const title = watch('title') ?? '';
-  const slug = watch('slug') ?? '';
   const seoTitle = watch('seoTitle') ?? '';
   const initialStatus = initialData?.status ?? 'DRAFT';
   const seoTitleEdited = useRef(!isCreate || Boolean(initialData?.seoTitle));
@@ -96,13 +93,6 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
     if (!isCreate || seoTitleEdited.current || seoTitle === title) return;
     setValue('seoTitle', title, { shouldDirty: Boolean(title) });
   }, [isCreate, seoTitle, setValue, title]);
-
-  const handleSlugChange = useCallback(
-    (newSlug: string) => {
-      setValue('slug', newSlug, { shouldDirty: true });
-    },
-    [setValue],
-  );
 
   const onSubmit = (data: CreatePostData | UpdatePostData) => {
     if (isCreate) {
@@ -183,20 +173,6 @@ export function PostForm({ mode, initialData, defaultBoardId }: PostFormProps) {
                   </p>
                 )}
               </div>
-
-              <SlugField
-                title={title}
-                value={slug}
-                onChange={handleSlugChange}
-                warningWhen={initialData?.status === 'PUBLISHED'}
-                warningMessage="발행된 게시글의 slug를 변경하면 기존 URL이 작동하지 않을 수 있습니다."
-                savedSlug={initialData?.slug}
-              />
-              {errors.slug && (
-                <p className="text-sm text-destructive">
-                  {errors.slug.message}
-                </p>
-              )}
 
               <div className="space-y-2">
                 <Label>게시판</Label>

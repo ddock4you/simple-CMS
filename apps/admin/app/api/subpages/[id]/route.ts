@@ -60,24 +60,13 @@ export const PATCH = defineRoute<z.infer<typeof updateSubpageSchema>, PatchResul
       );
     }
 
-    const { title, slug, seoTitle, seoDescription, status, cclType, cclAi, feedbackEnabled } =
+    const { title, seoTitle, seoDescription, status, cclType, cclAi, feedbackEnabled } =
       parsed;
-
-    if (slug && slug !== subpage.slug) {
-      const existing = await prisma.subpage.findFirst({ where: { slug } });
-      if (existing) {
-        return NextResponse.json(
-          { success: false, error: '이미 사용 중인 slug입니다.' } satisfies ApiResponse<never>,
-          { status: 409 },
-        );
-      }
-    }
 
     const willPublish = status === 'PUBLISHED' && subpage.status === 'DRAFT';
 
     const updateData: Record<string, unknown> = {};
     if (title !== undefined) updateData.title = title;
-    if (slug !== undefined) updateData.slug = slug;
     if (seoTitle !== undefined) updateData.seoTitle = seoTitle;
     if (seoDescription !== undefined) updateData.seoDescription = seoDescription;
     if (status !== undefined) {
@@ -117,10 +106,6 @@ export const PATCH = defineRoute<z.infer<typeof updateSubpageSchema>, PatchResul
     if (title !== undefined && title !== subpage.title) {
       before.title = subpage.title;
       after.title = title;
-    }
-    if (slug !== undefined && slug !== subpage.slug) {
-      before.slug = subpage.slug;
-      after.slug = slug;
     }
     if (seoTitle !== undefined && (seoTitle ?? null) !== (subpage.seoTitle ?? null)) {
       before.seoTitle = subpage.seoTitle;
