@@ -182,6 +182,29 @@ export const noticeConfigSchema = z.object({
 });
 export type NoticeConfigData = z.infer<typeof noticeConfigSchema>;
 
+export const galleryCollectionConfigSchema = z.object({
+  heading: z.string().min(1, '섹션 제목을 입력해주세요.').max(200),
+  description: z.string().max(500).nullable().optional(),
+  boardIds: z
+    .array(z.string().min(1))
+    .min(1, '게시판을 1개 이상 선택해주세요.')
+    .max(12, '최대 12개 게시판까지 선택할 수 있습니다.'),
+  boardTabLabels: z
+    .record(
+      z.string(),
+      z
+        .string()
+        .max(80, '탭 이름은 80자 이하여야 합니다.')
+        .nullable()
+        .optional(),
+    )
+    .optional(),
+  limit: z.number().int().min(1).max(12),
+});
+export type GalleryCollectionConfigData = z.infer<
+  typeof galleryCollectionConfigSchema
+>;
+
 const subCarouselItemSchema = z.object({
   imageUrl: z.string().min(1, '이미지 URL을 입력해주세요.').max(2000),
   imageAlt: z.string().min(1, '이미지 대체 텍스트를 입력해주세요.').max(200),
@@ -217,6 +240,7 @@ export const configSchemaByType = {
   LATEST_POSTS: latestPostsConfigSchema,
   CTA: ctaConfigSchema,
   NOTICE: noticeConfigSchema,
+  GALLERY_COLLECTION: galleryCollectionConfigSchema,
 } as const;
 
 /**
@@ -228,7 +252,11 @@ export const defaultConfigByType = {
     slideOptions: DEFAULT_SLIDE_OPTIONS,
   } satisfies HeroConfigData,
   BRIEF_INTRO: {
+<<<<<<< HEAD
     heading: '',
+=======
+    heading: '간략 소개',
+>>>>>>> feature/gallery-collection-home-section
     content: '',
     detailEnabled: false,
     detailUrl: null,
@@ -278,6 +306,13 @@ export const defaultConfigByType = {
     boardId: null,
     limit: 4,
   } satisfies NoticeConfigData,
+  GALLERY_COLLECTION: {
+    heading: '갤러리 모아보기',
+    description: null,
+    boardIds: [],
+    boardTabLabels: {},
+    limit: 4,
+  } satisfies GalleryCollectionConfigData,
 } as const;
 
 /**
@@ -292,16 +327,16 @@ export const updateHomeSectionSchema = z.object({
 export type UpdateHomeSectionData = z.infer<typeof updateHomeSectionSchema>;
 
 /**
- * 섹션 순서 변경 스키마 — 항상 전체 8개 섹션의 id+displayOrder를 포함해야 함
+ * 섹션 순서 변경 스키마 — 항상 전체 10개 섹션의 id+displayOrder를 포함해야 함
  */
 export const reorderHomeSectionsSchema = z.object({
   sections: z
     .array(
       z.object({
         id: z.string().min(1),
-        displayOrder: z.number().int().min(0).max(7),
+        displayOrder: z.number().int().min(0).max(9),
       }),
     )
-    .length(8, '전체 섹션(8개)을 포함해야 합니다.'),
+    .length(10, '전체 섹션(10개)을 포함해야 합니다.'),
 });
 export type ReorderHomeSectionsData = z.infer<typeof reorderHomeSectionsSchema>;

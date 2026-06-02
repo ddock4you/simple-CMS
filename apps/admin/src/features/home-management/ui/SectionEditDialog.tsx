@@ -26,6 +26,7 @@ import { ShortcutSectionForm } from './forms/ShortcutSectionForm';
 import { LatestPostsSectionForm } from './forms/LatestPostsSectionForm';
 import { CtaSectionForm } from './forms/CtaSectionForm';
 import { NoticeSectionForm } from './forms/NoticeSectionForm';
+import { GalleryCollectionSectionForm } from './forms/GalleryCollectionSectionForm';
 
 interface SectionEditDialogProps {
   section: HomeSectionListItem | null;
@@ -149,6 +150,14 @@ function SectionFormSwitch({
     case 'NOTICE':
       return (
         <NoticeSectionForm
+          section={section}
+          onClose={onClose}
+          onDirtyChange={onDirtyChange}
+        />
+      );
+    case 'GALLERY_COLLECTION':
+      return (
+        <GalleryCollectionSectionForm
           section={section}
           onClose={onClose}
           onDirtyChange={onDirtyChange}

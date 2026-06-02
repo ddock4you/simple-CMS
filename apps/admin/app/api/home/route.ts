@@ -8,6 +8,7 @@ import {
   defaultConfigByType,
   type BriefIntroConfigData,
   type FrequentMenuConfigData,
+  type GalleryCollectionConfigData,
   type HeroConfigData,
   type LatestPostsConfigData,
   type NoticeConfigData,
@@ -30,6 +31,7 @@ type DefaultHomeSectionConfig =
   | FrequentMenuConfigData
   | ShortcutConfigData
   | LatestPostsConfigData
+  | GalleryCollectionConfigData
   | CtaConfigData
   | NoticeConfigData;
 

@@ -5,15 +5,17 @@
  *   1. importSnapshot이 14모델 row마다 oldId → newCuid idMap 빌드
  *   2. payload deep clone (또는 in-place 변경 허용)
  *   3. walkSnapshotForRemap(payload, mediaIdMap, 'mediaId') — 모든 mediaId 위치 재매핑
- *   4. walkSnapshotForRemap(payload, boardIdMap, 'boardId') — LATEST_POSTS.boardId 재매핑
+ *   4. walkSnapshotForRemap(payload, boardIdMap, 'boardId') — HomeSection board 참조 재매핑
  *   5. createMany 시 row 자체 컬럼(featuredImageId, imageMediaId 등 평탄 FK)은
  *      별도 매핑 (walker는 JSON 안 깊은 mediaId/boardId만 처리)
  *
  * **위치별 field name 분기 (PR6 핵심)**:
  *   - HomeSection.configJson:
  *     - HERO    `slides[].mediaId`   (field: `mediaId`)
+ *     - BRIEF_INTRO `mediaId` (top-level)
  *     - RECOMMENDED `items[].mediaId` (field: `mediaId`)
  *     - LATEST_POSTS `boardId` (top-level)
+ *     - GALLERY_COLLECTION `boardIds[]` (top-level)
  *   - PageBlock.configJson:
  *     - IMAGE  `imageMediaId` (field 다름)
  *     - RICH_TEXT `contentJson` → Tiptap 재귀 → `image.attrs.mediaId`
@@ -76,7 +78,6 @@ function remapHomeSectionConfig(
         }
       }
     }
-    // BRIEF_INTRO mediaId (top-level)
     if (sectionType === 'BRIEF_INTRO' && typeof cfg.mediaId === 'string') {
       const newId = idMap.get(cfg.mediaId);
       if (newId) cfg.mediaId = newId;
@@ -109,6 +110,11 @@ function remapHomeSectionConfig(
     if (sectionType === 'LATEST_POSTS' && typeof cfg.boardId === 'string') {
       const newId = idMap.get(cfg.boardId);
       if (newId) cfg.boardId = newId;
+    }
+    if (sectionType === 'GALLERY_COLLECTION' && Array.isArray(cfg.boardIds)) {
+      cfg.boardIds = cfg.boardIds.map((boardId) =>
+        typeof boardId === 'string' ? (idMap.get(boardId) ?? boardId) : boardId,
+      );
     }
   }
 }

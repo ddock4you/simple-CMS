@@ -382,7 +382,11 @@ PR4가 도입한 두 진입점. 세부 동작은 루트 AGENTS.md "PR4 visitor �
 - Board x1 (`notice`)
 - Subpage x1 (`about`, PUBLISHED)
 - PageBlock x1 (about Subpage RICH_TEXT)
+<<<<<<< HEAD
 - HomeSection x9 (HERO/BRIEF_INTRO/SUB_CAROUSEL/FREQUENT_MENU/RECOMMENDED/SHORTCUT/LATEST_POSTS/CTA/NOTICE 대표 게시판)
+=======
+- HomeSection x10 (HERO/BRIEF_INTRO/SUB_CAROUSEL/FREQUENT_MENU/RECOMMENDED/SHORTCUT/LATEST_POSTS/GALLERY_COLLECTION/CTA/NOTICE 대표 게시판)
+>>>>>>> feature/gallery-collection-home-section
 - NavigationMenuItem x2 (about 링크 Header + Footer)
 
 운영 seed.ts와 별개 — 자체 PrismaClient + PrismaPg 어댑터 사용 (extension 미적용). 모든 query에 `sessionId: SEED_SENTINEL` 명시 + `findFirst → update | create` (upsert 회피 룰 일관).

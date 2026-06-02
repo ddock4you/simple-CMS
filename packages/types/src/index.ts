@@ -33,6 +33,7 @@ export type {
   CtaConfig,
   LegacyNoticeItem,
   NoticeConfig,
+  GalleryCollectionConfig,
   HomeSectionConfig,
 } from './domain/home.types';
 

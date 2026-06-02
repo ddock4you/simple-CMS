@@ -420,14 +420,23 @@ src/
 
 - 일반 서브 페이지와 분리된 **섹션 기반 관리**
 - 레이아웃은 코드에서 통제, 운영자는 섹션 데이터+순서 관리
+<<<<<<< HEAD
 - **고정 세트 모델** (Stage 5a 이후 확장): 9개 타입 각 1개씩 seed/자동 생성, 추가/삭제 UI 없음 — R/U만 지원
   - 타입: HERO, BRIEF_INTRO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
 - 섹션별 `configJson` 스키마 (Zod, `features/home-management/model/homeSchemas.ts`):
   - **HERO**: slides[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 10개, 1개=단일 배너, 2개 이상=슬라이드) + slideOptions
   - **BRIEF_INTRO**: heading, content, detailEnabled, detailUrl?, imageUrl?/imageAlt?/mediaId? — 공개 웹에서 full-bleed 회색 배경으로 렌더, 이미지 미설정 시 이미지 영역 생략
+=======
+- **고정 세트 모델** (Stage 5a): 10개 타입 각 1개씩 seed로 생성, 추가/삭제 UI 없음 — R/U만 지원
+  - 타입: HERO, BRIEF_INTRO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, GALLERY_COLLECTION, CTA, NOTICE
+- 섹션별 `configJson` 스키마 (Zod, `features/home-management/model/homeSchemas.ts`):
+  - **HERO**: slides[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 10개, 1개=단일 배너, 2개 이상=슬라이드) + slideOptions
+  - **BRIEF_INTRO**: heading, description?, imageUrl?, imageAlt?, linkLabel?, linkUrl?, mediaId? — 간략 소개 영역
+>>>>>>> feature/gallery-collection-home-section
   - **RECOMMENDED**: heading, description?, items[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 12개, 자유 갤러리) + slideOptions
   - **SHORTCUT**: heading, description?, items[]: `{label, description?, url}` (최대 8개)
   - **LATEST_POSTS**: heading, description?, boardId(nullable), limit(1~10) — 지정 게시판 최신 N개 자동 표시
+  - **GALLERY_COLLECTION (갤러리 모아보기)**: heading, description?, boardIds[](1~12), boardTabLabels?, limit(1~12) — 여러 공개 게시판의 최신 게시글을 KRDS Line 탭 + 갤러리 카드로 표시. 게시판별 공개 탭 이름은 수동 입력 가능하며 빈 값은 게시판명으로 폴백
   - **CTA**: heading, description?, buttonLabel, buttonUrl
   - **NOTICE (대표 게시판)**: heading, description?, boardId(nullable), limit(1~10) — 선택한 게시판의 중요 게시글 최신 1건 + 일반 최신글 N개 자동 표시
 - **SlideOptions 공통 스키마** (HERO, RECOMMENDED):

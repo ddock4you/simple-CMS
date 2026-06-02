@@ -147,7 +147,7 @@ async function main() {
     );
   }
 
-  // 6. Initial HomeSections (9 fixed sections, idempotent)
+  // 6. Initial HomeSections (10 fixed sections, idempotent)
   // sectionType은 unique 아님 → findFirst + create 패턴 (upsert 금지: 관리자 수정본 덮어쓰기 방지)
   const DEFAULT_SLIDE_OPTIONS = {
     showPrevNext: true,
@@ -233,9 +233,20 @@ async function main() {
       },
     },
     {
+      sectionType: 'GALLERY_COLLECTION' as const,
+      title: '갤러리 모아보기',
+      displayOrder: 7,
+      configJson: {
+        heading: '갤러리 모아보기',
+        description: null,
+        boardIds: [],
+        limit: 4,
+      },
+    },
+    {
       sectionType: 'CTA' as const,
       title: 'CTA 섹션',
-      displayOrder: 7,
+      displayOrder: 8,
       configJson: {
         heading: '지금 시작하세요',
         description: null,
@@ -246,7 +257,7 @@ async function main() {
     {
       sectionType: 'NOTICE' as const,
       title: '대표 게시판',
-      displayOrder: 8,
+      displayOrder: 9,
       configJson: {
         heading: '공지 알림',
         description: null,

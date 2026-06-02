@@ -11,6 +11,7 @@ import { ShortcutSection } from '@/features/home-section/ui/ShortcutSection';
 import { LatestPostsSection } from '@/features/home-section/ui/LatestPostsSection';
 import { CtaSection } from '@/features/home-section/ui/CtaSection';
 import { NoticeSection } from '@/features/home-section/ui/NoticeSection';
+import { GalleryCollectionSection } from '@/features/home-section/ui/GalleryCollectionSection';
 
 interface HomeSectionsProps {
   sections?: ResolvedSection[];
@@ -53,6 +54,10 @@ export async function HomeSections({
             return <CtaSection key={section.id} section={section} />;
           case 'NOTICE':
             return <NoticeSection key={section.id} section={section} />;
+          case 'GALLERY_COLLECTION':
+            return (
+              <GalleryCollectionSection key={section.id} section={section} />
+            );
         }
       })}
     </div>

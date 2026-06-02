@@ -14,7 +14,8 @@ export type HomeSectionType =
   | 'SHORTCUT'
   | 'LATEST_POSTS'
   | 'CTA'
-  | 'NOTICE';
+  | 'NOTICE'
+  | 'GALLERY_COLLECTION';
 
 export interface HomeSectionButton {
   label: string;
@@ -172,6 +173,14 @@ export interface NoticeConfig {
   items?: LegacyNoticeItem[];
 }
 
+export interface GalleryCollectionConfig {
+  heading: string;
+  description?: string | null;
+  boardIds: string[];
+  boardTabLabels?: Record<string, string | null>;
+  limit: number;
+}
+
 export type HomeSectionConfig =
   | ({ sectionType: 'HERO' } & { config: HeroConfig })
   | ({ sectionType: 'BRIEF_INTRO' } & { config: BriefIntroConfig })
@@ -181,4 +190,7 @@ export type HomeSectionConfig =
   | ({ sectionType: 'SHORTCUT' } & { config: ShortcutConfig })
   | ({ sectionType: 'LATEST_POSTS' } & { config: LatestPostsConfig })
   | ({ sectionType: 'CTA' } & { config: CtaConfig })
-  | ({ sectionType: 'NOTICE' } & { config: NoticeConfig });
+  | ({ sectionType: 'NOTICE' } & { config: NoticeConfig })
+  | ({ sectionType: 'GALLERY_COLLECTION' } & {
+      config: GalleryCollectionConfig;
+    });

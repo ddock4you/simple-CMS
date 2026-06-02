@@ -290,16 +290,25 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
 
 ### 구현 (Stage 5a + Stage 19)
 
+<<<<<<< HEAD
 - **9개 섹션 타입**: HERO, BRIEF_INTRO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
+=======
+- **10개 섹션 타입**: HERO, BRIEF_INTRO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, GALLERY_COLLECTION, CTA, NOTICE
+>>>>>>> feature/gallery-collection-home-section
 - **SSR Server Component 중심**: 섹션 컴포넌트는 Server, 슬라이드 컨트롤만 Client (`Carousel`)
 - **자체 커스텀 디자인** (시안 확정 전): `apps/web/app/globals.css`의 `.home-*` 클래스로 스코프된 스타일. 시안 확정 시 섹션 컴포넌트 교체 전제, admin 데이터 구조는 안정
 - **NOTICE(대표 게시판)**: 운영자가 선택한 게시판 1개의 중요 게시글 최신 1건과 일반 최신글 N건을 Figma 공지알림 카드 UI로 렌더한다. 기존 수동 `items[]` configJson은 persisted data 보호용 legacy fallback으로만 렌더한다.
+- **BRIEF_INTRO(간략 소개)**: 제목/설명/이미지/자세히 보기 링크를 단일 소개 블록으로 렌더한다.
+- **GALLERY_COLLECTION(갤러리 모아보기)**: 운영자가 선택한 여러 공개 게시판을 `전체 + 게시판별` KRDS Line 탭으로 렌더한다. 게시글은 발행일 최신순이며 카드는 게시판 GALLERY 스킨 카드 패턴을 재사용한다. 게시판별 탭 라벨은 `boardTabLabels[boardId]` 우선, 없거나 빈 값이면 게시판명으로 폴백한다. 카드 하단 메타는 게시판명을 노출하지 않고 발행일만 표시한다.
 
 ### HERO / BRIEF_INTRO / RECOMMENDED
+<<<<<<< HEAD
 
 - **BRIEF_INTRO**: Figma `인물소개` 패턴 기반 간략 소개 섹션. 배경 `#EEF2F7`은 `.page-container` 내부 폭에 갇히지 않도록 `w-screen` full-bleed로 렌더한다. 이미지가 없으면 이미지 프레임을 렌더하지 않고 텍스트 영역만 표시한다.
 
 ### HERO / RECOMMENDED 슬라이드
+=======
+>>>>>>> feature/gallery-collection-home-section
 
 - **HERO**: 슬라이드 1개면 정적 배너, 2개 이상이면 Carousel (1 per view)
   - 아이템 스키마: `{ imageUrl, imageAlt, title, description?, url? }`
@@ -324,10 +333,12 @@ src/entities/home-section/
 
 src/features/home-section/ui/
 ├── HeroSection.tsx             # 단일/슬라이드 분기
+├── BriefIntroSection.tsx       # 단일 소개 블록
 ├── SubCarouselSection.tsx      # 항상 Swiper, 원형 썸네일 4열 (Stage 19)
 ├── RecommendedSection.tsx      # 그리드/슬라이드 분기
 ├── ShortcutSection.tsx
 ├── LatestPostsSection.tsx
+├── GalleryCollectionSection.tsx
 ├── CtaSection.tsx
 └── NoticeSection.tsx
 
@@ -340,7 +351,7 @@ src/shared/ui/Carousel.tsx                       # Swiper 기반 공통 캐러�
 
 1. `isVisible: true` 섹션을 `displayOrder asc`로 조회
 2. 각 섹션의 `configJson`을 타입별로 Zod safeParse — 실패 시 skip
-3. LATEST_POSTS와 NOTICE의 boardId를 배치 조회 (Promise.all, N+1 방지). NOTICE는 중요글 1건과 일반글 N건을 분리 조회한다. RECOMMENDED/HERO는 외부 참조 없음
+3. LATEST_POSTS, NOTICE, GALLERY_COLLECTION의 boardId를 배치 조회 (Promise.all, N+1 방지). NOTICE는 중요글 1건과 일반글 N건을 분리 조회하고, GALLERY_COLLECTION은 선택 게시판별 최신 글과 전체 탭 데이터를 구성한다. RECOMMENDED/HERO/BRIEF_INTRO는 DB 참조 없음
 4. dead reference (삭제된/비공개 게시판 등)는 자동 skip — 에러 없이 나머지 렌더
 
 ### 엣지케이스

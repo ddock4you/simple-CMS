@@ -12,12 +12,15 @@ import type {
   LatestPostsConfig,
   CtaConfig,
   NoticeConfig,
+  GalleryCollectionConfig,
 } from '@simple-cms/types';
 
+import { extractFirstImageFromTiptap } from '@/entities/post/lib/extractFirstImageFromTiptap';
 import {
   parseBriefIntroConfig,
   parseCtaConfig,
   parseFrequentMenuConfig,
+  parseGalleryCollectionConfig,
   parseHeroConfig,
   parseLatestPostsConfig,
   parseNoticeConfig,
@@ -119,6 +122,32 @@ export interface ResolvedSubCarouselSection {
   config: SubCarouselConfig;
 }
 
+export interface ResolvedGalleryCollectionItem {
+  id: string;
+  title: string;
+  href: string;
+  publishedAt: string | null;
+  boardId: string;
+  boardName: string;
+  thumbnailUrl: string | null;
+  thumbnailAlt: string | null;
+}
+
+export interface ResolvedGalleryCollectionTab {
+  id: string;
+  label: string;
+  boardSlug: string | null;
+  items: ResolvedGalleryCollectionItem[];
+}
+
+export interface ResolvedGalleryCollectionSection {
+  id: string;
+  sectionType: 'GALLERY_COLLECTION';
+  config: GalleryCollectionConfig;
+  tabs: ResolvedGalleryCollectionTab[];
+  moreHref: string | null;
+}
+
 export type ResolvedSection =
   | ResolvedHeroSection
   | ResolvedBriefIntroSection
@@ -128,7 +157,8 @@ export type ResolvedSection =
   | ResolvedShortcutSection
   | ResolvedLatestPostsSection
   | ResolvedCtaSection
-  | ResolvedNoticeSection;
+  | ResolvedNoticeSection
+  | ResolvedGalleryCollectionSection;
 
 interface NoticePostRecord {
   id: string;
@@ -139,6 +169,17 @@ interface NoticePostRecord {
   publishedAt: Date | null;
   boardId: string;
   board: { slug: string; name: string };
+}
+
+interface GalleryCollectionPostRecord {
+  id: string;
+  title: string;
+  slug: string;
+  publishedAt: Date | null;
+  contentJson: unknown;
+  boardId: string;
+  board: { slug: string; name: string };
+  featuredImage: { url: string; alt: string | null } | null;
 }
 
 export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
@@ -158,6 +199,8 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
   const latestPostsLimitByBoard = new Map<string, number>();
   const noticeBoardIds = new Set<string>();
   const noticeLimitByBoard = new Map<string, number>();
+  const galleryCollectionBoardIds = new Set<string>();
+  const galleryCollectionLimitByBoard = new Map<string, number>();
   const frequentMenuSubpageIds = new Set<string>();
   const frequentMenuBoardIds = new Set<string>();
 
@@ -173,7 +216,8 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
       | ShortcutConfig
       | LatestPostsConfig
       | CtaConfig
-      | NoticeConfig;
+      | NoticeConfig
+      | GalleryCollectionConfig;
   }> = [];
 
   for (const section of rawSections) {
@@ -258,6 +302,22 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
         parsedSections.push({ ...section, config });
         break;
       }
+      case 'GALLERY_COLLECTION': {
+        const config = parseGalleryCollectionConfig(section.configJson);
+        if (!config) continue;
+        for (const boardId of config.boardIds) {
+          galleryCollectionBoardIds.add(boardId);
+          galleryCollectionLimitByBoard.set(
+            boardId,
+            Math.max(
+              galleryCollectionLimitByBoard.get(boardId) ?? 0,
+              config.limit,
+            ),
+          );
+        }
+        parsedSections.push({ ...section, config });
+        break;
+      }
     }
   }
 
@@ -270,6 +330,8 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
     noticeRegularGroups,
     frequentMenuSubpages,
     frequentMenuBoards,
+    galleryCollectionBoards,
+    galleryCollectionPostGroups,
   ] = await Promise.all([
     latestPostsBoardIds.size > 0
       ? prisma.board.findMany({
@@ -382,6 +444,40 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
           select: { id: true, slug: true },
         })
       : Promise.resolve([]),
+    galleryCollectionBoardIds.size > 0
+      ? prisma.board.findMany({
+          where: {
+            id: { in: Array.from(galleryCollectionBoardIds) },
+            isPublic: true,
+          },
+          select: { id: true, name: true, slug: true },
+        })
+      : Promise.resolve([]),
+    galleryCollectionBoardIds.size > 0
+      ? Promise.all(
+          Array.from(galleryCollectionBoardIds).map((boardId) =>
+            prisma.post.findMany({
+              where: {
+                boardId,
+                status: 'PUBLISHED',
+                board: { isPublic: true },
+              },
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                publishedAt: true,
+                contentJson: true,
+                boardId: true,
+                board: { select: { slug: true, name: true } },
+                featuredImage: { select: { url: true, alt: true } },
+              },
+              orderBy: { publishedAt: 'desc' },
+              take: galleryCollectionLimitByBoard.get(boardId) ?? 0,
+            }),
+          ),
+        )
+      : Promise.resolve([]),
   ]);
 
   const boardMap = new Map(boards.map((b) => [b.id, b]));
@@ -405,6 +501,12 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
   );
   const frequentMenuBoardSlugMap = new Map(
     frequentMenuBoards.map((item) => [item.id, item.slug]),
+  );
+  const galleryCollectionBoardMap = new Map(
+    galleryCollectionBoards.map((board) => [board.id, board]),
+  );
+  const galleryCollectionPostsByBoard = groupPostsByBoard(
+    galleryCollectionPostGroups.flat(),
   );
 
   // 4. 섹션별 최종 결과 조립
@@ -515,6 +617,23 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
           config: section.config as SubCarouselConfig,
         });
         break;
+      case 'GALLERY_COLLECTION': {
+        const config = section.config as GalleryCollectionConfig;
+        const tabs = resolveGalleryCollectionTabs(
+          config,
+          galleryCollectionBoardMap,
+          galleryCollectionPostsByBoard,
+        );
+
+        resolved.push({
+          id: section.id,
+          sectionType: 'GALLERY_COLLECTION',
+          config,
+          tabs,
+          moreHref: tabs[0]?.boardSlug ? `/board/${tabs[0].boardSlug}` : null,
+        });
+        break;
+      }
     }
   }
 
@@ -531,6 +650,83 @@ function groupPostsByBoard<T extends { boardId: string }>(
     grouped.set(post.boardId, existing);
   }
   return grouped;
+}
+
+function resolveGalleryCollectionTabs(
+  config: GalleryCollectionConfig,
+  boardMap: Map<string, { id: string; name: string; slug: string }>,
+  postsByBoard: Map<string, GalleryCollectionPostRecord[]>,
+): ResolvedGalleryCollectionTab[] {
+  const boardTabs = config.boardIds.flatMap((boardId) => {
+    const board = boardMap.get(boardId);
+    if (!board) return [];
+
+    const items = (postsByBoard.get(boardId) ?? [])
+      .slice(0, config.limit)
+      .map(toGalleryCollectionItem);
+
+    return [
+      {
+        id: board.id,
+        label: resolveGalleryCollectionTabLabel(config, board),
+        boardSlug: board.slug,
+        items,
+      },
+    ];
+  });
+
+  if (boardTabs.length === 0) return [];
+
+  const allItems = boardTabs
+    .flatMap((tab) => tab.items)
+    .sort(compareGalleryItemsByPublishedAt)
+    .slice(0, config.limit);
+
+  return [
+    {
+      id: 'all',
+      label: '전체',
+      boardSlug: boardTabs[0]?.boardSlug ?? null,
+      items: allItems,
+    },
+    ...boardTabs,
+  ];
+}
+
+function resolveGalleryCollectionTabLabel(
+  config: GalleryCollectionConfig,
+  board: { id: string; name: string },
+): string {
+  return config.boardTabLabels?.[board.id]?.trim() || board.name;
+}
+
+function toGalleryCollectionItem(
+  post: GalleryCollectionPostRecord,
+): ResolvedGalleryCollectionItem {
+  const fallbackImage = extractFirstImageFromTiptap(post.contentJson);
+  const thumbnailUrl = post.featuredImage?.url ?? fallbackImage?.src ?? null;
+  const thumbnailAlt =
+    post.featuredImage?.alt ?? fallbackImage?.alt ?? `${post.title} 썸네일`;
+
+  return {
+    id: post.id,
+    title: post.title,
+    href: `/board/${post.board.slug}/${post.slug}`,
+    publishedAt: post.publishedAt?.toISOString() ?? null,
+    boardId: post.boardId,
+    boardName: post.board.name,
+    thumbnailUrl,
+    thumbnailAlt: thumbnailUrl ? thumbnailAlt : null,
+  };
+}
+
+function compareGalleryItemsByPublishedAt(
+  a: ResolvedGalleryCollectionItem,
+  b: ResolvedGalleryCollectionItem,
+): number {
+  const aTime = a.publishedAt ? Date.parse(a.publishedAt) : 0;
+  const bTime = b.publishedAt ? Date.parse(b.publishedAt) : 0;
+  return bTime - aTime;
 }
 
 function toNoticePostItem(post: NoticePostRecord): ResolvedNoticePostItem {
