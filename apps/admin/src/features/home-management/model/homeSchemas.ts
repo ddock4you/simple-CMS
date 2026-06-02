@@ -69,6 +69,35 @@ export const heroConfigSchema = z.object({
 });
 export type HeroConfigData = z.infer<typeof heroConfigSchema>;
 
+export const briefIntroConfigSchema = z
+  .object({
+    heading: z.string().min(1, '제목을 입력해주세요.').max(200),
+    content: z.string().min(1, '내용을 입력해주세요.').max(1000),
+    detailEnabled: z.boolean(),
+    detailUrl: optionalUrlString,
+    imageUrl: z.string().max(2000).nullable().optional(),
+    imageAlt: z.string().max(200).nullable().optional(),
+    imageOriginalName: z.string().max(255).nullable().optional(),
+    mediaId: z.string().max(64).nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.detailEnabled && !value.detailUrl?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['detailUrl'],
+        message: '자세히 보기 URL을 입력해주세요.',
+      });
+    }
+    if (value.imageUrl?.trim() && !value.imageAlt?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['imageAlt'],
+        message: '이미지 대체 텍스트를 입력해주세요.',
+      });
+    }
+  });
+export type BriefIntroConfigData = z.infer<typeof briefIntroConfigSchema>;
+
 const recommendedItemSchema = z.object({
   imageUrl: z.string().min(1, '이미지 URL을 입력해주세요.').max(2000),
   imageAlt: z.string().min(1, '이미지 대체 텍스트를 입력해주세요.').max(200),
@@ -193,6 +222,7 @@ export type SubCarouselConfigData = z.infer<typeof subCarouselConfigSchema>;
  */
 export const configSchemaByType = {
   HERO: heroConfigSchema,
+  BRIEF_INTRO: briefIntroConfigSchema,
   RECOMMENDED: recommendedConfigSchema,
   SUB_CAROUSEL: subCarouselConfigSchema,
   FREQUENT_MENU: frequentMenuConfigSchema,
@@ -211,6 +241,16 @@ export const defaultConfigByType = {
     slides: [],
     slideOptions: DEFAULT_SLIDE_OPTIONS,
   } satisfies HeroConfigData,
+  BRIEF_INTRO: {
+    heading: '간략 소개',
+    content: '',
+    detailEnabled: false,
+    detailUrl: null,
+    imageUrl: null,
+    imageAlt: null,
+    imageOriginalName: null,
+    mediaId: null,
+  } satisfies BriefIntroConfigData,
   RECOMMENDED: {
     heading: '',
     description: null,
@@ -272,16 +312,16 @@ export const updateHomeSectionSchema = z.object({
 export type UpdateHomeSectionData = z.infer<typeof updateHomeSectionSchema>;
 
 /**
- * 섹션 순서 변경 스키마 — 항상 전체 9개 섹션의 id+displayOrder를 포함해야 함
+ * 섹션 순서 변경 스키마 — 항상 전체 10개 섹션의 id+displayOrder를 포함해야 함
  */
 export const reorderHomeSectionsSchema = z.object({
   sections: z
     .array(
       z.object({
         id: z.string().min(1),
-        displayOrder: z.number().int().min(0).max(8),
+        displayOrder: z.number().int().min(0).max(9),
       }),
     )
-    .length(9, '전체 섹션(9개)을 포함해야 합니다.'),
+    .length(10, '전체 섹션(10개)을 포함해야 합니다.'),
 });
 export type ReorderHomeSectionsData = z.infer<typeof reorderHomeSectionsSchema>;

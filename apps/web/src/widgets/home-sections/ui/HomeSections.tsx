@@ -3,6 +3,7 @@ import {
   type ResolvedSection,
 } from '@/entities/home-section/api/getHomeSections';
 import { HeroSection } from '@/features/home-section/ui/HeroSection';
+import { BriefIntroSection } from '@/features/home-section/ui/BriefIntroSection';
 import { RecommendedSection } from '@/features/home-section/ui/RecommendedSection';
 import { SubCarouselSection } from '@/features/home-section/ui/SubCarouselSection';
 import { FrequentMenuSection } from '@/features/home-section/ui/FrequentMenuSection';
@@ -37,6 +38,8 @@ export async function HomeSections({
         switch (section.sectionType) {
           case 'HERO':
             return <HeroSection key={section.id} section={section} />;
+          case 'BRIEF_INTRO':
+            return <BriefIntroSection key={section.id} section={section} />;
           case 'RECOMMENDED':
             return <RecommendedSection key={section.id} section={section} />;
           case 'SUB_CAROUSEL':

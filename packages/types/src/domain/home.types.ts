@@ -7,6 +7,7 @@
 
 export type HomeSectionType =
   | 'HERO'
+  | 'BRIEF_INTRO'
   | 'RECOMMENDED'
   | 'SUB_CAROUSEL'
   | 'FREQUENT_MENU'
@@ -52,6 +53,17 @@ export interface HeroSlide {
 export interface HeroConfig {
   slides: HeroSlide[];
   slideOptions: SlideOptions;
+}
+
+export interface BriefIntroConfig {
+  heading: string;
+  content: string;
+  detailEnabled: boolean;
+  detailUrl?: string | null;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  imageOriginalName?: string | null;
+  mediaId?: string | null;
 }
 
 /**
@@ -170,6 +182,7 @@ export interface GalleryCollectionConfig {
 
 export type HomeSectionConfig =
   | ({ sectionType: 'HERO' } & { config: HeroConfig })
+  | ({ sectionType: 'BRIEF_INTRO' } & { config: BriefIntroConfig })
   | ({ sectionType: 'RECOMMENDED' } & { config: RecommendedConfig })
   | ({ sectionType: 'SUB_CAROUSEL' } & { config: SubCarouselConfig })
   | ({ sectionType: 'FREQUENT_MENU' } & { config: FrequentMenuConfig })

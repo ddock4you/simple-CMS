@@ -12,6 +12,7 @@
  * **위치별 field name 분기 (PR6 핵심)**:
  *   - HomeSection.configJson:
  *     - HERO    `slides[].mediaId`   (field: `mediaId`)
+ *     - BRIEF_INTRO `mediaId` (top-level)
  *     - RECOMMENDED `items[].mediaId` (field: `mediaId`)
  *     - LATEST_POSTS `boardId` (top-level)
  *     - GALLERY_COLLECTION `boardIds[]` (top-level)
@@ -76,6 +77,10 @@ function remapHomeSectionConfig(
           }
         }
       }
+    }
+    if (sectionType === 'BRIEF_INTRO' && typeof cfg.mediaId === 'string') {
+      const newId = idMap.get(cfg.mediaId);
+      if (newId) cfg.mediaId = newId;
     }
     // RECOMMENDED / SUB_CAROUSEL items[].mediaId, FREQUENT_MENU items[].iconMediaId
     if (

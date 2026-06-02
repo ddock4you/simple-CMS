@@ -420,10 +420,11 @@ src/
 
 - 일반 서브 페이지와 분리된 **섹션 기반 관리**
 - 레이아웃은 코드에서 통제, 운영자는 섹션 데이터+순서 관리
-- **고정 세트 모델** (Stage 5a): 9개 타입 각 1개씩 seed로 생성, 추가/삭제 UI 없음 — R/U만 지원
-  - 타입: HERO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, GALLERY_COLLECTION, CTA, NOTICE
+- **고정 세트 모델** (Stage 5a): 10개 타입 각 1개씩 seed로 생성, 추가/삭제 UI 없음 — R/U만 지원
+  - 타입: HERO, BRIEF_INTRO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, GALLERY_COLLECTION, CTA, NOTICE
 - 섹션별 `configJson` 스키마 (Zod, `features/home-management/model/homeSchemas.ts`):
   - **HERO**: slides[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 10개, 1개=단일 배너, 2개 이상=슬라이드) + slideOptions
+  - **BRIEF_INTRO**: heading, description?, imageUrl?, imageAlt?, linkLabel?, linkUrl?, mediaId? — 간략 소개 영역
   - **RECOMMENDED**: heading, description?, items[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 12개, 자유 갤러리) + slideOptions
   - **SHORTCUT**: heading, description?, items[]: `{label, description?, url}` (최대 8개)
   - **LATEST_POSTS**: heading, description?, boardId(nullable), limit(1~10) — 지정 게시판 최신 N개 자동 표시

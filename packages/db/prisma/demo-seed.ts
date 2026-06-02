@@ -9,7 +9,7 @@
  *   - Board x1 (slug='notice')
  *   - Subpage x1 (slug='about', PUBLISHED)
  *   - PageBlock x1 (about Subpage의 RICH_TEXT 본문)
- *   - HomeSection x9 (운영 seed와 동일 9타입)
+ *   - HomeSection x10 (운영 seed와 동일 10타입)
  *   - NavigationMenuItem x2 (about 링크를 Header + Footer에 배치)
  *
  * cloneSeedToSession이 이 17 row 세트를 매 시연 방문자의 새 sessionId로 in-memory remap 클론한다.
@@ -202,7 +202,7 @@ async function main() {
   });
   console.log(`✓ PageBlock: about RICH_TEXT (displayOrder 0)`);
 
-  // ─── 8. HomeSection x9 ─────────────────────────────────
+  // ─── 8. HomeSection x10 ─────────────────────────────────
   const homeSections = [
     {
       sectionType: 'HERO' as const,
@@ -211,9 +211,24 @@ async function main() {
       configJson: { slides: [], slideOptions: DEFAULT_SLIDE_OPTIONS },
     },
     {
+      sectionType: 'BRIEF_INTRO' as const,
+      title: '간략 소개',
+      displayOrder: 1,
+      configJson: {
+        heading: '간략 소개',
+        content: '',
+        detailEnabled: false,
+        detailUrl: null,
+        imageUrl: null,
+        imageAlt: null,
+        imageOriginalName: null,
+        mediaId: null,
+      },
+    },
+    {
       sectionType: 'SUB_CAROUSEL' as const,
       title: '서브 캐러셀',
-      displayOrder: 1,
+      displayOrder: 2,
       configJson: {
         tagline: null,
         mainHeading: '',
@@ -226,7 +241,7 @@ async function main() {
     {
       sectionType: 'FREQUENT_MENU' as const,
       title: '자주찾는 메뉴',
-      displayOrder: 2,
+      displayOrder: 3,
       configJson: {
         heading: '자주찾는 메뉴',
         items: [],
@@ -235,7 +250,7 @@ async function main() {
     {
       sectionType: 'RECOMMENDED' as const,
       title: '추천 콘텐츠',
-      displayOrder: 3,
+      displayOrder: 4,
       configJson: {
         heading: '추천 콘텐츠',
         description: null,
@@ -246,13 +261,13 @@ async function main() {
     {
       sectionType: 'SHORTCUT' as const,
       title: '바로가기',
-      displayOrder: 4,
+      displayOrder: 5,
       configJson: { heading: '바로가기', description: null, items: [] },
     },
     {
       sectionType: 'LATEST_POSTS' as const,
       title: '최신 게시글',
-      displayOrder: 5,
+      displayOrder: 6,
       configJson: {
         heading: '최신 게시글',
         description: null,
@@ -263,7 +278,7 @@ async function main() {
     {
       sectionType: 'GALLERY_COLLECTION' as const,
       title: '갤러리 모아보기',
-      displayOrder: 6,
+      displayOrder: 7,
       configJson: {
         heading: '갤러리 모아보기',
         description: null,
@@ -274,7 +289,7 @@ async function main() {
     {
       sectionType: 'CTA' as const,
       title: 'CTA 섹션',
-      displayOrder: 7,
+      displayOrder: 8,
       configJson: {
         heading: '지금 시작하세요',
         description: null,
@@ -285,7 +300,7 @@ async function main() {
     {
       sectionType: 'NOTICE' as const,
       title: '대표 게시판',
-      displayOrder: 8,
+      displayOrder: 9,
       configJson: {
         heading: '공지 알림',
         description: null,
@@ -302,7 +317,7 @@ async function main() {
       isVisible: true,
     });
   }
-  console.log('✓ HomeSection: 9 sections');
+  console.log('✓ HomeSection: 10 sections');
 
   // ─── 9. NavigationMenuItem x2: about 링크 (Header + Footer) ───
   await upsertNavigationMenuItemSeed(headerMenu.id, '소개', {
@@ -518,6 +533,7 @@ async function upsertPageBlockSeed(
 async function upsertHomeSectionSeed(
   sectionType:
     | 'HERO'
+    | 'BRIEF_INTRO'
     | 'RECOMMENDED'
     | 'SUB_CAROUSEL'
     | 'FREQUENT_MENU'

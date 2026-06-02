@@ -8,6 +8,7 @@ const VARIANT_BY_TYPE: Record<
   'default' | 'secondary' | 'outline'
 > = {
   HERO: 'default',
+  BRIEF_INTRO: 'default',
   RECOMMENDED: 'default',
   SUB_CAROUSEL: 'default',
   FREQUENT_MENU: 'secondary',
