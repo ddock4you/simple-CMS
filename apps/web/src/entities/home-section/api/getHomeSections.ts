@@ -668,7 +668,7 @@ function resolveGalleryCollectionTabs(
     return [
       {
         id: board.id,
-        label: board.name,
+        label: resolveGalleryCollectionTabLabel(config, board),
         boardSlug: board.slug,
         items,
       },
@@ -691,6 +691,13 @@ function resolveGalleryCollectionTabs(
     },
     ...boardTabs,
   ];
+}
+
+function resolveGalleryCollectionTabLabel(
+  config: GalleryCollectionConfig,
+  board: { id: string; name: string },
+): string {
+  return config.boardTabLabels?.[board.id]?.trim() || board.name;
 }
 
 function toGalleryCollectionItem(

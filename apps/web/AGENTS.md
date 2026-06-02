@@ -295,7 +295,7 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
 - **자체 커스텀 디자인** (시안 확정 전): `apps/web/app/globals.css`의 `.home-*` 클래스로 스코프된 스타일. 시안 확정 시 섹션 컴포넌트 교체 전제, admin 데이터 구조는 안정
 - **NOTICE(대표 게시판)**: 운영자가 선택한 게시판 1개의 중요 게시글 최신 1건과 일반 최신글 N건을 Figma 공지알림 카드 UI로 렌더한다. 기존 수동 `items[]` configJson은 persisted data 보호용 legacy fallback으로만 렌더한다.
 - **BRIEF_INTRO(간략 소개)**: 제목/설명/이미지/자세히 보기 링크를 단일 소개 블록으로 렌더한다.
-- **GALLERY_COLLECTION(갤러리 모아보기)**: 운영자가 선택한 여러 공개 게시판을 `전체 + 게시판별` KRDS Line 탭으로 렌더한다. 게시글은 발행일 최신순이며 카드는 게시판 GALLERY 스킨 카드 패턴을 재사용한다.
+- **GALLERY_COLLECTION(갤러리 모아보기)**: 운영자가 선택한 여러 공개 게시판을 `전체 + 게시판별` KRDS Line 탭으로 렌더한다. 게시글은 발행일 최신순이며 카드는 게시판 GALLERY 스킨 카드 패턴을 재사용한다. 게시판별 탭 라벨은 `boardTabLabels[boardId]` 우선, 없거나 빈 값이면 게시판명으로 폴백한다.
 
 ### HERO / BRIEF_INTRO / RECOMMENDED
 

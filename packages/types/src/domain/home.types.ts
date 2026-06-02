@@ -177,6 +177,7 @@ export interface GalleryCollectionConfig {
   heading: string;
   description?: string | null;
   boardIds: string[];
+  boardTabLabels?: Record<string, string | null>;
   limit: number;
 }
 

@@ -189,6 +189,16 @@ export const galleryCollectionConfigSchema = z.object({
     .array(z.string().min(1))
     .min(1, '게시판을 1개 이상 선택해주세요.')
     .max(12, '최대 12개 게시판까지 선택할 수 있습니다.'),
+  boardTabLabels: z
+    .record(
+      z.string(),
+      z
+        .string()
+        .max(80, '탭 이름은 80자 이하여야 합니다.')
+        .nullable()
+        .optional(),
+    )
+    .optional(),
   limit: z.number().int().min(1).max(12),
 });
 export type GalleryCollectionConfigData = z.infer<
@@ -296,6 +306,7 @@ export const defaultConfigByType = {
     heading: '갤러리 모아보기',
     description: null,
     boardIds: [],
+    boardTabLabels: {},
     limit: 4,
   } satisfies GalleryCollectionConfigData,
 } as const;

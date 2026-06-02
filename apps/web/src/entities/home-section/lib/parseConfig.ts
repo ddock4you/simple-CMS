@@ -127,6 +127,7 @@ const galleryCollectionSchema = z.object({
   heading: z.string(),
   description: z.string().nullable().optional(),
   boardIds: z.array(z.string()).min(1).max(12),
+  boardTabLabels: z.record(z.string(), z.string().nullable()).optional(),
   limit: z.number().int().min(1).max(12),
 });
 

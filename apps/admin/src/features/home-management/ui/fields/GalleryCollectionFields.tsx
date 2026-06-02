@@ -91,21 +91,54 @@ export function GalleryCollectionFields({
                     공개 게시판이 없습니다.
                   </p>
                 ) : (
-                  <div className="max-h-[240px] space-y-2 overflow-y-auto pr-1">
-                    {boards.map((board) => (
-                      <label
-                        key={board.id}
-                        className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted"
-                      >
-                        <Checkbox
-                          checked={selectedIds.includes(board.id)}
-                          onCheckedChange={(checked) =>
-                            toggleBoard(board.id, checked === true)
-                          }
-                        />
-                        <span className="text-sm">{board.name}</span>
-                      </label>
-                    ))}
+                  <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1">
+                    {boards.map((board) => {
+                      const selected = selectedIds.includes(board.id);
+                      const checkboxId = `gallery-board-${board.id}`;
+                      const tabLabelId = `gallery-board-tab-label-${board.id}`;
+
+                      return (
+                        <div
+                          key={board.id}
+                          className="rounded-md border border-transparent px-2 py-2 hover:bg-muted"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id={checkboxId}
+                              checked={selected}
+                              onCheckedChange={(checked) =>
+                                toggleBoard(board.id, checked === true)
+                              }
+                            />
+                            <Label
+                              htmlFor={checkboxId}
+                              className="cursor-pointer text-sm font-normal"
+                            >
+                              {board.name}
+                            </Label>
+                          </div>
+
+                          {selected && (
+                            <div className="mt-2 pl-7">
+                              <Label
+                                htmlFor={tabLabelId}
+                                className="text-xs text-muted-foreground"
+                              >
+                                공개 탭 이름
+                              </Label>
+                              <Input
+                                id={tabLabelId}
+                                className="mt-1"
+                                placeholder={board.name}
+                                {...register(
+                                  `boardTabLabels.${board.id}` as const,
+                                )}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -117,7 +150,7 @@ export function GalleryCollectionFields({
         )}
         <p className="text-xs text-muted-foreground">
           선택한 순서대로 탭이 표시됩니다. 전체 탭은 선택한 게시판의 최신글을
-          함께 보여줍니다.
+          함께 보여줍니다. 공개 탭 이름을 비워두면 게시판명이 표시됩니다.
         </p>
       </div>
 

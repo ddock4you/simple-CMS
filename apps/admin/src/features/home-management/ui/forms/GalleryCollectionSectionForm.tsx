@@ -60,8 +60,19 @@ export function GalleryCollectionSectionForm({
       return;
     }
     setTitleError(null);
+    const boardTabLabels = normalizeBoardTabLabels(
+      config.boardIds,
+      config.boardTabLabels,
+    );
     mutation.mutate(
-      { title, isVisible, configJson: config },
+      {
+        title,
+        isVisible,
+        configJson: {
+          ...config,
+          boardTabLabels,
+        },
+      },
       { onSuccess: onClose },
     );
   });
@@ -84,4 +95,20 @@ export function GalleryCollectionSectionForm({
       />
     </SectionFormShell>
   );
+}
+
+function normalizeBoardTabLabels(
+  boardIds: string[],
+  rawLabels: Record<string, string | null | undefined> | undefined,
+): Record<string, string> {
+  const labels: Record<string, string> = {};
+
+  for (const boardId of boardIds) {
+    const label = rawLabels?.[boardId]?.trim();
+    if (label) {
+      labels[boardId] = label;
+    }
+  }
+
+  return labels;
 }

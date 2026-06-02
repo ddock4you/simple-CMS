@@ -428,7 +428,7 @@ src/
   - **RECOMMENDED**: heading, description?, items[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 12개, 자유 갤러리) + slideOptions
   - **SHORTCUT**: heading, description?, items[]: `{label, description?, url}` (최대 8개)
   - **LATEST_POSTS**: heading, description?, boardId(nullable), limit(1~10) — 지정 게시판 최신 N개 자동 표시
-  - **GALLERY_COLLECTION (갤러리 모아보기)**: heading, description?, boardIds[](1~12), limit(1~12) — 여러 공개 게시판의 최신 게시글을 KRDS Line 탭 + 갤러리 카드로 표시
+  - **GALLERY_COLLECTION (갤러리 모아보기)**: heading, description?, boardIds[](1~12), boardTabLabels?, limit(1~12) — 여러 공개 게시판의 최신 게시글을 KRDS Line 탭 + 갤러리 카드로 표시. 게시판별 공개 탭 이름은 수동 입력 가능하며 빈 값은 게시판명으로 폴백
   - **CTA**: heading, description?, buttonLabel, buttonUrl
   - **NOTICE (대표 게시판)**: heading, description?, boardId(nullable), limit(1~10) — 선택한 게시판의 중요 게시글 최신 1건 + 일반 최신글 N개 자동 표시
 - **SlideOptions 공통 스키마** (HERO, RECOMMENDED):
