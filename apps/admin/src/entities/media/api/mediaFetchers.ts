@@ -9,7 +9,11 @@ import type {
   UploadMediaResponse,
 } from '@simple-cms/types';
 
-import { fetchClient, FetchError } from '@/shared/api/fetchClient';
+import {
+  fetchClient,
+  FetchError,
+  resolveAdminApiPath,
+} from '@/shared/api/fetchClient';
 
 import { buildMediaSearchParams } from '../model/mediaFilters';
 
@@ -67,7 +71,7 @@ export async function uploadMedia(
   formData.append('file', file);
   formData.append('category', category);
 
-  const response = await fetch(endpoint, {
+  const response = await fetch(resolveAdminApiPath(endpoint), {
     method: 'POST',
     body: formData,
   });

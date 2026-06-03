@@ -5,6 +5,7 @@ import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { resolveAdminApiPath } from '@/shared/api/fetchClient';
 import { Button } from '@/shared/ui/Button';
 
 interface AuditLogExportProps {
@@ -41,8 +42,11 @@ export function AuditLogExport({
       if (q) params.set('q', q);
 
       const qs = params.toString();
+      const endpoint = qs
+        ? `/api/audit-logs/export?${qs}`
+        : '/api/audit-logs/export';
       const response = await fetch(
-        qs ? `/api/audit-logs/export?${qs}` : '/api/audit-logs/export',
+        resolveAdminApiPath(endpoint),
       );
 
       if (!response.ok) {

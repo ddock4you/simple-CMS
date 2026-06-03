@@ -41,6 +41,7 @@ import {
   CardTitle,
 } from '@/shared/ui/shadcn/card';
 import { StatCard } from '@/shared/ui/layout/StatCard';
+import { resolveAdminApiPath } from '@/shared/api/fetchClient';
 
 interface ImportStatsShape {
   rowsCreatedByModel: Record<string, number>;
@@ -87,7 +88,7 @@ export function DemoSnapshotForm({
     if (isExporting) return;
     setIsExporting(true);
     try {
-      const res = await fetch('/api/demo/snapshot/export', {
+      const res = await fetch(resolveAdminApiPath('/api/demo/snapshot/export'), {
         method: 'GET',
         credentials: 'same-origin',
       });
@@ -141,7 +142,7 @@ export function DemoSnapshotForm({
     setImportResult(null);
     try {
       const text = await pendingFile.text();
-      const res = await fetch('/api/demo/snapshot/import', {
+      const res = await fetch(resolveAdminApiPath('/api/demo/snapshot/import'), {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },

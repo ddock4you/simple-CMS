@@ -9,6 +9,28 @@ export class FetchError extends Error {
   }
 }
 
+const DEMO_ADMIN_BASE_PATH = '/_cms/admin';
+
+function isDemoAdminBrowserPath(): boolean {
+  if (typeof window === 'undefined') return false;
+  const { pathname } = window.location;
+  return (
+    pathname === DEMO_ADMIN_BASE_PATH ||
+    pathname.startsWith(`${DEMO_ADMIN_BASE_PATH}/`)
+  );
+}
+
+function shouldUseDemoAdminBasePath(): boolean {
+  if (typeof window !== 'undefined') return isDemoAdminBrowserPath();
+  return process.env.DEMO_MODE === 'true';
+}
+
+export function resolveAdminApiPath(path: string): string {
+  if (!path.startsWith('/api/')) return path;
+  if (!shouldUseDemoAdminBasePath()) return path;
+  return `${DEMO_ADMIN_BASE_PATH}${path}`;
+}
+
 function getBaseUrl(): string {
   if (typeof window !== 'undefined') return '';
   return process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001';
@@ -18,7 +40,7 @@ export async function fetchClient<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  const url = `${getBaseUrl()}${path}`;
+  const url = `${getBaseUrl()}${resolveAdminApiPath(path)}`;
 
   const response = await fetch(url, {
     ...init,

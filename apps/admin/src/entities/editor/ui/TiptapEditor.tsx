@@ -49,6 +49,7 @@ import { toast } from 'sonner';
 import type { ApiResponse, UploadMediaResponse } from '@simple-cms/types';
 
 import { Button } from '@/shared/ui/Button';
+import { resolveAdminApiPath } from '@/shared/api/fetchClient';
 import { resolveMediaPreviewUrl } from '@/shared/lib/mediaUrl';
 import {
   postprocessTiptapForSave,
@@ -86,7 +87,7 @@ async function uploadImageToMedia(file: File): Promise<UploadResult> {
   const fd = new FormData();
   fd.append('file', file);
   fd.append('category', 'content');
-  const res = await fetch('/api/media/upload', {
+  const res = await fetch(resolveAdminApiPath('/api/media/upload'), {
     method: 'POST',
     body: fd,
   });

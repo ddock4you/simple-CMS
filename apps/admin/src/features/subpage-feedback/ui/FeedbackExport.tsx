@@ -5,6 +5,7 @@ import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
+import { resolveAdminApiPath } from '@/shared/api/fetchClient';
 import { Button } from '@/shared/ui/Button';
 
 type RatingFilter = 'ALL' | 'POSITIVE' | 'NEGATIVE';
@@ -40,11 +41,10 @@ export function FeedbackExport({
       if (q) params.set('q', q);
 
       const qs = params.toString();
-      const response = await fetch(
-        qs
-          ? `/api/subpage-feedback/export?${qs}`
-          : '/api/subpage-feedback/export',
-      );
+      const endpoint = qs
+        ? `/api/subpage-feedback/export?${qs}`
+        : '/api/subpage-feedback/export';
+      const response = await fetch(resolveAdminApiPath(endpoint));
 
       if (!response.ok) {
         const data = await response.json();
