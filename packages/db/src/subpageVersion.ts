@@ -72,7 +72,7 @@ interface SnapshotMeta {
 }
 
 interface SnapshotBlock {
-  blockType: 'RICH_TEXT' | 'HTML' | 'IMAGE' | 'IFRAME';
+  blockType: 'RICH_TEXT' | 'HTML' | 'IMAGE' | 'IFRAME' | 'ACCORDION';
   configJson: unknown;
   isVisible: boolean;
   displayOrder: number;

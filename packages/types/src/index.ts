@@ -63,6 +63,8 @@ export type {
   ImageBlockConfig,
   ImageBlockItem,
   IframeBlockConfig,
+  AccordionBlockConfig,
+  AccordionBlockItem,
   PageBlockConfig,
 } from './domain/block.types';
 export {

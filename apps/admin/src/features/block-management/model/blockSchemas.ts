@@ -100,6 +100,42 @@ export const iframeBlockConfigSchema = z.object({
 });
 export type IframeBlockConfigData = z.infer<typeof iframeBlockConfigSchema>;
 
+const accordionBlockItemSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, '아코디언 제목을 입력해주세요.')
+    .max(200, '아코디언 제목은 200자 이하여야 합니다.'),
+  body: z
+    .string()
+    .trim()
+    .min(1, '아코디언 내용을 입력해주세요.')
+    .max(5000, '아코디언 내용은 5,000자 이하여야 합니다.'),
+});
+
+export const accordionBlockConfigSchema = z.object({
+  heading: z.string().trim().max(200, '제목은 200자 이하여야 합니다.').nullable().optional(),
+  description: z
+    .string()
+    .trim()
+    .max(500, '설명은 500자 이하여야 합니다.')
+    .nullable()
+    .optional(),
+  enableSearch: z.boolean(),
+  searchPlaceholder: z
+    .string()
+    .trim()
+    .max(100, '검색 placeholder는 100자 이하여야 합니다.')
+    .nullable()
+    .optional(),
+  defaultOpenFirst: z.boolean(),
+  items: z
+    .array(accordionBlockItemSchema)
+    .min(1, '아코디언 항목을 최소 1개 이상 등록해주세요.')
+    .max(50, '아코디언 항목은 최대 50개까지 등록할 수 있습니다.'),
+});
+export type AccordionBlockConfigData = z.infer<typeof accordionBlockConfigSchema>;
+
 /**
  * blockType → Zod 스키마 맵 (API 핸들러 재검증용).
  */
@@ -108,6 +144,7 @@ export const configSchemaByType = {
   HTML: htmlBlockConfigSchema,
   IMAGE: imageBlockConfigSchema,
   IFRAME: iframeBlockConfigSchema,
+  ACCORDION: accordionBlockConfigSchema,
 } as const satisfies Record<PageBlockType, z.ZodTypeAny>;
 
 /**
@@ -134,6 +171,14 @@ export const defaultConfigByType = {
     allowFullscreen: true,
     heightPx: null,
   } satisfies IframeBlockConfigData,
+  ACCORDION: {
+    heading: '',
+    description: '',
+    enableSearch: true,
+    searchPlaceholder: '검색어를 입력해주세요.',
+    defaultOpenFirst: false,
+    items: [{ title: '', body: '' }],
+  } satisfies AccordionBlockConfigData,
 } as const;
 
 /**
@@ -141,7 +186,7 @@ export const defaultConfigByType = {
  * configJson은 unknown — API 핸들러에서 blockType을 기준으로 configSchemaByType으로 재검증.
  */
 export const createBlockSchema = z.object({
-  blockType: z.enum(['RICH_TEXT', 'HTML', 'IMAGE', 'IFRAME']),
+  blockType: z.enum(['RICH_TEXT', 'HTML', 'IMAGE', 'IFRAME', 'ACCORDION']),
   configJson: z.unknown(),
   isVisible: z.boolean().optional(),
 });

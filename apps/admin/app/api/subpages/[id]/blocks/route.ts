@@ -22,7 +22,7 @@ import { defineRoute } from '@/shared/api/defineRoute';
 function toListItem(b: {
   id: string;
   subpageId: string;
-  blockType: 'RICH_TEXT' | 'HTML' | 'IMAGE' | 'IFRAME';
+  blockType: 'RICH_TEXT' | 'HTML' | 'IMAGE' | 'IFRAME' | 'ACCORDION';
   configJson: unknown;
   isVisible: boolean;
   displayOrder: number;
@@ -170,7 +170,7 @@ export const POST = defineRoute<z.infer<typeof createBlockSchema>, null>({
       },
     });
 
-    if (blockType === 'RICH_TEXT') {
+    if (blockType === 'RICH_TEXT' || blockType === 'ACCORDION') {
       await recalculateSubpageContent(subpageId);
     }
 

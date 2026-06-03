@@ -27,7 +27,7 @@ packages/types/
 │   │   ├── navigation.types.ts
 │   │   ├── home.types.ts
 │   │   ├── popup.types.ts         # HomePopupType, PopupLinkKind (Stage 5b)
-│   │   ├── block.types.ts         # PageBlockType(RICH_TEXT/HTML/IMAGE/IFRAME), RichTextBlockConfig, HtmlBlockConfig, ImageBlockConfig, IframeBlockConfig, PAGE_BLOCK_MAX_PER_SUBPAGE (Stage 6 — 통합 블록 모델)
+│   │   ├── block.types.ts         # PageBlockType(RICH_TEXT/HTML/IMAGE/IFRAME/ACCORDION), RichTextBlockConfig, HtmlBlockConfig, ImageBlockConfig, IframeBlockConfig, AccordionBlockConfig, PAGE_BLOCK_MAX_PER_SUBPAGE (Stage 6 — 통합 블록 모델)
 │   │   ├── media.types.ts
 │   │   ├── user.types.ts
 │   │   ├── role.types.ts          # Role 도메인 인터페이스

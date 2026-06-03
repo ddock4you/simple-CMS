@@ -45,6 +45,13 @@ function getBlockSummary(block: PageBlockListItem): string {
       return String(cfg.imageAlt ?? cfg.imageUrl ?? '');
     case 'IFRAME':
       return String(cfg.title ?? cfg.src ?? '');
+    case 'ACCORDION': {
+      const heading = String(cfg.heading ?? '').trim();
+      if (heading) return heading;
+      const items = Array.isArray(cfg.items) ? cfg.items : [];
+      const first = items[0] as { title?: unknown } | undefined;
+      return String(first?.title ?? '').trim();
+    }
     default:
       return '';
   }

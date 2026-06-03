@@ -500,7 +500,7 @@ async function upsertPageBlockSeed(
   subpageId: string,
   displayOrder: number,
   data: {
-    blockType: 'RICH_TEXT' | 'HTML' | 'IMAGE' | 'IFRAME';
+    blockType: 'RICH_TEXT' | 'HTML' | 'IMAGE' | 'IFRAME' | 'ACCORDION';
     isVisible: boolean;
     configJson: object;
   },

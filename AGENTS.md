@@ -91,12 +91,12 @@ apps/{앱}/
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | **User**               | 관리자 계정, username/password 인증, 가입 승인제(PENDING→ACTIVE), Role FK 기반 권한                                     |
 | **Role**               | 역할(등급) 정의, name·permissions(Json)·isSystem·isDefault, 메뉴별 CRUD 권한 매트릭스                                   |
-| **Subpage**            | 서브페이지, 콘텐츠는 PageBlock 목록으로 관리 (RICH_TEXT/HTML/IMAGE/IFRAME 자유 순서), 검색용 plain text(`content`) 유지 |
+| **Subpage**            | 서브페이지, 콘텐츠는 PageBlock 목록으로 관리 (RICH_TEXT/HTML/IMAGE/IFRAME/ACCORDION 자유 순서), 검색용 plain text(`content`) 유지 |
 | **Board**              | 게시판 설정, 스킨(list/gallery), slug, 공개 여부                                                                        |
 | **Post**               | 게시판 소속 게시글, 목록/상세 렌더링 대상. `isImportant`로 공지성 중요글 우선 노출 지원                                 |
 | **HomeSection**        | 메인 페이지 전용 섹션 설정                                                                                              |
 | **HomePopup**          | 메인 페이지 전용 팝업 (콘텐츠형/이미지형)                                                                               |
-| **PageBlock**          | 서브페이지 콘텐츠 블록 (blockType: RICH_TEXT/HTML/IMAGE/IFRAME + configJson, displayOrder 기반 자유 순서)               |
+| **PageBlock**          | 서브페이지 콘텐츠 블록 (blockType: RICH_TEXT/HTML/IMAGE/IFRAME/ACCORDION + configJson, displayOrder 기반 자유 순서)     |
 | **Media**              | 이미지/파일 메타데이터, 1차는 대표 이미지 중심                                                                          |
 | **NavigationMenu**     | 메뉴 묶음, slots 배열(HEADER/FOOTER/SIDEBAR)로 공개 웹 배치 위치 지정, 복수 슬롯 가능                                   |
 | **NavigationMenuItem** | 메뉴 항목 (SUBPAGE/BOARD/EXTERNAL/CUSTOM 연결)                                                                          |
@@ -913,8 +913,8 @@ shared/lib/
 
 - **Subpage 본문 (Stage 6 — 통합 블록 모델)**: 서브페이지의 모든 콘텐츠는 `PageBlock` 목록으로 표현
   - `Subpage.contentJson` 필드는 **없음** — RICH_TEXT 블록으로 흡수됨
-  - 한 서브페이지에 RICH_TEXT/HTML/IMAGE/IFRAME 블록을 자유 순서로 배치 (displayOrder)
-  - `Subpage.content`(검색용 plain text)는 유지 — 블록 CUD 시 `recalculateSubpageContent`가 모든 RICH_TEXT 블록의 contentJson을 순서대로 모아 재집계
+  - 한 서브페이지에 RICH_TEXT/HTML/IMAGE/IFRAME/ACCORDION 블록을 자유 순서로 배치 (displayOrder)
+  - `Subpage.content`(검색용 plain text)는 유지 — 블록 CUD 시 `recalculateSubpageContent`가 RICH_TEXT와 ACCORDION 블록의 텍스트를 순서대로 모아 재집계
 - **RICH_TEXT 블록**: Tiptap JSON(`configJson.contentJson`)으로 저장, 기존 본문 편집 역할을 이어받음
   - 텍스트 추출: `packages/editor`의 `extractTextFromTiptap()` 유틸리티 (검색 인덱싱용)
 - **Post / HomePopup(콘텐츠형)**: 여전히 `contentJson` + `content` 단일 본문 구조 (블록화 대상 아님)
@@ -924,6 +924,7 @@ shared/lib/
   - 외부 URL 직접 입력은 mediaId null (Media 무관, 의도적)
   - HTML 직렬화: `<img data-media-id="...">` — DOMPurify ALLOWED_ATTR 통과
 - **IMAGE 블록**: 기존 단일 이미지 config(`imageUrl`, `imageAlt`, `imageMediaId`, `caption`, `linkUrl`)와 신규 다중 이미지 config(`items[]`, 최대 12장)를 함께 지원한다. admin 저장 시 첫 번째 item을 legacy 필드에도 복제해 기존 데이터/참조 경로와 호환한다. 공개 웹은 1장이면 단일 figure, 2장 이상이면 Carousel(컨테이너 `<=768px` 1장, `>=769px` 최대 3장, autoplay off, prev/next+dots on, 16:9 cover)로 렌더한다. Media 참조 추적·SubpageVersion 스냅샷·demo snapshot walker는 legacy `imageMediaId`와 `items[].imageMediaId`를 모두 수집한다.
+- **ACCORDION 블록**: `{ heading?, description?, enableSearch, searchPlaceholder?, defaultOpenFirst, items[] }` 구조. 공개 웹은 KRDS 기본 Accordion DOM 클래스(`krds-accordion`, `accordion-item`, `btn-accordion`, `accordion-collapse`, `accordion-body`)로 렌더하고, `enableSearch=true`이면 블록 내부 검색 입력으로 일치하는 항목만 즉시 필터링한다. 검색용 `Subpage.content`에는 heading/description/items[].title/body를 포함한다.
 - **web 렌더링**: `@tiptap/html`의 `generateHTML()` — 서버 사이드 전용, 클라이언트 JS 0
   - `packages/editor`의 공유 확장으로 admin과 동일한 렌더링 보장
   - DOMPurify 새니타이징 (defense-in-depth)

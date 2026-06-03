@@ -148,7 +148,10 @@ export const PATCH = defineRoute<z.infer<typeof updateBlockSchema>, null>({
       data: updateData,
     });
 
-    if (block.blockType === 'RICH_TEXT' && configJson !== undefined) {
+    if (
+      (block.blockType === 'RICH_TEXT' || block.blockType === 'ACCORDION') &&
+      configJson !== undefined
+    ) {
       await recalculateSubpageContent(subpageId);
     }
 
@@ -199,7 +202,7 @@ export const DELETE = defineRoute<undefined, BlockDeleteResult>({
 
     await prisma.pageBlock.delete({ where: { id: blockId } });
 
-    if (block.blockType === 'RICH_TEXT') {
+    if (block.blockType === 'RICH_TEXT' || block.blockType === 'ACCORDION') {
       await recalculateSubpageContent(subpageId);
     }
 

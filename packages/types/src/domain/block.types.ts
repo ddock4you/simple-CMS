@@ -6,7 +6,12 @@
  * Zod 스키마 정의는 admin의 `features/block-management/model/blockSchemas.ts`에서 관리.
  */
 
-export type PageBlockType = 'RICH_TEXT' | 'HTML' | 'IMAGE' | 'IFRAME';
+export type PageBlockType =
+  | 'RICH_TEXT'
+  | 'HTML'
+  | 'IMAGE'
+  | 'IFRAME'
+  | 'ACCORDION';
 
 /**
  * RICH_TEXT 블록 — Tiptap JSON 기반 리치 텍스트 본문.
@@ -58,11 +63,30 @@ export interface IframeBlockConfig {
   heightPx?: number | null;
 }
 
+/**
+ * ACCORDION 블록 — 제목/본문 쌍을 KRDS 아코디언 UI로 표시한다.
+ * enableSearch가 true이면 공개 웹에서 이 블록 내부 항목만 필터링하는 검색 입력을 노출한다.
+ */
+export interface AccordionBlockConfig {
+  heading?: string | null;
+  description?: string | null;
+  enableSearch: boolean;
+  searchPlaceholder?: string | null;
+  defaultOpenFirst: boolean;
+  items: AccordionBlockItem[];
+}
+
+export interface AccordionBlockItem {
+  title: string;
+  body: string;
+}
+
 export type PageBlockConfig =
   | RichTextBlockConfig
   | HtmlBlockConfig
   | ImageBlockConfig
-  | IframeBlockConfig;
+  | IframeBlockConfig
+  | AccordionBlockConfig;
 
 /**
  * 서브페이지당 블록 최대 개수 (서버 상한).

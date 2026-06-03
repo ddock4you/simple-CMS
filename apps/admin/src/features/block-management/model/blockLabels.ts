@@ -7,6 +7,7 @@ export const BLOCK_TYPE_LABELS: Record<PageBlockType, string> = {
   HTML: 'HTML',
   IMAGE: '이미지',
   IFRAME: 'iframe',
+  ACCORDION: '아코디언',
 };
 
 export const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlockType, string> = {
@@ -14,6 +15,7 @@ export const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlockType, string> = {
   HTML: '자유 HTML 조각 — 서버에서 sanitize 후 렌더',
   IMAGE: '이미지 + alt + 선택적 캡션/링크',
   IFRAME: '허용된 외부 임베드 (YouTube, Vimeo, Google 지도)',
+  ACCORDION: '질문/답변, 이용안내 등 접히는 목록 + 선택적 내부 검색',
 };
 
 function extractIframeSrc(input: string): string {

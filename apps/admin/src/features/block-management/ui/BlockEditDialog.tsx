@@ -32,6 +32,7 @@ import {
 import {
   configSchemaByType,
   defaultConfigByType,
+  type AccordionBlockConfigData,
   type HtmlBlockConfigData,
   type ImageBlockConfigData,
   type IframeBlockConfigData,
@@ -41,6 +42,7 @@ import {
   useCreateBlock,
   useUpdateBlock,
 } from '../api/useBlockMutations';
+import { AccordionBlockFields } from './fields/AccordionBlockFields';
 import { HtmlBlockFields } from './fields/HtmlBlockFields';
 import { ImageBlockFields } from './fields/ImageBlockFields';
 import { IframeBlockFields } from './fields/IframeBlockFields';
@@ -50,7 +52,8 @@ type BlockConfig =
   | RichTextBlockConfigData
   | HtmlBlockConfigData
   | ImageBlockConfigData
-  | IframeBlockConfigData;
+  | IframeBlockConfigData
+  | AccordionBlockConfigData;
 
 interface BlockEditDialogProps {
   subpageId: string;
@@ -180,6 +183,12 @@ export function BlockEditDialog({
           {activeType === 'IFRAME' && (
             <IframeBlockFields
               value={config as IframeBlockConfigData}
+              onChange={(next) => setConfig(next)}
+            />
+          )}
+          {activeType === 'ACCORDION' && (
+            <AccordionBlockFields
+              value={config as AccordionBlockConfigData}
               onChange={(next) => setConfig(next)}
             />
           )}

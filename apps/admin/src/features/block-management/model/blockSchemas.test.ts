@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { IMAGE_BLOCK_MAX_ITEMS } from '@simple-cms/types';
 
-import { imageBlockConfigSchema } from './blockSchemas';
+import { accordionBlockConfigSchema, imageBlockConfigSchema } from './blockSchemas';
 
 describe('imageBlockConfigSchema', () => {
   it('accepts legacy single image config', () => {
@@ -42,6 +42,36 @@ describe('imageBlockConfigSchema', () => {
         imageUrl: `/uploads/${index}.jpg`,
         imageAlt: `Image ${index}`,
       })),
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('accordionBlockConfigSchema', () => {
+  it('accepts accordion config with optional search', () => {
+    const result = accordionBlockConfigSchema.safeParse({
+      heading: '자주묻는 질문',
+      description: '서비스 이용 전 확인하세요.',
+      enableSearch: true,
+      searchPlaceholder: '질문 검색',
+      defaultOpenFirst: false,
+      items: [
+        {
+          title: '회원가입은 어떻게 하나요?',
+          body: '상단 회원가입 버튼을 이용하세요.',
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects empty accordion items', () => {
+    const result = accordionBlockConfigSchema.safeParse({
+      enableSearch: false,
+      defaultOpenFirst: false,
+      items: [],
     });
 
     expect(result.success).toBe(false);

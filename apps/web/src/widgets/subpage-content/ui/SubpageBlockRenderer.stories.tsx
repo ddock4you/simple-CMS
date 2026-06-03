@@ -112,6 +112,34 @@ const iframeBlock = {
   },
 };
 
+const accordionBlock = {
+  id: 'block-6',
+  blockType: 'ACCORDION' as const,
+  displayOrder: 6,
+  isVisible: true,
+  configJson: {
+    heading: '자주묻는 질문',
+    description: '서비스 이용 전 자주 확인하는 내용을 모았습니다.',
+    enableSearch: true,
+    searchPlaceholder: '질문을 검색해 주세요.',
+    defaultOpenFirst: true,
+    items: [
+      {
+        title: '회원가입은 어떻게 하나요?',
+        body: '상단 회원가입 버튼을 눌러 신청서를 작성하면 관리자 승인 후 이용할 수 있습니다.',
+      },
+      {
+        title: '비밀번호를 잊어버렸습니다.',
+        body: '로그인 화면의 비밀번호 재설정 안내를 확인하거나 관리자에게 문의해 주세요.',
+      },
+      {
+        title: '첨부파일 용량 제한이 있나요?',
+        body: '운영자가 설정한 업로드 제한에 따라 확장자와 용량이 검증됩니다.',
+      },
+    ],
+  },
+};
+
 const meta: Meta<SubpageBlockRendererProps> = {
   title: 'Web/Widgets/SubpageBlockRenderer',
   component: SubpageBlockRenderer,
@@ -175,6 +203,12 @@ export const ImageOnly: Story = {
 export const ImageCarousel: Story = {
   args: {
     blocks: [imageCarouselBlock],
+  },
+};
+
+export const Accordion: Story = {
+  args: {
+    blocks: [accordionBlock],
   },
 };
 

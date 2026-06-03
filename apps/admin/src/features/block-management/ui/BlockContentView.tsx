@@ -6,6 +6,7 @@ import {
   Code2,
   EyeOff,
   Image as ImageIcon,
+  ListCollapse,
   MonitorPlay,
   Type,
 } from 'lucide-react';
@@ -29,6 +30,7 @@ const BLOCK_TYPE_ICONS: Record<PageBlockType, LucideIcon> = {
   HTML: Code2,
   IMAGE: ImageIcon,
   IFRAME: MonitorPlay,
+  ACCORDION: ListCollapse,
 };
 
 const MonacoEditor = dynamic(
@@ -244,6 +246,57 @@ function IframeBlockContent({ config }: { config: unknown }) {
   );
 }
 
+function AccordionBlockContent({ config }: { config: unknown }) {
+  const cfg = config as {
+    heading?: string | null;
+    description?: string | null;
+    enableSearch?: boolean;
+    defaultOpenFirst?: boolean;
+    items?: Array<{ title?: string; body?: string }>;
+  } | null;
+  const items = Array.isArray(cfg?.items) ? cfg.items : [];
+  if (items.length === 0) return EMPTY_HINT;
+
+  return (
+    <div className="space-y-3">
+      <dl className="space-y-1">
+        <Field label="제목">
+          {cfg?.heading?.trim() || <span className="text-muted-foreground">—</span>}
+        </Field>
+        <Field label="설명">
+          {cfg?.description?.trim() || <span className="text-muted-foreground">—</span>}
+        </Field>
+        <Field label="검색">
+          {cfg?.enableSearch ? '사용' : '미사용'}
+        </Field>
+        <Field label="기본 열림">
+          {cfg?.defaultOpenFirst ? '첫 항목 열림' : '모두 닫힘'}
+        </Field>
+      </dl>
+      <div className="space-y-2">
+        <Badge variant="secondary">항목 {items.length}개</Badge>
+        <ol className="m-0 list-decimal space-y-2 pl-5 text-sm">
+          {items.slice(0, 5).map((item, index) => (
+            <li key={index}>
+              <span className="font-medium">{item.title || '(제목 없음)'}</span>
+              {item.body && (
+                <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-muted-foreground">
+                  {item.body}
+                </p>
+              )}
+            </li>
+          ))}
+        </ol>
+        {items.length > 5 && (
+          <p className="text-xs text-muted-foreground">
+            외 {items.length - 5}개 항목
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function renderBlock(block: PageBlockListItem) {
   switch (block.blockType) {
     case 'RICH_TEXT':
@@ -254,6 +307,8 @@ function renderBlock(block: PageBlockListItem) {
       return <ImageBlockContent config={block.configJson} />;
     case 'IFRAME':
       return <IframeBlockContent config={block.configJson} />;
+    case 'ACCORDION':
+      return <AccordionBlockContent config={block.configJson} />;
     default:
       return null;
   }

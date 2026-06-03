@@ -31,7 +31,7 @@ interface RenderSubpageInput {
   feedbackEnabled: boolean;
   blocks: Array<{
     id: string;
-    blockType: 'RICH_TEXT' | 'HTML' | 'IMAGE' | 'IFRAME';
+    blockType: 'RICH_TEXT' | 'HTML' | 'IMAGE' | 'IFRAME' | 'ACCORDION';
     configJson: unknown;
     displayOrder: number;
     isVisible?: boolean;

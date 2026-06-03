@@ -58,6 +58,7 @@ const BLOCK_TYPE_OPTIONS: PageBlockType[] = [
   'HTML',
   'IMAGE',
   'IFRAME',
+  'ACCORDION',
 ];
 
 export function BlockManager({ subpageId }: { subpageId: string }) {

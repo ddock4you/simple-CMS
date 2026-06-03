@@ -201,7 +201,7 @@ src/
 
 - 서브페이지의 **모든 콘텐츠**는 PageBlock 목록으로 표현 (별도의 본문 필드 없음)
 - 블록 구조: `blockType` + `displayOrder` + `isVisible` + `configJson`
-- Admin UI 배치: 서브페이지 편집 페이지에 `SubpageForm` + `BlockManager`를 세로로 배치 (탭 없음). 위/아래 자유 배치로 본문·HTML·이미지·iframe을 섞어 구성
+- Admin UI 배치: 서브페이지 편집 페이지에 `SubpageForm` + `BlockManager`를 세로로 배치 (탭 없음). 위/아래 자유 배치로 본문·HTML·이미지·iframe·아코디언을 섞어 구성
 - FSD: `features/block-management/` + API Route `app/api/subpages/[id]/blocks/`
 - 권한 리소스: 별도 신설 없이 **`subpages:update`**로 블록 CUD 처리 (블록은 서브페이지 구성 요소)
 - 감사 로그 entityType: `PAGE_BLOCK` (CREATE/UPDATE/DELETE + 순서 변경 요약 로그)
@@ -215,6 +215,7 @@ src/
 | **HTML**      | `{ html: string, css?: string \| null }` (각 max 100,000자) — Stage 7b-Option B에서 css 필드 추가 | `@monaco-editor/react` language=html/css (SSR 비호환 → `next/dynamic` with `ssr: false`), shadcn Tabs 2탭 | 서버 DOMPurify sanitize(`sanitizeCustomHtml`, iframe 등 의미론 태그 허용) + iframe src 호스트 재검증 + css는 `scopeCustomCss(css, subpageId)` → `<style>` 페이지 스코프 |
 | **IMAGE**     | legacy `{ imageUrl, imageAlt(필수), imageMediaId?, caption?, linkUrl? }` + 신규 `{ items: ImageBlockItem[] }` (`max 12`) | `ImageUrlInput`(entities/media) + 이미지별 alt/캡션/링크 + 위/아래 순서 이동                              | 1장이면 `<figure><img alt><figcaption></figure>`, 2장 이상이면 공개 웹 Carousel                                                                                        |
 | **IFRAME**    | `{ src, title(필수/접근성), aspectRatio: '16:9'\|'4:3'\|'1:1', allowFullscreen }`                 | URL + 제목 + 비율 + 전체 화면                                                                             | aspect-ratio wrapper + iframe, 허용 호스트 **서버+클라이언트 2중 검증**                                                                                                 |
+| **ACCORDION** | `{ heading?, description?, enableSearch, searchPlaceholder?, defaultOpenFirst, items: { title, body }[] }` (`max 50`) | 제목/설명 + 검색 입력 사용 체크박스 + 항목별 제목/본문 + 위/아래 순서 이동                                | KRDS 기본 아코디언. `enableSearch=true`이면 블록 내부 검색 입력으로 일치 항목만 필터링                                                                                  |
 
 #### 본문 → 블록 변환 (Stage 6 마이그레이션)
 
@@ -244,13 +245,13 @@ src/
 | Method | Route                                 | 권한            | 용도                                                                                |
 | ------ | ------------------------------------- | --------------- | ----------------------------------------------------------------------------------- |
 | GET    | `/api/subpages/[id]/blocks`           | subpages:read   | 목록                                                                                |
-| POST   | `/api/subpages/[id]/blocks`           | subpages:update | 생성 (50개 상한 검사 + displayOrder 자동 + RICH_TEXT 시 content 재집계)             |
+| POST   | `/api/subpages/[id]/blocks`           | subpages:update | 생성 (50개 상한 검사 + displayOrder 자동 + 검색 대상 블록 content 재집계)           |
 | GET    | `/api/subpages/[id]/blocks/[blockId]` | subpages:read   | 단건                                                                                |
-| PATCH  | `/api/subpages/[id]/blocks/[blockId]` | subpages:update | 수정 (blockType 불변 — safeParse drop, RICH_TEXT configJson 변경 시 content 재집계) |
-| DELETE | `/api/subpages/[id]/blocks/[blockId]` | subpages:update | 삭제 + displayOrder 정규화 + RICH_TEXT 시 content 재집계                            |
+| PATCH  | `/api/subpages/[id]/blocks/[blockId]` | subpages:update | 수정 (blockType 불변 — safeParse drop, 검색 대상 블록 configJson 변경 시 content 재집계) |
+| DELETE | `/api/subpages/[id]/blocks/[blockId]` | subpages:update | 삭제 + displayOrder 정규화 + 검색 대상 블록 content 재집계                          |
 | PATCH  | `/api/subpages/[id]/blocks/reorder`   | subpages:update | 순서 일괄 변경 (트랜잭션) + content 재집계                                          |
 
-`recalculateSubpageContent(subpageId)` 헬퍼: `apps/admin/src/shared/lib/blockContentRecalculation.ts` — RICH_TEXT 블록들의 `configJson.contentJson`을 displayOrder 순으로 모아 `extractTextFromTiptap`으로 `Subpage.content` 갱신. PGroonga 검색 인덱스 최신 상태 유지.
+`recalculateSubpageContent(subpageId)` 헬퍼: `apps/admin/src/shared/lib/blockContentRecalculation.ts` — RICH_TEXT 블록의 `configJson.contentJson`과 ACCORDION 블록의 heading/description/items[].title/body를 displayOrder 순으로 모아 `Subpage.content` 갱신. PGroonga 검색 인덱스 최신 상태 유지.
 
 #### Media 참조 추적
 

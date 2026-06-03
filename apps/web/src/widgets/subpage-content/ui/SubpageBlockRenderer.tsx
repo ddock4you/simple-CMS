@@ -11,6 +11,8 @@ import { scopeCustomCss } from '@/shared/lib/scopeCustomCss';
 import { Carousel } from '@/shared/ui/Carousel';
 import { TiptapContent } from '@/shared/ui/TiptapContent';
 
+import { AccordionBlockClient } from './AccordionBlockClient';
+
 /**
  * 서브페이지 블록 렌더러 (Stage 6 + Stage 7b-Option B)
  *
@@ -210,6 +212,45 @@ function IframeBlock({ config }: { config: unknown }) {
   );
 }
 
+function AccordionBlock({
+  blockId,
+  config,
+}: {
+  blockId: string;
+  config: unknown;
+}) {
+  const cfg = config as {
+    heading?: string | null;
+    description?: string | null;
+    enableSearch?: boolean;
+    searchPlaceholder?: string | null;
+    defaultOpenFirst?: boolean;
+    items?: Array<{ title?: string; body?: string }>;
+  } | null;
+  const items = Array.isArray(cfg?.items)
+    ? cfg.items
+        .map((item) => ({
+          title: item.title?.trim() ?? '',
+          body: item.body?.trim() ?? '',
+        }))
+        .filter((item) => item.title && item.body)
+    : [];
+
+  if (items.length === 0) return null;
+
+  return (
+    <AccordionBlockClient
+      blockId={blockId}
+      heading={cfg?.heading?.trim() || null}
+      description={cfg?.description?.trim() || null}
+      enableSearch={cfg?.enableSearch ?? false}
+      searchPlaceholder={cfg?.searchPlaceholder?.trim() || null}
+      defaultOpenFirst={cfg?.defaultOpenFirst ?? false}
+      items={items}
+    />
+  );
+}
+
 interface SubpageBlockRendererProps {
   blocks: BlockInput[];
   /** HTML 블록의 CSS 스코프 prefix(`#subpage-{id}`) 생성에 사용. */
@@ -231,6 +272,8 @@ function renderBlock(block: BlockInput, subpageId: string) {
       return <ImageBlock config={block.configJson} />;
     case 'IFRAME':
       return <IframeBlock config={block.configJson} />;
+    case 'ACCORDION':
+      return <AccordionBlock blockId={block.id} config={block.configJson} />;
     default:
       return null;
   }

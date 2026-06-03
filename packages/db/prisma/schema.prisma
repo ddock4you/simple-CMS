@@ -48,6 +48,7 @@ enum PageBlockType {
   HTML
   IMAGE
   IFRAME
+  ACCORDION
 }
 
 enum CclType {

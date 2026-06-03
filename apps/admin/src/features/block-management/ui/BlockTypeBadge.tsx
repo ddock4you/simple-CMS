@@ -12,6 +12,7 @@ const VARIANT_BY_TYPE: Record<
   HTML: 'outline',
   IMAGE: 'secondary',
   IFRAME: 'outline',
+  ACCORDION: 'secondary',
 };
 
 export function BlockTypeBadge({ type }: { type: PageBlockType }) {

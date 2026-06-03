@@ -224,7 +224,7 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
   - `vitest.config.ts` — `mergeConfig(viteConfig, ...)` + `projects: [unit(jsdom), storybook(Playwright Chromium)]`
 - **Sidebar 카테고리 (Stage 7g 완료 시점 12 story 파일 · 총 32 tests — 7g 후속에서 KoglFooter Type2/Type3 보완으로 +2)**:
   - `Web/Shared/Carousel` (Default / WithAutoplay — Stage 7f)
-  - `Web/Widgets/SubpageBlockRenderer` (Mixed / RichTextOnly / HtmlOnly / ImageOnly / ImageCarousel / Empty — 블록 타입별 렌더 검증. IMAGE는 legacy 단일 이미지와 `items[]` 다중 슬라이더를 모두 커버. **meta decorator로 실사용처 wrapper(`<article id="subpage-{id}">` + max-width 820px + dashed border + min-height 160px)를 story 레벨에서 재현** — 단독 variant에서 텍스트 블록이 Canvas 좌상단에 묻히는 현상 방지 + 렌더 실패 시 wrapper만 보여 원인 구분 쉬움)
+  - `Web/Widgets/SubpageBlockRenderer` (Mixed / RichTextOnly / HtmlOnly / ImageOnly / ImageCarousel / Accordion / Empty — 블록 타입별 렌더 검증. IMAGE는 legacy 단일 이미지와 `items[]` 다중 슬라이더를 모두 커버하고, ACCORDION은 KRDS 기본 아코디언 + 내부 검색 옵션을 커버. **meta decorator로 실사용처 wrapper(`<article id="subpage-{id}">` + max-width 820px + dashed border + min-height 160px)를 story 레벨에서 재현** — 단독 variant에서 텍스트 블록이 Canvas 좌상단에 묻히는 현상 방지 + 렌더 실패 시 wrapper만 보여 원인 구분 쉬움)
   - `Web/Widgets/HomePopupModal` (ContentSingle / ImageSingle / SwiperMultiple / NoPopups)
   - `Web/Widgets/HeaderChrome` (Default / WithLogo — 실제 공개 웹 런타임 헤더. 통합검색 trigger + 모바일 전체메뉴 + PC GNB 3depth 포함)
   - `Web/Widgets/RightSidebar` (ThreeItems / FiveItems / Empty)
@@ -444,6 +444,7 @@ admin에서 발급한 토큰을 교환해 **draft 콘텐츠**를 공개 웹 렌�
    - **HTML 블록**: DOMPurify sanitize 후 `dangerouslySetInnerHTML`
    - **IMAGE 블록**: legacy 단일 이미지와 신규 `items[]` 다중 이미지를 모두 지원. 1장이면 `<figure><img alt><figcaption></figure>` + optional `<a>` 래핑, 2장 이상이면 `Carousel` 렌더. 슬라이더는 컨테이너 너비 기준 `<=768px` 1장, `>=769px` 최대 3장, 자동재생 off, prev/next+dots on, 16:9 cover
    - **IFRAME 블록**: aspect-ratio wrapper + iframe, 허용 호스트 **서버에서 2중 재검증** (관리자 우회 입력 방어)
+   - **ACCORDION 블록**: KRDS 기본 아코디언 DOM 클래스(`krds-accordion`, `accordion-item`, `btn-accordion`, `accordion-collapse`, `accordion-body`)로 렌더. `AccordionBlockClient`가 열림/닫힘, `aria-expanded`/`aria-hidden`, 선택적 내부 검색을 담당한다. `type-line`은 활성 배경 변화를 거의 없애므로 기본 `krds-accordion`을 사용한다.
    - image 노드의 `mediaId` attr → `<img data-media-id="cuid...">` 직렬화 (DOMPurify ALLOWED_ATTR에 `data-media-id` 포함, Media 라이브러리 참조 추적)
    - 데이터: `getPublishedSubpage()` 반환 객체의 `blocks` (Prisma select)
 2. **HTML 블록의 CSS/HTML (Stage 7b — Option B)**: HTML 블록의 `configJson`이 `{ html, css? }` 구조 — 페이지 단위 `Subpage.customHtml`/`customCss` 필드는 폐기됨. HTML 블록 내부에서 처리:
@@ -492,7 +493,7 @@ admin에서 발급한 토큰을 교환해 **draft 콘텐츠**를 공개 웹 렌�
 ## 통합검색
 
 - **PGroonga 기반 한글 검색**
-- 검색 대상: Subpage(제목+본문) + Post(제목+본문) — `content` 필드는 Tiptap JSON에서 추출한 plain text
+- 검색 대상: Subpage(제목+본문) + Post(제목+본문) — `content` 필드는 RICH_TEXT Tiptap JSON과 ACCORDION heading/description/items 텍스트에서 추출한 plain text
 - 게시판(Board)은 통합검색 결과에 포함하지 않는다. 게시판명 검색은 향후 별도 요구가 있을 때 확장한다
 - `published` 상태만 인덱싱/검색 (Post는 `board.isPublic = true` 추가 필터)
 - 라우트: `/search?q=...&type=all|subpage|post` (`force-dynamic`, SSR)

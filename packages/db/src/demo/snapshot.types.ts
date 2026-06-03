@@ -158,7 +158,7 @@ const postRowSchema = z.object({
 const pageBlockRowSchema = z.object({
   id: cuidString,
   subpageId: cuidString,
-  blockType: z.enum(['RICH_TEXT', 'HTML', 'IMAGE', 'IFRAME']),
+  blockType: z.enum(['RICH_TEXT', 'HTML', 'IMAGE', 'IFRAME', 'ACCORDION']),
   configJson: jsonValueSchema,
   isVisible: z.boolean(),
   displayOrder: z.number().int(),
