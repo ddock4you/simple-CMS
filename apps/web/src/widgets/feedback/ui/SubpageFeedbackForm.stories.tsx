@@ -16,7 +16,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 초기 상태 — 네/아니오 chip만 노출되고 Q1·Q2는 가려져 있다.
+ * 초기 상태 — 긍정 평점이 기본 선택되고 상세 입력 영역은 항상 펼쳐진다.
  */
 export const Default: Story = {
   args: {
@@ -27,13 +27,15 @@ export const Default: Story = {
     const yes = canvas.getByRole('radio', { name: /네/ });
     const no = canvas.getByRole('radio', { name: /아니오/ });
     expect(yes).toBeInTheDocument();
+    expect(yes).toBeChecked();
     expect(no).toBeInTheDocument();
-    expect(canvas.queryByText(/만족하셨나요\?/)).not.toBeInTheDocument();
+    expect(canvas.getByPlaceholderText('내용을 입력하세요')).toBeInTheDocument();
+    expect(canvas.getByRole('button', { name: '평가완료' })).toBeEnabled();
   },
 };
 
 /**
- * "네" 선택 → Q1 체크박스 3개 + Q2 자유 텍스트가 노출되는지 검증.
+ * "네" 선택 → 긍정 이유 체크박스 3개 + 자유 텍스트가 노출되는지 검증.
  */
 export const PositiveQuestionsVisible: Story = {
   args: {
@@ -55,7 +57,7 @@ export const PositiveQuestionsVisible: Story = {
 };
 
 /**
- * "아니오" 선택 → Q1(긍정 이유)는 노출되지 않고 Q2(자유 텍스트)만 노출되는지 검증.
+ * "아니오" 선택 → 긍정 이유는 노출되지 않고 자유 텍스트만 노출되는지 검증.
  */
 export const NegativeNoPositiveReasons: Story = {
   args: {

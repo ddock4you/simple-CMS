@@ -15,6 +15,20 @@ interface MobileMenuIslandProps {
   searchHref: string;
 }
 
+const SEARCH_SERVICE_LINK_CLASS = [
+  'link',
+  'before:bg-[var(--krds-light-color-text-basic)]',
+  'before:[forced-color-adjust:none]',
+  "before:[mask-image:url('/assets/krds/img/component/icon/ico_sch.svg')]",
+  'before:[mask-position:center]',
+  'before:[mask-repeat:no-repeat]',
+  'before:[mask-size:contain]',
+  "before:[-webkit-mask-image:url('/assets/krds/img/component/icon/ico_sch.svg')]",
+  'before:[-webkit-mask-position:center]',
+  'before:[-webkit-mask-repeat:no-repeat]',
+  'before:[-webkit-mask-size:contain]',
+].join(' ');
+
 function flattenMenuItems(items: FilteredMenuItem[]): FilteredMenuItem[] {
   return items.flatMap((item) => {
     if (item.children.length === 0) return [item];
@@ -88,7 +102,10 @@ export function MobileMenuIsland({
                   </div>
                 )}
                 <div className="gnb-service-menu">
-                  <a href={searchHref} className="link">
+                  <a
+                    href={searchHref}
+                    className={SEARCH_SERVICE_LINK_CLASS}
+                  >
                     통합검색
                   </a>
                 </div>

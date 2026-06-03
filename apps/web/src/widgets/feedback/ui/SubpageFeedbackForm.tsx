@@ -42,7 +42,7 @@ export function SubpageFeedbackForm({
   const messageId = useId();
   const ratingGroupName = useId();
   const reasonsGroupId = useId();
-  const [rating, setRating] = useState<FeedbackRating | null>(null);
+  const [rating, setRating] = useState<FeedbackRating>('POSITIVE');
   const [reasons, setReasons] = useState<FeedbackPositiveReason[]>([]);
   const [comment, setComment] = useState('');
   const [status, setStatus] = useState<Status>('idle');
@@ -61,7 +61,7 @@ export function SubpageFeedbackForm({
   }, [subpageId]);
 
   const handleReset = () => {
-    setRating(null);
+    setRating('POSITIVE');
     setReasons([]);
     setComment('');
     setErrorMessage(null);
@@ -118,10 +118,9 @@ export function SubpageFeedbackForm({
     }
   };
 
-  const showQuestions = rating !== null && !alreadySubmitted;
+  const showQuestions = !alreadySubmitted;
   const showPositiveReasons = rating === 'POSITIVE';
-  const isSubmittable =
-    !previewMode && status !== 'submitting' && rating !== null;
+  const isSubmittable = !previewMode && status !== 'submitting';
 
   return (
     <section
@@ -189,7 +188,7 @@ export function SubpageFeedbackForm({
               {showPositiveReasons && (
                 <fieldset className="flex flex-col gap-[12px]">
                   <legend className="text-[17px] leading-[1.5] font-medium text-[#1e2124]">
-                    1. 이 페이지의 어떤 점에 만족하셨나요?{' '}
+                    이 페이지의 어떤 점에 만족하셨나요?{' '}
                     <span className="text-[#58616a]">(선택 입력)</span>
                   </legend>
                   <div className="krds-check-area chk-column">
@@ -221,7 +220,6 @@ export function SubpageFeedbackForm({
                   htmlFor={`${titleId}-comment`}
                   className="text-[17px] leading-[1.5] font-medium text-[#1e2124]"
                 >
-                  {showPositiveReasons ? '2. ' : '1. '}
                   기타 제안 사항이 있다면 작성해주세요.{' '}
                   <span className="text-[#58616a]">(선택 입력)</span>
                 </label>
