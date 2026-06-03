@@ -61,10 +61,12 @@ export type {
   RichTextBlockConfig,
   HtmlBlockConfig,
   ImageBlockConfig,
+  ImageBlockItem,
   IframeBlockConfig,
   PageBlockConfig,
 } from './domain/block.types';
 export {
+  IMAGE_BLOCK_MAX_ITEMS,
   PAGE_BLOCK_MAX_PER_SUBPAGE,
   IFRAME_ALLOWED_HOSTS,
   isIframeHostAllowed,

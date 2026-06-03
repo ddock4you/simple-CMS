@@ -12,6 +12,7 @@ import {
 } from '@/features/block-management/model/blockSchemas';
 import {
   BLOCK_TYPE_LABELS,
+  isGoogleMapsEmbedUrl,
   isIframeHostAllowed,
   normalizeIframeEmbedUrl,
 } from '@/features/block-management/model/blockLabels';
@@ -24,6 +25,21 @@ type BlockDeleteResult = {
   blockType: string;
   displayOrder: number;
 };
+
+function collectImageMediaIds(config: unknown): string[] {
+  const cfg = config as {
+    imageMediaId?: unknown;
+    items?: Array<{ imageMediaId?: unknown }>;
+  } | null;
+  const ids: string[] = [];
+  if (typeof cfg?.imageMediaId === 'string') ids.push(cfg.imageMediaId);
+  if (Array.isArray(cfg?.items)) {
+    for (const item of cfg.items) {
+      if (typeof item.imageMediaId === 'string') ids.push(item.imageMediaId);
+    }
+  }
+  return Array.from(new Set(ids));
+}
 
 export const GET = defineRoute<undefined, PageBlockDetail>({
   resource: 'subpages',
@@ -86,28 +102,30 @@ export const PATCH = defineRoute<z.infer<typeof updateBlockSchema>, null>({
       }
 
       if (block.blockType === 'IFRAME') {
-        const iframeConfig = configParsed.data as { src: string };
+        const iframeConfig = configParsed.data as { src: string; heightPx?: number | null };
         const normalized = normalizeIframeEmbedUrl(iframeConfig.src);
         if (!normalized || !isIframeHostAllowed(normalized)) {
           return NextResponse.json(
             {
               success: false,
-              error: '임베드 가능한 URL이 아닙니다. YouTube 또는 Vimeo 영상 URL을 입력해주세요.',
+              error: '임베드 가능한 URL이 아닙니다. YouTube/Vimeo 영상 URL 또는 Google Maps embed 코드를 입력해주세요.',
             },
             { status: 422 },
           );
         }
         iframeConfig.src = normalized;
+        if (iframeConfig.heightPx == null && isGoogleMapsEmbedUrl(normalized)) {
+          iframeConfig.heightPx = 350;
+        }
       }
 
       if (block.blockType === 'IMAGE') {
-        const imageConfig = configParsed.data as { imageMediaId?: string | null };
-        if (imageConfig.imageMediaId) {
-          const media = await prisma.media.findFirst({
-            where: { id: imageConfig.imageMediaId },
-            select: { id: true },
+        const mediaIds = collectImageMediaIds(configParsed.data);
+        if (mediaIds.length > 0) {
+          const mediaCount = await prisma.media.count({
+            where: { id: { in: mediaIds } },
           });
-          if (!media) {
+          if (mediaCount !== mediaIds.length) {
             return NextResponse.json(
               { success: false, error: '연결할 미디어를 찾을 수 없습니다.' },
               { status: 400 },

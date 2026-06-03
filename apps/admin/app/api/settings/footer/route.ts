@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 
-import { getSiteSetting, logAuditEvent, setSiteSetting } from '@simple-cms/db';
+import {
+  getSiteSetting,
+  logAuditEvent,
+  prisma,
+  setSiteSetting,
+} from '@simple-cms/db';
 import type { Prisma } from '@simple-cms/db';
 import {
   DEFAULT_SITE_FOOTER_CONFIG,
@@ -18,6 +23,7 @@ import {
 } from '@/features/site-settings/model/settingsSchemas';
 
 const FOOTER_CONFIG_KEY = SITE_SETTING_KEYS.SITE_FOOTER_CONFIG;
+const FOOTER_LOGO_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 function parseFooterConfig(raw: string | null): SiteFooterConfig {
   if (!raw) return DEFAULT_SITE_FOOTER_CONFIG;
@@ -39,6 +45,8 @@ function nullableTrim(value: string | null): string | null {
 
 function normalizeFooterConfig(data: UpdateFooterData): SiteFooterConfig {
   return {
+    footerLogoMediaId: data.footerLogoMediaId,
+    footerLogoAlt: nullableTrim(data.footerLogoAlt),
     address: nullableTrim(data.address),
     contacts: data.contacts.map((item) => ({
       title: item.title.trim(),
@@ -73,7 +81,17 @@ export async function GET(_request: Request): Promise<NextResponse> {
 
   try {
     const raw = await getSiteSetting(FOOTER_CONFIG_KEY);
-    const data = parseFooterConfig(raw);
+    const config = parseFooterConfig(raw);
+    const footerLogo = config.footerLogoMediaId
+      ? await prisma.media.findUnique({
+          where: { id: config.footerLogoMediaId },
+          select: { url: true },
+        })
+      : null;
+    const data: FooterSettingsData = {
+      ...config,
+      footerLogoUrl: footerLogo?.url ?? null,
+    };
 
     return NextResponse.json({
       success: true,
@@ -112,6 +130,33 @@ export async function PATCH(request: Request): Promise<NextResponse> {
     const oldRaw = await getSiteSetting(FOOTER_CONFIG_KEY);
     const oldValue = parseFooterConfig(oldRaw);
     const nextValue = normalizeFooterConfig(parsed.data);
+
+    if (nextValue.footerLogoMediaId) {
+      const media = await prisma.media.findUnique({
+        where: { id: nextValue.footerLogoMediaId },
+        select: { mimeType: true },
+      });
+
+      if (!media) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: '선택한 푸터 로고 미디어를 찾을 수 없습니다.',
+          } satisfies ApiResponse<never>,
+          { status: 400 },
+        );
+      }
+
+      if (!FOOTER_LOGO_MIME.has(media.mimeType)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: '푸터 로고는 PNG, JPG, WEBP만 사용할 수 있습니다.',
+          } satisfies ApiResponse<never>,
+          { status: 400 },
+        );
+      }
+    }
 
     if (JSON.stringify(oldValue) === JSON.stringify(nextValue)) {
       return NextResponse.json({

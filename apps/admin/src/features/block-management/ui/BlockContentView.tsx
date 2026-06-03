@@ -162,16 +162,32 @@ function ImageBlockContent({ config }: { config: unknown }) {
     imageAlt?: string;
     caption?: string | null;
     linkUrl?: string | null;
+    items?: Array<{
+      imageUrl?: string;
+      imageAlt?: string;
+      caption?: string | null;
+      linkUrl?: string | null;
+    }>;
   } | null;
-  const imageUrl = cfg?.imageUrl?.trim() ?? '';
-  if (!imageUrl) return EMPTY_HINT;
+  const items = Array.isArray(cfg?.items) && cfg.items.length > 0
+    ? cfg.items
+    : cfg?.imageUrl
+      ? [cfg]
+      : [];
+  const validItems = items.filter((item) => item.imageUrl?.trim());
+  if (validItems.length === 0) return EMPTY_HINT;
 
-  const imageAlt = cfg?.imageAlt?.trim() ?? '';
-  const caption = cfg?.caption?.trim() ?? '';
-  const linkUrl = cfg?.linkUrl?.trim() ?? '';
+  const first = validItems[0]!;
+  const imageUrl = first.imageUrl?.trim() ?? '';
+  const imageAlt = first.imageAlt?.trim() ?? '';
+  const caption = first.caption?.trim() ?? '';
+  const linkUrl = first.linkUrl?.trim() ?? '';
 
   return (
     <div className="space-y-3">
+      {validItems.length > 1 && (
+        <Badge variant="secondary">이미지 {validItems.length}장</Badge>
+      )}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={resolveMediaPreviewUrl(imageUrl)}

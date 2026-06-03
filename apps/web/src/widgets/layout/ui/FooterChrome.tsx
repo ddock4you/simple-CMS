@@ -1,16 +1,14 @@
-import {
-  DEFAULT_SITE_FOOTER_IDENTIFIER_TEXT,
-  type SiteFooterConfig,
-} from '@simple-cms/types';
+import { DEFAULT_SITE_FOOTER_IDENTIFIER_TEXT } from '@simple-cms/types';
 
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import { getMenuItemHref } from '@/entities/navigation/lib/getMenuItemHref';
 import type { Branding } from '@/shared/lib/brandingCache';
+import type { ResolvedSiteFooterConfig } from '@/shared/lib/footerConfigCache';
 
 interface FooterChromeProps {
   branding: Branding;
   footerMenuItems: FilteredMenuItem[];
-  footerConfig: SiteFooterConfig;
+  footerConfig: ResolvedSiteFooterConfig;
 }
 
 function getLinkTarget(openInNewTab?: boolean): '_blank' | '_self' {
@@ -69,8 +67,20 @@ export function FooterChrome({
         </div>
       )}
       <div className="inner">
-        <div className="f-logo">
-          <span className="sr-only">{branding.siteName}</span>
+        <div
+          className={
+            footerConfig.footerLogoUrl ? 'f-logo has-custom-logo' : 'f-logo'
+          }
+        >
+          {footerConfig.footerLogoUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={footerConfig.footerLogoUrl}
+              alt={footerConfig.footerLogoAlt ?? branding.siteName}
+            />
+          ) : (
+            <span className="sr-only">{branding.siteName}</span>
+          )}
         </div>
         <div className="f-cnt">
           <div className="f-info">

@@ -252,11 +252,7 @@ export const defaultConfigByType = {
     slideOptions: DEFAULT_SLIDE_OPTIONS,
   } satisfies HeroConfigData,
   BRIEF_INTRO: {
-<<<<<<< HEAD
-    heading: '',
-=======
     heading: '간략 소개',
->>>>>>> feature/gallery-collection-home-section
     content: '',
     detailEnabled: false,
     detailUrl: null,

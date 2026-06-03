@@ -20,12 +20,26 @@ describe('isIframeHostAllowed', () => {
   });
 
   it.each(
-    IFRAME_ALLOWED_HOSTS.map((host) => ({
-      host,
-      url: `https://${host}/embed/test`,
-    })),
+    IFRAME_ALLOWED_HOSTS.filter((host) => host !== 'www.google.com').map(
+      (host) => ({
+        host,
+        url: `https://${host}/embed/test`,
+      }),
+    ),
   )('returns true for allowed host $host', ({ url }) => {
     expect(isIframeHostAllowed(url)).toBe(true);
+  });
+
+  it('returns true for Google Maps embed path', () => {
+    expect(
+      isIframeHostAllowed('https://www.google.com/maps/embed?pb=test'),
+    ).toBe(true);
+  });
+
+  it('returns false for non-map Google paths', () => {
+    expect(isIframeHostAllowed('https://www.google.com/search?q=test')).toBe(
+      false,
+    );
   });
 
   it('returns false for an unknown host', () => {

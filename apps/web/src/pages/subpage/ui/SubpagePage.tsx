@@ -75,7 +75,7 @@ function SubpageArticle({
           showHidden={showHidden}
         />
       ) : (
-        <p className="py-[40px] text-center text-[#8a949e]">
+        <p className="flex min-h-[180px] items-center justify-center rounded-[10px] bg-[#f4f5f6] p-[24px] text-center text-[16px] leading-[1.6] text-[#8a949e] large:min-h-[220px]">
           콘텐츠가 준비 중입니다.
         </p>
       )}

@@ -172,7 +172,7 @@ src/
 - **뷰 페이지 콘텐츠 카드** (`features/block-management/ui/BlockContentView.tsx`): 블록 순서대로 각 블록의 입력값을 표시 — 공개 웹과 동일한 실물 렌더는 상단 [미리보기] 버튼이 담당
   - RICH_TEXT: `renderTiptapContentForAdmin` → `<div className="prose prose-sm">` 렌더 (게시글 뷰 패턴 동일)
   - HTML: Monaco Editor `readOnly: true` + `domReadOnly: true` (편집 페이지의 HtmlBlockFields 패턴 재사용, height 220px)
-  - IMAGE: 작은 썸네일(`resolveMediaPreviewUrl`) + 필드 목록(URL, Alt, 캡션, 링크)
+  - IMAGE: 작은 썸네일(`resolveMediaPreviewUrl`) + 필드 목록(URL, Alt, 캡션, 링크). 다중 이미지 config(`items[]`)면 이미지별 카드로 표시
   - IFRAME: 필드 목록(URL, 제목, 비율, 전체화면 허용 여부) — 실제 iframe 임베드 없음 (관리자 검증만 목적)
   - 블록 컨테이너: `rounded-lg border bg-card shadow-sm` + 헤더(`border-b bg-muted/40`) + 번호 배지(primary 원형) + 블록 타입 Badge(shadcn, 아이콘 포함) + 숨김 Badge(outline)
   - 숨김 블록: 컨테이너에 `opacity-60` + 헤더 숨김 Badge 이중 표시
@@ -213,7 +213,7 @@ src/
 | ------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RICH_TEXT** | `{ contentJson: object }` Tiptap ProseMirror JSON                                                 | 기존 `TiptapEditor` 재사용 (검색용 plain text는 블록 CUD 시 `recalculateSubpageContent`가 재집계)         | `renderTiptapContent` + `TiptapContent` 공유 컴포넌트                                                                                                                   |
 | **HTML**      | `{ html: string, css?: string \| null }` (각 max 100,000자) — Stage 7b-Option B에서 css 필드 추가 | `@monaco-editor/react` language=html/css (SSR 비호환 → `next/dynamic` with `ssr: false`), shadcn Tabs 2탭 | 서버 DOMPurify sanitize(`sanitizeCustomHtml`, iframe 등 의미론 태그 허용) + iframe src 호스트 재검증 + css는 `scopeCustomCss(css, subpageId)` → `<style>` 페이지 스코프 |
-| **IMAGE**     | `{ imageUrl, imageAlt(필수), imageMediaId?, caption?, linkUrl? }`                                 | `ImageUrlInput`(entities/media) + alt + 캡션 + 링크                                                       | `<figure><img alt><figcaption></figure>`, optional `<a>` 래핑                                                                                                           |
+| **IMAGE**     | legacy `{ imageUrl, imageAlt(필수), imageMediaId?, caption?, linkUrl? }` + 신규 `{ items: ImageBlockItem[] }` (`max 12`) | `ImageUrlInput`(entities/media) + 이미지별 alt/캡션/링크 + 위/아래 순서 이동                              | 1장이면 `<figure><img alt><figcaption></figure>`, 2장 이상이면 공개 웹 Carousel                                                                                        |
 | **IFRAME**    | `{ src, title(필수/접근성), aspectRatio: '16:9'\|'4:3'\|'1:1', allowFullscreen }`                 | URL + 제목 + 비율 + 전체 화면                                                                             | aspect-ratio wrapper + iframe, 허용 호스트 **서버+클라이언트 2중 검증**                                                                                                 |
 
 #### 본문 → 블록 변환 (Stage 6 마이그레이션)
@@ -254,7 +254,7 @@ src/
 
 #### Media 참조 추적
 
-- IMAGE 블록의 `imageMediaId`: `findMediaReferences()` 경로 6 (JSONB containment)
+- IMAGE 블록의 `imageMediaId` + `items[].imageMediaId`: `findMediaReferences()` 경로 6 (JSONB containment)
 - RICH_TEXT 블록 `configJson.contentJson` 내 image 노드의 `mediaId`: 경로 7 (Tiptap 재귀)
 - `MediaReferenceType`: `'PAGE_BLOCK_IMAGE'` (IMAGE/RICH_TEXT 공용)
 - Media 삭제 시 해당 블록이 사용 중이면 409 차단, 사용처 목록에 서브페이지 제목 표시
@@ -420,19 +420,11 @@ src/
 
 - 일반 서브 페이지와 분리된 **섹션 기반 관리**
 - 레이아웃은 코드에서 통제, 운영자는 섹션 데이터+순서 관리
-<<<<<<< HEAD
-- **고정 세트 모델** (Stage 5a 이후 확장): 9개 타입 각 1개씩 seed/자동 생성, 추가/삭제 UI 없음 — R/U만 지원
-  - 타입: HERO, BRIEF_INTRO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
-- 섹션별 `configJson` 스키마 (Zod, `features/home-management/model/homeSchemas.ts`):
-  - **HERO**: slides[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 10개, 1개=단일 배너, 2개 이상=슬라이드) + slideOptions
-  - **BRIEF_INTRO**: heading, content, detailEnabled, detailUrl?, imageUrl?/imageAlt?/mediaId? — 공개 웹에서 full-bleed 회색 배경으로 렌더, 이미지 미설정 시 이미지 영역 생략
-=======
 - **고정 세트 모델** (Stage 5a): 10개 타입 각 1개씩 seed로 생성, 추가/삭제 UI 없음 — R/U만 지원
   - 타입: HERO, BRIEF_INTRO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, GALLERY_COLLECTION, CTA, NOTICE
 - 섹션별 `configJson` 스키마 (Zod, `features/home-management/model/homeSchemas.ts`):
   - **HERO**: slides[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 10개, 1개=단일 배너, 2개 이상=슬라이드) + slideOptions
   - **BRIEF_INTRO**: heading, description?, imageUrl?, imageAlt?, linkLabel?, linkUrl?, mediaId? — 간략 소개 영역
->>>>>>> feature/gallery-collection-home-section
   - **RECOMMENDED**: heading, description?, items[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 12개, 자유 갤러리) + slideOptions
   - **SHORTCUT**: heading, description?, items[]: `{label, description?, url}` (최대 8개)
   - **LATEST_POSTS**: heading, description?, boardId(nullable), limit(1~10) — 지정 게시판 최신 N개 자동 표시
@@ -1419,15 +1411,15 @@ entities → shared                   ✅
 
 ### entities 슬라이스 목록 (Stage 16e 기준)
 
-| 슬라이스                   | 핵심 파일                                               | 역할                                                                                          |
-| -------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `entities/auth/`           | `lib/`, `ui/PermissionProvider`                         | 인증·인가                                                                                     |
-| `entities/editor/`         | `ui/TiptapEditor`                                       | Tiptap 에디터 래퍼                                                                            |
-| `entities/link-target/`    | `ui/LinkTargetInput`, `api/linkTargetReferencesQueries` | URL 분기 입력                                                                                 |
-| `entities/media/`          | `ui/MediaPicker`, `ui/ImageUrlInput`                    | 미디어 선택·업로드                                                                            |
-| `entities/preview/`        | `ui/PreviewButton`, `api/usePreviewMutations`           | 미리보기 토큰                                                                                 |
+| 슬라이스                   | 핵심 파일                                               | 역할                                                                                                                     |
+| -------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `entities/auth/`           | `lib/`, `ui/PermissionProvider`                         | 인증·인가                                                                                                                |
+| `entities/editor/`         | `ui/TiptapEditor`                                       | Tiptap 에디터 래퍼                                                                                                       |
+| `entities/link-target/`    | `ui/LinkTargetInput`, `api/linkTargetReferencesQueries` | URL 분기 입력                                                                                                            |
+| `entities/media/`          | `ui/MediaPicker`, `ui/ImageUrlInput`                    | 미디어 선택·업로드                                                                                                       |
+| `entities/preview/`        | `ui/PreviewButton`, `api/usePreviewMutations`           | 미리보기 토큰                                                                                                            |
 | `entities/form-fields/`    | `ui/SlugField`                                          | 공용 slug 입력 (자동 생성 + 변경 경고). 현재 BoardForm에서 사용하며 Subpage/Post는 서버 발급 opaque slug 정책으로 미사용 |
-| `entities/content-status/` | `ui/StatusBadge`                                        | `ContentStatusBadge` — DRAFT/PUBLISHED 공용 Badge                                             |
+| `entities/content-status/` | `ui/StatusBadge`                                        | `ContentStatusBadge` — DRAFT/PUBLISHED 공용 Badge                                                                        |
 
 ## 유효성 검사 규칙
 

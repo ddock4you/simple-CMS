@@ -99,6 +99,13 @@ const footerUrlSchema = z
   .regex(/^(\/|https:\/\/)/, '내부 경로 또는 https URL만 입력해주세요.');
 
 export const updateFooterSchema = z.object({
+  footerLogoMediaId: z.string().nullable().default(null),
+  footerLogoAlt: z
+    .string()
+    .trim()
+    .max(120, '푸터 로고 대체 텍스트는 120자 이내로 입력해주세요.')
+    .nullable()
+    .default(null),
   address: z
     .string()
     .trim()
@@ -227,4 +234,6 @@ export interface SeoSettingsData {
   sitemapUrl: string;
 }
 
-export type FooterSettingsData = SiteFooterConfig;
+export interface FooterSettingsData extends SiteFooterConfig {
+  footerLogoUrl: string | null;
+}

@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { Link as LinkIcon, Plus, Trash2 } from 'lucide-react';
+import { Image as ImageIcon, Link as LinkIcon, Plus, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { DEFAULT_SITE_FOOTER_CONFIG } from '@simple-cms/types';
 
@@ -17,6 +18,7 @@ import {
 import { Button } from '@/shared/ui/Button';
 import { BooleanSwitchField } from '@/shared/ui/BooleanSwitchField';
 import { SettingsCardForm } from '@/entities/settings/ui/SettingsCardForm';
+import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Switch } from '@/shared/ui/shadcn/switch';
@@ -35,6 +37,10 @@ const SOCIAL_PLATFORM_LABELS = {
   blog: 'Blog',
 } as const;
 
+const BRANDING_ENDPOINT = '/api/media/branding-upload';
+const FOOTER_LOGO_MIME = ['image/jpeg', 'image/png', 'image/webp'];
+const FOOTER_LOGO_REASON = '푸터 로고는 PNG, JPG, WEBP만 사용할 수 있습니다.';
+
 function toNullable(value: unknown): string | null {
   const trimmed = typeof value === 'string' ? value.trim() : '';
   return trimmed.length > 0 ? trimmed : null;
@@ -48,6 +54,9 @@ function ErrorText({ message }: { message?: string }) {
 export function FooterSettingsForm() {
   const { data } = useQuery(footerSettingsOptions());
   const updateMutation = useUpdateFooter();
+  const [footerLogoUrlOverride, setFooterLogoUrlOverride] = useState<
+    string | null
+  >(null);
 
   const form = useForm<UpdateFooterData>({
     resolver: zodResolver(updateFooterSchema),
@@ -59,6 +68,7 @@ export function FooterSettingsForm() {
     formState: { errors, isDirty },
     register,
     reset,
+    setValue,
   } = form;
 
   const contacts = useFieldArray({ control, name: 'contacts' });
@@ -67,11 +77,34 @@ export function FooterSettingsForm() {
   const bottomLinks = useFieldArray({ control, name: 'bottomLinks' });
 
   useEffect(() => {
-    if (data) reset(data);
+    if (!data) return;
+    reset(data);
   }, [data, reset]);
 
   const onSubmit = (formData: UpdateFooterData) => {
     updateMutation.mutate(formData);
+  };
+
+  const footerLogoMediaId = useWatch({ control, name: 'footerLogoMediaId' });
+  const footerLogoUrl = footerLogoUrlOverride ?? data?.footerLogoUrl ?? '';
+
+  const handleFooterLogoChange = (next: {
+    url: string;
+    mediaId: string | null;
+  }) => {
+    if (!next.mediaId && next.url) {
+      toast.error('업로드 또는 라이브러리에서 선택해주세요.');
+      return;
+    }
+
+    setValue('footerLogoMediaId', next.mediaId, { shouldDirty: true });
+    setFooterLogoUrlOverride(next.url);
+  };
+
+  const handleRemoveFooterLogo = () => {
+    setValue('footerLogoMediaId', null, { shouldDirty: true });
+    setValue('footerLogoAlt', null, { shouldDirty: true });
+    setFooterLogoUrlOverride('');
   };
 
   return (
@@ -85,6 +118,62 @@ export function FooterSettingsForm() {
       disabled={!isDirty}
     >
       <div className="space-y-8">
+        <section className="rounded-lg border p-4">
+          <div className="mb-4">
+            <h3 className="flex items-center gap-2 text-base font-medium">
+              <ImageIcon className="size-4" />
+              푸터 로고
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              공개 웹 푸터 좌측 로고입니다. 비워두면 KRDS 기본 로고 영역을
+              사용합니다.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>로고 이미지</Label>
+              <ImageUrlInput
+                value={footerLogoUrl}
+                mediaId={footerLogoMediaId}
+                category="branding"
+                endpoint={BRANDING_ENDPOINT}
+                acceptMimeTypes={FOOTER_LOGO_MIME}
+                disabledReason={FOOTER_LOGO_REASON}
+                disableUrlInput
+                onChange={handleFooterLogoChange}
+              />
+              <p className="text-xs text-muted-foreground">
+                권장: 푸터 배경에서 잘 보이는 PNG/WEBP/JPG. SVG는 보안상
+                차단됩니다.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="footer-logo-alt">로고 대체 텍스트</Label>
+              <Input
+                id="footer-logo-alt"
+                {...register('footerLogoAlt', { setValueAs: toNullable })}
+                placeholder="비우면 사이트명을 사용합니다."
+                maxLength={120}
+              />
+              <ErrorText message={errors.footerLogoAlt?.message} />
+            </div>
+
+            {footerLogoMediaId && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleRemoveFooterLogo}
+              >
+                <Trash2 className="size-4" />
+                푸터 로고 제거
+              </Button>
+            )}
+          </div>
+        </section>
+
         <section className="space-y-4">
           <div>
             <h3 className="text-base font-medium">기본 정보</h3>

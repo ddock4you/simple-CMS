@@ -101,6 +101,20 @@ describe('sanitizeCustomHtml', () => {
     expect(result).toContain('<iframe');
   });
 
+  it('keeps iframe with Google Maps embed path', () => {
+    const result = sanitizeCustomHtml(
+      '<iframe src="https://www.google.com/maps/embed?pb=test" width="600" height="450"></iframe>',
+    );
+    expect(result).toContain('<iframe');
+  });
+
+  it('removes iframe with non-map Google path', () => {
+    const result = sanitizeCustomHtml(
+      '<iframe src="https://www.google.com/search?q=test" width="600" height="450"></iframe>',
+    );
+    expect(result).not.toContain('<iframe');
+  });
+
   it('removes iframe with a disallowed host', () => {
     const result = sanitizeCustomHtml(
       '<iframe src="https://evil.com/malicious" width="560" height="315"></iframe>',

@@ -19,11 +19,7 @@ export function BriefIntroSection({ section }: BriefIntroSectionProps) {
 
   return (
     <section
-<<<<<<< HEAD
-      className="relative left-1/2 w-screen -translate-x-1/2 bg-[#eef2f7] py-[48px] px-[16px] large:py-[64px] large:px-0"
-=======
       className="relative left-1/2 w-screen -translate-x-1/2 bg-[#eef2f7] px-[16px] py-[48px] large:px-0 large:py-[64px]"
->>>>>>> feature/gallery-collection-home-section
       aria-labelledby={`brief-intro-${section.id}`}
     >
       <div

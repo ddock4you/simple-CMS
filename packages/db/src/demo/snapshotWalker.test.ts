@@ -270,6 +270,40 @@ describe('walkSnapshotForRemap — PageBlock', () => {
     expect(cfg.imageMediaId).toBe('new-img');
   });
 
+  it('IMAGE 블록 items[].imageMediaId 재매핑', () => {
+    const payload = emptyPayload();
+    payload.models.PageBlock.push({
+      id: 'blk-1',
+      subpageId: 'sub-1',
+      blockType: 'IMAGE',
+      configJson: {
+        items: [
+          { imageUrl: '/u/a.jpg', imageAlt: 'a', imageMediaId: 'old-a' },
+          { imageUrl: '/u/b.jpg', imageAlt: 'b', imageMediaId: null },
+          { imageUrl: '/u/c.jpg', imageAlt: 'c', imageMediaId: 'old-c' },
+        ],
+      },
+      isVisible: true,
+      displayOrder: 0,
+    });
+
+    walkSnapshotForRemap(
+      payload,
+      new Map([
+        ['old-a', 'new-a'],
+        ['old-c', 'new-c'],
+      ]),
+      'mediaId',
+    );
+
+    const cfg = payload.models.PageBlock[0]!.configJson as {
+      items: Array<{ imageMediaId: string | null }>;
+    };
+    expect(cfg.items[0]!.imageMediaId).toBe('new-a');
+    expect(cfg.items[1]!.imageMediaId).toBeNull();
+    expect(cfg.items[2]!.imageMediaId).toBe('new-c');
+  });
+
   it('RICH_TEXT 블록의 contentJson Tiptap image 노드 재귀 재매핑', () => {
     const payload = emptyPayload();
     payload.models.PageBlock.push({

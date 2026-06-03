@@ -8,20 +8,12 @@ import type {
 } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
 
-<<<<<<< HEAD
-=======
 import { LinkTargetInput } from '@/entities/link-target/ui/LinkTargetInput';
 import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput';
->>>>>>> feature/gallery-collection-home-section
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
-<<<<<<< HEAD
-import { LinkTargetInput } from '@/entities/link-target/ui/LinkTargetInput';
-import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput';
-=======
->>>>>>> feature/gallery-collection-home-section
 
 import type { BriefIntroConfigData } from '../../model/homeSchemas';
 

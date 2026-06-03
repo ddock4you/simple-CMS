@@ -130,6 +130,27 @@ describe('normalizeIframeEmbedUrl', () => {
     });
   });
 
+  describe('Google Maps embed URLs', () => {
+    const mapsSrc =
+      'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3165';
+
+    it('returns Google Maps embed URL as-is', () => {
+      expect(normalizeIframeEmbedUrl(mapsSrc)).toBe(mapsSrc);
+    });
+
+    it('extracts src from a full iframe embed code', () => {
+      expect(
+        normalizeIframeEmbedUrl(
+          `<iframe src="${mapsSrc}" width="600" height="450" style="border:0;" loading="lazy"></iframe>`,
+        ),
+      ).toBe(mapsSrc);
+    });
+
+    it('returns null for non-map Google URLs', () => {
+      expect(normalizeIframeEmbedUrl('https://www.google.com/search?q=map')).toBeNull();
+    });
+  });
+
   describe('returns null for unembeddable YouTube URLs', () => {
     it('returns null for YouTube playlist URL', () => {
       expect(

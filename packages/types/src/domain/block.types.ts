@@ -29,6 +29,15 @@ export interface HtmlBlockConfig {
  * mediaId가 있으면 Media 라이브러리 참조(findMediaReferences 추적 대상).
  */
 export interface ImageBlockConfig {
+  imageUrl?: string;
+  imageAlt?: string;
+  imageMediaId?: string | null;
+  caption?: string | null;
+  linkUrl?: string | null;
+  items?: ImageBlockItem[];
+}
+
+export interface ImageBlockItem {
   imageUrl: string;
   imageAlt: string;
   imageMediaId?: string | null;
@@ -45,6 +54,8 @@ export interface IframeBlockConfig {
   title: string;
   aspectRatio: '16:9' | '4:3' | '1:1';
   allowFullscreen: boolean;
+  /** 지도처럼 비율보다 고정 높이가 적합한 임베드의 데스크탑 기준 높이(px). */
+  heightPx?: number | null;
 }
 
 export type PageBlockConfig =
@@ -58,6 +69,9 @@ export type PageBlockConfig =
  * UX/성능 관점에서 50개는 실사용 상한으로 충분.
  */
 export const PAGE_BLOCK_MAX_PER_SUBPAGE = 50;
+
+/** IMAGE 블록에 등록할 수 있는 이미지 최대 개수. */
+export const IMAGE_BLOCK_MAX_ITEMS = 12;
 
 /**
  * IFRAME 블록 / Subpage customHtml 양쪽의 iframe src 허용 호스트 (단일 출처).
@@ -74,6 +88,7 @@ export const IFRAME_ALLOWED_HOSTS = [
   'youtube.com',
   'www.youtube-nocookie.com',
   'player.vimeo.com',
+  'www.google.com',
 ] as const;
 
 /**
@@ -87,7 +102,12 @@ export const IFRAME_ALLOWED_HOSTS = [
 export function isIframeHostAllowed(src: string | null | undefined): boolean {
   if (!src) return false;
   try {
-    const host = new URL(src).hostname.toLowerCase();
+    const url = new URL(src);
+    const host = url.hostname.toLowerCase();
+    if (host === 'www.google.com') {
+      return url.pathname === '/maps/embed';
+    }
+
     return (IFRAME_ALLOWED_HOSTS as readonly string[]).includes(host);
   } catch {
     return false;

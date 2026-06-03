@@ -135,6 +135,16 @@ function remapPageBlockConfig(
       const newId = mediaIdMap.get(cfg.imageMediaId);
       if (newId) cfg.imageMediaId = newId;
     }
+    if (Array.isArray(cfg.items)) {
+      for (const item of cfg.items) {
+        if (!item || typeof item !== 'object') continue;
+        const imageItem = item as Record<string, unknown>;
+        if (typeof imageItem.imageMediaId === 'string') {
+          const newId = mediaIdMap.get(imageItem.imageMediaId);
+          if (newId) imageItem.imageMediaId = newId;
+        }
+      }
+    }
   }
 
   if (blockType === 'RICH_TEXT') {

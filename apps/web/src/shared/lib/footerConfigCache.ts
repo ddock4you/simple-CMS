@@ -1,4 +1,4 @@
-import { getSiteSetting } from '@simple-cms/db';
+import { getSiteSetting, prisma } from '@simple-cms/db';
 import {
   DEFAULT_SITE_FOOTER_CONFIG,
   SITE_SETTING_KEYS,
@@ -16,6 +16,8 @@ const footerUrlSchema = z
   .regex(/^(\/|https:\/\/)/);
 
 const footerConfigSchema = z.object({
+  footerLogoMediaId: z.string().nullable().default(null),
+  footerLogoAlt: z.string().trim().max(120).nullable().default(null),
   address: z.string().trim().max(200).nullable().default(null),
   contacts: z
     .array(
@@ -63,6 +65,10 @@ const footerConfigSchema = z.object({
   hideIdentifier: z.boolean().default(false),
 });
 
+export interface ResolvedSiteFooterConfig extends SiteFooterConfig {
+  footerLogoUrl: string | null;
+}
+
 function parseFooterConfig(raw: string | null): SiteFooterConfig {
   if (!raw) return DEFAULT_SITE_FOOTER_CONFIG;
 
@@ -76,13 +82,24 @@ function parseFooterConfig(raw: string | null): SiteFooterConfig {
 }
 
 const footerConfigCache = createSettingsCache({
-  fetcher: async (): Promise<SiteFooterConfig> => {
+  fetcher: async (): Promise<ResolvedSiteFooterConfig> => {
     const raw = await getSiteSetting(SITE_SETTING_KEYS.SITE_FOOTER_CONFIG);
-    return parseFooterConfig(raw);
+    const config = parseFooterConfig(raw);
+    const footerLogo = config.footerLogoMediaId
+      ? await prisma.media.findUnique({
+          where: { id: config.footerLogoMediaId },
+          select: { url: true },
+        })
+      : null;
+
+    return {
+      ...config,
+      footerLogoUrl: footerLogo?.url ?? null,
+    };
   },
   onError: (err) => {
     console.error('[footerConfigCache] fetch failed, returning fallback:', err);
-    return DEFAULT_SITE_FOOTER_CONFIG;
+    return { ...DEFAULT_SITE_FOOTER_CONFIG, footerLogoUrl: null };
   },
 });
 

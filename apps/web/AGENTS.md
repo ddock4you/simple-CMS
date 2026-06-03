@@ -224,7 +224,7 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
   - `vitest.config.ts` — `mergeConfig(viteConfig, ...)` + `projects: [unit(jsdom), storybook(Playwright Chromium)]`
 - **Sidebar 카테고리 (Stage 7g 완료 시점 12 story 파일 · 총 32 tests — 7g 후속에서 KoglFooter Type2/Type3 보완으로 +2)**:
   - `Web/Shared/Carousel` (Default / WithAutoplay — Stage 7f)
-  - `Web/Widgets/SubpageBlockRenderer` (Mixed / RichTextOnly / HtmlOnly / Empty — 블록 타입별 렌더 검증. **meta decorator로 실사용처 wrapper(`<article id="subpage-{id}">` + max-width 820px + dashed border + min-height 160px)를 story 레벨에서 재현** — 단독 variant에서 텍스트 블록이 Canvas 좌상단에 묻히는 현상 방지 + 렌더 실패 시 wrapper만 보여 원인 구분 쉬움)
+  - `Web/Widgets/SubpageBlockRenderer` (Mixed / RichTextOnly / HtmlOnly / ImageOnly / ImageCarousel / Empty — 블록 타입별 렌더 검증. IMAGE는 legacy 단일 이미지와 `items[]` 다중 슬라이더를 모두 커버. **meta decorator로 실사용처 wrapper(`<article id="subpage-{id}">` + max-width 820px + dashed border + min-height 160px)를 story 레벨에서 재현** — 단독 variant에서 텍스트 블록이 Canvas 좌상단에 묻히는 현상 방지 + 렌더 실패 시 wrapper만 보여 원인 구분 쉬움)
   - `Web/Widgets/HomePopupModal` (ContentSingle / ImageSingle / SwiperMultiple / NoPopups)
   - `Web/Widgets/HeaderChrome` (Default / WithLogo — 실제 공개 웹 런타임 헤더. 통합검색 trigger + 모바일 전체메뉴 + PC GNB 3depth 포함)
   - `Web/Widgets/RightSidebar` (ThreeItems / FiveItems / Empty)
@@ -290,11 +290,7 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
 
 ### 구현 (Stage 5a + Stage 19)
 
-<<<<<<< HEAD
-- **9개 섹션 타입**: HERO, BRIEF_INTRO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, CTA, NOTICE
-=======
 - **10개 섹션 타입**: HERO, BRIEF_INTRO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, GALLERY_COLLECTION, CTA, NOTICE
->>>>>>> feature/gallery-collection-home-section
 - **SSR Server Component 중심**: 섹션 컴포넌트는 Server, 슬라이드 컨트롤만 Client (`Carousel`)
 - **자체 커스텀 디자인** (시안 확정 전): `apps/web/app/globals.css`의 `.home-*` 클래스로 스코프된 스타일. 시안 확정 시 섹션 컴포넌트 교체 전제, admin 데이터 구조는 안정
 - **NOTICE(대표 게시판)**: 운영자가 선택한 게시판 1개의 중요 게시글 최신 1건과 일반 최신글 N건을 Figma 공지알림 카드 UI로 렌더한다. 기존 수동 `items[]` configJson은 persisted data 보호용 legacy fallback으로만 렌더한다.
@@ -302,13 +298,10 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
 - **GALLERY_COLLECTION(갤러리 모아보기)**: 운영자가 선택한 여러 공개 게시판을 `전체 + 게시판별` KRDS Line 탭으로 렌더한다. 게시글은 발행일 최신순이며 카드는 게시판 GALLERY 스킨 카드 패턴을 재사용한다. 게시판별 탭 라벨은 `boardTabLabels[boardId]` 우선, 없거나 빈 값이면 게시판명으로 폴백한다. 카드 하단 메타는 게시판명을 노출하지 않고 발행일만 표시한다.
 
 ### HERO / BRIEF_INTRO / RECOMMENDED
-<<<<<<< HEAD
 
 - **BRIEF_INTRO**: Figma `인물소개` 패턴 기반 간략 소개 섹션. 배경 `#EEF2F7`은 `.page-container` 내부 폭에 갇히지 않도록 `w-screen` full-bleed로 렌더한다. 이미지가 없으면 이미지 프레임을 렌더하지 않고 텍스트 영역만 표시한다.
 
 ### HERO / RECOMMENDED 슬라이드
-=======
->>>>>>> feature/gallery-collection-home-section
 
 - **HERO**: 슬라이드 1개면 정적 배너, 2개 이상이면 Carousel (1 per view)
   - 아이템 스키마: `{ imageUrl, imageAlt, title, description?, url? }`
@@ -449,7 +442,7 @@ admin에서 발급한 토큰을 교환해 **draft 콘텐츠**를 공개 웹 렌�
    - 위치: `src/widgets/subpage-content/ui/SubpageBlockRenderer.tsx` (Server Component, 클라이언트 JS 0)
    - **RICH_TEXT 블록**: `renderTiptapContent`로 Tiptap JSON → HTML(DOMPurify sanitize) → `<TiptapContent>` 렌더. 기존의 "본문" 역할
    - **HTML 블록**: DOMPurify sanitize 후 `dangerouslySetInnerHTML`
-   - **IMAGE 블록**: `<figure><img alt><figcaption></figure>`, optional `<a>` 래핑
+   - **IMAGE 블록**: legacy 단일 이미지와 신규 `items[]` 다중 이미지를 모두 지원. 1장이면 `<figure><img alt><figcaption></figure>` + optional `<a>` 래핑, 2장 이상이면 `Carousel` 렌더. 슬라이더는 컨테이너 너비 기준 `<=768px` 1장, `>=769px` 최대 3장, 자동재생 off, prev/next+dots on, 16:9 cover
    - **IFRAME 블록**: aspect-ratio wrapper + iframe, 허용 호스트 **서버에서 2중 재검증** (관리자 우회 입력 방어)
    - image 노드의 `mediaId` attr → `<img data-media-id="cuid...">` 직렬화 (DOMPurify ALLOWED_ATTR에 `data-media-id` 포함, Media 라이브러리 참조 추적)
    - 데이터: `getPublishedSubpage()` 반환 객체의 `blocks` (Prisma select)

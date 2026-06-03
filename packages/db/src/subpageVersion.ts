@@ -350,9 +350,17 @@ export function collectMediaIdsFromSnapshot(
   const ids: string[] = [];
   for (const block of snapshot.blocks) {
     if (block.blockType === 'IMAGE') {
-      const cfg = block.configJson as { imageMediaId?: string | null } | null;
+      const cfg = block.configJson as {
+        imageMediaId?: string | null;
+        items?: Array<{ imageMediaId?: string | null }>;
+      } | null;
       if (cfg && typeof cfg.imageMediaId === 'string') {
         ids.push(cfg.imageMediaId);
+      }
+      if (Array.isArray(cfg?.items)) {
+        for (const item of cfg.items) {
+          if (typeof item.imageMediaId === 'string') ids.push(item.imageMediaId);
+        }
       }
     } else if (block.blockType === 'RICH_TEXT') {
       const cfg = block.configJson as { contentJson?: unknown } | null;

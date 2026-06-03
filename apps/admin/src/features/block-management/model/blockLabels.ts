@@ -13,8 +13,23 @@ export const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlockType, string> = {
   RICH_TEXT: 'Tiptap WYSIWYG 본문 — 여러 개 배치 가능',
   HTML: '자유 HTML 조각 — 서버에서 sanitize 후 렌더',
   IMAGE: '이미지 + alt + 선택적 캡션/링크',
-  IFRAME: '허용된 외부 임베드 (YouTube, Vimeo)',
+  IFRAME: '허용된 외부 임베드 (YouTube, Vimeo, Google 지도)',
 };
+
+function extractIframeSrc(input: string): string {
+  const match = input.match(/<iframe\b[^>]*\bsrc=(['"])([^'"]+)\1/i);
+  return match?.[2] ?? input;
+}
+
+export function isGoogleMapsEmbedUrl(src: string | null | undefined): boolean {
+  if (!src) return false;
+  try {
+    const url = new URL(src);
+    return url.hostname.toLowerCase() === 'www.google.com' && url.pathname === '/maps/embed';
+  } catch {
+    return false;
+  }
+}
 
 /**
  * iframe src를 **임베드 가능한 URL**로 정규화한다.
@@ -29,12 +44,14 @@ export const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlockType, string> = {
  *   - `youtu.be/ID` → `www.youtube.com/embed/ID`
  *   - `youtube.com/shorts/ID` → `www.youtube.com/embed/ID`
  *   - `vimeo.com/ID` (숫자) → `player.vimeo.com/video/ID`
+ *   - `www.google.com/maps/embed?...` → 그대로 통과
+ *   - `<iframe src="...">` 전체 코드 → src 추출 후 위 규칙 적용
  *   - 그 외(playlist, channel, 임의 경로) → null
  *
  * admin 저장 시점과 API Route 양쪽에서 호출(방어 다층).
  */
 export function normalizeIframeEmbedUrl(src: string): string | null {
-  const trimmed = src.trim();
+  const trimmed = extractIframeSrc(src.trim()).trim();
   if (!trimmed) return null;
 
   let url: URL;
@@ -46,6 +63,11 @@ export function normalizeIframeEmbedUrl(src: string): string | null {
 
   const host = url.hostname.toLowerCase();
   const path = url.pathname;
+
+  // Google Maps embed URL — iframe 코드에서 src만 추출한 뒤 /maps/embed만 허용
+  if (host === 'www.google.com' && path === '/maps/embed') {
+    return url.toString();
+  }
 
   // 이미 embed 형식인 경우 그대로 통과
   if (

@@ -30,6 +30,8 @@ export interface SiteFooterBottomLink {
 }
 
 export interface SiteFooterConfig {
+  footerLogoMediaId: string | null;
+  footerLogoAlt: string | null;
   address: string | null;
   contacts: SiteFooterContact[];
   quickLinks: SiteFooterQuickLink[];
@@ -42,6 +44,8 @@ export interface SiteFooterConfig {
 }
 
 export const DEFAULT_SITE_FOOTER_CONFIG: SiteFooterConfig = {
+  footerLogoMediaId: null,
+  footerLogoAlt: null,
   address: null,
   contacts: [],
   quickLinks: [],

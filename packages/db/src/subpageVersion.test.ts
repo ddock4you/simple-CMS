@@ -165,6 +165,30 @@ describe('collectMediaIdsFromSnapshot', () => {
     expect(collectMediaIdsFromSnapshot(snapshot)).toEqual(['img-media-1']);
   });
 
+  it('IMAGE 블록 items[].imageMediaId → mediaId 배열', () => {
+    const snapshot: SubpageSnapshotPayload = {
+      meta: emptyMeta,
+      blocks: [
+        {
+          blockType: 'IMAGE',
+          configJson: {
+            items: [
+              { imageMediaId: 'img-media-1' },
+              { imageMediaId: null },
+              { imageMediaId: 'img-media-2' },
+            ],
+          },
+          isVisible: true,
+          displayOrder: 0,
+        },
+      ],
+    };
+    expect(collectMediaIdsFromSnapshot(snapshot)).toEqual([
+      'img-media-1',
+      'img-media-2',
+    ]);
+  });
+
   it('IMAGE 블록 + imageMediaId null → []', () => {
     const snapshot: SubpageSnapshotPayload = {
       meta: emptyMeta,

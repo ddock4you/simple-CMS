@@ -374,7 +374,7 @@ apps/{앱}/
 **Snapshot Export/Import + CLI (PR6)**
 
 - `packages/db/src/demo/snapshot.types.ts` — Zod `snapshotPayloadSchema` v1 + 14모델 row 타입(SnapshotRoleRow, SnapshotMediaRow, ...). User.password 의도적 제외, Media.uploadedById null로 anonymize, Media에 `base64Data` 첨부
-- `packages/db/src/demo/snapshotWalker.ts` — `walkSnapshotForRemap(payload, idMap, kind)` in-place mediaId/boardId 재매핑. 위치별 field name 분기(HERO `slides[].mediaId` / BRIEF_INTRO `mediaId` / RECOMMENDED `items[].mediaId` / IMAGE `imageMediaId` / RICH_TEXT Tiptap recursion / SubpageVersion.snapshot meta+blocks / HomePopup CONTENT). Tiptap image 노드 `attrs.mediaId` 재귀
+- `packages/db/src/demo/snapshotWalker.ts` — `walkSnapshotForRemap(payload, idMap, kind)` in-place mediaId/boardId 재매핑. 위치별 field name 분기(HERO `slides[].mediaId` / BRIEF_INTRO `mediaId` / RECOMMENDED `items[].mediaId` / IMAGE `imageMediaId` + `items[].imageMediaId` / RICH_TEXT Tiptap recursion / SubpageVersion.snapshot meta+blocks / HomePopup CONTENT). Tiptap image 노드 `attrs.mediaId` 재귀
 - `packages/db/src/demo/exportMedia.ts` — sharp 1600px 리사이즈(`withoutEnlargement`) + JPEG quality 80 (image/jpeg|png|webp만 — SVG/GIF/PDF 원본 유지) + provider별 downloader factory(`createLocalMediaDownloader` / `createSupabaseMediaDownloader`) + `extractStorageKeyFromUrl`
 - `packages/db/src/demo/exportSnapshot.ts` — `exportSnapshot({sourceSessionId, downloadMedia, urlToStorageKey, concurrency=4})`. 14모델 findMany + Media binary 처리 (`p-limit`-style worker pool) + `runWithBypass` 자동 wrap
 - `packages/db/src/demo/resetSeedData.ts` — `cleanupExpiredSessions`와 분리된 별도 헬퍼. `__SEED__` row 14모델 deleteMany 자식→부모 순 + cleanupStorage 콜백 위임. RESERVED 가드 우회를 명시적 진입점으로 격리
@@ -923,6 +923,7 @@ shared/lib/
   - paste/drop 시 `ImageUploadExtension`이 자동 업로드 + image 노드 삽입 (mediaId 포함)
   - 외부 URL 직접 입력은 mediaId null (Media 무관, 의도적)
   - HTML 직렬화: `<img data-media-id="...">` — DOMPurify ALLOWED_ATTR 통과
+- **IMAGE 블록**: 기존 단일 이미지 config(`imageUrl`, `imageAlt`, `imageMediaId`, `caption`, `linkUrl`)와 신규 다중 이미지 config(`items[]`, 최대 12장)를 함께 지원한다. admin 저장 시 첫 번째 item을 legacy 필드에도 복제해 기존 데이터/참조 경로와 호환한다. 공개 웹은 1장이면 단일 figure, 2장 이상이면 Carousel(컨테이너 `<=768px` 1장, `>=769px` 최대 3장, autoplay off, prev/next+dots on, 16:9 cover)로 렌더한다. Media 참조 추적·SubpageVersion 스냅샷·demo snapshot walker는 legacy `imageMediaId`와 `items[].imageMediaId`를 모두 수집한다.
 - **web 렌더링**: `@tiptap/html`의 `generateHTML()` — 서버 사이드 전용, 클라이언트 JS 0
   - `packages/editor`의 공유 확장으로 admin과 동일한 렌더링 보장
   - DOMPurify 새니타이징 (defense-in-depth)

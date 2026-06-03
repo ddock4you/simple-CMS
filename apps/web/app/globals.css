@@ -115,6 +115,18 @@
   min-width: 0;
 }
 
+#krds-footer .f-logo.has-custom-logo {
+  background-image: none !important;
+}
+
+#krds-footer .f-logo.has-custom-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
 .right-sidebar {
   flex-shrink: 0;
   width: 16rem;
@@ -450,6 +462,41 @@
   color: #374151;
 }
 
+.subpage-block-image-carousel {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.subpage-block-image-carousel .subpage-block-image {
+  height: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #e4e4e4;
+  background: #fff;
+}
+
+.subpage-block-image-carousel .subpage-block-image img {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+.subpage-block-image-carousel .subpage-block-image figcaption {
+  padding: 0 12px 12px;
+}
+
+.subpage-block-image-carousel .swiper-slide {
+  width: 100% !important;
+}
+
+@container (min-width: 769px) {
+  .subpage-block-image-carousel .swiper-slide {
+    width: calc((100% - 48px) / 3) !important;
+  }
+}
+
 /* IFRAME 블록 — aspect-ratio 유지하는 반응형 래퍼 */
 .subpage-block-iframe {
   position: relative;
@@ -467,12 +514,41 @@
 .subpage-block-iframe[data-ratio='1:1'] {
   aspect-ratio: 1 / 1;
 }
+.subpage-block-iframe[data-height-mode='fixed'] {
+  height: min(var(--iframe-height, 350px), 60vh);
+}
 .subpage-block-iframe iframe {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+.subpage-block-html iframe[src*='google.com/maps/embed'] {
+  width: 100% !important;
+  height: 350px;
+  border: 0;
+}
+
+@media (max-width: 1023px) {
+  .subpage-block-iframe[data-height-mode='fixed'] {
+    height: min(calc(var(--iframe-height, 350px) * 0.85), 320px);
+  }
+
+  .subpage-block-html iframe[src*='google.com/maps/embed'] {
+    height: 320px;
+  }
+}
+
+@media (max-width: 767px) {
+  .subpage-block-iframe[data-height-mode='fixed'] {
+    height: min(calc(var(--iframe-height, 350px) * 0.72), 280px);
+  }
+
+  .subpage-block-html iframe[src*='google.com/maps/embed'] {
+    height: 280px;
+  }
 }
 
 /* ==========================================================================

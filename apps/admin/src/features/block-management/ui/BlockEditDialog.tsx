@@ -25,6 +25,7 @@ import { Label } from '@/shared/ui/shadcn/label';
 
 import {
   BLOCK_TYPE_LABELS,
+  isGoogleMapsEmbedUrl,
   isIframeHostAllowed,
   normalizeIframeEmbedUrl,
 } from '../model/blockLabels';
@@ -96,11 +97,16 @@ export function BlockEditDialog({
       const normalized = normalizeIframeEmbedUrl(iframeCfg.src);
       if (!normalized) {
         toast.error(
-          '임베드 가능한 URL이 아닙니다. YouTube 시청/shorts/youtu.be 또는 Vimeo 영상 URL을 입력해주세요.',
+          '임베드 가능한 URL이 아닙니다. YouTube/Vimeo 영상 URL 또는 Google Maps embed 코드를 입력해주세요.',
         );
         return;
       }
-      configToValidate = { ...iframeCfg, src: normalized };
+      configToValidate = {
+        ...iframeCfg,
+        src: normalized,
+        heightPx:
+          iframeCfg.heightPx ?? (isGoogleMapsEmbedUrl(normalized) ? 350 : null),
+      };
     }
 
     const schema = configSchemaByType[activeType];

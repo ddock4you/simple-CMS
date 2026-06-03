@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, type CSSProperties } from 'react';
 
 import type { PageBlockType } from '@simple-cms/types';
 import { isIframeHostAllowed } from '@simple-cms/types';
@@ -8,6 +8,7 @@ import {
   sanitizeCustomHtml,
 } from '@/shared/lib/renderContent';
 import { scopeCustomCss } from '@/shared/lib/scopeCustomCss';
+import { Carousel } from '@/shared/ui/Carousel';
 import { TiptapContent } from '@/shared/ui/TiptapContent';
 
 /**
@@ -76,31 +77,63 @@ function HtmlBlock({
   );
 }
 
-function ImageBlock({ config }: { config: unknown }) {
+interface ImageBlockItem {
+  imageUrl: string;
+  imageAlt: string;
+  caption?: string | null;
+  linkUrl?: string | null;
+}
+
+const IMAGE_CAROUSEL_OPTIONS = {
+  showPrevNext: true,
+  showDots: true,
+  showPlayPause: false,
+  autoPlay: false,
+  autoPlayInterval: 5000,
+};
+
+function getImageItems(config: unknown): ImageBlockItem[] {
   const cfg = config as {
     imageUrl?: string;
     imageAlt?: string;
     caption?: string | null;
     linkUrl?: string | null;
+    items?: ImageBlockItem[];
   } | null;
-  if (!cfg?.imageUrl || !cfg.imageAlt) return null;
 
+  if (Array.isArray(cfg?.items)) {
+    return cfg.items.filter((item) => item.imageUrl && item.imageAlt);
+  }
+  if (cfg?.imageUrl && cfg.imageAlt) {
+    return [
+      {
+        imageUrl: cfg.imageUrl,
+        imageAlt: cfg.imageAlt,
+        caption: cfg.caption,
+        linkUrl: cfg.linkUrl,
+      },
+    ];
+  }
+  return [];
+}
+
+function ImageFigure({ item }: { item: ImageBlockItem }) {
   const inner = (
     <figure className="subpage-block subpage-block-image">
       {/* 외부 URL과 업로드 URL 모두 수용 — next/image 대신 img 사용 */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={cfg.imageUrl} alt={cfg.imageAlt} loading="lazy" />
-      {cfg.caption && <figcaption>{cfg.caption}</figcaption>}
+      <img src={item.imageUrl} alt={item.imageAlt} loading="lazy" />
+      {item.caption && <figcaption>{item.caption}</figcaption>}
     </figure>
   );
 
-  if (cfg.linkUrl) {
+  if (item.linkUrl) {
     return (
       <a
-        href={cfg.linkUrl}
+        href={item.linkUrl}
         className="subpage-block-image-link"
-        target={cfg.linkUrl.startsWith('http') ? '_blank' : undefined}
-        rel={cfg.linkUrl.startsWith('http') ? 'noopener noreferrer' : undefined}
+        target={item.linkUrl.startsWith('http') ? '_blank' : undefined}
+        rel={item.linkUrl.startsWith('http') ? 'noopener noreferrer' : undefined}
       >
         {inner}
       </a>
@@ -109,12 +142,41 @@ function ImageBlock({ config }: { config: unknown }) {
   return inner;
 }
 
+function ImageBlock({ config }: { config: unknown }) {
+  const items = getImageItems(config);
+  if (items.length === 0) return null;
+  if (items.length === 1) return <ImageFigure item={items[0]!} />;
+
+  return (
+    <div className="subpage-block subpage-block-image-carousel">
+      <Carousel
+        slides={items.map((item, index) => (
+          <div key={index} className="subpage-block-image-slide">
+            <ImageFigure item={item} />
+          </div>
+        ))}
+        options={IMAGE_CAROUSEL_OPTIONS}
+        slidesPerView={1}
+        spaceBetween={16}
+        breakpointsBase="container"
+        breakpoints={{
+          0: { slidesPerView: 1, spaceBetween: 16 },
+          768: { slidesPerView: 1, spaceBetween: 16 },
+          769: { slidesPerView: 3, spaceBetween: 24 },
+        }}
+        ariaLabel="서브페이지 이미지 슬라이드"
+      />
+    </div>
+  );
+}
+
 function IframeBlock({ config }: { config: unknown }) {
   const cfg = config as {
     src?: string;
     title?: string;
     aspectRatio?: '16:9' | '4:3' | '1:1';
     allowFullscreen?: boolean;
+    heightPx?: number | null;
   } | null;
   if (!cfg?.src || !cfg.title) return null;
 
@@ -122,10 +184,20 @@ function IframeBlock({ config }: { config: unknown }) {
   if (!isIframeHostAllowed(cfg.src)) return null;
 
   const ratio = cfg.aspectRatio ?? '16:9';
+  const heightPx =
+    typeof cfg.heightPx === 'number' && Number.isFinite(cfg.heightPx)
+      ? Math.min(Math.max(cfg.heightPx, 240), 640)
+      : null;
+  const style = heightPx
+    ? ({ '--iframe-height': `${heightPx}px` } as CSSProperties)
+    : undefined;
+
   return (
     <div
       className="subpage-block subpage-block-iframe"
-      data-ratio={ratio}
+      data-ratio={heightPx ? undefined : ratio}
+      data-height-mode={heightPx ? 'fixed' : 'ratio'}
+      style={style}
     >
       <iframe
         src={cfg.src}

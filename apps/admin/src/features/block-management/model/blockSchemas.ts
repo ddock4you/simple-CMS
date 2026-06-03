@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { PageBlockType } from '@simple-cms/types';
+import { IMAGE_BLOCK_MAX_ITEMS, type PageBlockType } from '@simple-cms/types';
 
 /**
  * 서브페이지 블록 Zod 스키마 (Stage 6)
@@ -42,7 +42,7 @@ export const htmlBlockConfigSchema = z.object({
 });
 export type HtmlBlockConfigData = z.infer<typeof htmlBlockConfigSchema>;
 
-export const imageBlockConfigSchema = z.object({
+const imageBlockItemSchema = z.object({
   imageUrl: z
     .string()
     .trim()
@@ -57,6 +57,24 @@ export const imageBlockConfigSchema = z.object({
   caption: z.string().trim().max(300).nullable().optional(),
   linkUrl: z.string().trim().max(2000).nullable().optional(),
 });
+
+export const imageBlockConfigSchema = imageBlockItemSchema
+  .partial()
+  .extend({
+    items: z.array(imageBlockItemSchema).max(IMAGE_BLOCK_MAX_ITEMS).optional(),
+  })
+  .superRefine((value, ctx) => {
+    const hasItems = Array.isArray(value.items) && value.items.length > 0;
+    const hasLegacyImage = Boolean(value.imageUrl && value.imageAlt);
+
+    if (!hasItems && !hasLegacyImage) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['items'],
+        message: '이미지를 최소 1장 이상 등록해주세요.',
+      });
+    }
+  });
 export type ImageBlockConfigData = z.infer<typeof imageBlockConfigSchema>;
 
 export const iframeBlockConfigSchema = z.object({
@@ -72,6 +90,13 @@ export const iframeBlockConfigSchema = z.object({
     .max(200, '제목은 200자 이하여야 합니다.'),
   aspectRatio: z.enum(['16:9', '4:3', '1:1']),
   allowFullscreen: z.boolean(),
+  heightPx: z
+    .number()
+    .int('높이는 정수로 입력해주세요.')
+    .min(240, '높이는 최소 240px 이상이어야 합니다.')
+    .max(640, '높이는 최대 640px까지 설정 가능합니다.')
+    .nullable()
+    .optional(),
 });
 export type IframeBlockConfigData = z.infer<typeof iframeBlockConfigSchema>;
 
@@ -100,17 +125,14 @@ export const defaultConfigByType = {
   RICH_TEXT: { contentJson: EMPTY_TIPTAP_DOC } satisfies RichTextBlockConfigData,
   HTML: { html: '', css: null } satisfies HtmlBlockConfigData,
   IMAGE: {
-    imageUrl: '',
-    imageAlt: '',
-    imageMediaId: null,
-    caption: null,
-    linkUrl: null,
+    items: [],
   } satisfies ImageBlockConfigData,
   IFRAME: {
     src: '',
     title: '',
     aspectRatio: '16:9',
     allowFullscreen: true,
+    heightPx: null,
   } satisfies IframeBlockConfigData,
 } as const;
 

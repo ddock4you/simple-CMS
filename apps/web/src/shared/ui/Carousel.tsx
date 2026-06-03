@@ -29,6 +29,8 @@ interface CarouselProps {
     number,
     { slidesPerView: number; spaceBetween?: number }
   >;
+  /** breakpoint 기준 (기본: window) */
+  breakpointsBase?: 'window' | 'container';
   /** loop 모드 (기본 true) */
   loop?: boolean;
   /** 기본 slidesPerView (breakpoints가 없는 경우, 기본 1) */
@@ -56,6 +58,7 @@ export function Carousel({
   slides,
   options,
   breakpoints,
+  breakpointsBase = 'window',
   loop = true,
   slidesPerView = 1,
   spaceBetween = 16,
@@ -192,6 +195,7 @@ export function Carousel({
         }
         autoplay={autoplayConfig}
         breakpoints={breakpoints}
+        breakpointsBase={breakpointsBase}
       >
         {slides.map((slide, index) => (
           <SwiperSlide key={index}>{slide}</SwiperSlide>

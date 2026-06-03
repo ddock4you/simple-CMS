@@ -73,8 +73,8 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 ### 검색 헬퍼 (`src/search.ts`)
 
-| 함수                                     | 설명                                                         |
-| ---------------------------------------- | ------------------------------------------------------------ |
+| 함수                                            | 설명                                                                                         |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | `searchContent(query, page?, pageSize?, type?)` | Subpage + Post 통합 검색, PGroonga `&@~` 연산자, 관련도 정렬. `type`: `all`/`subpage`/`post` |
 
 - 검색 대상: `PUBLISHED` 상태의 Subpage(title + content) + Post(title + content, 공개 게시판만)
@@ -381,12 +381,8 @@ PR4가 도입한 두 진입점. 세부 동작은 루트 AGENTS.md "PR4 visitor �
 - NavigationMenu x2 (Header Main + Footer)
 - Board x1 (`notice`)
 - Subpage x1 (`about`, PUBLISHED)
-- PageBlock x1 (about Subpage RICH_TEXT)
-<<<<<<< HEAD
-- HomeSection x9 (HERO/BRIEF_INTRO/SUB_CAROUSEL/FREQUENT_MENU/RECOMMENDED/SHORTCUT/LATEST_POSTS/CTA/NOTICE 대표 게시판)
-=======
+- PageBlock x1 (about Subpage RICH_TEXT). IMAGE 블록은 legacy `imageMediaId`와 신규 `items[].imageMediaId` 모두 snapshot media 수집/remap 대상
 - HomeSection x10 (HERO/BRIEF_INTRO/SUB_CAROUSEL/FREQUENT_MENU/RECOMMENDED/SHORTCUT/LATEST_POSTS/GALLERY_COLLECTION/CTA/NOTICE 대표 게시판)
->>>>>>> feature/gallery-collection-home-section
 - NavigationMenuItem x2 (about 링크 Header + Footer)
 
 운영 seed.ts와 별개 — 자체 PrismaClient + PrismaPg 어댑터 사용 (extension 미적용). 모든 query에 `sessionId: SEED_SENTINEL` 명시 + `findFirst → update | create` (upsert 회피 룰 일관).

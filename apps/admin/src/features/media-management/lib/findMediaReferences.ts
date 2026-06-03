@@ -1,5 +1,5 @@
 import { prisma, demo } from '@simple-cms/db';
-import type { MediaReference } from '@simple-cms/types';
+import { SITE_SETTING_KEYS, type MediaReference } from '@simple-cms/types';
 
 import {
   MEDIA_BEARING_SETTING_KEYS,
@@ -39,6 +39,7 @@ export function containsMediaReference(
  * 6. PageBlock IMAGE 블록 configJson.imageMediaId (JSONB containment, Stage 6)
  * 7. PageBlock RICH_TEXT 블록 configJson.contentJson (Tiptap JSON 재귀, Stage 6 — 통합 블록 모델)
  * 8. SiteSettings via MEDIA_BEARING_SETTING_KEYS 화이트리스트 (Stage 7l — LOGO/FAVICON/OG_IMAGE)
+ * 9. SITE_FOOTER_CONFIG.footerLogoMediaId (Stage 20 follow-up — 푸터 로고)
  *
  * 서브페이지 본문은 RICH_TEXT 블록으로 흡수되어 Subpage.contentJson 경로는 더 이상 존재하지 않는다.
  * Media 삭제 전 차단 판정 + 사용처 안내에 사용한다.
@@ -145,8 +146,8 @@ export async function findMediaReferences(
     });
   }
 
-  // ─── 6. PageBlock IMAGE 블록 configJson.imageMediaId (Stage 6) ──────────
-  // JSONB containment 연산자로 imageMediaId가 일치하는 IMAGE 블록 스캔.
+  // ─── 6. PageBlock IMAGE 블록 configJson.imageMediaId / items[].imageMediaId ──
+  // JSONB containment 연산자로 legacy 단일 이미지와 다중 이미지 items를 함께 스캔.
   // Subpage를 JOIN하여 사용자에게 "어떤 서브페이지의 블록인지" 표시.
   type PageBlockRaw = {
     id: string;
@@ -159,7 +160,10 @@ export async function findMediaReferences(
     JOIN "Subpage" sp ON sp.id = pb."subpageId" AND sp."sessionId" = ${sessionId}
     WHERE pb."sessionId" = ${sessionId}
       AND pb."blockType" = 'IMAGE'
-      AND pb."configJson" @> ${JSON.stringify({ imageMediaId: mediaId })}::jsonb
+      AND (
+        pb."configJson" @> ${JSON.stringify({ imageMediaId: mediaId })}::jsonb
+        OR pb."configJson" @> ${JSON.stringify({ items: [{ imageMediaId: mediaId }] })}::jsonb
+      )
   `;
   for (const b of blockMatches) {
     references.push({
@@ -210,6 +214,29 @@ export async function findMediaReferences(
         label: meta.label,
         context: meta.context,
       });
+    }
+  }
+
+  // ─── 9. SiteSettings SITE_FOOTER_CONFIG.footerLogoMediaId ────────────────
+  const footerConfigSetting = await prisma.siteSettings.findFirst({
+    where: { key: SITE_SETTING_KEYS.SITE_FOOTER_CONFIG },
+    select: { value: true },
+  });
+  if (footerConfigSetting?.value) {
+    try {
+      const parsed = JSON.parse(footerConfigSetting.value) as {
+        footerLogoMediaId?: unknown;
+      };
+      if (parsed.footerLogoMediaId === mediaId) {
+        references.push({
+          type: 'SITE_SETTINGS',
+          entityId: SITE_SETTING_KEYS.SITE_FOOTER_CONFIG,
+          label: '푸터 설정 — 로고',
+          context: '사이트 설정',
+        });
+      }
+    } catch {
+      // 설정 JSON 손상은 미디어 삭제 판단을 차단하지 않는다.
     }
   }
 

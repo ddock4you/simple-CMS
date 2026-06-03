@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react';
 
-import type { SiteFooterConfig } from '@simple-cms/types';
-
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import type { Branding } from '@/shared/lib/brandingCache';
+import type { ResolvedSiteFooterConfig } from '@/shared/lib/footerConfigCache';
 
 import { FooterChrome } from './FooterChrome';
 import { HeaderChrome } from './HeaderChrome';
@@ -15,7 +14,7 @@ interface PageLayoutProps {
   footerMenuItems: FilteredMenuItem[];
   rightSidebar: { name: string; items: FilteredMenuItem[] } | null;
   branding: Branding;
-  footerConfig: SiteFooterConfig;
+  footerConfig: ResolvedSiteFooterConfig;
 }
 
 export function PageLayout({
@@ -29,10 +28,10 @@ export function PageLayout({
   const hasRightSidebar = !!rightSidebar && rightSidebar.items.length > 0;
 
   return (
-    <>
+    <div className="flex min-h-dvh flex-col">
       <HeaderChrome branding={branding} headerMenuItems={headerMenuItems} />
       {hasRightSidebar ? (
-        <div className="krds-container page-with-right-sidebar">
+        <div className="krds-container page-with-right-sidebar grow">
           <main id="main-content" className="page-main">
             {children}
           </main>
@@ -42,13 +41,15 @@ export function PageLayout({
           />
         </div>
       ) : (
-        <main id="main-content">{children}</main>
+        <main id="main-content" className="grow">
+          {children}
+        </main>
       )}
       <FooterChrome
         branding={branding}
         footerMenuItems={footerMenuItems}
         footerConfig={footerConfig}
       />
-    </>
+    </div>
   );
 }

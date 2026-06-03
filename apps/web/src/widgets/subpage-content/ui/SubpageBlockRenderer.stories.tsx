@@ -64,6 +64,41 @@ const imageBlock = {
   },
 };
 
+const imageCarouselBlock = {
+  id: 'block-5',
+  blockType: 'IMAGE' as const,
+  displayOrder: 5,
+  isVisible: true,
+  configJson: {
+    items: [
+      {
+        imageUrl: 'https://picsum.photos/id/1015/960/540',
+        imageAlt: '산과 강이 보이는 풍경',
+        caption: '첫 번째 이미지',
+        linkUrl: null,
+      },
+      {
+        imageUrl: 'https://picsum.photos/id/1025/960/540',
+        imageAlt: '강아지 초상',
+        caption: '두 번째 이미지',
+        linkUrl: 'https://www.krds.go.kr/',
+      },
+      {
+        imageUrl: 'https://picsum.photos/id/1035/960/540',
+        imageAlt: '나무와 들판 풍경',
+        caption: '세 번째 이미지',
+        linkUrl: null,
+      },
+      {
+        imageUrl: 'https://picsum.photos/id/1043/960/540',
+        imageAlt: '해변 풍경',
+        caption: '네 번째 이미지',
+        linkUrl: null,
+      },
+    ],
+  },
+};
+
 const iframeBlock = {
   id: 'block-4',
   blockType: 'IFRAME' as const,
@@ -128,6 +163,18 @@ export const RichTextOnly: Story = {
 export const HtmlOnly: Story = {
   args: {
     blocks: [htmlBlock],
+  },
+};
+
+export const ImageOnly: Story = {
+  args: {
+    blocks: [imageBlock],
+  },
+};
+
+export const ImageCarousel: Story = {
+  args: {
+    blocks: [imageCarouselBlock],
   },
 };
 
