@@ -603,6 +603,7 @@ describe('snapshotWalker clone helpers', () => {
   it('remaps HomeSection mediaId and boardId references in one pass', () => {
     const mediaIdMap = new Map([['seed-media', 'visitor-media']]);
     const boardIdMap = new Map([['seed-board', 'visitor-board']]);
+    const subpageIdMap = new Map([['seed-subpage', 'visitor-subpage']]);
 
     const heroConfig = {
       slides: [{ mediaId: 'seed-media' }, { mediaId: 'unmapped-media' }],
@@ -612,6 +613,7 @@ describe('snapshotWalker clone helpers', () => {
       heroConfig,
       mediaIdMap,
       boardIdMap,
+      subpageIdMap,
     );
     expect(heroConfig.slides[0]!.mediaId).toBe('visitor-media');
     expect(heroConfig.slides[1]!.mediaId).toBe('unmapped-media');
@@ -622,8 +624,60 @@ describe('snapshotWalker clone helpers', () => {
       latestPostsConfig,
       mediaIdMap,
       boardIdMap,
+      subpageIdMap,
     );
     expect(latestPostsConfig.boardId).toBe('visitor-board');
+
+    const noticeConfig = { boardId: 'seed-board' };
+    remapHomeSectionJsonReferences(
+      'NOTICE',
+      noticeConfig,
+      mediaIdMap,
+      boardIdMap,
+      subpageIdMap,
+    );
+    expect(noticeConfig.boardId).toBe('visitor-board');
+
+    const frequentMenuConfig = {
+      items: [
+        {
+          itemType: 'SUBPAGE',
+          subpageId: 'seed-subpage',
+          boardId: null,
+        },
+        {
+          itemType: 'BOARD',
+          subpageId: null,
+          boardId: 'seed-board',
+        },
+      ],
+    };
+    remapHomeSectionJsonReferences(
+      'FREQUENT_MENU',
+      frequentMenuConfig,
+      mediaIdMap,
+      boardIdMap,
+      subpageIdMap,
+    );
+    expect(frequentMenuConfig.items[0]!.subpageId).toBe('visitor-subpage');
+    expect(frequentMenuConfig.items[1]!.boardId).toBe('visitor-board');
+
+    const galleryConfig = {
+      boardIds: ['seed-board', 'unmapped-board'],
+      boardTabLabels: { 'seed-board': '공지', 'unmapped-board': '기타' },
+    };
+    remapHomeSectionJsonReferences(
+      'GALLERY_COLLECTION',
+      galleryConfig,
+      mediaIdMap,
+      boardIdMap,
+      subpageIdMap,
+    );
+    expect(galleryConfig.boardIds).toEqual(['visitor-board', 'unmapped-board']);
+    expect(galleryConfig.boardTabLabels).toEqual({
+      'visitor-board': '공지',
+      'unmapped-board': '기타',
+    });
   });
 
   it('remaps clone-time Tiptap and PageBlock media references', () => {

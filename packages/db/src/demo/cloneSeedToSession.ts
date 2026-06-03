@@ -237,35 +237,7 @@ export async function cloneSeedToSession(
         await tx.board.createMany({ data: boardData });
       }
 
-      // ─── 7) HomeSection ─────────────────────────────────
-      const seedSections = await tx.homeSection.findMany({
-        where: { sessionId: SEED_SENTINEL },
-        orderBy: { id: 'asc' },
-      });
-      const sectionData = seedSections.map((s) => {
-        const configJson = cloneJson(s.configJson);
-        remapHomeSectionJsonReferences(
-          s.sectionType,
-          configJson,
-          mediaIdMap,
-          boardIdMap,
-        );
-
-        return {
-          id: createId(),
-          sessionId: newSessionId,
-          sectionType: s.sectionType,
-          title: s.title,
-          configJson: configJson as Prisma.InputJsonValue,
-          isVisible: s.isVisible,
-          displayOrder: s.displayOrder,
-        };
-      });
-      if (sectionData.length > 0) {
-        await tx.homeSection.createMany({ data: sectionData });
-      }
-
-      // ─── 8) Subpage ─────────────────────────────────────
+      // ─── 7) Subpage ─────────────────────────────────────
       const seedSubpages = await tx.subpage.findMany({
         where: { sessionId: SEED_SENTINEL },
         orderBy: { id: 'asc' },
@@ -296,6 +268,35 @@ export async function cloneSeedToSession(
       });
       if (subpageData.length > 0) {
         await tx.subpage.createMany({ data: subpageData });
+      }
+
+      // ─── 8) HomeSection ─────────────────────────────────
+      const seedSections = await tx.homeSection.findMany({
+        where: { sessionId: SEED_SENTINEL },
+        orderBy: { id: 'asc' },
+      });
+      const sectionData = seedSections.map((s) => {
+        const configJson = cloneJson(s.configJson);
+        remapHomeSectionJsonReferences(
+          s.sectionType,
+          configJson,
+          mediaIdMap,
+          boardIdMap,
+          subpageIdMap,
+        );
+
+        return {
+          id: createId(),
+          sessionId: newSessionId,
+          sectionType: s.sectionType,
+          title: s.title,
+          configJson: configJson as Prisma.InputJsonValue,
+          isVisible: s.isVisible,
+          displayOrder: s.displayOrder,
+        };
+      });
+      if (sectionData.length > 0) {
+        await tx.homeSection.createMany({ data: sectionData });
       }
 
       // ─── 9) Post ────────────────────────────────────────

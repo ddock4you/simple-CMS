@@ -106,8 +106,12 @@ function remapHomeSectionConfig(
   }
 
   if (kind === 'boardId') {
-    // LATEST_POSTS boardId (top-level)
+    // LATEST_POSTS / NOTICE boardId (top-level)
     if (sectionType === 'LATEST_POSTS' && typeof cfg.boardId === 'string') {
+      const newId = idMap.get(cfg.boardId);
+      if (newId) cfg.boardId = newId;
+    }
+    if (sectionType === 'NOTICE' && typeof cfg.boardId === 'string') {
       const newId = idMap.get(cfg.boardId);
       if (newId) cfg.boardId = newId;
     }
@@ -115,6 +119,28 @@ function remapHomeSectionConfig(
       cfg.boardIds = cfg.boardIds.map((boardId) =>
         typeof boardId === 'string' ? (idMap.get(boardId) ?? boardId) : boardId,
       );
+    }
+    if (
+      sectionType === 'GALLERY_COLLECTION' &&
+      cfg.boardTabLabels &&
+      typeof cfg.boardTabLabels === 'object' &&
+      !Array.isArray(cfg.boardTabLabels)
+    ) {
+      const nextLabels: Record<string, unknown> = {};
+      for (const [boardId, label] of Object.entries(cfg.boardTabLabels)) {
+        nextLabels[idMap.get(boardId) ?? boardId] = label;
+      }
+      cfg.boardTabLabels = nextLabels;
+    }
+    if (sectionType === 'FREQUENT_MENU' && Array.isArray(cfg.items)) {
+      for (const item of cfg.items) {
+        if (!item || typeof item !== 'object') continue;
+        const i = item as { boardId?: unknown };
+        if (typeof i.boardId === 'string') {
+          const newId = idMap.get(i.boardId);
+          if (newId) i.boardId = newId;
+        }
+      }
     }
   }
 }
@@ -124,9 +150,33 @@ export function remapHomeSectionJsonReferences(
   configJson: unknown,
   mediaIdMap: IdMap,
   boardIdMap: IdMap,
+  subpageIdMap: IdMap = new Map(),
 ): void {
   remapHomeSectionConfig(sectionType, configJson, mediaIdMap, 'mediaId');
   remapHomeSectionConfig(sectionType, configJson, boardIdMap, 'boardId');
+  remapHomeSectionSubpageReferences(sectionType, configJson, subpageIdMap);
+}
+
+function remapHomeSectionSubpageReferences(
+  sectionType: string,
+  configJson: unknown,
+  subpageIdMap: IdMap,
+): void {
+  if (subpageIdMap.size === 0) return;
+  if (sectionType !== 'FREQUENT_MENU') return;
+  if (!configJson || typeof configJson !== 'object') return;
+
+  const cfg = configJson as Record<string, unknown>;
+  if (!Array.isArray(cfg.items)) return;
+
+  for (const item of cfg.items) {
+    if (!item || typeof item !== 'object') continue;
+    const i = item as { subpageId?: unknown };
+    if (typeof i.subpageId === 'string') {
+      const newId = subpageIdMap.get(i.subpageId);
+      if (newId) i.subpageId = newId;
+    }
+  }
 }
 
 // ─── PageBlock.configJson 재매핑 ────────────────────────────
