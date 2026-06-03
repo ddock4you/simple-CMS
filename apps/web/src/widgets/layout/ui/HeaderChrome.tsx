@@ -21,6 +21,7 @@ const HEADER_UTILITY_LINKS = [
 const desktopDropdownClassName = [
   'web-gnb-dropdown',
   "[&[data-active='true']>.gnb-toggle-wrap]:!block",
+  "[&[data-active='true']>.gnb-toggle-wrap]:large:!w-screen",
   "[&[data-active='true']>.gnb-main-trigger::before]:!left-0",
   "[&[data-active='true']>.gnb-main-trigger::before]:!w-full",
   "[&[data-active='true']>.gnb-main-trigger::after]:rotate-[-180deg]",
@@ -215,19 +216,15 @@ function DesktopMainMenu({ items }: { items: FilteredMenuItem[] }) {
 
             return (
               <li key={item.id} className={desktopDropdownClassName}>
-                <a
-                  href={href}
+                <button
+                  type="button"
                   className="gnb-main-trigger"
                   aria-haspopup="true"
                   aria-expanded="false"
-                  target={item.openInNewTab ? '_blank' : undefined}
-                  rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
-                  title={external ? '새 창 열림' : undefined}
                 >
                   {item.label}
-                  {external && <ExternalMenuIcon />}
-                </a>
-                <div className="gnb-toggle-wrap">
+                </button>
+                <div className="gnb-toggle-wrap large:!left-1/2 large:!z-[60] large:!w-screen large:!-translate-x-1/2">
                   <div
                     className="gnb-main-list"
                     data-has-submenu={hasSubmenu ? 'true' : 'false'}
@@ -306,6 +303,7 @@ export function HeaderChrome({ branding, headerMenuItems }: HeaderChromeProps) {
           <DesktopMainMenu items={headerMenuItems} />
         </div>
       </header>
+      <div className="gnb-backdrop" aria-hidden="true" />
     </>
   );
 }

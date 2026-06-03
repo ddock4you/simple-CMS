@@ -2,6 +2,8 @@ import type { FilteredMenuItem } from './filterMenuItems';
 
 export function getMenuItemHref(item: FilteredMenuItem): string {
   switch (item.itemType) {
+    case 'GROUP':
+      return '#';
     case 'SUBPAGE':
       return item.subpage ? `/p/${item.subpage.slug}` : '#';
     case 'BOARD':

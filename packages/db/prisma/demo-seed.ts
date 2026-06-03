@@ -565,7 +565,7 @@ async function upsertNavigationMenuItemSeed(
   menuId: string,
   label: string,
   data: {
-    itemType: 'SUBPAGE' | 'BOARD' | 'EXTERNAL' | 'CUSTOM';
+    itemType: 'GROUP' | 'SUBPAGE' | 'BOARD' | 'EXTERNAL' | 'CUSTOM';
     subpageId?: string;
     boardId?: string;
     url?: string;

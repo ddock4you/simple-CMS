@@ -562,7 +562,9 @@ src/pages/search/ui/SearchResultItem.tsx      # 결과 리스트 아이템
 - 공개 웹 공통 레이아웃의 헤더/푸터는 KRDS React 컴포넌트에 전부 위임하지 않고, 서버 컴포넌트(`HeaderChrome`, `FooterChrome`)가 KRDS DOM 클래스와 의미 구조를 직접 렌더한다. 목적은 페이지 전환 시 헤더/푸터 HTML이 늦게 주입되어 생기는 CLS/깜빡임을 줄이는 것이다.
 - `HeaderBranding`은 서버 컴포넌트다. KRDS `Header.Branding`이 `children`을 `.logo`(`<h2>`) **밖**에 렌더하므로 로고 이미지를 클릭 가능 영역(`<a href="/">`) 안에 두려면 그대로 사용 불가하다. Stage 7d `RightSidebar`/`ContentSideNavigation` 동일 패턴으로 KRDS DOM 클래스(`.header-branding > h2.logo > a`)는 차용하되 일반 시각 스타일은 Tailwind utility로 작성한다.
 - 모바일 전체메뉴만 `MobileMenuIsland` 클라이언트 island로 분리한다. 모바일 overlay open/close, ESC 닫기, body scroll lock처럼 상호작용이 필요한 부분만 클라이언트에 둔다. 전체메뉴 dialog는 헤더 CSS 스코프/containing block 영향을 피하기 위해 `document.body` portal로 렌더한다.
-- 데스크톱 GNB hover 안정화는 `DesktopGnbBehavior`가 담당한다. 서버에서 렌더된 GNB DOM에 `pointerenter`/`focusin` 이벤트를 붙여 최근 열린 `.web-gnb-dropdown`에 `data-active="true"`를 유지한다. GNB 항목 사이 gap에 커서가 있어도 최근 메뉴가 유지되고, nav 영역을 완전히 벗어나거나 포커스가 빠지면 닫힌다.
+- 데스크톱 GNB 상호작용은 `DesktopGnbBehavior`가 담당한다. KRDS Header 기준으로 하위 메뉴가 있는 1depth는 hover가 아니라 click/Enter 토글로 연다. 열린 항목에는 `.web-gnb-dropdown[data-active="true"]`, `.gnb-toggle-wrap.is-open`, `aria-expanded="true"`를 동기화하고, 재클릭/외부 클릭/Esc/`.gnb-backdrop` 클릭 시 닫는다.
+- 데스크톱 GNB backdrop은 KRDS 공식 DOM 클래스인 `.gnb-backdrop`을 `#krds-header` sibling으로 렌더하고 `active` 클래스만 토글한다. KRDS CSS의 `#krds-header { z-index: 70 }` / `.gnb-backdrop { z-index: 60 }` 규칙을 사용해 헤더는 밝게 유지하고 본문 영역만 dim 처리한다. 커스텀 fixed dim layer나 JS top 보정은 하위 메뉴 위치를 밀 수 있으므로 사용하지 않는다.
+- 데스크톱 1depth dropdown panel(`.gnb-toggle-wrap`)은 KRDS 기본 `top: 100%` 위치를 유지하되, viewport 폭을 채우기 위해 `large:!left-1/2 large:!w-screen large:!-translate-x-1/2`만 추가한다.
 - PC 메뉴/모바일 트리거 분기는 KRDS 표준형 `large:`(1024px~) 기준으로 통일한다.
 - 통합검색은 커스텀 SVG가 아니라 KRDS `btn-navi sch navi-row` 클래스를 사용해 아이콘/상태 스타일을 위임한다. 링크의 `href="/search"`는 JS 실패 fallback으로 유지하고, 정상 클릭 시 `HeaderSearchTrigger`가 `SearchOverlay`를 열어 현재 페이지 위에서 검색 모달을 표시한다. 검색 모달도 `document.body` portal로 렌더한다.
 - 헤더와 모바일 전체메뉴 유틸리티에는 코드 상수(`HEADER_UTILITY_LINKS`)로 `KRDS 소개`(`https://www.krds.go.kr/`)를 노출한다. 데스크톱 링크는 새 창(`target="_blank" rel="noopener noreferrer"`)으로 연다.

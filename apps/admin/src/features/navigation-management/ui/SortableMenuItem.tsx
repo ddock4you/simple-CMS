@@ -76,8 +76,9 @@ export function SortableMenuItem({
             <ExternalLink className="size-3 text-muted-foreground" />
           )}
         </div>
-        {(item.url || item.subpageName || item.boardName) && (
+        {(item.itemType === 'GROUP' || item.url || item.subpageName || item.boardName) && (
           <p className="text-xs text-muted-foreground truncate mt-0.5">
+            {item.itemType === 'GROUP' && '하위 메뉴를 여는 그룹'}
             {item.subpageName && `서브 페이지: ${item.subpageName}`}
             {item.boardName && `게시판: ${item.boardName}`}
             {item.url && item.url}

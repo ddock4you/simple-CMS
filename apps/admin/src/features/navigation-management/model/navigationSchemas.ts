@@ -31,7 +31,7 @@ export type UpdateMenuData = z.infer<typeof updateMenuSchema>;
 export const createMenuItemSchema = z.object({
   parentId: z.string().nullable().optional(),
   label: z.string().min(1, '라벨을 입력해주세요.').max(200),
-  itemType: z.enum(['SUBPAGE', 'BOARD', 'EXTERNAL', 'CUSTOM']),
+  itemType: z.enum(['GROUP', 'SUBPAGE', 'BOARD', 'EXTERNAL', 'CUSTOM']),
   subpageId: z.string().nullable().optional(),
   boardId: z.string().nullable().optional(),
   url: z.string().max(2000).nullable().optional(),
@@ -45,7 +45,7 @@ export type CreateMenuItemData = z.infer<typeof createMenuItemSchema>;
 
 export const updateMenuItemSchema = z.object({
   label: z.string().min(1, '라벨을 입력해주세요.').max(200).optional(),
-  itemType: z.enum(['SUBPAGE', 'BOARD', 'EXTERNAL', 'CUSTOM']).optional(),
+  itemType: z.enum(['GROUP', 'SUBPAGE', 'BOARD', 'EXTERNAL', 'CUSTOM']).optional(),
   subpageId: z.string().nullable().optional(),
   boardId: z.string().nullable().optional(),
   url: z.string().max(2000).nullable().optional(),

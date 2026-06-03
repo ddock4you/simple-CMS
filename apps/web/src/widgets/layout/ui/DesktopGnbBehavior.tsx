@@ -14,61 +14,81 @@ export function DesktopGnbBehavior({ navId }: DesktopGnbBehaviorProps) {
     const dropdowns = Array.from(
       nav.querySelectorAll<HTMLElement>('.web-gnb-dropdown'),
     );
+    const backdrop = document.querySelector<HTMLElement>('.gnb-backdrop');
     let activeDropdown: HTMLElement | null = null;
+    let lastTrigger: HTMLElement | null = null;
 
-    const setActiveDropdown = (dropdown: HTMLElement | null) => {
+    const setActiveDropdown = (dropdown: HTMLElement | null, options?: { restoreFocus?: boolean }) => {
       if (activeDropdown === dropdown) return;
 
       if (activeDropdown) {
         activeDropdown.removeAttribute('data-active');
+        activeDropdown.classList.remove('active');
         activeDropdown
           .querySelector<HTMLElement>('.gnb-main-trigger')
           ?.setAttribute('aria-expanded', 'false');
+        activeDropdown
+          .querySelector<HTMLElement>('.gnb-toggle-wrap')
+          ?.classList.remove('is-open');
       }
 
       activeDropdown = dropdown;
+      backdrop?.classList.toggle('active', Boolean(activeDropdown));
 
       if (activeDropdown) {
         activeDropdown.setAttribute('data-active', 'true');
+        activeDropdown.classList.add('active');
+        const trigger = activeDropdown.querySelector<HTMLElement>('.gnb-main-trigger');
+        trigger?.setAttribute('aria-expanded', 'true');
         activeDropdown
-          .querySelector<HTMLElement>('.gnb-main-trigger')
-          ?.setAttribute('aria-expanded', 'true');
+          .querySelector<HTMLElement>('.gnb-toggle-wrap')
+          ?.classList.add('is-open');
+        lastTrigger = trigger;
+      } else if (options?.restoreFocus) {
+        lastTrigger?.focus();
       }
     };
 
-    const onPointerLeave = () => setActiveDropdown(null);
-    const onFocusOut = () => {
-      window.requestAnimationFrame(() => {
-        if (!nav.contains(document.activeElement)) setActiveDropdown(null);
-      });
+    const onDocumentClick = (event: MouseEvent) => {
+      if (!activeDropdown) return;
+      const target = event.target;
+      if (target instanceof Node && !nav.contains(target)) {
+        setActiveDropdown(null);
+      }
     };
+
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setActiveDropdown(null);
+      if (event.key === 'Escape' && activeDropdown) {
+        event.preventDefault();
+        setActiveDropdown(null, { restoreFocus: true });
+      }
     };
+    const onBackdropClick = () => setActiveDropdown(null);
 
     const removers = dropdowns.map((dropdown) => {
-      const onPointerEnter = () => setActiveDropdown(dropdown);
-      const onFocusIn = () => setActiveDropdown(dropdown);
+      const trigger = dropdown.querySelector<HTMLElement>('.gnb-main-trigger');
+      const onClick = (event: MouseEvent) => {
+        event.preventDefault();
+        setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
+      };
 
-      dropdown.addEventListener('pointerenter', onPointerEnter);
-      dropdown.addEventListener('focusin', onFocusIn);
+      trigger?.addEventListener('click', onClick);
 
       return () => {
-        dropdown.removeEventListener('pointerenter', onPointerEnter);
-        dropdown.removeEventListener('focusin', onFocusIn);
+        trigger?.removeEventListener('click', onClick);
       };
     });
 
-    nav.addEventListener('pointerleave', onPointerLeave);
-    nav.addEventListener('focusout', onFocusOut);
     nav.addEventListener('keydown', onKeyDown);
+    backdrop?.addEventListener('click', onBackdropClick);
+    document.addEventListener('click', onDocumentClick);
 
     return () => {
       setActiveDropdown(null);
       removers.forEach((remove) => remove());
-      nav.removeEventListener('pointerleave', onPointerLeave);
-      nav.removeEventListener('focusout', onFocusOut);
       nav.removeEventListener('keydown', onKeyDown);
+      backdrop?.removeEventListener('click', onBackdropClick);
+      document.removeEventListener('click', onDocumentClick);
     };
   }, [navId]);
 

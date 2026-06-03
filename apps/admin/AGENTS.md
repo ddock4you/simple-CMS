@@ -406,7 +406,8 @@ src/
   - admin UI에서 체크박스 그룹으로 복수 선택
   - 메뉴 설정(이름/설명/슬롯) 수정: 메뉴 편집 페이지의 "메뉴 설정" Dialog
 - NavigationMenuItem (메뉴 항목): label, itemType, 연결 대상, parentId, isVisible, displayOrder, openInNewTab, 노출 기간(startDate/endDate)
-- **항목 타입**: SUBPAGE(subpageId), BOARD(boardId), EXTERNAL(url), CUSTOM(경로)
+- **항목 타입**: GROUP(링크 없는 그룹/토글), SUBPAGE(subpageId), BOARD(boardId), EXTERNAL(url), CUSTOM(경로)
+- HEADER 슬롯에서 하위 메뉴가 있는 1depth는 GROUP 사용을 기본값으로 한다. 공개 웹 KRDS PC GNB는 1depth 클릭을 하위 메뉴 토글로 사용하므로, 이동 링크는 2depth 이하에 둔다.
 - 최대 3depth (parentId 자기참조, 3단계 이상 서버 차단)
 - 연결은 엔티티 참조 방식 우선 (URL 직접 입력 아님), slug 변경 시 메뉴 안 깨짐
 - 메뉴명: 엔티티 연결 시 label 자동 채움, 이후 수동 수정 가능

@@ -186,7 +186,7 @@ const navigationMenuItemRowSchema = z.object({
   menuId: cuidString,
   parentId: cuidString.nullable(),
   label: z.string(),
-  itemType: z.enum(['SUBPAGE', 'BOARD', 'EXTERNAL', 'CUSTOM']),
+  itemType: z.enum(['GROUP', 'SUBPAGE', 'BOARD', 'EXTERNAL', 'CUSTOM']),
   subpageId: cuidString.nullable(),
   boardId: cuidString.nullable(),
   url: z.string().nullable(),

@@ -50,14 +50,18 @@ export function filterMenuItems(items: RawMenuItem[]): FilteredMenuItem[] {
   return items
     .filter(isItemVisible)
     .sort((a, b) => a.displayOrder - b.displayOrder)
-    .map((item) => ({
-      id: item.id,
-      label: item.label,
-      itemType: item.itemType,
-      url: item.url,
-      openInNewTab: item.openInNewTab,
-      subpage: item.subpage ? { slug: item.subpage.slug } : null,
-      board: item.board ? { slug: item.board.slug } : null,
-      children: filterMenuItems(item.children ?? []),
-    }));
+    .map((item) => {
+      const children = filterMenuItems(item.children ?? []);
+      return {
+        id: item.id,
+        label: item.label,
+        itemType: item.itemType,
+        url: item.url,
+        openInNewTab: item.itemType === 'GROUP' ? false : item.openInNewTab,
+        subpage: item.subpage ? { slug: item.subpage.slug } : null,
+        board: item.board ? { slug: item.board.slug } : null,
+        children,
+      };
+    })
+    .filter((item) => item.itemType !== 'GROUP' || item.children.length > 0);
 }

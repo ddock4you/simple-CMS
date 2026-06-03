@@ -66,6 +66,7 @@ enum NavigationMenuSlot {
 }
 
 enum NavigationMenuItemType {
+  GROUP
   SUBPAGE
   BOARD
   EXTERNAL

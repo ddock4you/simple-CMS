@@ -65,7 +65,7 @@ export function MenuItemDialog({
     defaultValues: {
       parentId: editItem ? undefined : parentId,
       label: '',
-      itemType: 'SUBPAGE',
+      itemType: parentId ? 'SUBPAGE' : 'GROUP',
       subpageId: null,
       boardId: null,
       url: null,
@@ -94,7 +94,7 @@ export function MenuItemDialog({
       reset({
         parentId,
         label: '',
-        itemType: 'SUBPAGE',
+        itemType: parentId ? 'SUBPAGE' : 'GROUP',
         subpageId: null,
         boardId: null,
         url: null,
@@ -107,6 +107,13 @@ export function MenuItemDialog({
   }, [open, editItem, parentId, reset]);
 
   const itemType = watch('itemType');
+
+  useEffect(() => {
+    if (itemType !== 'SUBPAGE') setValue('subpageId', null);
+    if (itemType !== 'BOARD') setValue('boardId', null);
+    if (itemType !== 'EXTERNAL' && itemType !== 'CUSTOM') setValue('url', null);
+    if (itemType === 'GROUP') setValue('openInNewTab', false);
+  }, [itemType, setValue]);
 
   // Auto-fill label when entity is selected
   const handleSubpageChange = (subpageId: string) => {
@@ -155,9 +162,11 @@ export function MenuItemDialog({
                         {field.value === 'BOARD' && '게시판'}
                         {field.value === 'EXTERNAL' && '외부 링크'}
                         {field.value === 'CUSTOM' && '커스텀 경로'}
+                        {field.value === 'GROUP' && '메뉴 그룹'}
                       </span>
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="GROUP">메뉴 그룹</SelectItem>
                       <SelectItem value="SUBPAGE">서브 페이지</SelectItem>
                       <SelectItem value="BOARD">게시판</SelectItem>
                       <SelectItem value="EXTERNAL">외부 링크</SelectItem>
@@ -257,11 +266,13 @@ export function MenuItemDialog({
                 name="isVisible"
                 label="공개"
               />
-              <BooleanSwitchField
-                control={control}
-                name="openInNewTab"
-                label="새 탭에서 열기"
-              />
+              {itemType !== 'GROUP' && (
+                <BooleanSwitchField
+                  control={control}
+                  name="openInNewTab"
+                  label="새 탭에서 열기"
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

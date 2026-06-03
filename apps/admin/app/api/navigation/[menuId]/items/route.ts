@@ -103,7 +103,7 @@ export async function POST(
         boardId: itemType === 'BOARD' ? boardId : null,
         url: itemType === 'EXTERNAL' || itemType === 'CUSTOM' ? url : null,
         isVisible,
-        openInNewTab,
+        openInNewTab: itemType === 'GROUP' ? false : openInNewTab,
         displayOrder,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,

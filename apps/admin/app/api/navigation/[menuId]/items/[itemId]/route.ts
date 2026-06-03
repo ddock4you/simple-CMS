@@ -34,21 +34,54 @@ export async function PATCH(
     }
 
     const { label, itemType, subpageId, boardId, url, isVisible, openInNewTab, startDate, endDate } = parsed.data;
+    const nextItemType = itemType ?? item.itemType;
+    const nextSubpageId = subpageId !== undefined ? subpageId : item.subpageId;
+    const nextBoardId = boardId !== undefined ? boardId : item.boardId;
+    const nextUrl = url !== undefined ? url : item.url;
+
+    if (nextItemType === 'SUBPAGE' && !nextSubpageId) {
+      return NextResponse.json(
+        { success: false, error: '서브 페이지를 선택해주세요.' } satisfies ApiResponse<never>,
+        { status: 400 },
+      );
+    }
+    if (nextItemType === 'BOARD' && !nextBoardId) {
+      return NextResponse.json(
+        { success: false, error: '게시판을 선택해주세요.' } satisfies ApiResponse<never>,
+        { status: 400 },
+      );
+    }
+    if ((nextItemType === 'EXTERNAL' || nextItemType === 'CUSTOM') && !nextUrl) {
+      return NextResponse.json(
+        { success: false, error: 'URL을 입력해주세요.' } satisfies ApiResponse<never>,
+        { status: 400 },
+      );
+    }
 
     const updateData: Record<string, unknown> = {};
     if (label !== undefined) updateData.label = label;
     if (itemType !== undefined) {
       updateData.itemType = itemType;
-      updateData.subpageId = itemType === 'SUBPAGE' ? (subpageId ?? item.subpageId) : null;
-      updateData.boardId = itemType === 'BOARD' ? (boardId ?? item.boardId) : null;
-      updateData.url = (itemType === 'EXTERNAL' || itemType === 'CUSTOM') ? (url ?? item.url) : null;
+      updateData.subpageId = itemType === 'SUBPAGE' ? nextSubpageId : null;
+      updateData.boardId = itemType === 'BOARD' ? nextBoardId : null;
+      updateData.url =
+        itemType === 'EXTERNAL' || itemType === 'CUSTOM' ? nextUrl : null;
+      if (itemType === 'GROUP') updateData.openInNewTab = false;
     } else {
       if (subpageId !== undefined) updateData.subpageId = subpageId;
       if (boardId !== undefined) updateData.boardId = boardId;
       if (url !== undefined) updateData.url = url;
     }
     if (isVisible !== undefined) updateData.isVisible = isVisible;
-    if (openInNewTab !== undefined) updateData.openInNewTab = openInNewTab;
+    if (openInNewTab !== undefined && nextItemType !== 'GROUP') {
+      updateData.openInNewTab = openInNewTab;
+    }
+    if (nextItemType === 'GROUP') {
+      updateData.subpageId = null;
+      updateData.boardId = null;
+      updateData.url = null;
+      updateData.openInNewTab = false;
+    }
     if (startDate !== undefined) updateData.startDate = startDate ? new Date(startDate) : null;
     if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null;
 
