@@ -6,6 +6,8 @@ import Link from 'next/link';
 
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import { getMenuItemHref } from '@/entities/navigation/lib/getMenuItemHref';
+import { isExternalMenuItem } from '@/entities/navigation/lib/isExternalMenuItem';
+import { ExternalMenuIcon } from '@/entities/navigation/ui/ExternalMenuIcon';
 
 interface MobileMenuIslandProps {
   items: FilteredMenuItem[];
@@ -103,6 +105,7 @@ export function MobileMenuIsland({
                             : [item]
                           ).map((child) => {
                             const href = getMenuItemHref(child);
+                            const external = isExternalMenuItem(child, href);
                             return (
                               <li key={child.id}>
                                 <a
@@ -119,6 +122,7 @@ export function MobileMenuIsland({
                                   onClick={() => setOpen(false)}
                                 >
                                   {child.label}
+                                  {external && <ExternalMenuIcon />}
                                 </a>
                                 {child.children.length > 0 && (
                                   <div className="depth3-wrap is-open">
@@ -126,6 +130,11 @@ export function MobileMenuIsland({
                                       {child.children.map((grandchild) => {
                                         const grandchildHref =
                                           getMenuItemHref(grandchild);
+                                        const grandchildExternal =
+                                          isExternalMenuItem(
+                                            grandchild,
+                                            grandchildHref,
+                                          );
                                         return (
                                           <li key={grandchild.id}>
                                             <a
@@ -144,6 +153,9 @@ export function MobileMenuIsland({
                                               onClick={() => setOpen(false)}
                                             >
                                               {grandchild.label}
+                                              {grandchildExternal && (
+                                                <ExternalMenuIcon />
+                                              )}
                                             </a>
                                           </li>
                                         );

@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import { getMenuItemHref } from '@/entities/navigation/lib/getMenuItemHref';
+import { isExternalMenuItem } from '@/entities/navigation/lib/isExternalMenuItem';
+import { ExternalMenuIcon } from '@/entities/navigation/ui/ExternalMenuIcon';
 
 interface RightSidebarProps {
   menuName: string;
@@ -30,8 +32,7 @@ function flattenLeaves(
       continue;
     }
     const href = getMenuItemHref(item);
-    const external =
-      item.itemType === 'EXTERNAL' || /^https?:\/\//i.test(href);
+    const external = isExternalMenuItem(item, href);
     out.push({
       href,
       label: item.label,
@@ -88,6 +89,7 @@ export function RightSidebar({ menuName, items }: RightSidebarProps) {
                         rel={rel}
                       >
                         {item.label}
+                        <ExternalMenuIcon />
                       </a>
                     ) : (
                       <Link

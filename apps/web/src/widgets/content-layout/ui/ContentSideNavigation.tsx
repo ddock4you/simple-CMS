@@ -6,6 +6,8 @@ import { SideNavigation } from 'krds-react';
 
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import { getMenuItemHref } from '@/entities/navigation/lib/getMenuItemHref';
+import { isExternalMenuItem } from '@/entities/navigation/lib/isExternalMenuItem';
+import { ExternalMenuIcon } from '@/entities/navigation/ui/ExternalMenuIcon';
 
 interface ContentSideNavigationProps {
   rootLabel: string;
@@ -79,6 +81,10 @@ export function ContentSideNavigation({
                                   className={getActiveClassName(childActive)}
                                 >
                                   {child.label}
+                                  {isExternalMenuItem(
+                                    child,
+                                    getMenuItemHref(child),
+                                  ) && <ExternalMenuIcon />}
                                 </SideNavigation.Link>
                               </SideNavigation.SubItem>
                             );
@@ -93,6 +99,9 @@ export function ContentSideNavigation({
                       className={getActiveClassName(itemActive)}
                     >
                       {item.label}
+                      {isExternalMenuItem(item, getMenuItemHref(item)) && (
+                        <ExternalMenuIcon />
+                      )}
                     </SideNavigation.Link>
                   )}
                 </SideNavigation.Item>

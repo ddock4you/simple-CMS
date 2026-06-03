@@ -276,6 +276,7 @@ web은 Server Component 중심이라 전역 Provider 없음. Storybook decorator
 - 메뉴 depth: 최대 3단계
 - 메뉴 레이아웃/반응형은 코드에서 통제
 - 모바일/데스크톱 동일 데이터, 렌더링 방식만 분기
+- 외부 링크(`itemType === 'EXTERNAL'` 또는 `http(s)` URL)는 헤더 PC 메뉴, 모바일 전체메뉴, 좌측 콘텐츠 사이드바, 우측 사이드바, 푸터 메뉴에서 텍스트 오른쪽에 `ExternalMenuIcon`(lucide `ExternalLink`)을 표시한다. 판정은 `entities/navigation/lib/isExternalMenuItem.ts`, 아이콘은 `entities/navigation/ui/ExternalMenuIcon.tsx`가 단일 출처
 - 운영자는 메뉴명/링크/노출 여부/순서/슬롯만 수정
 
 ## 메인 페이지

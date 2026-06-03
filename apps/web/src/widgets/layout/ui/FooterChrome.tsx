@@ -2,6 +2,8 @@ import { DEFAULT_SITE_FOOTER_IDENTIFIER_TEXT } from '@simple-cms/types';
 
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import { getMenuItemHref } from '@/entities/navigation/lib/getMenuItemHref';
+import { isExternalMenuItem } from '@/entities/navigation/lib/isExternalMenuItem';
+import { ExternalMenuIcon } from '@/entities/navigation/ui/ExternalMenuIcon';
 import type { Branding } from '@/shared/lib/brandingCache';
 import type { ResolvedSiteFooterConfig } from '@/shared/lib/footerConfigCache';
 
@@ -99,16 +101,21 @@ export function FooterChrome({
             )}
             {footerMenuItems.length > 0 && (
               <div className="f-menu">
-                {footerMenuItems.map((item) => (
-                  <a
-                    key={item.id}
-                    href={getMenuItemHref(item)}
-                    target={getLinkTarget(item.openInNewTab)}
-                    rel={getLinkRel(item.openInNewTab)}
-                  >
-                    {item.label}
-                  </a>
-                ))}
+                {footerMenuItems.map((item) => {
+                  const href = getMenuItemHref(item);
+                  const external = isExternalMenuItem(item, href);
+                  return (
+                    <a
+                      key={item.id}
+                      href={href}
+                      target={getLinkTarget(item.openInNewTab)}
+                      rel={getLinkRel(item.openInNewTab)}
+                    >
+                      {item.label}
+                      {external && <ExternalMenuIcon />}
+                    </a>
+                  );
+                })}
               </div>
             )}
           </div>

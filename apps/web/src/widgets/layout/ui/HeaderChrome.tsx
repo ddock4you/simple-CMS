@@ -1,5 +1,7 @@
 import type { FilteredMenuItem } from '@/entities/navigation/lib/filterMenuItems';
 import { getMenuItemHref } from '@/entities/navigation/lib/getMenuItemHref';
+import { isExternalMenuItem } from '@/entities/navigation/lib/isExternalMenuItem';
+import { ExternalMenuIcon } from '@/entities/navigation/ui/ExternalMenuIcon';
 import type { Branding } from '@/shared/lib/brandingCache';
 
 import { DesktopGnbBehavior } from './DesktopGnbBehavior';
@@ -97,13 +99,9 @@ interface HeaderChromeProps {
   headerMenuItems: FilteredMenuItem[];
 }
 
-function isExternal(item: FilteredMenuItem, href: string) {
-  return item.itemType === 'EXTERNAL' || /^https?:\/\//i.test(href);
-}
-
 function renderDesktopLeaf(item: FilteredMenuItem) {
   const href = getMenuItemHref(item);
-  const external = isExternal(item, href);
+  const external = isExternalMenuItem(item, href);
 
   return (
     <a
@@ -125,7 +123,7 @@ function DesktopSubPanel({
   hasSiblingSubmenu: boolean;
 }) {
   const href = getMenuItemHref(item);
-  const external = isExternal(item, href);
+  const external = isExternalMenuItem(item, href);
 
   if (item.children.length === 0) {
     return (
@@ -157,7 +155,7 @@ function DesktopSubPanel({
           <ul className={depth3ListClassName}>
             {item.children.map((child) => {
               const childHref = getMenuItemHref(child);
-              const childExternal = isExternal(child, childHref);
+              const childExternal = isExternalMenuItem(child, childHref);
               return (
                 <li key={child.id}>
                   <a
@@ -168,6 +166,7 @@ function DesktopSubPanel({
                     title={childExternal ? '새 창 열림' : undefined}
                   >
                     {child.label}
+                    {childExternal && <ExternalMenuIcon />}
                   </a>
                 </li>
               );
@@ -192,7 +191,7 @@ function DesktopMainMenu({ items }: { items: FilteredMenuItem[] }) {
         <ul className="gnb-menu">
           {items.map((item) => {
             const href = getMenuItemHref(item);
-            const external = isExternal(item, href);
+            const external = isExternalMenuItem(item, href);
             const hasSubmenu = item.children.some(
               (child) => child.children.length > 0,
             );
@@ -208,6 +207,7 @@ function DesktopMainMenu({ items }: { items: FilteredMenuItem[] }) {
                     title={external ? '새 창 열림' : undefined}
                   >
                     {item.label}
+                    {external && <ExternalMenuIcon />}
                   </a>
                 </li>
               );
@@ -225,6 +225,7 @@ function DesktopMainMenu({ items }: { items: FilteredMenuItem[] }) {
                   title={external ? '새 창 열림' : undefined}
                 >
                   {item.label}
+                  {external && <ExternalMenuIcon />}
                 </a>
                 <div className="gnb-toggle-wrap">
                   <div
