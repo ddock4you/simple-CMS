@@ -29,8 +29,8 @@ export function HeaderBranding({
   searchHref?: string;
 }) {
   return (
-    <div className="header-branding !flex !min-h-[var(--krds-size-height-6)] !w-full !items-center !gap-[24px] large:!min-h-[var(--krds-size-height-7)]">
-      <h2 className="logo !m-0 !h-[2rem] !w-[5.875rem] !shrink-0 medium:!h-[var(--krds-size-height-7)] medium:!w-[8.5625rem]">
+    <div className="header-branding">
+      <h2 className="logo">
         <Link
           href="/"
           aria-label={branding.logoAlt}

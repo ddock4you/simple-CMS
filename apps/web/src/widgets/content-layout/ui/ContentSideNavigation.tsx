@@ -9,6 +9,11 @@ import { getMenuItemHref } from '@/entities/navigation/lib/getMenuItemHref';
 import { isExternalMenuItem } from '@/entities/navigation/lib/isExternalMenuItem';
 import { ExternalMenuIcon } from '@/entities/navigation/ui/ExternalMenuIcon';
 
+import {
+  findDeepestActiveMenuItemId,
+  hasActiveMenuItem,
+} from '../lib/contentSideNavigationActive';
+
 interface ContentSideNavigationProps {
   rootLabel: string;
   items: FilteredMenuItem[];
@@ -19,14 +24,15 @@ export function ContentSideNavigation({
   items,
 }: ContentSideNavigationProps) {
   const pathname = usePathname() ?? '';
+  const activeItemId = findDeepestActiveMenuItemId(items, pathname);
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     for (const item of items) {
-      if (hasActiveChild(item, pathname)) {
+      if (hasActiveMenuItem(item, pathname)) {
         initial[item.id] = true;
         for (const child of item.children) {
-          if (hasActiveChild(child, pathname)) initial[child.id] = true;
+          if (hasActiveMenuItem(child, pathname)) initial[child.id] = true;
         }
       }
     }
@@ -38,8 +44,7 @@ export function ContentSideNavigation({
   };
 
   const isActive = (item: FilteredMenuItem) => {
-    const href = getMenuItemHref(item);
-    return href !== '#' && isPathActive(href, pathname);
+    return item.id === activeItemId;
   };
 
   return (
@@ -116,15 +121,4 @@ export function ContentSideNavigation({
 
 function getActiveClassName(isActive: boolean): string | undefined {
   return isActive ? 'active selected' : undefined;
-}
-
-function hasActiveChild(item: FilteredMenuItem, pathname: string): boolean {
-  const href = getMenuItemHref(item);
-  if (href !== '#' && isPathActive(href, pathname)) return true;
-  return item.children.some((child) => hasActiveChild(child, pathname));
-}
-
-function isPathActive(href: string, pathname: string): boolean {
-  if (pathname === href) return true;
-  return href.startsWith('/board/') && pathname.startsWith(`${href}/`);
 }

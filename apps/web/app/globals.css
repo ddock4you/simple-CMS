@@ -91,6 +91,13 @@
 /* ==========================================================================
    2. 페이지 레이아웃 보조
    ========================================================================== */
+#krds-header .header-container .logo {
+  width: 13rem !important;
+  height: 3.5rem !important;
+}
+#krds-footer .f-logo {
+  width: 13rem !important;
+}
 
 .page-container {
   max-width: var(--krds-content-max-width, 1200px);

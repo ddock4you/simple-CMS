@@ -9,8 +9,14 @@ const EMPTY_STATE_GUIDES = [
 
 export function BoardEmptyState({ boardName }: BoardEmptyStateProps) {
   return (
-    <section className="flex min-h-[180px] w-full flex-col items-stretch justify-center gap-[16px] rounded-[10px] bg-[#f4f5f6] p-[16px] large:min-h-[220px] large:rounded-[12px] large:p-[24px]" aria-labelledby="board-empty-title">
-      <h2 id="board-empty-title" className="m-0 text-[18px] leading-[1.5] font-bold text-[#1e2124] large:text-[19px]">
+    <section
+      className="flex min-h-[180px] w-full flex-col items-stretch justify-center gap-[16px] rounded-[10px] bg-[#f4f5f6] p-[16px] large:min-h-[220px] large:rounded-[12px] large:p-[24px] mb-[40px] large:mb-[64px]"
+      aria-labelledby="board-empty-title"
+    >
+      <h2
+        id="board-empty-title"
+        className="m-0 text-[18px] leading-[1.5] font-bold text-[#1e2124] large:text-[19px]"
+      >
         <span className="text-[#1e694e]">{boardName}</span>에 등록된 게시글이
         없습니다.
       </h2>

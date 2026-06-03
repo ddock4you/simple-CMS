@@ -124,7 +124,7 @@ export function SubpageFeedbackForm({
 
   return (
     <section
-      className="subpage-feedback rounded-[12px] bg-[#f4f5f6] p-[24px] medium:p-[48px]"
+      className="subpage-feedback rounded-[12px] bg-[#f4f5f6] p-[24px] medium:p-[48px] mt-[40px] large:mt-[64px]"
       aria-labelledby={titleId}
       aria-describedby={messageId}
     >
@@ -138,9 +138,15 @@ export function SubpageFeedbackForm({
           </p>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-[24px] large:space-y-[28px]">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-[24px] large:space-y-[28px]"
+        >
           <div className="flex flex-col gap-[16px] medium:flex-row medium:items-center medium:justify-between">
-            <h2 id={titleId} className="text-[17px] leading-[1.5] font-bold text-[#1e2124]">
+            <h2
+              id={titleId}
+              className="text-[17px] leading-[1.5] font-bold text-[#1e2124]"
+            >
               이 페이지에 만족하시나요?
             </h2>
             {/*
@@ -168,10 +174,7 @@ export function SubpageFeedbackForm({
                       checked={checked}
                       onChange={() => handleRatingChange(option.value)}
                     />
-                    <label
-                      className="krds-form-chip-outline"
-                      htmlFor={inputId}
-                    >
+                    <label className="krds-form-chip-outline" htmlFor={inputId}>
                       {option.label} {option.emoji}
                     </label>
                   </div>
@@ -242,13 +245,19 @@ export function SubpageFeedbackForm({
               </div>
 
               {errorMessage && (
-                <p role="alert" className="text-[15px] leading-[1.5] text-[#e71825]">
+                <p
+                  role="alert"
+                  className="text-[15px] leading-[1.5] text-[#e71825]"
+                >
                   {errorMessage}
                 </p>
               )}
 
               {previewMode && (
-                <p role="note" className="text-[15px] leading-[1.5] text-[#58616a]">
+                <p
+                  role="note"
+                  className="text-[15px] leading-[1.5] text-[#58616a]"
+                >
                   미리보기 모드에서는 피드백을 제출할 수 없습니다.
                 </p>
               )}
