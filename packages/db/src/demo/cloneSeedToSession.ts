@@ -12,12 +12,10 @@
  *   3. NavigationMenuItem 자기참조(`parentId`)는 2-pass: 1차 createMany는 `parentId=null`, 2차 update로 채움.
  *   4. 부분 실패 시 PG가 자동 rollback → 호출 측은 catch 후 splash 재시도 흐름.
  *
- * 알려진 한계 (PR9/11 snapshot walker 도입 시 일괄 처리):
- *   - SubpageVersion.snapshot Json 내부의 mediaId/blockId는 walker 미적용 → `__SEED__`-era id 잔존.
- *     시연 사용자가 옛 버전 복원 시 image 등이 dangling 될 수 있음.
- *   - HomeSection.configJson 내부의 boardId / mediaId reference 동일 위험.
- *   - Tiptap RICH_TEXT 본문 image 노드의 `attrs.mediaId` 동일 위험.
- *   각 케이스 모두 시각 렌더 자체는 정상 (url 필드는 별도 보존).
+ * JSON 내부 참조도 함께 remap한다:
+ *   - HomeSection.configJson 내부 boardId/mediaId
+ *   - Post/PageBlock/HomePopup Tiptap image attrs.mediaId
+ *   - SubpageVersion.snapshot 내부 media 참조
  */
 import { createId } from '@paralleldrive/cuid2';
 
@@ -26,12 +24,24 @@ import { Prisma } from '../generated/prisma/client';
 
 import { isBypassed, SEED_SENTINEL } from './sessionContext';
 import { SeedNotFoundError } from './SeedNotFoundError';
+import {
+  remapHomePopupContentJsonReferences,
+  remapHomeSectionJsonReferences,
+  remapPageBlockConfigJsonReferences,
+  remapPostContentJsonReferences,
+  remapSubpageVersionSnapshotJsonReferences,
+} from './snapshotWalker';
 
 /** demo-seed.ts와 cloneSeedToSession이 공유하는 demo 관리자 username 상수. */
 export const DEMO_ADMIN_USERNAME = 'demo_admin';
 
 const TRANSACTION_TIMEOUT_MS = 30_000;
 const TRANSACTION_MAX_WAIT_MS = 5_000;
+
+function cloneJson<T>(value: T): T {
+  if (value === null || value === undefined) return value;
+  return structuredClone(value);
+}
 
 export interface CloneStats {
   Role: number;
@@ -232,15 +242,25 @@ export async function cloneSeedToSession(
         where: { sessionId: SEED_SENTINEL },
         orderBy: { id: 'asc' },
       });
-      const sectionData = seedSections.map((s) => ({
-        id: createId(),
-        sessionId: newSessionId,
-        sectionType: s.sectionType,
-        title: s.title,
-        configJson: s.configJson as Prisma.InputJsonValue,
-        isVisible: s.isVisible,
-        displayOrder: s.displayOrder,
-      }));
+      const sectionData = seedSections.map((s) => {
+        const configJson = cloneJson(s.configJson);
+        remapHomeSectionJsonReferences(
+          s.sectionType,
+          configJson,
+          mediaIdMap,
+          boardIdMap,
+        );
+
+        return {
+          id: createId(),
+          sessionId: newSessionId,
+          sectionType: s.sectionType,
+          title: s.title,
+          configJson: configJson as Prisma.InputJsonValue,
+          isVisible: s.isVisible,
+          displayOrder: s.displayOrder,
+        };
+      });
       if (sectionData.length > 0) {
         await tx.homeSection.createMany({ data: sectionData });
       }
@@ -287,6 +307,9 @@ export async function cloneSeedToSession(
         .map((p) => {
           const newBoardId = boardIdMap.get(p.boardId);
           if (!newBoardId) return null; // 데이터 무결성 깨졌을 때 skip
+          const contentJson = cloneJson(p.contentJson);
+          remapPostContentJsonReferences(contentJson, mediaIdMap);
+
           return {
             id: createId(),
             sessionId: newSessionId,
@@ -296,8 +319,7 @@ export async function cloneSeedToSession(
             seoTitle: p.seoTitle,
             seoDescription: p.seoDescription,
             contentJson:
-              (p.contentJson as Prisma.InputJsonValue | null) ??
-              Prisma.JsonNull,
+              (contentJson as Prisma.InputJsonValue | null) ?? Prisma.JsonNull,
             content: p.content,
             status: p.status,
             isImportant: p.isImportant,
@@ -323,12 +345,19 @@ export async function cloneSeedToSession(
         .map((b) => {
           const newSubpageId = subpageIdMap.get(b.subpageId);
           if (!newSubpageId) return null;
+          const configJson = cloneJson(b.configJson);
+          remapPageBlockConfigJsonReferences(
+            b.blockType,
+            configJson,
+            mediaIdMap,
+          );
+
           return {
             id: createId(),
             sessionId: newSessionId,
             subpageId: newSubpageId,
             blockType: b.blockType,
-            configJson: b.configJson as Prisma.InputJsonValue,
+            configJson: configJson as Prisma.InputJsonValue,
             isVisible: b.isVisible,
             displayOrder: b.displayOrder,
           };
@@ -343,26 +372,35 @@ export async function cloneSeedToSession(
         where: { sessionId: SEED_SENTINEL },
         orderBy: { id: 'asc' },
       });
-      const popupData = seedPopups.map((p) => ({
-        id: createId(),
-        sessionId: newSessionId,
-        popupType: p.popupType,
-        title: p.title,
-        contentJson:
-          (p.contentJson as Prisma.InputJsonValue | null) ?? Prisma.JsonNull,
-        content: p.content,
-        imageUrl: p.imageUrl,
-        imageAlt: p.imageAlt,
-        imageMediaId: p.imageMediaId
-          ? (mediaIdMap.get(p.imageMediaId) ?? null)
-          : null,
-        linkUrl: p.linkUrl,
-        buttonLabel: p.buttonLabel,
-        isVisible: p.isVisible,
-        displayOrder: p.displayOrder,
-        startDate: p.startDate,
-        endDate: p.endDate,
-      }));
+      const popupData = seedPopups.map((p) => {
+        const contentJson = cloneJson(p.contentJson);
+        remapHomePopupContentJsonReferences(
+          p.popupType,
+          contentJson,
+          mediaIdMap,
+        );
+
+        return {
+          id: createId(),
+          sessionId: newSessionId,
+          popupType: p.popupType,
+          title: p.title,
+          contentJson:
+            (contentJson as Prisma.InputJsonValue | null) ?? Prisma.JsonNull,
+          content: p.content,
+          imageUrl: p.imageUrl,
+          imageAlt: p.imageAlt,
+          imageMediaId: p.imageMediaId
+            ? (mediaIdMap.get(p.imageMediaId) ?? null)
+            : null,
+          linkUrl: p.linkUrl,
+          buttonLabel: p.buttonLabel,
+          isVisible: p.isVisible,
+          displayOrder: p.displayOrder,
+          startDate: p.startDate,
+          endDate: p.endDate,
+        };
+      });
       if (popupData.length > 0) {
         await tx.homePopup.createMany({ data: popupData });
       }
@@ -415,8 +453,6 @@ export async function cloneSeedToSession(
       }
 
       // ─── 13) SubpageVersion ─────────────────────────────
-      // 알려진 한계: snapshot Json 내부의 mediaId/blockId는 walker 미적용 → __SEED__-era id 잔존.
-      // 시연 사용자가 옛 버전 복원 시 image 등이 dangling 될 수 있음 (PR9 walker 도입 시 일괄 처리).
       const seedVersions = await tx.subpageVersion.findMany({
         where: { sessionId: SEED_SENTINEL },
         orderBy: { id: 'asc' },
@@ -425,6 +461,9 @@ export async function cloneSeedToSession(
         .map((v) => {
           const newSubpageId = subpageIdMap.get(v.subpageId);
           if (!newSubpageId) return null;
+          const snapshot = cloneJson(v.snapshot);
+          remapSubpageVersionSnapshotJsonReferences(snapshot, mediaIdMap);
+
           return {
             id: createId(),
             sessionId: newSessionId,
@@ -433,7 +472,7 @@ export async function cloneSeedToSession(
               ? (userIdMap.get(v.createdById) ?? null)
               : null,
             label: v.label,
-            snapshot: v.snapshot as Prisma.InputJsonValue,
+            snapshot: snapshot as Prisma.InputJsonValue,
             isPinned: v.isPinned,
             sourceAction: v.sourceAction,
           };

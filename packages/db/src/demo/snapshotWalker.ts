@@ -119,6 +119,16 @@ function remapHomeSectionConfig(
   }
 }
 
+export function remapHomeSectionJsonReferences(
+  sectionType: string,
+  configJson: unknown,
+  mediaIdMap: IdMap,
+  boardIdMap: IdMap,
+): void {
+  remapHomeSectionConfig(sectionType, configJson, mediaIdMap, 'mediaId');
+  remapHomeSectionConfig(sectionType, configJson, boardIdMap, 'boardId');
+}
+
 // ─── PageBlock.configJson 재매핑 ────────────────────────────
 
 function remapPageBlockConfig(
@@ -155,6 +165,14 @@ function remapPageBlockConfig(
   }
 }
 
+export function remapPageBlockConfigJsonReferences(
+  blockType: string,
+  configJson: unknown,
+  mediaIdMap: IdMap,
+): void {
+  remapPageBlockConfig(blockType, configJson, mediaIdMap);
+}
+
 // ─── SubpageVersion.snapshot 재매핑 ─────────────────────────
 
 function remapSubpageVersionSnapshot(
@@ -184,6 +202,13 @@ function remapSubpageVersionSnapshot(
   }
 }
 
+export function remapSubpageVersionSnapshotJsonReferences(
+  snapshot: unknown,
+  mediaIdMap: IdMap,
+): void {
+  remapSubpageVersionSnapshot(snapshot, mediaIdMap);
+}
+
 // ─── HomePopup.contentJson 재매핑 (CONTENT 타입의 Tiptap) ──
 
 function remapHomePopupContent(
@@ -196,11 +221,26 @@ function remapHomePopupContent(
   remapTiptapNode(contentJson, mediaIdMap);
 }
 
+export function remapHomePopupContentJsonReferences(
+  popupType: string,
+  contentJson: unknown,
+  mediaIdMap: IdMap,
+): void {
+  remapHomePopupContent(popupType, contentJson, mediaIdMap);
+}
+
 // ─── Post.contentJson 재매핑 (Tiptap) ───────────────────────
 
 function remapPostContent(contentJson: unknown, mediaIdMap: IdMap): void {
   if (!contentJson) return;
   remapTiptapNode(contentJson, mediaIdMap);
+}
+
+export function remapPostContentJsonReferences(
+  contentJson: unknown,
+  mediaIdMap: IdMap,
+): void {
+  remapPostContent(contentJson, mediaIdMap);
 }
 
 // ─── 최상위 진입점 ────────────────────────────────────────

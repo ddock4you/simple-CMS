@@ -15,7 +15,12 @@
 import { describe, it, expect } from 'vitest';
 
 import type { SnapshotPayload } from './snapshot.types';
-import { walkSnapshotForRemap } from './snapshotWalker';
+import {
+  remapHomeSectionJsonReferences,
+  remapPageBlockConfigJsonReferences,
+  remapPostContentJsonReferences,
+  walkSnapshotForRemap,
+} from './snapshotWalker';
 
 function emptyPayload(): SnapshotPayload {
   return {
@@ -591,5 +596,63 @@ describe('walkSnapshotForRemap — edge', () => {
       slides: Array<{ mediaId: string }>;
     };
     expect(cfg.slides[0]!.mediaId).toBe('m1'); // 무변경
+  });
+});
+
+describe('snapshotWalker clone helpers', () => {
+  it('remaps HomeSection mediaId and boardId references in one pass', () => {
+    const mediaIdMap = new Map([['seed-media', 'visitor-media']]);
+    const boardIdMap = new Map([['seed-board', 'visitor-board']]);
+
+    const heroConfig = {
+      slides: [{ mediaId: 'seed-media' }, { mediaId: 'unmapped-media' }],
+    };
+    remapHomeSectionJsonReferences(
+      'HERO',
+      heroConfig,
+      mediaIdMap,
+      boardIdMap,
+    );
+    expect(heroConfig.slides[0]!.mediaId).toBe('visitor-media');
+    expect(heroConfig.slides[1]!.mediaId).toBe('unmapped-media');
+
+    const latestPostsConfig = { boardId: 'seed-board' };
+    remapHomeSectionJsonReferences(
+      'LATEST_POSTS',
+      latestPostsConfig,
+      mediaIdMap,
+      boardIdMap,
+    );
+    expect(latestPostsConfig.boardId).toBe('visitor-board');
+  });
+
+  it('remaps clone-time Tiptap and PageBlock media references', () => {
+    const mediaIdMap = new Map([['seed-media', 'visitor-media']]);
+    const contentJson = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'image',
+              attrs: { mediaId: 'seed-media', src: '/uploads/image.jpg' },
+            },
+          ],
+        },
+      ],
+    };
+    remapPostContentJsonReferences(contentJson, mediaIdMap);
+    expect(contentJson.content[0]!.content[0]!.attrs.mediaId).toBe(
+      'visitor-media',
+    );
+
+    const configJson = {
+      imageMediaId: 'seed-media',
+      items: [{ imageMediaId: 'seed-media' }],
+    };
+    remapPageBlockConfigJsonReferences('IMAGE', configJson, mediaIdMap);
+    expect(configJson.imageMediaId).toBe('visitor-media');
+    expect(configJson.items[0]!.imageMediaId).toBe('visitor-media');
   });
 });
