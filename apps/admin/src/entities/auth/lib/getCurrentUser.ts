@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
 
+import { demo } from '@simple-cms/db';
+
 import { getCachedSession } from '@/shared/lib/cachedSession';
 import type { SessionUser } from '@/entities/auth/model/auth.types';
 
@@ -9,6 +11,10 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
   // Session 모델은 DEMO extension의 EXCLUDED_MODELS + `runWithBypass` 이중 안전망 그대로 유지.
   const session = await getCachedSession();
   if (!session) return null;
+
+  if (process.env.DEMO_MODE === 'true') {
+    demo.enterWith({ sessionId: session.user.sessionId });
+  }
 
   const { password: _, ...safeUser } = session.user;
   return safeUser;
