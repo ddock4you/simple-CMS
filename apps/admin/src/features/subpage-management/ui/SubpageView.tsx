@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { AdminLink as Link } from '@/shared/ui/AdminLink';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ArrowLeft, Pencil } from 'lucide-react';

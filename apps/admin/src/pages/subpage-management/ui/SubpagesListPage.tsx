@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import Link from 'next/link';
+import { AdminLink as Link } from '@/shared/ui/AdminLink';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 

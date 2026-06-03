@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { AdminLink as Link } from '@/shared/ui/AdminLink';
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';

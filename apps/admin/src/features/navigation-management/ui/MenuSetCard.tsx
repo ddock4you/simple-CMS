@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { AdminLink as Link } from '@/shared/ui/AdminLink';
 import { format } from 'date-fns';
 import { ChevronRight } from 'lucide-react';
 

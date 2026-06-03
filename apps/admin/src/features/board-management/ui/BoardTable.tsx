@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { AdminLink as Link } from '@/shared/ui/AdminLink';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Eye, Pencil } from 'lucide-react';

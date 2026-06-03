@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
+import { AdminLink as Link } from '@/shared/ui/AdminLink';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Eye, Pencil, Trash2, ListChecks } from 'lucide-react';

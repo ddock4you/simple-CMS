@@ -1,5 +1,5 @@
 import { Command } from 'lucide-react';
-import Link from 'next/link';
+import { AdminLink as Link } from '@/shared/ui/AdminLink';
 
 import {
   Sidebar,

@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { AdminLink as Link } from '@/shared/ui/AdminLink';
 import { usePathname } from 'next/navigation';
 
 import { getVisibleMenuItems } from '@/shared/lib/sidebarPermissions';

@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { AdminLink as Link } from '@/shared/ui/AdminLink';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
 
