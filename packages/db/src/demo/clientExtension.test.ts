@@ -188,6 +188,37 @@ describe('processOperation — runWith({sessionId: A})', () => {
       data: { status: 'PUBLISHED' },
     });
   });
+
+  it('update — where unique 조건에 sessionId를 직접 추가', async () => {
+    const query = vi.fn().mockResolvedValue({ id: '1' });
+    await runWith({ sessionId: 'A' }, () =>
+      callOp({
+        model: 'Subpage',
+        operation: 'update',
+        args: { where: { id: '1' }, data: { title: 'next' } },
+        query,
+      }),
+    );
+    expect(query).toHaveBeenCalledWith({
+      where: { id: '1', sessionId: 'A' },
+      data: { title: 'next' },
+    });
+  });
+
+  it('delete — where unique 조건에 sessionId를 직접 추가', async () => {
+    const query = vi.fn().mockResolvedValue({ id: '1' });
+    await runWith({ sessionId: 'A' }, () =>
+      callOp({
+        model: 'Post',
+        operation: 'delete',
+        args: { where: { id: '1' } },
+        query,
+      }),
+    );
+    expect(query).toHaveBeenCalledWith({
+      where: { id: '1', sessionId: 'A' },
+    });
+  });
 });
 
 describe('processOperation — findUnique post-filter', () => {

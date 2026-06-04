@@ -143,22 +143,17 @@ export async function processOperation(
             return result;
           }
 
-          // ─── update/delete — 사전 sessionId 검증 (cross-tenant write 차단) ────────
-          // args.where가 id 기반(글로벌 unique)일 수 있어 그대로 통과시키면 타 세션 row를 mutate하게 됨.
-          // 사전 findFirst로 sessionId 일치 여부 확인 후 원래 query 진행.
+          // ─── update/delete — where에 sessionId를 직접 추가 (cross-tenant write 차단) ────────
+          // Prisma 5+의 WhereUniqueInput은 unique field(id 등)와 non-unique field(sessionId)를
+          // 함께 받을 수 있다. 사전 findFirst에 의존하면 Vercel 번들 환경에서 extension context
+          // delegate가 undefined가 되는 회귀가 있어, 단일 update/delete query에 tenant guard를 합친다.
           case 'update':
           case 'delete': {
-            const camelModel = model.charAt(0).toLowerCase() + model.slice(1);
-            const ext = Prisma.getExtensionContext(this) as Record<
-              string,
-              { findFirst: (a: unknown) => Promise<unknown> }
-            >;
-            const target = await ext[camelModel].findFirst({
-              where: { AND: [args.where, { sessionId }] },
-              select: { id: true },
+            const where = args.where as Record<string, unknown> | undefined;
+            return query({
+              ...args,
+              where: { ...(where ?? {}), sessionId },
             });
-            if (!target) throwNotFound(operation);
-            return query(args);
           }
 
           // ─── upsert — extension 일반 처리 회피 ─────────────────
