@@ -27,6 +27,15 @@ interface DefineBulkOperationOptions<TParsed extends { ids: string[] }, TFail> {
   afterAll?: (successIds: string[], ctx: HandlerContext<TParsed>) => Promise<void>;
 }
 
+function isPrismaRecordNotFoundError(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: unknown }).code === 'P2025'
+  );
+}
+
 export function defineBulkOperation<TParsed extends { ids: string[] }, TFail>(
   opts: DefineBulkOperationOptions<TParsed, TFail>,
 ): (request: Request, ctx: { params: Promise<Record<string, string>> }) => Promise<NextResponse> {
@@ -87,6 +96,12 @@ export function defineBulkOperation<TParsed extends { ids: string[] }, TFail>(
           },
         });
       } catch (err) {
+        if (isPrismaRecordNotFoundError(err)) {
+          return NextResponse.json(
+            { success: false, error: '대상을 찾을 수 없습니다.' },
+            { status: 404 },
+          );
+        }
         console.error(`[${opts.resource} ${opts.action}] Unexpected error:`, err);
         return NextResponse.json(
           { success: false, error: '요청 처리에 실패했습니다.' },

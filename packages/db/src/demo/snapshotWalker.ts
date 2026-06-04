@@ -30,26 +30,36 @@
 import type { SnapshotPayload } from './snapshot.types';
 
 type IdMap = Map<string, string>;
+type UrlMap = Map<string, string>;
 type RemapKind = 'mediaId' | 'boardId';
 
 // ─── Tiptap 재귀 walker (image 노드의 attrs.mediaId 재매핑) ────
 
-function remapTiptapNode(node: unknown, mediaIdMap: IdMap): void {
+function remapTiptapNode(
+  node: unknown,
+  mediaIdMap: IdMap,
+  mediaUrlMap: UrlMap = new Map(),
+): void {
   if (!node || typeof node !== 'object') return;
   const n = node as {
     type?: string;
-    attrs?: { mediaId?: unknown };
+    attrs?: { mediaId?: unknown; src?: unknown };
     content?: unknown;
   };
   if (n.type === 'image' && typeof n.attrs?.mediaId === 'string') {
+    const oldMediaId = n.attrs.mediaId;
     const newId = mediaIdMap.get(n.attrs.mediaId);
     if (newId) {
       n.attrs.mediaId = newId;
     }
+    const newUrl = mediaUrlMap.get(oldMediaId);
+    if (newUrl && typeof n.attrs.src === 'string') {
+      n.attrs.src = newUrl;
+    }
   }
   if (Array.isArray(n.content)) {
     for (const child of n.content) {
-      remapTiptapNode(child, mediaIdMap);
+      remapTiptapNode(child, mediaIdMap, mediaUrlMap);
     }
   }
 }
@@ -61,6 +71,7 @@ function remapHomeSectionConfig(
   configJson: unknown,
   idMap: IdMap,
   kind: RemapKind,
+  mediaUrlMap: UrlMap = new Map(),
 ): void {
   if (!configJson || typeof configJson !== 'object') return;
   const cfg = configJson as Record<string, unknown>;
@@ -72,15 +83,26 @@ function remapHomeSectionConfig(
         if (slide && typeof slide === 'object') {
           const s = slide as { mediaId?: unknown };
           if (typeof s.mediaId === 'string') {
+            const oldMediaId = s.mediaId;
             const newId = idMap.get(s.mediaId);
             if (newId) s.mediaId = newId;
+            const newUrl = mediaUrlMap.get(oldMediaId);
+            if (newUrl && typeof (s as { imageUrl?: unknown }).imageUrl === 'string') {
+              (s as { imageUrl: string }).imageUrl = newUrl;
+            }
+            if (newUrl && typeof (s as { url?: unknown }).url === 'string') {
+              (s as { url: string }).url = newUrl;
+            }
           }
         }
       }
     }
     if (sectionType === 'BRIEF_INTRO' && typeof cfg.mediaId === 'string') {
+      const oldMediaId = cfg.mediaId;
       const newId = idMap.get(cfg.mediaId);
       if (newId) cfg.mediaId = newId;
+      const newUrl = mediaUrlMap.get(oldMediaId);
+      if (newUrl && typeof cfg.imageUrl === 'string') cfg.imageUrl = newUrl;
     }
     // RECOMMENDED / SUB_CAROUSEL items[].mediaId, FREQUENT_MENU items[].iconMediaId
     if (
@@ -93,12 +115,22 @@ function remapHomeSectionConfig(
         if (item && typeof item === 'object') {
           const i = item as { mediaId?: unknown; iconMediaId?: unknown };
           if (typeof i.mediaId === 'string') {
+            const oldMediaId = i.mediaId;
             const newId = idMap.get(i.mediaId);
             if (newId) i.mediaId = newId;
+            const newUrl = mediaUrlMap.get(oldMediaId);
+            if (newUrl && typeof (i as { imageUrl?: unknown }).imageUrl === 'string') {
+              (i as { imageUrl: string }).imageUrl = newUrl;
+            }
           }
           if (typeof i.iconMediaId === 'string') {
+            const oldMediaId = i.iconMediaId;
             const newId = idMap.get(i.iconMediaId);
             if (newId) i.iconMediaId = newId;
+            const newUrl = mediaUrlMap.get(oldMediaId);
+            if (newUrl && typeof (i as { iconUrl?: unknown }).iconUrl === 'string') {
+              (i as { iconUrl: string }).iconUrl = newUrl;
+            }
           }
         }
       }
@@ -151,8 +183,15 @@ export function remapHomeSectionJsonReferences(
   mediaIdMap: IdMap,
   boardIdMap: IdMap,
   subpageIdMap: IdMap = new Map(),
+  mediaUrlMap: UrlMap = new Map(),
 ): void {
-  remapHomeSectionConfig(sectionType, configJson, mediaIdMap, 'mediaId');
+  remapHomeSectionConfig(
+    sectionType,
+    configJson,
+    mediaIdMap,
+    'mediaId',
+    mediaUrlMap,
+  );
   remapHomeSectionConfig(sectionType, configJson, boardIdMap, 'boardId');
   remapHomeSectionSubpageReferences(sectionType, configJson, subpageIdMap);
 }
@@ -185,6 +224,7 @@ function remapPageBlockConfig(
   blockType: string,
   configJson: unknown,
   mediaIdMap: IdMap,
+  mediaUrlMap: UrlMap = new Map(),
 ): void {
   if (!configJson || typeof configJson !== 'object') return;
   const cfg = configJson as Record<string, unknown>;
@@ -192,16 +232,24 @@ function remapPageBlockConfig(
   if (blockType === 'IMAGE') {
     // IMAGE 블록의 imageMediaId (field name 다름!)
     if (typeof cfg.imageMediaId === 'string') {
+      const oldMediaId = cfg.imageMediaId;
       const newId = mediaIdMap.get(cfg.imageMediaId);
       if (newId) cfg.imageMediaId = newId;
+      const newUrl = mediaUrlMap.get(oldMediaId);
+      if (newUrl && typeof cfg.imageUrl === 'string') cfg.imageUrl = newUrl;
     }
     if (Array.isArray(cfg.items)) {
       for (const item of cfg.items) {
         if (!item || typeof item !== 'object') continue;
         const imageItem = item as Record<string, unknown>;
         if (typeof imageItem.imageMediaId === 'string') {
+          const oldMediaId = imageItem.imageMediaId;
           const newId = mediaIdMap.get(imageItem.imageMediaId);
           if (newId) imageItem.imageMediaId = newId;
+          const newUrl = mediaUrlMap.get(oldMediaId);
+          if (newUrl && typeof imageItem.imageUrl === 'string') {
+            imageItem.imageUrl = newUrl;
+          }
         }
       }
     }
@@ -210,7 +258,7 @@ function remapPageBlockConfig(
   if (blockType === 'RICH_TEXT') {
     // RICH_TEXT의 contentJson → Tiptap 재귀
     if (cfg.contentJson) {
-      remapTiptapNode(cfg.contentJson, mediaIdMap);
+      remapTiptapNode(cfg.contentJson, mediaIdMap, mediaUrlMap);
     }
   }
 }
@@ -219,8 +267,9 @@ export function remapPageBlockConfigJsonReferences(
   blockType: string,
   configJson: unknown,
   mediaIdMap: IdMap,
+  mediaUrlMap: UrlMap = new Map(),
 ): void {
-  remapPageBlockConfig(blockType, configJson, mediaIdMap);
+  remapPageBlockConfig(blockType, configJson, mediaIdMap, mediaUrlMap);
 }
 
 // ─── SubpageVersion.snapshot 재매핑 ─────────────────────────
@@ -228,6 +277,7 @@ export function remapPageBlockConfigJsonReferences(
 function remapSubpageVersionSnapshot(
   snapshot: unknown,
   mediaIdMap: IdMap,
+  mediaUrlMap: UrlMap = new Map(),
 ): void {
   if (!snapshot || typeof snapshot !== 'object') return;
   const s = snapshot as {
@@ -237,8 +287,13 @@ function remapSubpageVersionSnapshot(
 
   // meta.featuredImageId
   if (s.meta && typeof s.meta.featuredImageId === 'string') {
+    const oldMediaId = s.meta.featuredImageId;
     const newId = mediaIdMap.get(s.meta.featuredImageId);
     if (newId) s.meta.featuredImageId = newId;
+    const newUrl = mediaUrlMap.get(oldMediaId);
+    if (newUrl && typeof (s.meta as { featuredImageUrl?: unknown }).featuredImageUrl === 'string') {
+      (s.meta as { featuredImageUrl: string }).featuredImageUrl = newUrl;
+    }
   }
 
   // blocks[].configJson — PageBlock과 동일 분기
@@ -247,7 +302,7 @@ function remapSubpageVersionSnapshot(
       if (!block || typeof block !== 'object') continue;
       const b = block as { blockType?: unknown; configJson?: unknown };
       if (typeof b.blockType !== 'string') continue;
-      remapPageBlockConfig(b.blockType, b.configJson, mediaIdMap);
+      remapPageBlockConfig(b.blockType, b.configJson, mediaIdMap, mediaUrlMap);
     }
   }
 }
@@ -255,8 +310,9 @@ function remapSubpageVersionSnapshot(
 export function remapSubpageVersionSnapshotJsonReferences(
   snapshot: unknown,
   mediaIdMap: IdMap,
+  mediaUrlMap: UrlMap = new Map(),
 ): void {
-  remapSubpageVersionSnapshot(snapshot, mediaIdMap);
+  remapSubpageVersionSnapshot(snapshot, mediaIdMap, mediaUrlMap);
 }
 
 // ─── HomePopup.contentJson 재매핑 (CONTENT 타입의 Tiptap) ──
@@ -265,32 +321,39 @@ function remapHomePopupContent(
   popupType: string,
   contentJson: unknown,
   mediaIdMap: IdMap,
+  mediaUrlMap: UrlMap = new Map(),
 ): void {
   if (popupType !== 'CONTENT') return;
   if (!contentJson) return;
-  remapTiptapNode(contentJson, mediaIdMap);
+  remapTiptapNode(contentJson, mediaIdMap, mediaUrlMap);
 }
 
 export function remapHomePopupContentJsonReferences(
   popupType: string,
   contentJson: unknown,
   mediaIdMap: IdMap,
+  mediaUrlMap: UrlMap = new Map(),
 ): void {
-  remapHomePopupContent(popupType, contentJson, mediaIdMap);
+  remapHomePopupContent(popupType, contentJson, mediaIdMap, mediaUrlMap);
 }
 
 // ─── Post.contentJson 재매핑 (Tiptap) ───────────────────────
 
-function remapPostContent(contentJson: unknown, mediaIdMap: IdMap): void {
+function remapPostContent(
+  contentJson: unknown,
+  mediaIdMap: IdMap,
+  mediaUrlMap: UrlMap = new Map(),
+): void {
   if (!contentJson) return;
-  remapTiptapNode(contentJson, mediaIdMap);
+  remapTiptapNode(contentJson, mediaIdMap, mediaUrlMap);
 }
 
 export function remapPostContentJsonReferences(
   contentJson: unknown,
   mediaIdMap: IdMap,
+  mediaUrlMap: UrlMap = new Map(),
 ): void {
-  remapPostContent(contentJson, mediaIdMap);
+  remapPostContent(contentJson, mediaIdMap, mediaUrlMap);
 }
 
 // ─── 최상위 진입점 ────────────────────────────────────────
@@ -339,5 +402,53 @@ export function walkSnapshotForRemap(
   // SubpageVersion.snapshot — meta + blocks
   for (const version of payload.models.SubpageVersion) {
     remapSubpageVersionSnapshot(version.snapshot, idMap);
+  }
+}
+
+export function walkSnapshotForMediaUrlRemap(
+  payload: SnapshotPayload,
+  mediaIdMap: IdMap,
+  mediaUrlMap: UrlMap,
+): void {
+  if (mediaUrlMap.size === 0) return;
+
+  for (const section of payload.models.HomeSection) {
+    remapHomeSectionConfig(
+      section.sectionType,
+      section.configJson,
+      mediaIdMap,
+      'mediaId',
+      mediaUrlMap,
+    );
+  }
+
+  for (const post of payload.models.Post) {
+    remapPostContent(post.contentJson, mediaIdMap, mediaUrlMap);
+  }
+
+  for (const block of payload.models.PageBlock) {
+    remapPageBlockConfig(
+      block.blockType,
+      block.configJson,
+      mediaIdMap,
+      mediaUrlMap,
+    );
+  }
+
+  for (const popup of payload.models.HomePopup) {
+    remapHomePopupContent(
+      popup.popupType,
+      popup.contentJson,
+      mediaIdMap,
+      mediaUrlMap,
+    );
+    if (typeof popup.imageMediaId === 'string') {
+      const newUrl = mediaUrlMap.get(popup.imageMediaId);
+      if (newUrl && typeof popup.imageUrl === 'string') popup.imageUrl = newUrl;
+    }
+  }
+
+  for (const version of payload.models.SubpageVersion) {
+    remapSubpageVersionSnapshot(version.snapshot, mediaIdMap, mediaUrlMap);
   }
 }

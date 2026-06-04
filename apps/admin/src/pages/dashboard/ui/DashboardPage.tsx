@@ -2,20 +2,31 @@ import { FileText, SquareKanban, PenSquare, Users } from 'lucide-react';
 
 import { prisma } from '@simple-cms/db';
 
+import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { ErrorLogDashboardWidget } from '@/features/error-log/ui/ErrorLogDashboardWidget';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { StatCard } from '@/shared/ui/layout/StatCard';
 import { PageHeader } from '@/shared/ui/PageHeader';
 
 export default async function DashboardPage() {
-  const [subpageCount, publishedSubpageCount, boardCount, postCount, publishedPostCount, pendingUserCount] =
-    await Promise.all([
+  const user = await requireAuth();
+  const [
+    subpageCount,
+    publishedSubpageCount,
+    boardCount,
+    postCount,
+    publishedPostCount,
+    pendingUserCount,
+  ] = await runWithUserDemoSession(user, () =>
+    Promise.all([
       prisma.subpage.count(),
       prisma.subpage.count({ where: { status: 'PUBLISHED' } }),
       prisma.board.count(),
       prisma.post.count(),
       prisma.post.count({ where: { status: 'PUBLISHED' } }),
       prisma.user.count({ where: { status: 'PENDING' } }),
-    ]);
+    ]),
+  );
 
   return (
     <div className="space-y-6">

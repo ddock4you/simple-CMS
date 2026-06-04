@@ -4,11 +4,12 @@ import { prisma } from '@simple-cms/db';
 
 import { hasPermission } from '@/entities/auth/lib/checkPermission';
 import { getCurrentUser } from '@/entities/auth/lib/getCurrentUser';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { StatCard } from '@/shared/ui/layout/StatCard';
 
 export async function ErrorLogDashboardWidget() {
   const user = await getCurrentUser();
-  if (!hasPermission(user, 'errorLogs', 'read')) {
+  if (!user || !hasPermission(user, 'errorLogs', 'read')) {
     return null;
   }
 
@@ -16,11 +17,15 @@ export async function ErrorLogDashboardWidget() {
   const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const [count24h, count7d, unresolvedCount] = await Promise.all([
-    prisma.errorLog.count({ where: { createdAt: { gte: dayAgo } } }),
-    prisma.errorLog.count({ where: { createdAt: { gte: weekAgo } } }),
-    prisma.errorLog.count({ where: { isResolved: false } }),
-  ]);
+  const [count24h, count7d, unresolvedCount] = await runWithUserDemoSession(
+    user,
+    () =>
+      Promise.all([
+        prisma.errorLog.count({ where: { createdAt: { gte: dayAgo } } }),
+        prisma.errorLog.count({ where: { createdAt: { gte: weekAgo } } }),
+        prisma.errorLog.count({ where: { isResolved: false } }),
+      ]),
+  );
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

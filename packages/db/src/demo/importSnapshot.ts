@@ -42,7 +42,10 @@ import {
   type SnapshotSubpageVersionRow,
   type SnapshotUserRow,
 } from './snapshot.types';
-import { walkSnapshotForRemap } from './snapshotWalker';
+import {
+  walkSnapshotForMediaUrlRemap,
+  walkSnapshotForRemap,
+} from './snapshotWalker';
 
 const TRANSACTION_TIMEOUT_MS = 60_000; // import는 row 많을 수 있어 cloneSeedToSession(30s)보다 길게
 const TRANSACTION_MAX_WAIT_MS = 5_000;
@@ -156,6 +159,7 @@ async function doImport(
   // ─── Phase 1c: walker remap (in-place) ───────────────
   // payload는 이제 새 idMap으로 모든 mediaId/boardId 위치를 갱신
   walkSnapshotForRemap(payload, mediaIdMap, 'mediaId');
+  walkSnapshotForMediaUrlRemap(payload, mediaIdMap, mediaUrlMap);
   walkSnapshotForRemap(payload, idMaps.Board, 'boardId');
 
   // ─── Phase 2: $transaction으로 14모델 createMany ──

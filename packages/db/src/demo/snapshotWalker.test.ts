@@ -19,6 +19,7 @@ import {
   remapHomeSectionJsonReferences,
   remapPageBlockConfigJsonReferences,
   remapPostContentJsonReferences,
+  walkSnapshotForMediaUrlRemap,
   walkSnapshotForRemap,
 } from './snapshotWalker';
 
@@ -708,5 +709,78 @@ describe('snapshotWalker clone helpers', () => {
     remapPageBlockConfigJsonReferences('IMAGE', configJson, mediaIdMap);
     expect(configJson.imageMediaId).toBe('visitor-media');
     expect(configJson.items[0]!.imageMediaId).toBe('visitor-media');
+  });
+
+  it('rewrites imported media URLs inside JSON references', () => {
+    const payload = emptyPayload();
+    payload.models.Post = [
+      {
+        id: 'post-1',
+        title: 'Post',
+        slug: 'post',
+        boardId: 'board-1',
+        seoTitle: null,
+        seoDescription: null,
+        contentJson: {
+          type: 'doc',
+          content: [
+            {
+              type: 'image',
+              attrs: { mediaId: 'media-1', src: '/uploads/content/a.jpg' },
+            },
+          ],
+        },
+        content: null,
+        status: 'PUBLISHED',
+        isImportant: false,
+        publishedAt: null,
+        featuredImageId: null,
+        authorId: null,
+        displayOrder: 0,
+      },
+    ];
+    payload.models.PageBlock = [
+      {
+        id: 'block-1',
+        subpageId: 'subpage-1',
+        blockType: 'IMAGE',
+        configJson: {
+          imageMediaId: 'media-1',
+          imageUrl: '/uploads/content/a.jpg',
+          items: [
+            {
+              imageMediaId: 'media-1',
+              imageUrl: '/uploads/content/a.jpg',
+            },
+          ],
+        },
+        isVisible: true,
+        displayOrder: 0,
+      },
+    ];
+
+    const mediaIdMap = new Map([['media-1', 'seed-media-1']]);
+    const mediaUrlMap = new Map([
+      [
+        'media-1',
+        'https://example.supabase.co/storage/v1/object/public/uploads/__SEED__/content/a.jpg',
+      ],
+    ]);
+
+    walkSnapshotForMediaUrlRemap(payload, mediaIdMap, mediaUrlMap);
+
+    const postImage = (payload.models.Post[0]!.contentJson as {
+      content: Array<{ attrs: { src: string } }>;
+    }).content[0]!;
+    expect(postImage.attrs.src).toContain('/__SEED__/content/a.jpg');
+
+    const blockConfig = payload.models.PageBlock[0]!.configJson as {
+      imageUrl: string;
+      items: Array<{ imageUrl: string }>;
+    };
+    expect(blockConfig.imageUrl).toContain('/__SEED__/content/a.jpg');
+    expect(blockConfig.items[0]!.imageUrl).toContain(
+      '/__SEED__/content/a.jpg',
+    );
   });
 });
