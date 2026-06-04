@@ -528,3 +528,43 @@ cd /home/ddock4you/project/simple-CMS/apps/web
 6. API가 401/403이면 permission/session cookie 경로를 확인한다.
 7. API가 500이면 Vercel server log의 `console.error` 기준으로 route 내부 오류를 확인한다.
 8. visitor session row count 자체가 누락되어 있으면 clone/import 쪽으로 되돌아가 확인한다.
+
+## 2026-06-04 추가 작업: 개발 DB 스냅샷 전체 노출 보강
+
+### 1. 스냅샷 범위 확장
+
+- 기존 snapshot v1은 14모델만 포함해 admin 체크리스트의 `/audit-logs`, `/error-logs`가 개발 DB 데이터와 맞을 수 없었다.
+- snapshot v2는 `AuditLog`, `ErrorLog`를 포함한 16모델로 확장한다.
+- 기존 v1 JSON은 import 시 `AuditLog: []`, `ErrorLog: []`로 보정해 하위 호환을 유지한다.
+- 로그는 포함하되 다음 값은 익명화한다.
+  - `ipAddress`: `0.0.0.0`
+  - `userAgent`: `Demo Snapshot`
+  - `referer`: `null`
+  - `changes` / `metadata` 내부 `token`, `password`, `cookie`, `email`, `ip`, `userAgent`, `session` 계열 키: `[REDACTED]`
+- `AuditLog.entityId`, `AuditLog.userId`, `ErrorLog.resolvedBy`는 import/clone 시 새 session row id로 재매핑한다. 매핑 불가 값은 `null` 처리한다.
+
+### 2. 공개 web 시연 세션 보강
+
+- `RootLayout` 바깥에서 실행되는 `generateMetadata`, Route Handler, proxy, sitemap은 layout의 `ensureDemoSession()` 컨텍스트를 자동으로 받지 못한다.
+- `apps/web/src/shared/lib/requestDemoSession.ts`를 추가해 cookie 기반으로 visitor `sessionId`를 붙인다.
+- `createSettingsCache()`는 `DEMO_MODE=true`에서 `demo.getCurrentSessionId()`별 캐시 Map을 사용한다. 운영 모드는 기존 단일 TTL 캐시 유지.
+- `/api/feedback`: 시연 세션이 없으면 401, 있으면 visitor session에 저장.
+- `/api/error-report`: 시연 세션이 없으면 운영 DB에 쓰지 않고 성공 응답만 반환, 있으면 visitor session에 저장.
+- `/api/preview`: preview token의 `sessionId`와 현재 visitor sessionId가 일치할 때만 target 콘텐츠로 이동.
+- `proxy.ts`: 시연 모드에서는 커스텀 도메인 리다이렉트를 skip.
+- `sitemap.ts`: 시연 모드에서는 운영 콘텐츠 sitemap을 만들지 않고 demo root만 반환.
+
+### 3. 추가 확인 기준
+
+admin:
+
+- `/audit-logs`, `/error-logs`에 개발 DB에서 가져온 로그가 익명화된 값으로 표시되는지 확인한다.
+- `/settings/demo-snapshot`의 총 row 설명이 16모델 기준이고 `AuditLog`, `ErrorLog` count가 포함되는지 확인한다.
+
+public web:
+
+- 새 시크릿창으로 `/demo-bootstrap` 이후 홈/서브페이지/게시판/게시글/검색에서 개발 DB 콘텐츠가 보이는지 확인한다.
+- 헤더 로고, footer 설정, 사이트명 등 SiteSettings 기반 데이터가 visitor별로 섞이지 않는지 확인한다.
+- 공개 피드백 제출 후 admin `/subpage-feedback`에서 같은 visitor session 데이터가 보이는지 확인한다.
+- 클라이언트 에러 리포트 발생 후 admin `/error-logs`에서 visitor session 로그로 보이는지 확인한다.
+- 미리보기 URL은 같은 시연 세션에서만 열리고, 다른 새 세션에서는 홈으로 redirect되는지 확인한다.

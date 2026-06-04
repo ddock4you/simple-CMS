@@ -1,11 +1,12 @@
 /**
  * 시연 모드 snapshot export 코어 (PR6).
  *
- * - 운영(__PROD__) 또는 dev 환경의 14모델 row를 SnapshotPayload JSON으로 직렬화
+ * - 운영(__PROD__) 또는 dev 환경의 16모델 row를 SnapshotPayload JSON으로 직렬화
  * - Media binary는 callback으로 download → processMediaForExport(sharp 1600px) → base64
  * - User.password 제외 (export payload에 포함 X)
  * - Media.uploadedById = null 일괄 (anonymization)
- * - AuditLog / ErrorLog / Session / PreviewToken 미포함 (cloneSeedToSession 정책 동일)
+ * - AuditLog / ErrorLog는 포함하되 IP/UA/민감 JSON 키 익명화
+ * - Session / PreviewToken 미포함
  *
  * 호출자:
  *   - admin route handler `/api/demo/snapshot/export` (GET)
@@ -14,6 +15,11 @@
 import { prisma } from '../client';
 
 import { processMediaForExport } from './exportMedia';
+import {
+  anonymizeIp,
+  anonymizeUserAgent,
+  sanitizeSnapshotJson,
+} from './snapshotLogSanitizer';
 import { isBypassed, runWithBypass } from './sessionContext';
 import {
   SNAPSHOT_SCHEMA_VERSION,
@@ -60,7 +66,7 @@ async function doExport(options: ExportOptions): Promise<SnapshotPayload> {
     concurrency = 4,
   } = options;
 
-  // ─── 14모델 findMany ─────────────────────────────
+  // ─── 16모델 findMany ─────────────────────────────
   const [
     roles,
     users,
@@ -76,6 +82,8 @@ async function doExport(options: ExportOptions): Promise<SnapshotPayload> {
     navigationMenuItems,
     subpageVersions,
     subpageFeedback,
+    auditLogs,
+    errorLogs,
   ] = await Promise.all([
     prisma.role.findMany({
       where: { sessionId: sourceSessionId },
@@ -130,6 +138,14 @@ async function doExport(options: ExportOptions): Promise<SnapshotPayload> {
       orderBy: { id: 'asc' },
     }),
     prisma.subpageFeedback.findMany({
+      where: { sessionId: sourceSessionId },
+      orderBy: { id: 'asc' },
+    }),
+    prisma.auditLog.findMany({
+      where: { sessionId: sourceSessionId },
+      orderBy: { id: 'asc' },
+    }),
+    prisma.errorLog.findMany({
       where: { sessionId: sourceSessionId },
       orderBy: { id: 'asc' },
     }),
@@ -282,7 +298,39 @@ async function doExport(options: ExportOptions): Promise<SnapshotPayload> {
         positiveReasons: f.positiveReasons,
         comment: f.comment,
         ipAddressHash: f.ipAddressHash,
-        userAgent: f.userAgent,
+        userAgent: anonymizeUserAgent(f.userAgent),
+      })),
+      AuditLog: auditLogs.map((l) => ({
+        id: l.id,
+        action: l.action,
+        entityType: l.entityType,
+        entityId: l.entityId,
+        entityTitle: l.entityTitle,
+        changes: sanitizeSnapshotJson(l.changes) as unknown,
+        userId: l.userId,
+        ipAddress: anonymizeIp(l.ipAddress),
+        userAgent: anonymizeUserAgent(l.userAgent),
+        createdAt: l.createdAt.toISOString(),
+      })),
+      ErrorLog: errorLogs.map((l) => ({
+        id: l.id,
+        level: l.level,
+        source: l.source,
+        message: l.message,
+        stack: l.stack,
+        url: l.url,
+        method: l.method,
+        statusCode: l.statusCode,
+        userAgent: anonymizeUserAgent(l.userAgent),
+        ipAddress: anonymizeIp(l.ipAddress),
+        referer: null,
+        digest: l.digest,
+        fingerprint: l.fingerprint,
+        metadata: sanitizeSnapshotJson(l.metadata) as unknown,
+        isResolved: l.isResolved,
+        resolvedAt: l.resolvedAt?.toISOString() ?? null,
+        resolvedBy: l.resolvedBy,
+        createdAt: l.createdAt.toISOString(),
       })),
     },
   } as SnapshotPayload;

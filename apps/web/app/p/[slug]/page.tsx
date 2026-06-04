@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { getPublishedSubpage } from '@/entities/subpage/api/getSubpage';
 import { getCachedBranding } from '@/shared/lib/brandingCache';
+import { enterDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
 import { getSiteUrl } from '@/shared/lib/siteUrl';
 import {
   buildArticleJsonLd,
@@ -17,6 +18,11 @@ interface PageProps {
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
+  const demoSession = await enterDemoSessionFromCookies();
+  if (process.env.DEMO_MODE === 'true' && !demoSession) {
+    return { title: '시연 모드' };
+  }
+
   const { slug } = await params;
   const subpage = await getPublishedSubpage(slug);
 

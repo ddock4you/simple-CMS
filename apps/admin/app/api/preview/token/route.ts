@@ -79,6 +79,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         entityId,
         issuedById: user!.id,
         expires,
+        sessionId: user!.sessionId,
       },
     });
 

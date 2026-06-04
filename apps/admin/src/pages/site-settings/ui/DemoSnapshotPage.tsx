@@ -11,7 +11,7 @@ import { SettingsNav } from '@/features/site-settings/ui/SettingsNav';
 /**
  * 시연 스냅샷 설정 페이지 (PR7).
  *
- * - 운영(__PROD__) 또는 dev 환경의 14모델 row count + Media 합계 사이즈를 미리보기
+ * - 운영(__PROD__) 또는 dev 환경의 16모델 row count + Media 합계 사이즈를 미리보기
  * - [내보내기]: GET /api/demo/snapshot/export (파일 다운로드)
  * - [Supabase 즉시 적용]: POST /api/demo/snapshot/import (시연 환경에서만 동작)
  *
@@ -45,6 +45,8 @@ export default async function DemoSnapshotPage() {
       navigationMenuItemCount,
       subpageVersionCount,
       subpageFeedbackCount,
+      auditLogCount,
+      errorLogCount,
       mediaSizeAgg,
     ] = await Promise.all([
       prisma.role.count({ where: { sessionId: sourceSessionId } }),
@@ -63,6 +65,8 @@ export default async function DemoSnapshotPage() {
       }),
       prisma.subpageVersion.count({ where: { sessionId: sourceSessionId } }),
       prisma.subpageFeedback.count({ where: { sessionId: sourceSessionId } }),
+      prisma.auditLog.count({ where: { sessionId: sourceSessionId } }),
+      prisma.errorLog.count({ where: { sessionId: sourceSessionId } }),
       prisma.media.aggregate({
         where: { sessionId: sourceSessionId },
         _sum: { size: true },
@@ -85,6 +89,8 @@ export default async function DemoSnapshotPage() {
         NavigationMenuItem: navigationMenuItemCount,
         SubpageVersion: subpageVersionCount,
         SubpageFeedback: subpageFeedbackCount,
+        AuditLog: auditLogCount,
+        ErrorLog: errorLogCount,
       },
       totalRows:
         roleCount +
@@ -100,7 +106,9 @@ export default async function DemoSnapshotPage() {
         homePopupCount +
         navigationMenuItemCount +
         subpageVersionCount +
-        subpageFeedbackCount,
+        subpageFeedbackCount +
+        auditLogCount +
+        errorLogCount,
       mediaSizeBytes: Number(mediaSizeAgg._sum.size ?? 0),
     };
   });
@@ -121,7 +129,8 @@ export default async function DemoSnapshotPage() {
         <p className="text-sm text-muted-foreground mb-4">
           현재 운영 데이터를 시연 환경의 시드(<code>__SEED__</code>)로 export/import합니다.
           내보낸 JSON은 sharp로 1600px 리사이즈된 Media를 base64로 포함하며, User
-          비밀번호와 운영자 식별자(uploadedById)는 자동으로 제거/익명화됩니다. 즉시 적용은
+          비밀번호와 운영자 식별자(uploadedById)는 자동으로 제거/익명화됩니다. AuditLog와
+          ErrorLog는 포함하되 IP/User-Agent/민감 JSON 값은 익명화합니다. 즉시 적용은
           <code>DEMO_MODE=true</code> 시연 환경에서만 동작합니다.
         </p>
         <DemoSnapshotForm

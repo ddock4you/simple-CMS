@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@simple-cms/db';
 
 import { setPreviewCookie } from '@/shared/lib/previewCookies';
+import { runWithRequestDemoSession } from '@/shared/lib/requestDemoSession';
 
 export const runtime = 'nodejs';
 
@@ -13,6 +14,23 @@ export const runtime = 'nodejs';
  * 검증 실패 시 홈으로 리다이렉트, 성공 시 대상 콘텐츠 URL로 리다이렉트.
  */
 export async function GET(request: Request): Promise<NextResponse> {
+  if (process.env.DEMO_MODE === 'true') {
+    return runWithRequestDemoSession(request, async (session) => {
+      if (!session) {
+        const requestUrl = new URL(request.url);
+        return NextResponse.redirect(new URL('/', requestUrl));
+      }
+      return handlePreviewGet(request, session.sessionId);
+    });
+  }
+
+  return handlePreviewGet(request, null);
+}
+
+async function handlePreviewGet(
+  request: Request,
+  expectedSessionId: string | null,
+): Promise<NextResponse> {
   const requestUrl = new URL(request.url);
   const token = requestUrl.searchParams.get('token');
   const type = requestUrl.searchParams.get('type');
@@ -32,12 +50,15 @@ export async function GET(request: Request): Promise<NextResponse> {
   try {
     const record = await prisma.previewToken.findUnique({
       where: { token },
-      select: { entityType: true, entityId: true, expires: true },
+      select: { entityType: true, entityId: true, expires: true, sessionId: true },
     });
 
     if (!record) return NextResponse.redirect(homeUrl);
     if (record.expires < new Date()) return NextResponse.redirect(homeUrl);
     if (record.entityType !== normalizedType) {
+      return NextResponse.redirect(homeUrl);
+    }
+    if (expectedSessionId && record.sessionId !== expectedSessionId) {
       return NextResponse.redirect(homeUrl);
     }
     if (record.entityId !== id) return NextResponse.redirect(homeUrl);

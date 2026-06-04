@@ -1,7 +1,7 @@
 import { cache } from 'react';
 import { cookies } from 'next/headers';
 
-import { prisma } from '@simple-cms/db';
+import { demo, prisma } from '@simple-cms/db';
 import type { PreviewEntityType } from '@simple-cms/types';
 
 import { PREVIEW_COOKIE_NAME } from './previewCookies';
@@ -23,11 +23,17 @@ export const getPreviewSession = cache(
 
     const record = await prisma.previewToken.findUnique({
       where: { token },
-      select: { entityType: true, entityId: true, expires: true },
+      select: { entityType: true, entityId: true, expires: true, sessionId: true },
     });
 
     if (!record) return null;
     if (record.expires < new Date()) return null;
+    if (
+      process.env.DEMO_MODE === 'true' &&
+      record.sessionId !== demo.getCurrentSessionId()
+    ) {
+      return null;
+    }
 
     return {
       entityType: record.entityType,

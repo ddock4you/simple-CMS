@@ -5,13 +5,14 @@
  * Zod로 런타임 검증 + TypeScript inference.
  *
  * **schemaVersion**:
- *   - 1 (현재). 향후 형식 변경 시 마이그레이션 함수로 분기
+ *   - 2 (현재). v1 snapshot은 import 시 AuditLog/ErrorLog 빈 배열로 보정
  *
- * **포함**: 14개 cloneSeedToSession 모델
+ * **포함**: 16개 cloneSeedToSession 모델
  *   Role / User / Media / SiteSettings / NavigationMenu / Board / HomeSection /
- *   Subpage / Post / PageBlock / HomePopup / NavigationMenuItem / SubpageVersion / SubpageFeedback
+ *   Subpage / Post / PageBlock / HomePopup / NavigationMenuItem / SubpageVersion /
+ *   SubpageFeedback / AuditLog / ErrorLog
  *
- * **제외**: AuditLog / ErrorLog / Session / PreviewToken (cloneSeedToSession 동일 정책)
+ * **제외**: Session / PreviewToken
  *
  * **Media.base64Data**:
  *   import 시 `__SEED__/<category>/<filename>` 경로로 Storage에 적재.
@@ -217,32 +218,117 @@ const subpageFeedbackRowSchema = z.object({
   userAgent: z.string().nullable(),
 });
 
-// ─── 최상위 payload schema ────────────────────────
-
-export const SNAPSHOT_SCHEMA_VERSION = 1 as const;
-
-export const snapshotPayloadSchema = z.object({
-  schemaVersion: z.literal(SNAPSHOT_SCHEMA_VERSION),
-  exportedAt: isoDateString,
-  models: z.object({
-    Role: z.array(roleRowSchema),
-    User: z.array(userRowSchema),
-    Media: z.array(mediaRowSchema),
-    SiteSettings: z.array(siteSettingsRowSchema),
-    NavigationMenu: z.array(navigationMenuRowSchema),
-    Board: z.array(boardRowSchema),
-    HomeSection: z.array(homeSectionRowSchema),
-    Subpage: z.array(subpageRowSchema),
-    Post: z.array(postRowSchema),
-    PageBlock: z.array(pageBlockRowSchema),
-    HomePopup: z.array(homePopupRowSchema),
-    NavigationMenuItem: z.array(navigationMenuItemRowSchema),
-    SubpageVersion: z.array(subpageVersionRowSchema),
-    SubpageFeedback: z.array(subpageFeedbackRowSchema),
-  }),
+const auditLogRowSchema = z.object({
+  id: cuidString,
+  action: z.enum(['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT']),
+  entityType: z
+    .enum([
+      'SUBPAGE',
+      'SUBPAGE_VERSION',
+      'SUBPAGE_FEEDBACK',
+      'BOARD',
+      'POST',
+      'NAVIGATION_MENU',
+      'NAVIGATION_MENU_ITEM',
+      'HOME_SECTION',
+      'HOME_POPUP',
+      'PAGE_BLOCK',
+      'USER',
+      'ROLE',
+      'SITE_SETTINGS',
+      'ERROR_LOG',
+      'MEDIA',
+      'AUDIT_LOG',
+    ])
+    .nullable(),
+  entityId: z.string().nullable(),
+  entityTitle: z.string().nullable(),
+  changes: jsonValueSchema.nullable(),
+  userId: cuidString.nullable(),
+  ipAddress: z.string().nullable(),
+  userAgent: z.string().nullable(),
+  createdAt: isoDateString,
 });
 
-export type SnapshotPayload = z.infer<typeof snapshotPayloadSchema>;
+const errorLogRowSchema = z.object({
+  id: cuidString,
+  level: z.enum(['ERROR', 'WARN']),
+  source: z.enum([
+    'SERVER_SSR',
+    'SERVER_API',
+    'SERVER_MIDDLEWARE',
+    'CLIENT_REACT',
+    'CLIENT_JS',
+  ]),
+  message: z.string(),
+  stack: z.string().nullable(),
+  url: z.string().nullable(),
+  method: z.string().nullable(),
+  statusCode: z.number().int().nullable(),
+  userAgent: z.string().nullable(),
+  ipAddress: z.string().nullable(),
+  referer: z.string().nullable(),
+  digest: z.string().nullable(),
+  fingerprint: z.string().nullable(),
+  metadata: jsonValueSchema.nullable(),
+  isResolved: z.boolean(),
+  resolvedAt: isoDateString.nullable(),
+  resolvedBy: cuidString.nullable(),
+  createdAt: isoDateString,
+});
+
+// ─── 최상위 payload schema ────────────────────────
+
+export const SNAPSHOT_SCHEMA_VERSION = 2 as const;
+
+const snapshotModelsSchema = z.object({
+  Role: z.array(roleRowSchema),
+  User: z.array(userRowSchema),
+  Media: z.array(mediaRowSchema),
+  SiteSettings: z.array(siteSettingsRowSchema),
+  NavigationMenu: z.array(navigationMenuRowSchema),
+  Board: z.array(boardRowSchema),
+  HomeSection: z.array(homeSectionRowSchema),
+  Subpage: z.array(subpageRowSchema),
+  Post: z.array(postRowSchema),
+  PageBlock: z.array(pageBlockRowSchema),
+  HomePopup: z.array(homePopupRowSchema),
+  NavigationMenuItem: z.array(navigationMenuItemRowSchema),
+  SubpageVersion: z.array(subpageVersionRowSchema),
+  SubpageFeedback: z.array(subpageFeedbackRowSchema),
+  AuditLog: z.array(auditLogRowSchema),
+  ErrorLog: z.array(errorLogRowSchema),
+});
+
+const snapshotPayloadV2Schema = z.object({
+  schemaVersion: z.literal(2),
+  exportedAt: isoDateString,
+  models: snapshotModelsSchema,
+});
+
+const snapshotPayloadV1Schema = z.object({
+  schemaVersion: z.literal(1),
+  exportedAt: isoDateString,
+  models: snapshotModelsSchema.omit({ AuditLog: true, ErrorLog: true }),
+});
+
+export const snapshotPayloadSchema = z.preprocess((raw) => {
+  const payload = raw as
+    | { schemaVersion?: unknown; models?: Record<string, unknown> }
+    | null;
+  if (payload?.schemaVersion !== 1 || !payload.models) return raw;
+  return {
+    ...payload,
+    schemaVersion: SNAPSHOT_SCHEMA_VERSION,
+    models: {
+      ...payload.models,
+      AuditLog: [],
+      ErrorLog: [],
+    },
+  };
+}, z.union([snapshotPayloadV2Schema, snapshotPayloadV1Schema]).pipe(snapshotPayloadV2Schema));
+
+export type SnapshotPayload = z.infer<typeof snapshotPayloadV2Schema>;
 export type SnapshotRoleRow = z.infer<typeof roleRowSchema>;
 export type SnapshotUserRow = z.infer<typeof userRowSchema>;
 export type SnapshotMediaRow = z.infer<typeof mediaRowSchema>;
@@ -258,6 +344,6 @@ export type SnapshotNavigationMenuItemRow = z.infer<
   typeof navigationMenuItemRowSchema
 >;
 export type SnapshotSubpageVersionRow = z.infer<typeof subpageVersionRowSchema>;
-export type SnapshotSubpageFeedbackRow = z.infer<
-  typeof subpageFeedbackRowSchema
->;
+export type SnapshotSubpageFeedbackRow = z.infer<typeof subpageFeedbackRowSchema>;
+export type SnapshotAuditLogRow = z.infer<typeof auditLogRowSchema>;
+export type SnapshotErrorLogRow = z.infer<typeof errorLogRowSchema>;

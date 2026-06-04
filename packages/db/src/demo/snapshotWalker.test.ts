@@ -15,6 +15,7 @@
 import { describe, it, expect } from 'vitest';
 
 import type { SnapshotPayload } from './snapshot.types';
+import { SNAPSHOT_SCHEMA_VERSION } from './snapshot.types';
 import {
   remapHomeSectionJsonReferences,
   remapPageBlockConfigJsonReferences,
@@ -25,7 +26,7 @@ import {
 
 function emptyPayload(): SnapshotPayload {
   return {
-    schemaVersion: 1,
+    schemaVersion: SNAPSHOT_SCHEMA_VERSION,
     exportedAt: '2026-05-08T12:00:00.000Z',
     models: {
       Role: [],
@@ -42,6 +43,8 @@ function emptyPayload(): SnapshotPayload {
       NavigationMenuItem: [],
       SubpageVersion: [],
       SubpageFeedback: [],
+      AuditLog: [],
+      ErrorLog: [],
     },
   };
 }

@@ -18,6 +18,10 @@ function nextWithPathname(request: NextRequest) {
 
 export async function proxy(request: NextRequest) {
   try {
+    if (process.env.DEMO_MODE === 'true') {
+      return nextWithPathname(request);
+    }
+
     // 개발 모드에서는 localhost 항상 허용
     if (process.env.NODE_ENV === 'development') {
       return nextWithPathname(request);

@@ -8,6 +8,7 @@ import { getCachedBranding } from '@/shared/lib/brandingCache';
 import { ensureDemoSession } from '@/shared/lib/ensureDemoSession';
 import { getCachedFooterConfig } from '@/shared/lib/footerConfigCache';
 import { getCurrentPathname } from '@/shared/lib/getCurrentPathname';
+import { enterDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
 import { getSiteUrl } from '@/shared/lib/siteUrl';
 import {
   buildOrganizationJsonLd,
@@ -37,6 +38,14 @@ export const revalidate = 60;
  * `RootLayout`도 같은 `getCachedBranding()`을 호출하지만 모듈 레벨 TTL 캐시(60s/5s)로 dedup.
  */
 export async function generateMetadata(): Promise<Metadata> {
+  const demoSession = await enterDemoSessionFromCookies();
+  if (process.env.DEMO_MODE === 'true' && !demoSession) {
+    return {
+      title: '시연 모드',
+      description: '시연 세션을 준비하고 있습니다.',
+    };
+  }
+
   const branding = await getCachedBranding();
 
   const metadata: Metadata = {

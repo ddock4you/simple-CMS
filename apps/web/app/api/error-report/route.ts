@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { logWebError } from '@simple-cms/db';
 import type { LogWebErrorInput, Prisma } from '@simple-cms/db';
 
+import { runWithRequestDemoSession } from '@/shared/lib/requestDemoSession';
+
 export const runtime = 'nodejs';
 
 const clientErrorReportSchema = z.object({
@@ -113,8 +115,15 @@ export async function POST(request: Request): Promise<NextResponse> {
         : null,
     };
 
-    // fire-and-forget: logWebError는 내부 try-catch로 실패를 흡수함
-    void logWebError(input);
+    if (process.env.DEMO_MODE === 'true') {
+      await runWithRequestDemoSession(request, async (session) => {
+        if (!session) return;
+        // logWebError는 내부 try-catch로 실패를 흡수함
+        await logWebError(input);
+      });
+    } else {
+      void logWebError(input);
+    }
 
     return NextResponse.json({ success: true, data: null });
   } catch (err) {

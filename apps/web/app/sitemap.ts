@@ -11,8 +11,21 @@ import { getSiteUrl } from '@/shared/lib/siteUrl';
 export const revalidate = 300;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = await getSiteUrl();
   const now = new Date();
+
+  if (process.env.DEMO_MODE === 'true') {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    return [
+      {
+        url: baseUrl,
+        lastModified: now,
+        changeFrequency: 'daily',
+        priority: 0.1,
+      },
+    ];
+  }
+
+  const baseUrl = await getSiteUrl();
 
   const [subpages, boards, posts] = await Promise.all([
     prisma.subpage.findMany({

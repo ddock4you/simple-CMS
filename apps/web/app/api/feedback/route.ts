@@ -11,6 +11,7 @@ import {
 
 import { extractIp, hashIp } from '@/shared/lib/feedbackIp';
 import { PREVIEW_COOKIE_NAME } from '@/shared/lib/previewCookies';
+import { runWithRequestDemoSession } from '@/shared/lib/requestDemoSession';
 
 export const runtime = 'nodejs';
 
@@ -35,6 +36,22 @@ const RATE_LIMIT_MS = FEEDBACK_RATE_LIMIT_HOURS * 60 * 60 * 1000;
 
 
 export async function POST(request: Request): Promise<NextResponse> {
+  if (process.env.DEMO_MODE === 'true') {
+    return runWithRequestDemoSession(request, async (session) => {
+      if (!session) {
+        return NextResponse.json(
+          { success: false, error: '시연 세션이 만료되었습니다.' },
+          { status: 401 },
+        );
+      }
+      return handleFeedbackPost(request);
+    });
+  }
+
+  return handleFeedbackPost(request);
+}
+
+async function handleFeedbackPost(request: Request): Promise<NextResponse> {
   try {
     const body = await request.json();
     const parsed = feedbackBodySchema.safeParse(body);

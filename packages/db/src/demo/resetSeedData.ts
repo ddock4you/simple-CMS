@@ -147,6 +147,24 @@ const DELETE_ORDER: ReadonlyArray<{
       ).count,
   },
   {
+    name: 'AuditLog',
+    run: async () =>
+      (
+        await prisma.auditLog.deleteMany({
+          where: { sessionId: SEED_SENTINEL },
+        })
+      ).count,
+  },
+  {
+    name: 'ErrorLog',
+    run: async () =>
+      (
+        await prisma.errorLog.deleteMany({
+          where: { sessionId: SEED_SENTINEL },
+        })
+      ).count,
+  },
+  {
     name: 'User',
     run: async () =>
       (
@@ -176,7 +194,7 @@ export async function resetSeedData(
       errors: [],
     };
 
-    // 1. 14모델 deleteMany
+    // 1. 16모델 deleteMany
     for (const step of DELETE_ORDER) {
       try {
         const count = await step.run();

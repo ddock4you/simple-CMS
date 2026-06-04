@@ -1,3 +1,5 @@
+import { demo } from '@simple-cms/db';
+
 const TTL_PROD_MS = 60_000;
 const TTL_DEV_MS = 5_000;
 
@@ -16,11 +18,18 @@ export function createSettingsCache<T>(opts: {
   const ttlMs =
     process.env.NODE_ENV === 'production' ? TTL_PROD_MS : TTL_DEV_MS;
 
-  let cache: { data: T; fetchedAt: number } | null = null;
+  const cacheBySession = new Map<string, { data: T; fetchedAt: number }>();
+
+  const getCacheKey = () =>
+    process.env.DEMO_MODE === 'true'
+      ? demo.getCurrentSessionId()
+      : demo.PROD_SENTINEL;
 
   return {
     async get(): Promise<T> {
       const now = Date.now();
+      const cacheKey = getCacheKey();
+      const cache = cacheBySession.get(cacheKey);
       if (cache && now - cache.fetchedAt < ttlMs) {
         return cache.data;
       }
@@ -28,7 +37,7 @@ export function createSettingsCache<T>(opts: {
       if (onError) {
         try {
           const data = await fetcher();
-          cache = { data, fetchedAt: now };
+          cacheBySession.set(cacheKey, { data, fetchedAt: now });
           return data;
         } catch (err) {
           return onError(err);
@@ -36,12 +45,12 @@ export function createSettingsCache<T>(opts: {
       }
 
       const data = await fetcher();
-      cache = { data, fetchedAt: now };
+      cacheBySession.set(cacheKey, { data, fetchedAt: now });
       return data;
     },
 
     invalidate(): void {
-      cache = null;
+      cacheBySession.clear();
     },
   };
 }

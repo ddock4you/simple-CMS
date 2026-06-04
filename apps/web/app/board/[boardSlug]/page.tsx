@@ -5,6 +5,7 @@ import { getPublishedBoard } from '@/entities/board/api/getBoard';
 import { resolveContentNavigation } from '@/entities/navigation/lib/resolveContentNavigation';
 import { getPublishedPosts } from '@/entities/post/api/getPostList';
 import { getCachedBranding } from '@/shared/lib/brandingCache';
+import { enterDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
 import { getSiteUrl } from '@/shared/lib/siteUrl';
 import {
   buildBreadcrumbJsonLd,
@@ -18,6 +19,11 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const demoSession = await enterDemoSessionFromCookies();
+  if (process.env.DEMO_MODE === 'true' && !demoSession) {
+    return { title: '시연 모드' };
+  }
+
   const { boardSlug } = await params;
   const board = await getPublishedBoard(boardSlug);
 

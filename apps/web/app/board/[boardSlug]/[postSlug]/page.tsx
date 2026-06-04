@@ -9,6 +9,7 @@ import {
 } from '@/entities/post/api/getPost';
 import { PreviewBanner } from '@/features/preview/ui/PreviewBanner';
 import { getCachedBranding } from '@/shared/lib/brandingCache';
+import { enterDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
 import { renderTiptapContent } from '@/shared/lib/renderContent';
 import { getPreviewSession } from '@/shared/lib/previewSession';
 import { getSiteUrl } from '@/shared/lib/siteUrl';
@@ -31,6 +32,11 @@ function summarizeContent(raw: string | null, max = 160): string | undefined {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const demoSession = await enterDemoSessionFromCookies();
+  if (process.env.DEMO_MODE === 'true' && !demoSession) {
+    return { title: '시연 모드' };
+  }
+
   const { boardSlug, postSlug } = await params;
   const board = await getPublishedBoard(boardSlug);
   if (!board) return { title: '게시글을 찾을 수 없습니다' };

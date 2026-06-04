@@ -4,7 +4,7 @@
  * **흐름**:
  *   - Phase 0: Zod 검증
  *   - Phase 1 (트랜잭션 밖): resetSeedData → Storage upload → URL/idMap 빌드
- *   - Phase 2 ($transaction): cuid idMap 빌드 → walker remap → 14모델 createMany
+ *   - Phase 2 ($transaction): cuid idMap 빌드 → walker remap → 16모델 createMany
  *
  * **Phase 1/2 분리 이유**:
  *   Supabase Storage는 sync network라 100개 upload면 30s pooler-friendly transaction이 timeout.
@@ -28,6 +28,8 @@ import { isBypassed, runWithBypass, SEED_SENTINEL } from './sessionContext';
 import {
   snapshotPayloadSchema,
   type SnapshotBoardRow,
+  type SnapshotAuditLogRow,
+  type SnapshotErrorLogRow,
   type SnapshotHomePopupRow,
   type SnapshotHomeSectionRow,
   type SnapshotMediaRow,
@@ -44,6 +46,12 @@ import {
   type SnapshotUserRow,
 } from './snapshot.types';
 import { DEMO_ADMIN_USERNAME } from './cloneSeedToSession';
+import {
+  anonymizeIp,
+  anonymizeUserAgent,
+  remapAuditEntityId,
+  sanitizeSnapshotJson,
+} from './snapshotLogSanitizer';
 import {
   walkSnapshotForMediaUrlRemap,
   walkSnapshotForRemap,
@@ -183,7 +191,7 @@ async function doImport(
   walkSnapshotForMediaUrlRemap(payload, mediaIdMap, mediaUrlMap);
   walkSnapshotForRemap(payload, idMaps.Board, 'boardId');
 
-  // ─── Phase 2: $transaction으로 14모델 createMany ──
+  // ─── Phase 2: $transaction으로 16모델 createMany ──
   await prisma.$transaction(
     async (tx) => {
       // 자식 → 부모 의존성. cloneSeedToSession 동일 순서 (단 외부 JSON이므로 findMany 없음).
@@ -479,12 +487,66 @@ async function doImport(
               positiveReasons: f.positiveReasons,
               comment: f.comment,
               ipAddressHash: f.ipAddressHash,
-              userAgent: f.userAgent,
+              userAgent: anonymizeUserAgent(f.userAgent),
             }),
           ),
         });
         stats.rowsCreatedByModel.SubpageFeedback =
           payload.models.SubpageFeedback.length;
+      }
+
+      // 15) ErrorLog
+      if (payload.models.ErrorLog.length > 0) {
+        await tx.errorLog.createMany({
+          data: payload.models.ErrorLog.map((l: SnapshotErrorLogRow) => ({
+            id: idMaps.ErrorLog.get(l.id)!,
+            sessionId: SEED_SENTINEL,
+            level: l.level,
+            source: l.source,
+            message: l.message,
+            stack: l.stack,
+            url: l.url,
+            method: l.method,
+            statusCode: l.statusCode,
+            userAgent: anonymizeUserAgent(l.userAgent),
+            ipAddress: anonymizeIp(l.ipAddress),
+            referer: null,
+            digest: l.digest,
+            fingerprint: l.fingerprint,
+            metadata:
+              (sanitizeSnapshotJson(l.metadata) as Prisma.InputJsonValue | null) ??
+              Prisma.JsonNull,
+            isResolved: l.isResolved,
+            resolvedAt: l.resolvedAt ? new Date(l.resolvedAt) : null,
+            resolvedBy: l.resolvedBy
+              ? (idMaps.User.get(l.resolvedBy) ?? null)
+              : null,
+            createdAt: new Date(l.createdAt),
+          })),
+        });
+        stats.rowsCreatedByModel.ErrorLog = payload.models.ErrorLog.length;
+      }
+
+      // 16) AuditLog
+      if (payload.models.AuditLog.length > 0) {
+        await tx.auditLog.createMany({
+          data: payload.models.AuditLog.map((l: SnapshotAuditLogRow) => ({
+            id: idMaps.AuditLog.get(l.id)!,
+            sessionId: SEED_SENTINEL,
+            action: l.action,
+            entityType: l.entityType,
+            entityId: remapAuditEntityId(l.entityType, l.entityId, idMaps),
+            entityTitle: l.entityTitle,
+            changes:
+              (sanitizeSnapshotJson(l.changes) as Prisma.InputJsonValue | null) ??
+              Prisma.JsonNull,
+            userId: l.userId ? (idMaps.User.get(l.userId) ?? null) : null,
+            ipAddress: anonymizeIp(l.ipAddress),
+            userAgent: anonymizeUserAgent(l.userAgent),
+            createdAt: new Date(l.createdAt),
+          })),
+        });
+        stats.rowsCreatedByModel.AuditLog = payload.models.AuditLog.length;
       }
     },
     {
@@ -587,6 +649,8 @@ interface IdMaps {
   NavigationMenuItem: Map<string, string>;
   SubpageVersion: Map<string, string>;
   SubpageFeedback: Map<string, string>;
+  AuditLog: Map<string, string>;
+  ErrorLog: Map<string, string>;
 }
 
 function buildIdMaps(payload: SnapshotPayload): IdMaps {
@@ -612,6 +676,8 @@ function buildIdMaps(payload: SnapshotPayload): IdMaps {
     NavigationMenuItem: map(payload.models.NavigationMenuItem),
     SubpageVersion: map(payload.models.SubpageVersion),
     SubpageFeedback: map(payload.models.SubpageFeedback),
+    AuditLog: map(payload.models.AuditLog),
+    ErrorLog: map(payload.models.ErrorLog),
   };
 }
 
