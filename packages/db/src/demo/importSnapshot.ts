@@ -557,10 +557,12 @@ async function doImport(
 
   const ensuredDemoAdmin = await ensureDemoAdminSeed();
   if (ensuredDemoAdmin.roleCreated) {
-    stats.rowsCreatedByModel.Role += 1;
+    stats.rowsCreatedByModel.Role =
+      (stats.rowsCreatedByModel.Role ?? 0) + 1;
   }
   if (ensuredDemoAdmin.userCreated) {
-    stats.rowsCreatedByModel.User += 1;
+    stats.rowsCreatedByModel.User =
+      (stats.rowsCreatedByModel.User ?? 0) + 1;
   }
 
   return stats;
