@@ -273,6 +273,14 @@ pnpm demo:import ./snapshot.json
 
 이 흐름은 풍부한 콘텐츠를 시연용으로 익명화/리사이즈해서 적재한다 (sharp 1600px / Media base64 / Tiptap walker / SubpageVersion + SubpageFeedback 포함, AuditLog/ErrorLog/Session/PreviewToken/User.password 제외).
 
+**import 전 필수 점검**:
+
+- `pnpm demo:export`는 기본적으로 현재 연결 DB의 `__PROD__` row를 export한다. 연결 DB가 "풍부한 개발 DB"인지, 이미 비어 있는 시연 Supabase인지 먼저 확인한다.
+- snapshot JSON의 모델별 count를 확인한다. `Role`, `User`, `Media`, `NavigationMenu`, `Board`, `Subpage`, `Post`, `PageBlock`, `NavigationMenuItem`이 기대보다 작으면 import하지 않는다.
+- `pnpm demo:import`는 전체 Supabase DB를 초기화하지 않고 `__SEED__` row와 Storage `__SEED__/` 파일만 reset/import한다.
+- 기존 visitor session row는 자동 갱신되지 않는다. import 후 브라우저 검증은 반드시 [새 세션 시작] 또는 cookie 삭제 후 새 세션으로 한다.
+- `__SEED__`에 들어간 최종 count는 Supabase SQL 또는 Prisma one-off script로 다시 확인한다.
+
 ### 방법 C — Admin UI `/settings/demo-snapshot` (PR7 완료 후, 운영자 친화적)
 
 브라우저에서 운영자가 직접 export/import. 운영자가 SQL/CLI 모르고도 시드 갱신 가능.
@@ -681,6 +689,10 @@ dotenv -e .env.demo -- pnpm demo:import ./snapshot.json
 | Admin UI 시드 적용 후 일부 image broken                                   | walker mediaId 위치 누락 (회귀)                                                    | `snapshotWalker.ts` 분기 + 단위 테스트 14건 검증. SubpageVersion.snapshot 같은 깊은 경로 confirm                                                     |
 | Admin UI에서 일반 관리자에게 시연 스냅샷 탭이 보임                        | demo-snapshot 권한 잘못 부여                                                       | `packages/db/prisma/seed.ts`의 `DEFAULT_PERMISSIONS`에 demo-snapshot이 빠져있는지 확인. `pnpm db:seed` 재실행 후 일반 관리자 역할 권한 매트릭스 검토 |
 | Admin UI import 후 통계가 갱신 안 됨                                      | `router.refresh()` 호출 누락 또는 캐시 문제                                        | 페이지 hard reload (Ctrl+Shift+R). DemoSnapshotForm의 import 성공 흐름에 `router.refresh()` 호출 확인                                                |
+| Admin API가 200인데 `{"success":true,"data":[]}`                         | 현재 visitor session 또는 `__SEED__`에 해당 모델 row가 없음                       | Vercel 로그보다 먼저 `__SEED__`/visitor 모델별 count 확인. seed 갱신 후 기존 세션은 자동 변경되지 않으므로 [새 세션 시작] 후 재검증                 |
+| Admin은 빈 목록인데 public web에는 데이터가 보임                          | public web DB 조회가 session context 밖에서 `__PROD__` row를 읽음                 | 해당 public route/page에서 DB 조회 전 `enterDemoSessionFromCookies()` 호출 여부 확인. layout gate만으로 충분하다고 가정하지 않음                    |
+| `__SEED__`가 Media/HomeSection 정도만 남고 Board/Post/Subpage가 사라짐     | 비어 있는 시연 Supabase `__PROD__` snapshot을 다시 import                         | 로컬/개발 풀데이터 snapshot으로 `__SEED__` 재import. import 전 모델별 count 확인을 운영 절차에 포함                                                   |
+| `pnpm demo:export`가 `@supabase/supabase-js` module not found로 실패       | `packages/db` CLI가 Supabase client를 import하지만 db package dependency 누락     | `packages/db/package.json`에 `@supabase/supabase-js` 의존성이 있는지 확인. workspace hoisting에 기대지 않음                                          |
 
 ### 실전 배포 디버깅 (PR4-7 후속 검증으로 발견된 함정)
 

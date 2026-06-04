@@ -568,3 +568,99 @@ public web:
 - 공개 피드백 제출 후 admin `/subpage-feedback`에서 같은 visitor session 데이터가 보이는지 확인한다.
 - 클라이언트 에러 리포트 발생 후 admin `/error-logs`에서 visitor session 로그로 보이는지 확인한다.
 - 미리보기 URL은 같은 시연 세션에서만 열리고, 다른 새 세션에서는 홈으로 redirect되는지 확인한다.
+
+## 2026-06-04 추가 작업: admin session scope와 seed 복구
+
+### 1. 완료된 코드 수정
+
+커밋:
+
+- `038ac1a Fix admin demo API session scope`
+- `cb9832d Fix demo home session scope`
+- `797188b Fix demo snapshot import tooling`
+
+주요 변경:
+
+- 직접 작성된 admin GET/list/detail API route를 `runWithUserDemoSession(user, async () => ...)`로 감싸 visitor session scope를 명시했다.
+- `defineRoute` 기반 API는 기존 factory가 이미 session scope를 감싸므로 별도 수정 대상에서 제외했다.
+- 공개 웹 홈 페이지는 `getActiveHomePopups()` / `getHomeSections()` 호출 전 `enterDemoSessionFromCookies()`를 호출하도록 수정했다.
+- `packages/db` snapshot CLI가 Supabase Storage client를 직접 import하므로 `@simple-cms/db` package dependency에 `@supabase/supabase-js`를 추가했다.
+- `importSnapshotToSeed()`의 `Role/User` 통계가 `undefined += 1`로 `NaN`이 되던 문제를 `(value ?? 0) + 1`로 수정했다.
+
+검증:
+
+- admin `tsc --noEmit`, `eslint .`, `next build` 통과.
+- web `tsc --noEmit`, `eslint .`, `next build` 통과.
+- db `tsc --noEmit` 통과.
+- db demo 관련 테스트 3개 파일 / 28개 테스트 통과.
+
+### 2. 실제 장애 원인
+
+관리자 메인 팝업 API가 `{"success": true, "data": []}`를 반환한 것은 route 자체 오류가 아니었다.
+
+확인 당시 DB 상태:
+
+- `HomePopup`: `__PROD__` 1건, `__SEED__` 0건.
+- 공개 웹 홈은 session attach 전에 `__PROD__` 팝업을 볼 수 있었다.
+- 관리자 API는 visitor session을 올바르게 보고 있었으므로 해당 session에 row가 없어 빈 배열을 반환했다.
+
+이후 잘못된 복구 시도가 있었다:
+
+- 현재 Supabase `__PROD__` 기준으로 `pnpm demo:export`를 실행했다.
+- 이 snapshot은 `Role 0`, `User 0`, `Media 1`, `HomeSection 10`, `HomePopup 1` 정도의 빈약한 데이터였다.
+- 이를 `pnpm demo:import`로 `__SEED__`에 적용해 새 visitor 세션이 빈약한 seed에서 생성되는 문제가 생겼다.
+- `demo:import`는 전체 DB 초기화가 아니라 `__SEED__` row와 Storage `__SEED__/` 파일만 reset/import한다. 기존 visitor session row가 많이 남아 있는 것은 정상이다.
+
+### 3. 복구 완료 상태
+
+복구 방식:
+
+- 기존 로컬 snapshot `demo-snapshot-2026-06-04T01-09-30-773Z.json`을 기준으로 사용했다.
+- 이 로컬 snapshot은 `HomePopup`이 0건이었으므로, 현재 Supabase `__PROD__`의 `HomePopup` 1건을 병합해 `/tmp/simple-cms-demo-snapshot-restored.json`를 만들었다.
+- 복구 snapshot을 `pnpm demo:import /tmp/simple-cms-demo-snapshot-restored.json`로 `__SEED__`에 재적재했다.
+
+최종 `__SEED__` count:
+
+```txt
+Role 2
+User 2
+Media 62
+SiteSettings 7
+NavigationMenu 3
+Board 6
+HomeSection 10
+Subpage 7
+Post 21
+PageBlock 11
+HomePopup 1
+NavigationMenuItem 22
+SubpageVersion 0
+SubpageFeedback 0
+AuditLog 0
+ErrorLog 0
+```
+
+사용자 확인:
+
+- 새 세션 시작 후 관리자 DB 페이지에서 팝업/메뉴 데이터가 확인됨.
+- 기존 브라우저 session은 seed 갱신 전 데이터가 남아 있을 수 있으므로, seed 복구 검증은 항상 [새 세션 시작] 또는 cookie 삭제 후 진행한다.
+
+### 4. 다음 컨텍스트 조사 대상: public web DB 데이터 미노출
+
+다음 작업에서는 공개 웹에서 DB 데이터가 안 보이는 원인을 확인한다.
+
+우선순위:
+
+1. public web route/page별로 DB 조회 직전에 `enterDemoSessionFromCookies()`가 호출되는지 확인한다.
+   - 이미 보강됨: home page.
+   - 확인 필요: `/p/[slug]`, `/board/[boardSlug]`, `/board/[boardSlug]/[postSlug]`, `/search`, sitemap/metadata 관련 helper.
+2. `generateMetadata()`에는 session attach가 있어도 default page 함수에는 없는 route가 있는지 확인한다.
+3. React `cache()`를 쓰는 DB helper가 session attach 전에 호출되어 `__PROD__` 또는 sentinel 없는 결과를 캐시하는지 확인한다.
+4. 공개 웹에서 404/empty가 나오는 경우, 해당 slug/menu/post가 `__SEED__`와 새 visitor session에 실제로 존재하는지 DB count와 slug 목록으로 확인한다.
+5. public web API/Route Handler는 `runWithRequestDemoSession(request, ...)` 또는 cookie attach가 적용됐는지 확인한다.
+6. `createSettingsCache()`처럼 cross-request cache를 쓰는 helper는 demo session별 cache key를 쓰는지 확인한다.
+
+주의:
+
+- public web에서 데이터가 보이지 않는다고 바로 snapshot/import 문제로 단정하지 않는다. 관리자 새 세션에서 데이터가 보인다면 seed/clone은 대체로 정상이고, public route의 session attach 또는 cache boundary를 먼저 본다.
+- 반대로 admin도 비면 `__SEED__`/visitor row count부터 다시 본다.
