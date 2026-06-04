@@ -18,6 +18,10 @@ import { Badge } from '@/shared/ui/shadcn/badge';
 
 import { ListSummary } from '@/shared/ui/ListSummary';
 import { ListPagination } from '@/shared/ui/ListPagination';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import { errorLogListOptions } from '../api/errorLogQueries';
 import type { ErrorLogListFilters } from '../model/errorLogFilters';
 import { BulkResolveButton } from './BulkResolveButton';
@@ -30,10 +34,24 @@ interface ErrorLogTableProps {
 }
 
 export function ErrorLogTable({ filters }: ErrorLogTableProps) {
-  const { data } = useQuery(errorLogListOptions(filters));
+  const { data, isPending, isError, error } = useQuery(
+    errorLogListOptions(filters),
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="에러 로그를 불러오는 중..." />;
+  }
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="에러 로그를 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

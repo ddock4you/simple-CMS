@@ -9,6 +9,10 @@ import { Upload } from 'lucide-react';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { SettingsCardForm } from '@/entities/settings/ui/SettingsCardForm';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 
 import { uploadSettingsOptions } from '../api/settingsQueries';
 import { useUpdateUpload } from '../api/useSettingsMutations';
@@ -16,7 +20,9 @@ import { updateUploadSchema, type UpdateUploadData } from '../model/settingsSche
 import { TagInput } from './TagInput';
 
 export function UploadSettingsForm() {
-  const { data } = useQuery(uploadSettingsOptions());
+  const { data, isPending, isError, error } = useQuery(
+    uploadSettingsOptions(),
+  );
   const updateMutation = useUpdateUpload();
 
   const form = useForm<UpdateUploadData>({
@@ -43,6 +49,20 @@ export function UploadSettingsForm() {
   const onSubmit = (formData: UpdateUploadData) => {
     updateMutation.mutate(formData);
   };
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="업로드 설정을 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
+
+  if (isPending || !data) {
+    return <QueryStateMessage title="업로드 설정을 불러오는 중..." />;
+  }
 
   return (
     <SettingsCardForm

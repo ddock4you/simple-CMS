@@ -2,6 +2,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import { subpageFeedbackStatsOptions } from '../api/feedbackQueries';
 
 import { FeedbackBySubpageTable } from './FeedbackBySubpageTable';
@@ -20,7 +24,7 @@ export function FeedbackStatsSection({
   to,
   selectedSubpageId,
 }: FeedbackStatsSectionProps) {
-  const { data } = useQuery(
+  const { data, isPending, isError, error } = useQuery(
     subpageFeedbackStatsOptions({
       from: from ?? undefined,
       to: to ?? undefined,
@@ -28,7 +32,19 @@ export function FeedbackStatsSection({
   );
   const hasExplicitRange = Boolean(from || to);
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="피드백 통계를 불러오는 중..." />;
+  }
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="피드백 통계를 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

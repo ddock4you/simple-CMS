@@ -9,13 +9,19 @@ import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { SettingsCardForm } from '@/entities/settings/ui/SettingsCardForm';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 
 import { domainSettingsOptions } from '../api/settingsQueries';
 import { useUpdateDomain, useDeleteDomain, useCheckDns } from '../api/useSettingsMutations';
 import { updateDomainSchema, type UpdateDomainData } from '../model/settingsSchemas';
 
 export function DomainSettingsForm() {
-  const { data } = useQuery(domainSettingsOptions());
+  const { data, isPending, isError, error } = useQuery(
+    domainSettingsOptions(),
+  );
   const updateMutation = useUpdateDomain();
   const deleteMutation = useDeleteDomain();
   const checkDnsMutation = useCheckDns();
@@ -30,6 +36,20 @@ export function DomainSettingsForm() {
   const onSubmit = (formData: UpdateDomainData) => {
     updateMutation.mutate(formData);
   };
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="도메인 설정을 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
+
+  if (isPending || !data) {
+    return <QueryStateMessage title="도메인 설정을 불러오는 중..." />;
+  }
 
   return (
     <SettingsCardForm

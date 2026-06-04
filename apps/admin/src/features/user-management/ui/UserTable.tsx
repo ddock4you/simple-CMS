@@ -18,6 +18,10 @@ import { BulkActionBar } from '@/shared/ui/BulkActionBar';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { ListSummary } from '@/shared/ui/ListSummary';
 import { ListPagination } from '@/shared/ui/ListPagination';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import type { UserListFilters } from '@/features/user-management/model/userFilters';
 import { userListOptions } from '@/features/user-management/api/userQueries';
 import { UserStatusBadge } from '@/features/user-management/ui/UserStatusBadge';
@@ -41,7 +45,9 @@ export function UserTable({
   currentUserId,
   isCurrentUserSystemAdmin,
 }: UserTableProps) {
-  const { data } = useQuery(userListOptions(filters));
+  const { data, isPending, isError, error } = useQuery(
+    userListOptions(filters),
+  );
   const canUpdateUsers = usePermission('users', 'update');
   const canDeleteUsers = usePermission('users', 'delete');
 
@@ -123,7 +129,19 @@ export function UserTable({
     return actions;
   }, [selectedIds.size, allPending, allActive, allSuspended, isMixed, canUpdateUsers, canDeleteUsers]);
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="사용자 목록을 불러오는 중..." />;
+  }
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="사용자 목록을 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
 
   const isAllOnPageSelected = pageIds.length > 0 && selectedOnPage.length === pageIds.length;
   const isIndeterminate = selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length;

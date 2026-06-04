@@ -16,6 +16,10 @@ import { renderTiptapContentForAdmin } from '@/shared/lib/renderContent';
 import { resolveMediaPreviewUrl } from '@/shared/lib/mediaUrl';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
 import { homePopupDetailOptions } from '../api/popupQueries';
@@ -25,12 +29,26 @@ import { DeletePopupDialog } from './DeletePopupDialog';
 import { PopupTypeBadge } from './PopupTypeBadge';
 
 export function PopupView({ id }: { id: string }) {
-  const { data } = useQuery(homePopupDetailOptions(id));
+  const { data, isPending, isError, error } = useQuery(
+    homePopupDetailOptions(id),
+  );
   const deleteMutation = useDeleteHomePopup();
   const canUpdate = usePermission('home-popups', 'update');
   const canDelete = usePermission('home-popups', 'delete');
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="팝업 정보를 불러오는 중..." />;
+  }
+
+  if (isError || !data) {
+    return (
+      <QueryStateMessage
+        title="팝업 정보를 불러오지 못했습니다."
+        details={isError ? getQueryErrorMessage(error) : undefined}
+        tone="destructive"
+      />
+    );
+  }
 
   const contentHtml =
     data.popupType === 'CONTENT'

@@ -16,6 +16,10 @@ import {
 } from '@/shared/ui/shadcn/card';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { getPostPublicUrl } from '@/shared/lib/siteUrl';
 
@@ -33,12 +37,24 @@ interface PostViewProps {
 }
 
 export function PostView({ id }: PostViewProps) {
-  const { data } = useQuery(postDetailOptions(id));
+  const { data, isPending, isError, error } = useQuery(postDetailOptions(id));
   const deleteMutation = useDeletePost();
   const canUpdate = usePermission('posts', 'update');
   const canDelete = usePermission('posts', 'delete');
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="게시글 정보를 불러오는 중..." />;
+  }
+
+  if (isError || !data) {
+    return (
+      <QueryStateMessage
+        title="게시글 정보를 불러오지 못했습니다."
+        details={isError ? getQueryErrorMessage(error) : undefined}
+        tone="destructive"
+      />
+    );
+  }
 
   const contentHtml = renderTiptapContentForAdmin(data.contentJson);
 

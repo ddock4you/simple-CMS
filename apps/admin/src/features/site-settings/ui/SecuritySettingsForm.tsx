@@ -21,21 +21,41 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/shared/ui/AlertDialog';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 
 import { securitySettingsOptions } from '../api/settingsQueries';
 import { useUpdateSecurity } from '../api/useSettingsMutations';
 
 export function SecuritySettingsForm() {
-  const { data } = useQuery(securitySettingsOptions());
+  const { data, isPending, isError, error } = useQuery(
+    securitySettingsOptions(),
+  );
   const updateMutation = useUpdateSecurity();
   const [confirmOpen, setConfirmOpen] = useState(false);
-
-  const currentValue = data?.concurrentLoginEnabled ?? true;
 
   const handleDisable = () => {
     updateMutation.mutate({ concurrentLoginEnabled: false });
     setConfirmOpen(false);
   };
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="보안 설정을 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
+
+  if (isPending || !data) {
+    return <QueryStateMessage title="보안 설정을 불러오는 중..." />;
+  }
+
+  const currentValue = data.concurrentLoginEnabled;
 
   return (
     <Card>

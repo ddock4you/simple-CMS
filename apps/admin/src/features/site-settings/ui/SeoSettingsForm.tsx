@@ -15,6 +15,10 @@ import {
   CardTitle,
 } from '@/shared/ui/shadcn/card';
 import { SettingsCardForm } from '@/entities/settings/ui/SettingsCardForm';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 
 import { seoSettingsOptions } from '../api/settingsQueries';
 import { useUpdateSeo } from '../api/useSettingsMutations';
@@ -35,7 +39,7 @@ function pathsToTextarea(paths: string[]): string {
 }
 
 export function SeoSettingsForm() {
-  const { data } = useQuery(seoSettingsOptions());
+  const { data, isPending, isError, error } = useQuery(seoSettingsOptions());
   const updateMutation = useUpdateSeo();
 
   const form = useForm<UpdateSeoData>({
@@ -55,8 +59,22 @@ export function SeoSettingsForm() {
     updateMutation.mutate(formData);
   };
 
-  const baseUrl = data?.baseUrl ?? '';
-  const sitemapUrl = data?.sitemapUrl ?? '';
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="SEO 설정을 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
+
+  if (isPending || !data) {
+    return <QueryStateMessage title="SEO 설정을 불러오는 중..." />;
+  }
+
+  const baseUrl = data.baseUrl;
+  const sitemapUrl = data.sitemapUrl;
 
   return (
     <div className="space-y-6">

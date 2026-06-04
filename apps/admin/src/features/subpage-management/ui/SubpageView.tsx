@@ -15,6 +15,10 @@ import {
 } from '@/shared/ui/shadcn/card';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { getSubpagePublicUrl } from '@/shared/lib/siteUrl';
 import { CCL_TYPE_LABELS } from '@simple-cms/types';
@@ -42,8 +46,15 @@ interface SubpageViewProps {
 }
 
 export function SubpageView({ id }: SubpageViewProps) {
-  const { data } = useQuery(subpageDetailOptions(id));
-  const { data: blocks = [] } = useQuery(blockListOptions(id));
+  const { data, isPending, isError, error } = useQuery(
+    subpageDetailOptions(id),
+  );
+  const {
+    data: blocks = [],
+    isPending: blocksPending,
+    isError: blocksError,
+    error: blocksErrorValue,
+  } = useQuery(blockListOptions(id));
   const deleteMutation = useDeleteSubpage();
   const canUpdate = usePermission('subpages', 'update');
   const canDelete = usePermission('subpages', 'delete');
@@ -62,7 +73,19 @@ export function SubpageView({ id }: SubpageViewProps) {
       },
     });
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="서브 페이지 정보를 불러오는 중..." />;
+  }
+
+  if (isError || !data) {
+    return (
+      <QueryStateMessage
+        title="서브 페이지 정보를 불러오지 못했습니다."
+        details={isError ? getQueryErrorMessage(error) : undefined}
+        tone="destructive"
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -117,10 +140,20 @@ export function SubpageView({ id }: SubpageViewProps) {
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>블록 구성 ({blocks.length})</CardTitle>
+              <CardTitle>
+                블록 구성 {blocksPending ? '' : `(${blocks.length})`}
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              {blocks.length === 0 ? (
+              {blocksPending ? (
+                <QueryStateMessage title="블록 목록을 불러오는 중..." />
+              ) : blocksError ? (
+                <QueryStateMessage
+                  title="블록 목록을 불러오지 못했습니다."
+                  details={getQueryErrorMessage(blocksErrorValue)}
+                  tone="destructive"
+                />
+              ) : blocks.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   아직 추가된 블록이 없습니다. 편집 화면에서 본문·HTML·이미지·iframe 블록을 자유롭게 섞을 수 있습니다.
                 </p>
@@ -149,7 +182,7 @@ export function SubpageView({ id }: SubpageViewProps) {
             </CardContent>
           </Card>
 
-          {blocks.length > 0 && (
+          {!blocksPending && !blocksError && blocks.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>콘텐츠</CardTitle>

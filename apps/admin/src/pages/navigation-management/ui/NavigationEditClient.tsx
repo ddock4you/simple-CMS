@@ -6,6 +6,10 @@ import { ArrowLeft } from 'lucide-react';
 
 import { Badge } from '@/shared/ui/shadcn/badge';
 import { Button } from '@/shared/ui/Button';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { PageHeader } from '@/shared/ui/PageHeader';
 
@@ -19,10 +23,24 @@ interface NavigationEditClientProps {
 }
 
 export function NavigationEditClient({ menuId }: NavigationEditClientProps) {
-  const { data } = useQuery(menuSetDetailOptions(menuId));
+  const { data, isPending, isError, error } = useQuery(
+    menuSetDetailOptions(menuId),
+  );
   const canUpdate = usePermission('navigation', 'update');
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="메뉴 정보를 불러오는 중..." />;
+  }
+
+  if (isError || !data) {
+    return (
+      <QueryStateMessage
+        title="메뉴 정보를 불러오지 못했습니다."
+        details={isError ? getQueryErrorMessage(error) : undefined}
+        tone="destructive"
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

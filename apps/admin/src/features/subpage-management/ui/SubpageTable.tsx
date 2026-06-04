@@ -20,6 +20,10 @@ import { InlineStatusSwitchToggle } from '@/shared/ui/InlineStatusSwitchToggle';
 import { BulkActionBar } from '@/shared/ui/BulkActionBar';
 import { ListSummary } from '@/shared/ui/ListSummary';
 import { ListPagination } from '@/shared/ui/ListPagination';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
 import type { SubpageListFilters } from '../model/subpageFilters';
@@ -34,7 +38,9 @@ interface SubpageTableProps {
 }
 
 export function SubpageTable({ filters }: SubpageTableProps) {
-  const { data } = useQuery(subpageListOptions(filters));
+  const { data, isPending, isError, error } = useQuery(
+    subpageListOptions(filters),
+  );
   const canUpdate = usePermission('subpages', 'update');
   const canDelete = usePermission('subpages', 'delete');
   const toggleStatus = useToggleSubpageStatus();
@@ -58,7 +64,19 @@ export function SubpageTable({ filters }: SubpageTableProps) {
   const isIndeterminate =
     selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length;
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="서브 페이지 목록을 불러오는 중..." />;
+  }
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="서브 페이지 목록을 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
 
   const toggleAll = (next: boolean) => {
     setSelectedIds((prev) => {

@@ -22,6 +22,10 @@ import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
 import { ListSummary } from '@/shared/ui/ListSummary';
 import { ListPagination } from '@/shared/ui/ListPagination';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 
 import type { PostListFilters } from '../model/postFilters';
 import { postListOptions } from '../api/postQueries';
@@ -37,7 +41,9 @@ interface PostTableProps {
 }
 
 export function PostTable({ filters }: PostTableProps) {
-  const { data } = useQuery(postListOptions(filters));
+  const { data, isPending, isError, error } = useQuery(
+    postListOptions(filters),
+  );
   const canUpdate = usePermission('posts', 'update');
   const canDelete = usePermission('posts', 'delete');
   const toggleStatus = useTogglePostStatus();
@@ -62,7 +68,19 @@ export function PostTable({ filters }: PostTableProps) {
   const isIndeterminate =
     selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length;
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="게시글 목록을 불러오는 중..." />;
+  }
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="게시글 목록을 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
 
   const toggleAll = (next: boolean) => {
     setSelectedIds((prev) => {

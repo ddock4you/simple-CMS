@@ -20,6 +20,10 @@ import { Textarea } from '@/shared/ui/shadcn/textarea';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
 import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
 import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 
 import { brandingSettingsOptions } from '../api/settingsQueries';
 import {
@@ -48,7 +52,9 @@ const FAVICON_REASON = '파비콘은 PNG, WEBP, ICO만 사용할 수 있습니�
 const OG_REASON = 'OG 이미지는 PNG, JPG, WEBP만 사용할 수 있습니다.';
 
 export function BrandingSettingsForm() {
-  const { data } = useQuery(brandingSettingsOptions());
+  const { data, isPending, isError, error } = useQuery(
+    brandingSettingsOptions(),
+  );
   const updateMutation = useUpdateBranding();
   const deleteAssetMutation = useDeleteBrandingAsset();
 
@@ -136,6 +142,20 @@ export function BrandingSettingsForm() {
   const watchLogoMediaId = watch('logoMediaId');
   const watchFaviconMediaId = watch('faviconMediaId');
   const watchOgImageMediaId = watch('ogImageMediaId');
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="브랜딩 설정을 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
+
+  if (isPending || !data) {
+    return <QueryStateMessage title="브랜딩 설정을 불러오는 중..." />;
+  }
 
   return (
     <>

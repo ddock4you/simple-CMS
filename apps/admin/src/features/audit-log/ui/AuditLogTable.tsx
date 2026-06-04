@@ -17,6 +17,10 @@ import { Button } from '@/shared/ui/Button';
 
 import { ListSummary } from '@/shared/ui/ListSummary';
 import { ListPagination } from '@/shared/ui/ListPagination';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import type { AuditLogListFilters, AuditLogListItem } from '../model/auditLogFilters';
 import { auditLogListOptions } from '../api/auditLogQueries';
 import { AuditActionBadge } from './AuditActionBadge';
@@ -28,10 +32,24 @@ interface AuditLogTableProps {
 }
 
 export function AuditLogTable({ filters }: AuditLogTableProps) {
-  const { data } = useQuery(auditLogListOptions(filters));
+  const { data, isPending, isError, error } = useQuery(
+    auditLogListOptions(filters),
+  );
   const [selectedItem, setSelectedItem] = useState<AuditLogListItem | null>(null);
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="감사 로그를 불러오는 중..." />;
+  }
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="감사 로그를 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

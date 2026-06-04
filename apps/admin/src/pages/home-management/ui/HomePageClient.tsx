@@ -10,6 +10,10 @@ import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { OrderActionButtons } from '@/shared/ui/OrderActionButtons';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import { homeSectionListOptions } from '@/features/home-management/api/homeQueries';
 import { useReorderHomeSections } from '@/features/home-management/api/useHomeMutations';
 import { SectionList } from '@/features/home-management/ui/SectionList';
@@ -20,7 +24,12 @@ interface HomePageClientProps {
 
 export function HomePageClient({ canUpdate }: HomePageClientProps) {
   const queryClient = useQueryClient();
-  const { data: sections, isLoading } = useQuery(homeSectionListOptions());
+  const {
+    data: sections,
+    isPending,
+    isError,
+    error,
+  } = useQuery(homeSectionListOptions());
   const reorderMutation = useReorderHomeSections();
 
   const { items, isDirty, dirtyCount, applyDragEnd, getDirtyPayload, reset } =
@@ -48,19 +57,23 @@ export function HomePageClient({ canUpdate }: HomePageClientProps) {
     );
   }, [reorderMutation, getDirtyPayload, queryClient, reset]);
 
-  if (isLoading) {
+  if (isPending) {
+    return <QueryStateMessage title="섹션을 불러오는 중..." />;
+  }
+
+  if (isError) {
     return (
-      <div className="rounded-md border border-dashed p-8 text-center text-muted-foreground">
-        불러오는 중...
-      </div>
+      <QueryStateMessage
+        title="섹션 목록을 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
     );
   }
 
-  if (!sections || sections.length === 0) {
+  if (sections.length === 0) {
     return (
-      <div className="rounded-md border border-dashed p-8 text-center text-muted-foreground">
-        섹션이 없습니다. Seed 스크립트(<code>pnpm tsx packages/db/prisma/seed.ts</code>)를 실행해주세요.
-      </div>
+      <QueryStateMessage title="섹션이 없습니다. Seed 스크립트(pnpm tsx packages/db/prisma/seed.ts)를 실행해주세요." />
     );
   }
 

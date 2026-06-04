@@ -42,9 +42,7 @@ export function DemoBanner({
 }: DemoBannerProps) {
   const router = useRouter();
   const expiresMs = useRef(new Date(expiresAt).getTime());
-  const [remaining, setRemaining] = useState<number>(() =>
-    Math.max(0, expiresMs.current - Date.now()),
-  );
+  const [remaining, setRemaining] = useState<number | null>(null);
   const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
@@ -53,9 +51,11 @@ export function DemoBanner({
   }, [expiresAt]);
 
   useEffect(() => {
-    const id = setInterval(() => {
+    const updateRemaining = () => {
       setRemaining(Math.max(0, expiresMs.current - Date.now()));
-    }, 1000);
+    };
+    updateRemaining();
+    const id = setInterval(updateRemaining, 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -147,7 +147,7 @@ export function DemoBanner({
         }}
       >
         <span style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-          남은 시간 {formatRemaining(remaining)}
+          남은 시간 {remaining === null ? '계산 중' : formatRemaining(remaining)}
         </span>
         <button
           type="button"

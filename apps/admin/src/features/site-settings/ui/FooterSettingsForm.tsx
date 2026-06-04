@@ -19,6 +19,10 @@ import { Button } from '@/shared/ui/Button';
 import { BooleanSwitchField } from '@/shared/ui/BooleanSwitchField';
 import { SettingsCardForm } from '@/entities/settings/ui/SettingsCardForm';
 import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Switch } from '@/shared/ui/shadcn/switch';
@@ -52,7 +56,9 @@ function ErrorText({ message }: { message?: string }) {
 }
 
 export function FooterSettingsForm() {
-  const { data } = useQuery(footerSettingsOptions());
+  const { data, isPending, isError, error } = useQuery(
+    footerSettingsOptions(),
+  );
   const updateMutation = useUpdateFooter();
   const [footerLogoUrlOverride, setFooterLogoUrlOverride] = useState<
     string | null
@@ -106,6 +112,20 @@ export function FooterSettingsForm() {
     setValue('footerLogoAlt', null, { shouldDirty: true });
     setFooterLogoUrlOverride('');
   };
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="푸터 설정을 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
+
+  if (isPending || !data) {
+    return <QueryStateMessage title="푸터 설정을 불러오는 중..." />;
+  }
 
   return (
     <SettingsCardForm

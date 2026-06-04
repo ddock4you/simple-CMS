@@ -19,6 +19,10 @@ import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 
 import { ListSummary } from '@/shared/ui/ListSummary';
 import { ListPagination } from '@/shared/ui/ListPagination';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 
 import type { BoardListFilters } from '../model/boardFilters';
 import { boardListOptions } from '../api/boardQueries';
@@ -31,11 +35,25 @@ interface BoardTableProps {
 }
 
 export function BoardTable({ filters }: BoardTableProps) {
-  const { data } = useQuery(boardListOptions(filters));
+  const { data, isPending, isError, error } = useQuery(
+    boardListOptions(filters),
+  );
   const canUpdate = usePermission('boards', 'update');
   const toggleVisibility = useToggleBoardVisibility();
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="게시판 목록을 불러오는 중..." />;
+  }
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="게시판 목록을 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

@@ -14,6 +14,10 @@ import {
 } from '@/shared/ui/shadcn/card';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { getBoardPublicUrl } from '@/shared/lib/siteUrl';
 
@@ -30,12 +34,26 @@ interface BoardViewProps {
 }
 
 export function BoardView({ id }: BoardViewProps) {
-  const { data } = useQuery(boardDetailOptions(id));
+  const { data, isPending, isError, error } = useQuery(
+    boardDetailOptions(id),
+  );
   const deleteMutation = useDeleteBoard();
   const canUpdate = usePermission('boards', 'update');
   const canDelete = usePermission('boards', 'delete');
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="게시판 정보를 불러오는 중..." />;
+  }
+
+  if (isError || !data) {
+    return (
+      <QueryStateMessage
+        title="게시판 정보를 불러오지 못했습니다."
+        details={isError ? getQueryErrorMessage(error) : undefined}
+        tone="destructive"
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -26,6 +26,10 @@ import type { FeedbackListQuery } from '../model/feedbackFilters';
 
 import { ListSummary } from '@/shared/ui/ListSummary';
 import { ListPagination } from '@/shared/ui/ListPagination';
+import {
+  getQueryErrorMessage,
+  QueryStateMessage,
+} from '@/shared/ui/QueryStateMessage';
 import { FeedbackDetailDialog } from './FeedbackDetailDialog';
 import { RatingBadge } from './RatingBadge';
 
@@ -34,10 +38,24 @@ interface FeedbackListTableProps {
 }
 
 export function FeedbackListTable({ filters }: FeedbackListTableProps) {
-  const { data } = useQuery(subpageFeedbackListOptions(filters));
+  const { data, isPending, isError, error } = useQuery(
+    subpageFeedbackListOptions(filters),
+  );
   const [selected, setSelected] = useState<FeedbackListItem | null>(null);
 
-  if (!data) return null;
+  if (isPending) {
+    return <QueryStateMessage title="피드백 목록을 불러오는 중..." />;
+  }
+
+  if (isError) {
+    return (
+      <QueryStateMessage
+        title="피드백 목록을 불러오지 못했습니다."
+        details={getQueryErrorMessage(error)}
+        tone="destructive"
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
