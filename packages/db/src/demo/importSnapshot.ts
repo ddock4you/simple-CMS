@@ -18,6 +18,7 @@
  * 호출자: admin route handler `/api/demo/snapshot/import`, CLI `pnpm demo:import`.
  */
 import { createId } from '@paralleldrive/cuid2';
+import { hash } from 'bcryptjs';
 
 import { prisma } from '../client';
 import { Prisma } from '../generated/prisma/client';
@@ -42,6 +43,7 @@ import {
   type SnapshotSubpageVersionRow,
   type SnapshotUserRow,
 } from './snapshot.types';
+import { DEMO_ADMIN_USERNAME } from './cloneSeedToSession';
 import {
   walkSnapshotForMediaUrlRemap,
   walkSnapshotForRemap,
@@ -57,6 +59,25 @@ const TRANSACTION_MAX_WAIT_MS = 5_000;
  */
 const PLACEHOLDER_PASSWORD_HASH =
   '$2a$10$INVALIDhashINVALIDhashINVALIDhashINVALIDhashINVALIDhashIN';
+const DEMO_ADMIN_PASSWORD = 'demo_password';
+
+const DEMO_ADMIN_PERMISSIONS = {
+  dashboard: { read: true },
+  subpages: { create: true, read: true, update: true, delete: true },
+  'subpage-feedback': { read: true, delete: true },
+  boards: { create: true, read: true, update: true, delete: true },
+  posts: { create: true, read: true, update: true, delete: true },
+  navigation: { create: true, read: true, update: true, delete: true },
+  home: { create: true, read: true, update: true, delete: true },
+  'home-popups': { create: true, read: true, update: true, delete: true },
+  media: { create: true, read: true, update: true, delete: true },
+  users: { create: true, read: true, update: true, delete: true },
+  roles: { create: true, read: true, update: true, delete: true },
+  auditLogs: { read: true },
+  errorLogs: { read: true, update: true },
+  settings: { read: true, update: true },
+  'demo-snapshot': { read: true, create: true, update: true },
+};
 
 export interface ImportOptions {
   /**
@@ -472,10 +493,84 @@ async function doImport(
     },
   );
 
+  const ensuredDemoAdmin = await ensureDemoAdminSeed();
+  if (ensuredDemoAdmin.roleCreated) {
+    stats.rowsCreatedByModel.Role += 1;
+  }
+  if (ensuredDemoAdmin.userCreated) {
+    stats.rowsCreatedByModel.User += 1;
+  }
+
   return stats;
 }
 
 // ─── helpers ──────────────────────────────────────
+
+async function ensureDemoAdminSeed(): Promise<{
+  roleCreated: boolean;
+  userCreated: boolean;
+}> {
+  let roleCreated = false;
+  let userCreated = false;
+
+  let systemRole = await prisma.role.findFirst({
+    where: { sessionId: SEED_SENTINEL, isSystem: true },
+    orderBy: { id: 'asc' },
+  });
+
+  if (!systemRole) {
+    systemRole = await prisma.role.create({
+      data: {
+        sessionId: SEED_SENTINEL,
+        name: '총괄 관리자',
+        description: '모든 권한을 보유한 시스템 관리자 (시연용)',
+        permissions: DEMO_ADMIN_PERMISSIONS,
+        isSystem: true,
+        isDefault: false,
+      },
+    });
+    roleCreated = true;
+  } else {
+    await prisma.role.update({
+      where: { id: systemRole.id },
+      data: {
+        permissions: DEMO_ADMIN_PERMISSIONS,
+        isSystem: true,
+      },
+    });
+  }
+
+  const password = await hash(DEMO_ADMIN_PASSWORD, 10);
+  const existingDemoAdmin = await prisma.user.findFirst({
+    where: { sessionId: SEED_SENTINEL, username: DEMO_ADMIN_USERNAME },
+  });
+
+  if (existingDemoAdmin) {
+    await prisma.user.update({
+      where: { id: existingDemoAdmin.id },
+      data: {
+        name: '시연 관리자',
+        password,
+        status: 'ACTIVE',
+        roleId: systemRole.id,
+      },
+    });
+  } else {
+    await prisma.user.create({
+      data: {
+        sessionId: SEED_SENTINEL,
+        username: DEMO_ADMIN_USERNAME,
+        password,
+        name: '시연 관리자',
+        status: 'ACTIVE',
+        roleId: systemRole.id,
+      },
+    });
+    userCreated = true;
+  }
+
+  return { roleCreated, userCreated };
+}
 
 interface IdMaps {
   Role: Map<string, string>;
