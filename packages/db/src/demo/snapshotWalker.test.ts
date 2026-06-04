@@ -827,9 +827,11 @@ describe('snapshotWalker clone helpers', () => {
 
     walkSnapshotForMediaUrlRemap(payload, mediaIdMap, mediaUrlMap);
 
-    const postImage = (payload.models.Post[0]!.contentJson as {
-      content: Array<{ attrs: { src: string } }>;
-    }).content[0]!;
+    const postImage = (
+      payload.models.Post[0]!.contentJson as {
+        content: Array<{ attrs: { src: string } }>;
+      }
+    ).content[0]!;
     expect(postImage.attrs.src).toContain('/__SEED__/content/a.jpg');
 
     const blockConfig = payload.models.PageBlock[0]!.configJson as {
@@ -837,9 +839,7 @@ describe('snapshotWalker clone helpers', () => {
       items: Array<{ imageUrl: string }>;
     };
     expect(blockConfig.imageUrl).toContain('/__SEED__/content/a.jpg');
-    expect(blockConfig.items[0]!.imageUrl).toContain(
-      '/__SEED__/content/a.jpg',
-    );
+    expect(blockConfig.items[0]!.imageUrl).toContain('/__SEED__/content/a.jpg');
   });
 
   it('keeps imported media URLs when the regular mediaId remap runs afterward', () => {
@@ -882,10 +882,115 @@ describe('snapshotWalker clone helpers', () => {
     walkSnapshotForMediaUrlRemap(payload, mediaIdMap, mediaUrlMap);
     walkSnapshotForRemap(payload, mediaIdMap, 'mediaId');
 
-    const postImage = (payload.models.Post[0]!.contentJson as {
-      content: Array<{ attrs: { mediaId: string; src: string } }>;
-    }).content[0]!;
+    const postImage = (
+      payload.models.Post[0]!.contentJson as {
+        content: Array<{ attrs: { mediaId: string; src: string } }>;
+      }
+    ).content[0]!;
     expect(postImage.attrs.mediaId).toBe('seed-media-1');
     expect(postImage.attrs.src).toContain('/__SEED__/content/a.jpg');
+  });
+
+  it('remaps SiteSettings after media URL remap pass', () => {
+    const payload = emptyPayload();
+    payload.models.SiteSettings = [
+      {
+        id: 'setting-logo',
+        key: 'SITE_LOGO_MEDIA_ID',
+        value: 'media-1',
+        description: null,
+      },
+      {
+        id: 'setting-footer',
+        key: 'SITE_FOOTER_CONFIG',
+        value: JSON.stringify({ footerLogoMediaId: 'media-1' }),
+        description: null,
+      },
+    ];
+    payload.models.HomeSection = [
+      {
+        id: 'section-1',
+        sectionType: 'HERO',
+        title: 'Hero',
+        configJson: {
+          slides: [{ mediaId: 'media-1', imageUrl: '/uploads/home/a.jpg' }],
+        },
+        isVisible: true,
+        displayOrder: 0,
+      },
+    ];
+
+    const mediaIdMap = new Map([['media-1', 'seed-media-1']]);
+    const mediaUrlMap = new Map([
+      [
+        'media-1',
+        'https://example.supabase.co/storage/v1/object/public/uploads/__SEED__/home/a.jpg',
+      ],
+    ]);
+
+    walkSnapshotForMediaUrlRemap(payload, mediaIdMap, mediaUrlMap);
+    walkSnapshotForRemap(payload, mediaIdMap, 'mediaId');
+
+    expect(payload.models.SiteSettings[0]!.value).toBe('seed-media-1');
+    expect(JSON.parse(payload.models.SiteSettings[1]!.value!)).toEqual({
+      footerLogoMediaId: 'seed-media-1',
+    });
+    expect(
+      (
+        payload.models.HomeSection[0]!.configJson as {
+          slides: Array<{ mediaId: string; imageUrl: string }>;
+        }
+      ).slides[0],
+    ).toEqual({
+      mediaId: 'seed-media-1',
+      imageUrl:
+        'https://example.supabase.co/storage/v1/object/public/uploads/__SEED__/home/a.jpg',
+    });
+  });
+
+  it('remaps HomeSection subpage references through top-level walker', () => {
+    const payload = emptyPayload();
+    payload.models.HomeSection = [
+      {
+        id: 'section-1',
+        sectionType: 'FREQUENT_MENU',
+        title: '자주찾는 메뉴',
+        configJson: {
+          items: [
+            {
+              itemType: 'SUBPAGE',
+              subpageId: 'subpage-1',
+              boardId: null,
+            },
+            {
+              itemType: 'BOARD',
+              subpageId: null,
+              boardId: 'board-1',
+            },
+          ],
+        },
+        isVisible: true,
+        displayOrder: 0,
+      },
+    ];
+
+    walkSnapshotForRemap(
+      payload,
+      new Map([['subpage-1', 'seed-subpage-1']]),
+      'subpageId',
+    );
+    walkSnapshotForRemap(
+      payload,
+      new Map([['board-1', 'seed-board-1']]),
+      'boardId',
+    );
+
+    const items = (
+      payload.models.HomeSection[0]!.configJson as {
+        items: Array<{ subpageId: string | null; boardId: string | null }>;
+      }
+    ).items;
+    expect(items[0]!.subpageId).toBe('seed-subpage-1');
+    expect(items[1]!.boardId).toBe('seed-board-1');
   });
 });

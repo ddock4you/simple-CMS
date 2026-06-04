@@ -187,9 +187,11 @@ async function doImport(
 
   // ─── Phase 1c: walker remap (in-place) ───────────────
   // URL 재작성은 old mediaId 기준 mediaUrlMap을 사용하므로 mediaId-only remap보다 먼저 수행한다.
-  // walkSnapshotForMediaUrlRemap은 같은 pass에서 mediaId도 함께 새 id로 바꾼다.
+  // walkSnapshotForMediaUrlRemap은 JSON 내부 mediaId도 함께 새 id로 바꾸지만 SiteSettings는 다루지 않는다.
   walkSnapshotForMediaUrlRemap(payload, mediaIdMap, mediaUrlMap);
+  walkSnapshotForRemap(payload, mediaIdMap, 'mediaId');
   walkSnapshotForRemap(payload, idMaps.Board, 'boardId');
+  walkSnapshotForRemap(payload, idMaps.Subpage, 'subpageId');
 
   // ─── Phase 2: $transaction으로 16모델 createMany ──
   await prisma.$transaction(
@@ -514,8 +516,9 @@ async function doImport(
             digest: l.digest,
             fingerprint: l.fingerprint,
             metadata:
-              (sanitizeSnapshotJson(l.metadata) as Prisma.InputJsonValue | null) ??
-              Prisma.JsonNull,
+              (sanitizeSnapshotJson(
+                l.metadata,
+              ) as Prisma.InputJsonValue | null) ?? Prisma.JsonNull,
             isResolved: l.isResolved,
             resolvedAt: l.resolvedAt ? new Date(l.resolvedAt) : null,
             resolvedBy: l.resolvedBy
@@ -538,8 +541,9 @@ async function doImport(
             entityId: remapAuditEntityId(l.entityType, l.entityId, idMaps),
             entityTitle: l.entityTitle,
             changes:
-              (sanitizeSnapshotJson(l.changes) as Prisma.InputJsonValue | null) ??
-              Prisma.JsonNull,
+              (sanitizeSnapshotJson(
+                l.changes,
+              ) as Prisma.InputJsonValue | null) ?? Prisma.JsonNull,
             userId: l.userId ? (idMaps.User.get(l.userId) ?? null) : null,
             ipAddress: anonymizeIp(l.ipAddress),
             userAgent: anonymizeUserAgent(l.userAgent),
@@ -557,12 +561,10 @@ async function doImport(
 
   const ensuredDemoAdmin = await ensureDemoAdminSeed();
   if (ensuredDemoAdmin.roleCreated) {
-    stats.rowsCreatedByModel.Role =
-      (stats.rowsCreatedByModel.Role ?? 0) + 1;
+    stats.rowsCreatedByModel.Role = (stats.rowsCreatedByModel.Role ?? 0) + 1;
   }
   if (ensuredDemoAdmin.userCreated) {
-    stats.rowsCreatedByModel.User =
-      (stats.rowsCreatedByModel.User ?? 0) + 1;
+    stats.rowsCreatedByModel.User = (stats.rowsCreatedByModel.User ?? 0) + 1;
   }
 
   return stats;

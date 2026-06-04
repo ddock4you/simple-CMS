@@ -1,13 +1,14 @@
 /**
- * 시연 모드 snapshot import 시 in-place mediaId / boardId 재매핑 walker.
+ * 시연 모드 snapshot import 시 in-place mediaId / boardId / subpageId 재매핑 walker.
  *
  * 사용 패턴:
  *   1. importSnapshot이 14모델 row마다 oldId → newCuid idMap 빌드
  *   2. payload deep clone (또는 in-place 변경 허용)
  *   3. walkSnapshotForRemap(payload, mediaIdMap, 'mediaId') — 모든 mediaId 위치 재매핑
  *   4. walkSnapshotForRemap(payload, boardIdMap, 'boardId') — HomeSection board 참조 재매핑
- *   5. createMany 시 row 자체 컬럼(featuredImageId, imageMediaId 등 평탄 FK)은
- *      별도 매핑 (walker는 JSON 안 깊은 mediaId/boardId만 처리)
+ *   5. walkSnapshotForRemap(payload, subpageIdMap, 'subpageId') — HomeSection subpage 참조 재매핑
+ *   6. createMany 시 row 자체 컬럼(featuredImageId, imageMediaId 등 평탄 FK)은
+ *      별도 매핑 (walker는 JSON 안 깊은 mediaId/boardId/subpageId만 처리)
  *
  * **위치별 field name 분기 (PR6 핵심)**:
  *   - HomeSection.configJson:
@@ -31,7 +32,7 @@ import type { SnapshotPayload } from './snapshot.types';
 
 type IdMap = Map<string, string>;
 type UrlMap = Map<string, string>;
-type RemapKind = 'mediaId' | 'boardId';
+type RemapKind = 'mediaId' | 'boardId' | 'subpageId';
 
 const MEDIA_ID_SETTING_KEYS = new Set([
   'SITE_LOGO_MEDIA_ID',
@@ -93,7 +94,10 @@ function remapHomeSectionConfig(
             const newId = idMap.get(s.mediaId);
             if (newId) s.mediaId = newId;
             const newUrl = mediaUrlMap.get(oldMediaId);
-            if (newUrl && typeof (s as { imageUrl?: unknown }).imageUrl === 'string') {
+            if (
+              newUrl &&
+              typeof (s as { imageUrl?: unknown }).imageUrl === 'string'
+            ) {
               (s as { imageUrl: string }).imageUrl = newUrl;
             }
             if (newUrl && typeof (s as { url?: unknown }).url === 'string') {
@@ -125,7 +129,10 @@ function remapHomeSectionConfig(
             const newId = idMap.get(i.mediaId);
             if (newId) i.mediaId = newId;
             const newUrl = mediaUrlMap.get(oldMediaId);
-            if (newUrl && typeof (i as { imageUrl?: unknown }).imageUrl === 'string') {
+            if (
+              newUrl &&
+              typeof (i as { imageUrl?: unknown }).imageUrl === 'string'
+            ) {
               (i as { imageUrl: string }).imageUrl = newUrl;
             }
           }
@@ -134,7 +141,10 @@ function remapHomeSectionConfig(
             const newId = idMap.get(i.iconMediaId);
             if (newId) i.iconMediaId = newId;
             const newUrl = mediaUrlMap.get(oldMediaId);
-            if (newUrl && typeof (i as { iconUrl?: unknown }).iconUrl === 'string') {
+            if (
+              newUrl &&
+              typeof (i as { iconUrl?: unknown }).iconUrl === 'string'
+            ) {
               (i as { iconUrl: string }).iconUrl = newUrl;
             }
           }
@@ -297,7 +307,11 @@ function remapSubpageVersionSnapshot(
     const newId = mediaIdMap.get(s.meta.featuredImageId);
     if (newId) s.meta.featuredImageId = newId;
     const newUrl = mediaUrlMap.get(oldMediaId);
-    if (newUrl && typeof (s.meta as { featuredImageUrl?: unknown }).featuredImageUrl === 'string') {
+    if (
+      newUrl &&
+      typeof (s.meta as { featuredImageUrl?: unknown }).featuredImageUrl ===
+        'string'
+    ) {
       (s.meta as { featuredImageUrl: string }).featuredImageUrl = newUrl;
     }
   }
@@ -403,7 +417,7 @@ export function remapSiteSettingValueReferences(
  *
  * @param payload - SnapshotPayload (in-place 변경됨)
  * @param idMap - oldId → newId
- * @param kind - 'mediaId' | 'boardId'
+ * @param kind - 'mediaId' | 'boardId' | 'subpageId'
  */
 export function walkSnapshotForRemap(
   payload: SnapshotPayload,
@@ -414,15 +428,23 @@ export function walkSnapshotForRemap(
 
   // HomeSection
   for (const section of payload.models.HomeSection) {
-    remapHomeSectionConfig(
-      section.sectionType,
-      section.configJson,
-      idMap,
-      kind,
-    );
+    if (kind === 'subpageId') {
+      remapHomeSectionSubpageReferences(
+        section.sectionType,
+        section.configJson,
+        idMap,
+      );
+    } else {
+      remapHomeSectionConfig(
+        section.sectionType,
+        section.configJson,
+        idMap,
+        kind,
+      );
+    }
   }
 
-  if (kind !== 'mediaId') return; // boardId는 HomeSection까지만
+  if (kind !== 'mediaId') return; // boardId/subpageId는 HomeSection까지만
 
   for (const setting of payload.models.SiteSettings) {
     setting.value = remapSiteSettingValueReferences(

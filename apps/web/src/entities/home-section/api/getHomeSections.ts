@@ -745,7 +745,6 @@ function resolveFrequentMenuItems(
   boardSlugMap: Map<string, string>,
 ): ResolvedFrequentMenuItem[] {
   return config.items
-    .slice(0, 6)
     .flatMap((item): ResolvedFrequentMenuItem[] => {
       if (!item.isVisible || !item.iconUrl || !item.title) return [];
 
@@ -761,7 +760,8 @@ function resolveFrequentMenuItems(
           iconAlt: item.iconAlt || `${item.title} 아이콘`,
         },
       ];
-    });
+    })
+    .slice(0, 6);
 }
 
 function resolveFrequentMenuHref(
