@@ -783,4 +783,51 @@ describe('snapshotWalker clone helpers', () => {
       '/__SEED__/content/a.jpg',
     );
   });
+
+  it('keeps imported media URLs when the regular mediaId remap runs afterward', () => {
+    const payload = emptyPayload();
+    payload.models.Post = [
+      {
+        id: 'post-1',
+        title: 'Post',
+        slug: 'post',
+        boardId: 'board-1',
+        seoTitle: null,
+        seoDescription: null,
+        contentJson: {
+          type: 'doc',
+          content: [
+            {
+              type: 'image',
+              attrs: { mediaId: 'media-1', src: '/uploads/content/a.jpg' },
+            },
+          ],
+        },
+        content: null,
+        status: 'PUBLISHED',
+        isImportant: false,
+        publishedAt: null,
+        featuredImageId: null,
+        authorId: null,
+        displayOrder: 0,
+      },
+    ];
+
+    const mediaIdMap = new Map([['media-1', 'seed-media-1']]);
+    const mediaUrlMap = new Map([
+      [
+        'media-1',
+        'https://example.supabase.co/storage/v1/object/public/uploads/__SEED__/content/a.jpg',
+      ],
+    ]);
+
+    walkSnapshotForMediaUrlRemap(payload, mediaIdMap, mediaUrlMap);
+    walkSnapshotForRemap(payload, mediaIdMap, 'mediaId');
+
+    const postImage = (payload.models.Post[0]!.contentJson as {
+      content: Array<{ attrs: { mediaId: string; src: string } }>;
+    }).content[0]!;
+    expect(postImage.attrs.mediaId).toBe('seed-media-1');
+    expect(postImage.attrs.src).toContain('/__SEED__/content/a.jpg');
+  });
 });

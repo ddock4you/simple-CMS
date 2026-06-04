@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import type { ApiResponse } from '@simple-cms/types';
 import type { ResourceKey, Action } from '@simple-cms/types';
+import { demo } from '@simple-cms/db';
 
 import { getCurrentUser } from '@/entities/auth/lib/getCurrentUser';
 import { hasPermission } from '@/entities/auth/lib/checkPermission';
@@ -34,6 +35,10 @@ export async function requirePermission(
         { status: 403 },
       ),
     };
+  }
+
+  if (process.env.DEMO_MODE === 'true') {
+    demo.enterWith({ sessionId: user.sessionId });
   }
 
   return { user, error: null };

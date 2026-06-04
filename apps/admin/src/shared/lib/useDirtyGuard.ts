@@ -3,6 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+const DEMO_ADMIN_BASE_PATH = '/_cms/admin';
+
+function stripAdminBasePath(pathname: string): string {
+  if (pathname === DEMO_ADMIN_BASE_PATH) return '/';
+  if (pathname.startsWith(`${DEMO_ADMIN_BASE_PATH}/`)) {
+    return pathname.slice(DEMO_ADMIN_BASE_PATH.length) || '/';
+  }
+  return pathname;
+}
+
 export interface UseDirtyGuardResult {
   confirmDialogProps: {
     open: boolean;
@@ -98,7 +108,7 @@ export function useDirtyGuard(isDirty: boolean): UseDirtyGuardResult {
       }
 
       e.preventDefault();
-      const nextPath = url.pathname + url.search + url.hash;
+      const nextPath = stripAdminBasePath(url.pathname) + url.search + url.hash;
       pendingNavRef.current = () => {
         router.push(nextPath);
       };

@@ -178,8 +178,8 @@ async function doImport(
   }
 
   // ─── Phase 1c: walker remap (in-place) ───────────────
-  // payload는 이제 새 idMap으로 모든 mediaId/boardId 위치를 갱신
-  walkSnapshotForRemap(payload, mediaIdMap, 'mediaId');
+  // URL 재작성은 old mediaId 기준 mediaUrlMap을 사용하므로 mediaId-only remap보다 먼저 수행한다.
+  // walkSnapshotForMediaUrlRemap은 같은 pass에서 mediaId도 함께 새 id로 바꾼다.
   walkSnapshotForMediaUrlRemap(payload, mediaIdMap, mediaUrlMap);
   walkSnapshotForRemap(payload, idMaps.Board, 'boardId');
 

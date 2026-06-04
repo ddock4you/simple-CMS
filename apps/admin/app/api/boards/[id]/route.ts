@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { prisma } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
+import { generateSlug } from '@simple-cms/editor';
 
 import { defineRoute } from '@/shared/api/defineRoute';
 import { renormalizeDisplayOrder } from '@/shared/api/renormalizeDisplayOrder';
@@ -62,7 +63,18 @@ export const PATCH = defineRoute<UpdateBoardData, PatchResult>({
       );
     }
 
-    const { name, slug, description, skinType, isPublic } = parsed;
+    const { name, description, skinType, isPublic } = parsed;
+    const slug =
+      parsed.slug !== undefined
+        ? parsed.slug.trim() || generateSlug(name ?? board.name)
+        : undefined;
+
+    if (parsed.slug !== undefined && !slug) {
+      return NextResponse.json(
+        { success: false, error: 'slug을 입력해주세요.' } satisfies ApiResponse<never>,
+        { status: 400 },
+      );
+    }
 
     if (slug && slug !== board.slug) {
       const existing = await prisma.board.findFirst({ where: { slug } });

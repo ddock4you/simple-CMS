@@ -43,6 +43,26 @@ function cloneJson<T>(value: T): T {
   return structuredClone(value);
 }
 
+function normalizeSeedMediaUrl(url: string, filename: string): string {
+  if (
+    process.env.DEMO_MODE !== 'true' ||
+    process.env.STORAGE_PROVIDER !== 'supabase' ||
+    /^(https?:)?\/\//i.test(url)
+  ) {
+    return url;
+  }
+
+  const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/+$/, '');
+  const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? 'uploads';
+  if (!supabaseUrl) return url;
+
+  const localMatch = url.match(/^\/+uploads\/([a-z0-9-]+)\//i);
+  const category = localMatch?.[1];
+  if (!category) return url;
+
+  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${SEED_SENTINEL}/${category}/${filename}`;
+}
+
 export interface CloneStats {
   Role: number;
   User: number;
@@ -154,9 +174,12 @@ export async function cloneSeedToSession(
         orderBy: { id: 'asc' },
       });
       const mediaIdMap = new Map<string, string>();
+      const mediaUrlMap = new Map<string, string>();
       const mediaData = seedMedia.map((m) => {
         const newId = createId();
+        const url = normalizeSeedMediaUrl(m.url, m.filename);
         mediaIdMap.set(m.id, newId);
+        mediaUrlMap.set(m.id, url);
         return {
           id: newId,
           sessionId: newSessionId,
@@ -164,7 +187,7 @@ export async function cloneSeedToSession(
           originalFilename: m.originalFilename,
           mimeType: m.mimeType,
           size: m.size,
-          url: m.url,
+          url,
           alt: m.alt,
           contentHash: m.contentHash,
           uploadedById: m.uploadedById
@@ -283,6 +306,7 @@ export async function cloneSeedToSession(
           mediaIdMap,
           boardIdMap,
           subpageIdMap,
+          mediaUrlMap,
         );
 
         return {
@@ -309,7 +333,11 @@ export async function cloneSeedToSession(
           const newBoardId = boardIdMap.get(p.boardId);
           if (!newBoardId) return null; // 데이터 무결성 깨졌을 때 skip
           const contentJson = cloneJson(p.contentJson);
-          remapPostContentJsonReferences(contentJson, mediaIdMap);
+          remapPostContentJsonReferences(
+            contentJson,
+            mediaIdMap,
+            mediaUrlMap,
+          );
 
           return {
             id: createId(),
@@ -351,6 +379,7 @@ export async function cloneSeedToSession(
             b.blockType,
             configJson,
             mediaIdMap,
+            mediaUrlMap,
           );
 
           return {
@@ -379,7 +408,12 @@ export async function cloneSeedToSession(
           p.popupType,
           contentJson,
           mediaIdMap,
+          mediaUrlMap,
         );
+        const imageUrl =
+          p.imageMediaId && p.imageUrl
+            ? mediaUrlMap.get(p.imageMediaId) ?? p.imageUrl
+            : p.imageUrl;
 
         return {
           id: createId(),
@@ -389,7 +423,7 @@ export async function cloneSeedToSession(
           contentJson:
             (contentJson as Prisma.InputJsonValue | null) ?? Prisma.JsonNull,
           content: p.content,
-          imageUrl: p.imageUrl,
+          imageUrl,
           imageAlt: p.imageAlt,
           imageMediaId: p.imageMediaId
             ? (mediaIdMap.get(p.imageMediaId) ?? null)
@@ -463,7 +497,11 @@ export async function cloneSeedToSession(
           const newSubpageId = subpageIdMap.get(v.subpageId);
           if (!newSubpageId) return null;
           const snapshot = cloneJson(v.snapshot);
-          remapSubpageVersionSnapshotJsonReferences(snapshot, mediaIdMap);
+          remapSubpageVersionSnapshotJsonReferences(
+            snapshot,
+            mediaIdMap,
+            mediaUrlMap,
+          );
 
           return {
             id: createId(),

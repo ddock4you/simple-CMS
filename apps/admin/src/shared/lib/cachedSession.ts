@@ -19,11 +19,8 @@ export type CachedSession = Prisma.SessionGetPayload<{
   include: { user: { include: { role: true } } };
 }>;
 
-export const getCachedSession = cache(
-  async (): Promise<CachedSession | null> => {
-    const token = await getSessionCookie();
-    if (!token) return null;
-
+const getCachedSessionByToken = cache(
+  async (token: string): Promise<CachedSession | null> => {
     return demo.runWithBypass(async () => {
       const session = await prisma.session.findUnique({
         where: { sessionToken: token },
@@ -43,3 +40,9 @@ export const getCachedSession = cache(
     });
   },
 );
+
+export async function getCachedSession(): Promise<CachedSession | null> {
+  const token = await getSessionCookie();
+  if (!token) return null;
+  return getCachedSessionByToken(token);
+}

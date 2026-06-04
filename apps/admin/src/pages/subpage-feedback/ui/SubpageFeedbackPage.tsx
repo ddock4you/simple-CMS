@@ -14,6 +14,7 @@ import { FeedbackFilters } from '@/features/subpage-feedback/ui/FeedbackFilters'
 import { FeedbackListTable } from '@/features/subpage-feedback/ui/FeedbackListTable';
 import { FeedbackStatsSection } from '@/features/subpage-feedback/ui/FeedbackStatsSection';
 import { getQueryClient } from '@/shared/api/queryClient';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
 
@@ -48,7 +49,7 @@ export default async function SubpageFeedbackPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireAuth();
+  const user = await requireAuth();
   const params = await searchParams;
   const filters = parseFilters(params);
 
@@ -63,10 +64,12 @@ export default async function SubpageFeedbackPage({
     ),
   ]);
 
-  const subpageOptions = await prisma.subpage.findMany({
-    select: { id: true, title: true, slug: true },
-    orderBy: { title: 'asc' },
-  });
+  const subpageOptions = await runWithUserDemoSession(user, () =>
+    prisma.subpage.findMany({
+      select: { id: true, title: true, slug: true },
+      orderBy: { title: 'asc' },
+    }),
+  );
 
   return (
     <div className="space-y-6">

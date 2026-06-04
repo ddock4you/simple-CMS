@@ -12,6 +12,10 @@ vi.mock('next/server', () => ({
   },
 }));
 
+vi.mock('@simple-cms/db', () => ({
+  demo: { enterWith: vi.fn() },
+}));
+
 vi.mock('@/entities/auth/lib/getCurrentUser');
 
 import { requirePermission } from './requirePermission';
