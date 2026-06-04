@@ -5,6 +5,7 @@ import type { ApiResponse } from '@simple-cms/types';
 
 import { hasPermission } from '@/entities/auth/lib/checkPermission';
 import { requireAnyPermission } from '@/entities/auth/lib/requireAnyPermission';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 
 export type QuickSearchType = 'subpage' | 'post' | 'board' | 'menu';
 
@@ -42,6 +43,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     );
   }
 
+  return runWithUserDemoSession(user, async () => {
   const requestedTypes = searchParams.get('types')?.split(',') ?? ALL_TYPES;
   const types = requestedTypes.filter((t): t is QuickSearchType =>
     (ALL_TYPES as string[]).includes(t),
@@ -168,12 +170,13 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json(
       { success: true, data: { results } } satisfies ApiResponse<QuickSearchResponse>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[Quick Search GET] Unexpected error:', err);
     const message = err instanceof Error ? err.message : '검색에 실패했습니다.';
     return NextResponse.json(
       { success: false, error: message } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }

@@ -4,6 +4,7 @@ import { prisma } from '@simple-cms/db';
 import type { ApiResponse, HomeSectionListItem } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import {
   defaultConfigByType,
   type BriefIntroConfigData,
@@ -36,10 +37,11 @@ type DefaultHomeSectionConfig =
   | NoticeConfigData;
 
 export async function GET(_request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('home', 'read');
+  const { user, error } = await requirePermission('home', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     await ensureFixedHomeSections();
 
     const sections = await prisma.homeSection.findMany({
@@ -68,7 +70,7 @@ export async function GET(_request: Request): Promise<NextResponse> {
     return NextResponse.json({ success: true, data } satisfies ApiResponse<
       HomeSectionListItem[]
     >);
-  } catch (err) {
+    } catch (err) {
     console.error('[Home GET] Unexpected error:', err);
     return NextResponse.json(
       {
@@ -77,7 +79,8 @@ export async function GET(_request: Request): Promise<NextResponse> {
       } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }
 
 async function ensureFixedHomeSections(): Promise<void> {

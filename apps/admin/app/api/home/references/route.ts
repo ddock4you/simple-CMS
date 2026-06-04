@@ -4,6 +4,7 @@ import { prisma } from '@simple-cms/db';
 import type { ApiResponse, HomeReferencesDto } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 
 /**
  * 섹션 편집 Dialog의 드롭다운용 참조 데이터 묶음.
@@ -14,10 +15,11 @@ import { requirePermission } from '@/entities/auth/lib/requirePermission';
  * 한 번의 요청으로 3개 리소스를 가져와 네트워크 왕복을 줄임.
  */
 export async function GET(_request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('home', 'read');
+  const { user, error } = await requirePermission('home', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const [subpages, boards, posts] = await Promise.all([
       prisma.subpage.findMany({
         where: { status: 'PUBLISHED' },
@@ -56,7 +58,7 @@ export async function GET(_request: Request): Promise<NextResponse> {
     return NextResponse.json(
       { success: true, data } satisfies ApiResponse<HomeReferencesDto>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[Home References GET] Unexpected error:', err);
     return NextResponse.json(
       {
@@ -65,5 +67,6 @@ export async function GET(_request: Request): Promise<NextResponse> {
       } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }

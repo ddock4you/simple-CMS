@@ -9,14 +9,16 @@ import type {
 } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { feedbackListQuerySchema } from '@/features/subpage-feedback/model/feedbackFilters';
 import { kstStartOfDay, kstEndOfDay } from '@/shared/lib/kstDate';
 
 export async function GET(request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('subpage-feedback', 'read');
+  const { user, error } = await requirePermission('subpage-feedback', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const { searchParams } = new URL(request.url);
     const parsed = feedbackListQuerySchema.safeParse({
       subpageId: searchParams.get('subpageId') ?? undefined,
@@ -90,7 +92,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json(
       { success: true, data } satisfies ApiResponse<FeedbackListResponse>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[SubpageFeedback GET] Unexpected error:', err);
     return NextResponse.json(
       {
@@ -99,5 +101,6 @@ export async function GET(request: Request): Promise<NextResponse> {
       } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }

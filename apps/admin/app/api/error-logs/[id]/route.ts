@@ -5,6 +5,7 @@ import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import type { ErrorLogDetail } from '@/features/error-log/model/errorLogFilters';
 import { errorLogResolveBodySchema } from '@/features/error-log/model/errorLogSchemas';
 
@@ -16,12 +17,13 @@ export async function GET(
   _request: Request,
   { params }: RouteParams,
 ): Promise<NextResponse> {
-  const { error } = await requirePermission('errorLogs', 'read');
+  const { user, error } = await requirePermission('errorLogs', 'read');
   if (error) return error;
 
-  const { id } = await params;
+  return runWithUserDemoSession(user, async () => {
+    const { id } = await params;
 
-  try {
+    try {
     const log = await prisma.errorLog.findUnique({ where: { id } });
     if (!log) {
       return NextResponse.json(
@@ -67,7 +69,7 @@ export async function GET(
     return NextResponse.json(
       { success: true, data } satisfies ApiResponse<ErrorLogDetail>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[ErrorLog GET] Unexpected error:', err);
     return NextResponse.json(
       {
@@ -76,7 +78,8 @@ export async function GET(
       } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }
 
 export async function PATCH(

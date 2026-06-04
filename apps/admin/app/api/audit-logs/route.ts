@@ -4,14 +4,16 @@ import { prisma } from '@simple-cms/db';
 import type { ApiResponse, PaginatedResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { auditLogListQuerySchema } from '@/features/audit-log/model/auditLogSchemas';
 import type { AuditLogListItem } from '@/features/audit-log/model/auditLogFilters';
 
 export async function GET(request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('auditLogs', 'read');
+  const { user, error } = await requirePermission('auditLogs', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const { searchParams } = new URL(request.url);
     const parsed = auditLogListQuerySchema.safeParse({
       action: searchParams.get('action') ?? undefined,
@@ -88,11 +90,12 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json(
       { success: true, data } satisfies ApiResponse<PaginatedResponse<AuditLogListItem>>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[AuditLogs GET] Unexpected error:', err);
     return NextResponse.json(
       { success: false, error: '감사 로그 조회에 실패했습니다.' } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }

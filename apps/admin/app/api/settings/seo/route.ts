@@ -6,6 +6,7 @@ import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import {
   updateSeoSchema,
   type SeoSettingsData,
@@ -32,10 +33,11 @@ function parseRobotsDisallow(raw: string | null): string[] {
 }
 
 export async function GET(_request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('settings', 'read');
+  const { user, error } = await requirePermission('settings', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const [robotsRaw, domain] = await Promise.all([
       getSiteSetting(ROBOTS_ADDITIONAL_DISALLOW_KEY),
       getSiteSetting('SITE_DOMAIN'),
@@ -51,13 +53,14 @@ export async function GET(_request: Request): Promise<NextResponse> {
         data: { robotsAdditionalDisallow, baseUrl, sitemapUrl },
       } satisfies ApiResponse<SeoSettingsData>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[Settings SEO GET] Unexpected error:', err);
     return NextResponse.json(
       { success: false, error: 'SEO 설정 조회에 실패했습니다.' } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }
 
 export async function PATCH(request: Request): Promise<NextResponse> {

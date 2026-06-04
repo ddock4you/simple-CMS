@@ -4,6 +4,7 @@ import { prisma } from '@simple-cms/db';
 import type { ApiResponse, PaginatedResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import type {
   ErrorLogGroupItem,
   ErrorLogListItem,
@@ -16,10 +17,11 @@ function firstLine(msg: string): string {
 }
 
 export async function GET(request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('errorLogs', 'read');
+  const { user, error } = await requirePermission('errorLogs', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const { searchParams } = new URL(request.url);
     const parsed = errorLogListQuerySchema.safeParse({
       level: searchParams.get('level') ?? undefined,
@@ -203,7 +205,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         PaginatedResponse<ErrorLogRow>
       >,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[ErrorLogs GET] Unexpected error:', err);
     return NextResponse.json(
       {
@@ -212,5 +214,6 @@ export async function GET(request: Request): Promise<NextResponse> {
       } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }

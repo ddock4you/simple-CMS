@@ -7,6 +7,7 @@ import { extractTextFromTiptap } from '@simple-cms/editor';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { createHomePopupSchema } from '@/features/popup-management/model/popupSchemas';
 
 function toListItem(p: {
@@ -44,10 +45,11 @@ function toListItem(p: {
 }
 
 export async function GET(_request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('home-popups', 'read');
+  const { user, error } = await requirePermission('home-popups', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const popups = await prisma.homePopup.findMany({
       orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
       select: {
@@ -73,7 +75,7 @@ export async function GET(_request: Request): Promise<NextResponse> {
     return NextResponse.json(
       { success: true, data } satisfies ApiResponse<HomePopupListItem[]>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[HomePopups GET] Unexpected error:', err);
     return NextResponse.json(
       {
@@ -82,7 +84,8 @@ export async function GET(_request: Request): Promise<NextResponse> {
       } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }
 
 export async function POST(request: Request): Promise<NextResponse> {

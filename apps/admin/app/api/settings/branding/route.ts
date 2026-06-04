@@ -12,6 +12,7 @@ import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import {
   updateBrandingSchema,
   type BrandingAssetKind,
@@ -81,10 +82,11 @@ const MIME_RULES: Record<
 };
 
 export async function GET(_request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('settings', 'read');
+  const { user, error } = await requirePermission('settings', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const values = await getSiteSettings(Object.values(SETTING_KEYS));
 
     const mediaIds = [
@@ -123,7 +125,7 @@ export async function GET(_request: Request): Promise<NextResponse> {
     return NextResponse.json(
       { success: true, data } satisfies ApiResponse<BrandingSettingsData>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[Settings Branding GET] Unexpected error:', err);
     return NextResponse.json(
       {
@@ -132,7 +134,8 @@ export async function GET(_request: Request): Promise<NextResponse> {
       } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }
 
 export async function PATCH(request: Request): Promise<NextResponse> {

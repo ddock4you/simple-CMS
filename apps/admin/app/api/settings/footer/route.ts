@@ -16,6 +16,7 @@ import {
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import {
   updateFooterSchema,
   type FooterSettingsData,
@@ -76,10 +77,11 @@ function normalizeFooterConfig(data: UpdateFooterData): SiteFooterConfig {
 }
 
 export async function GET(_request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('settings', 'read');
+  const { user, error } = await requirePermission('settings', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const raw = await getSiteSetting(FOOTER_CONFIG_KEY);
     const config = parseFooterConfig(raw);
     const footerLogo = config.footerLogoMediaId
@@ -97,7 +99,7 @@ export async function GET(_request: Request): Promise<NextResponse> {
       success: true,
       data,
     } satisfies ApiResponse<FooterSettingsData>);
-  } catch (err) {
+    } catch (err) {
     console.error('[Settings Footer GET] Unexpected error:', err);
     return NextResponse.json(
       {
@@ -106,7 +108,8 @@ export async function GET(_request: Request): Promise<NextResponse> {
       } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }
 
 export async function PATCH(request: Request): Promise<NextResponse> {

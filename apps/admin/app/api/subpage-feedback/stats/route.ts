@@ -12,6 +12,7 @@ import {
 } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { feedbackStatsQuerySchema } from '@/features/subpage-feedback/model/feedbackFilters';
 import {
   DAY_MS,
@@ -22,10 +23,11 @@ import {
 } from '@/shared/lib/kstDate';
 
 export async function GET(request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('subpage-feedback', 'read');
+  const { user, error } = await requirePermission('subpage-feedback', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const { searchParams } = new URL(request.url);
     const parsed = feedbackStatsQuerySchema.safeParse({
       from: searchParams.get('from') ?? undefined,
@@ -157,7 +159,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json(
       { success: true, data } satisfies ApiResponse<FeedbackStatsResponse>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[SubpageFeedback Stats GET] Unexpected error:', err);
     return NextResponse.json(
       {
@@ -166,5 +168,6 @@ export async function GET(request: Request): Promise<NextResponse> {
       } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }

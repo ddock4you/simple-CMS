@@ -5,14 +5,16 @@ import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { createMenuSchema } from '@/features/navigation-management/model/navigationSchemas';
 import type { MenuSetListItem } from '@/features/navigation-management/model/navigationFilters';
 
 export async function GET(_request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('navigation', 'read');
+  const { user, error } = await requirePermission('navigation', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const menus = await prisma.navigationMenu.findMany({
       select: {
         id: true,
@@ -37,13 +39,14 @@ export async function GET(_request: Request): Promise<NextResponse> {
     return NextResponse.json(
       { success: true, data } satisfies ApiResponse<MenuSetListItem[]>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[Navigation GET] Unexpected error:', err);
     return NextResponse.json(
       { success: false, error: '메뉴 목록 조회에 실패했습니다.' } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }
 
 export async function POST(request: Request): Promise<NextResponse> {

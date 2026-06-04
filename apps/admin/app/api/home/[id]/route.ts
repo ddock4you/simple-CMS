@@ -6,6 +6,7 @@ import type { ApiResponse, HomeSectionDetail } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import {
   configSchemaByType,
   updateHomeSectionSchema,
@@ -15,10 +16,11 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const { error } = await requirePermission('home', 'read');
+  const { user, error } = await requirePermission('home', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const { id } = await params;
     const section = await prisma.homeSection.findUnique({ where: { id } });
     if (!section) {
@@ -45,7 +47,7 @@ export async function GET(
     return NextResponse.json(
       { success: true, data } satisfies ApiResponse<HomeSectionDetail>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[Home GET detail] Unexpected error:', err);
     return NextResponse.json(
       {
@@ -54,7 +56,8 @@ export async function GET(
       } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }
 
 export async function PATCH(

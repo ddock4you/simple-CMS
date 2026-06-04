@@ -6,29 +6,32 @@ import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import {
   updateSecuritySchema,
   type SecuritySettingsData,
 } from '@/features/site-settings/model/settingsSchemas';
 
 export async function GET(_request: Request): Promise<NextResponse> {
-  const { error } = await requirePermission('settings', 'read');
+  const { user, error } = await requirePermission('settings', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const value = await getSiteSetting(SITE_SETTING_KEYS.CONCURRENT_LOGIN_ENABLED);
     const concurrentLoginEnabled = value !== 'false';
 
     return NextResponse.json(
       { success: true, data: { concurrentLoginEnabled } } satisfies ApiResponse<SecuritySettingsData>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[Settings Security GET] Unexpected error:', err);
     return NextResponse.json(
       { success: false, error: '보안 설정 조회에 실패했습니다.' } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }
 
 export async function PATCH(request: Request): Promise<NextResponse> {

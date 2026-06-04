@@ -6,16 +6,18 @@ import { extractTextFromTiptap } from '@simple-cms/editor';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { updateHomePopupSchema } from '@/features/popup-management/model/popupSchemas';
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const { error } = await requirePermission('home-popups', 'read');
+  const { user, error } = await requirePermission('home-popups', 'read');
   if (error) return error;
 
-  try {
+  return runWithUserDemoSession(user, async () => {
+    try {
     const { id } = await params;
     const popup = await prisma.homePopup.findUnique({ where: { id } });
     if (!popup) {
@@ -51,7 +53,7 @@ export async function GET(
     return NextResponse.json(
       { success: true, data } satisfies ApiResponse<HomePopupDetail>,
     );
-  } catch (err) {
+    } catch (err) {
     console.error('[HomePopup GET detail] Unexpected error:', err);
     return NextResponse.json(
       {
@@ -60,7 +62,8 @@ export async function GET(
       } satisfies ApiResponse<never>,
       { status: 500 },
     );
-  }
+    }
+  });
 }
 
 export async function PATCH(
