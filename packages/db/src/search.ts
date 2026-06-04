@@ -29,6 +29,10 @@ export interface SearchResponse {
   type: SearchContentType;
 }
 
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 export async function searchContent(
   query: string,
   page = 1,
@@ -141,9 +145,7 @@ export async function searchContent(
 
     const [items, countResult] = await Promise.all([
       itemQuery,
-      prisma.$queryRaw<[
-        { subpage: bigint; post: bigint; all: bigint },
-      ]>`
+      prisma.$queryRaw<[{ subpage: bigint; post: bigint; all: bigint }]>`
         SELECT
           (
             SELECT COUNT(*) FROM "Subpage" s
@@ -182,6 +184,11 @@ export async function searchContent(
       subpage: Number(countResult[0]?.subpage ?? 0),
       post: Number(countResult[0]?.post ?? 0),
     } satisfies Record<SearchContentType, number>;
+
+    if (counts.all === 0) {
+      return searchContentFallback(trimmed, page, pageSize, type, sessionId);
+    }
+
     const total = counts[type];
 
     return {
@@ -195,6 +202,163 @@ export async function searchContent(
     };
   } catch (error) {
     console.error('Search query failed:', error);
-    return emptyResponse;
+    try {
+      return await searchContentFallback(
+        trimmed,
+        page,
+        pageSize,
+        type,
+        sessionId,
+      );
+    } catch (fallbackError) {
+      console.error('Search fallback query failed:', fallbackError);
+      return emptyResponse;
+    }
   }
+}
+
+async function searchContentFallback(
+  trimmed: string,
+  page: number,
+  pageSize: number,
+  type: SearchContentType,
+  sessionId: string,
+): Promise<SearchResponse> {
+  const offset = (page - 1) * pageSize;
+  const pattern = `%${escapeLikePattern(trimmed)}%`;
+  const likeEscape = '\\';
+
+  const itemQuery =
+    type === 'subpage'
+      ? prisma.$queryRaw<SearchResult[]>`
+        SELECT
+          s.id,
+          'subpage'::text AS type,
+          s.title,
+          LEFT(COALESCE(s.content, ''), ${EXCERPT_LENGTH}) AS excerpt,
+          s.slug,
+          s."publishedAt",
+          CASE WHEN s.title ILIKE ${pattern} ESCAPE ${likeEscape} THEN 2 ELSE 1 END::double precision AS score,
+          NULL::text AS "boardName",
+          NULL::text AS "boardSlug"
+        FROM "Subpage" s
+        WHERE s.status = 'PUBLISHED'
+          AND s."sessionId" = ${sessionId}
+          AND (s.title ILIKE ${pattern} ESCAPE ${likeEscape} OR COALESCE(s.content, '') ILIKE ${pattern} ESCAPE ${likeEscape})
+        ORDER BY score DESC, "publishedAt" DESC NULLS LAST
+        LIMIT ${pageSize} OFFSET ${offset}
+      `
+      : type === 'post'
+        ? prisma.$queryRaw<SearchResult[]>`
+          SELECT
+            p.id,
+            'post'::text AS type,
+            p.title,
+            LEFT(COALESCE(p.content, ''), ${EXCERPT_LENGTH}) AS excerpt,
+            p.slug,
+            p."publishedAt",
+            CASE WHEN p.title ILIKE ${pattern} ESCAPE ${likeEscape} THEN 2 ELSE 1 END::double precision AS score,
+            b.name AS "boardName",
+            b.slug AS "boardSlug"
+          FROM "Post" p
+          JOIN "Board" b ON b.id = p."boardId" AND b."sessionId" = ${sessionId}
+          WHERE p.status = 'PUBLISHED'
+            AND b."isPublic" = true
+            AND p."sessionId" = ${sessionId}
+            AND (p.title ILIKE ${pattern} ESCAPE ${likeEscape} OR COALESCE(p.content, '') ILIKE ${pattern} ESCAPE ${likeEscape})
+          ORDER BY score DESC, "publishedAt" DESC NULLS LAST
+          LIMIT ${pageSize} OFFSET ${offset}
+        `
+        : prisma.$queryRaw<SearchResult[]>`
+      (
+        SELECT
+          s.id,
+          'subpage'::text AS type,
+          s.title,
+          LEFT(COALESCE(s.content, ''), ${EXCERPT_LENGTH}) AS excerpt,
+          s.slug,
+          s."publishedAt",
+          CASE WHEN s.title ILIKE ${pattern} ESCAPE ${likeEscape} THEN 2 ELSE 1 END::double precision AS score,
+          NULL::text AS "boardName",
+          NULL::text AS "boardSlug"
+        FROM "Subpage" s
+        WHERE s.status = 'PUBLISHED'
+          AND s."sessionId" = ${sessionId}
+          AND (s.title ILIKE ${pattern} ESCAPE ${likeEscape} OR COALESCE(s.content, '') ILIKE ${pattern} ESCAPE ${likeEscape})
+      )
+      UNION ALL
+      (
+        SELECT
+          p.id,
+          'post'::text AS type,
+          p.title,
+          LEFT(COALESCE(p.content, ''), ${EXCERPT_LENGTH}) AS excerpt,
+          p.slug,
+          p."publishedAt",
+          CASE WHEN p.title ILIKE ${pattern} ESCAPE ${likeEscape} THEN 2 ELSE 1 END::double precision AS score,
+          b.name AS "boardName",
+          b.slug AS "boardSlug"
+        FROM "Post" p
+        JOIN "Board" b ON b.id = p."boardId" AND b."sessionId" = ${sessionId}
+        WHERE p.status = 'PUBLISHED'
+          AND b."isPublic" = true
+          AND p."sessionId" = ${sessionId}
+          AND (p.title ILIKE ${pattern} ESCAPE ${likeEscape} OR COALESCE(p.content, '') ILIKE ${pattern} ESCAPE ${likeEscape})
+      )
+      ORDER BY score DESC, "publishedAt" DESC NULLS LAST
+      LIMIT ${pageSize} OFFSET ${offset}
+    `;
+
+  const [items, countResult] = await Promise.all([
+    itemQuery,
+    prisma.$queryRaw<[{ subpage: bigint; post: bigint; all: bigint }]>`
+      SELECT
+        (
+          SELECT COUNT(*) FROM "Subpage" s
+          WHERE s.status = 'PUBLISHED'
+            AND s."sessionId" = ${sessionId}
+            AND (s.title ILIKE ${pattern} ESCAPE ${likeEscape} OR COALESCE(s.content, '') ILIKE ${pattern} ESCAPE ${likeEscape})
+        ) AS subpage,
+        (
+          SELECT COUNT(*) FROM "Post" p
+          JOIN "Board" b ON b.id = p."boardId" AND b."sessionId" = ${sessionId}
+          WHERE p.status = 'PUBLISHED'
+            AND b."isPublic" = true
+            AND p."sessionId" = ${sessionId}
+            AND (p.title ILIKE ${pattern} ESCAPE ${likeEscape} OR COALESCE(p.content, '') ILIKE ${pattern} ESCAPE ${likeEscape})
+        ) AS post,
+        (
+          (
+            SELECT COUNT(*) FROM "Subpage" s
+            WHERE s.status = 'PUBLISHED'
+              AND s."sessionId" = ${sessionId}
+              AND (s.title ILIKE ${pattern} ESCAPE ${likeEscape} OR COALESCE(s.content, '') ILIKE ${pattern} ESCAPE ${likeEscape})
+          ) + (
+            SELECT COUNT(*) FROM "Post" p
+            JOIN "Board" b ON b.id = p."boardId" AND b."sessionId" = ${sessionId}
+            WHERE p.status = 'PUBLISHED'
+              AND b."isPublic" = true
+              AND p."sessionId" = ${sessionId}
+              AND (p.title ILIKE ${pattern} ESCAPE ${likeEscape} OR COALESCE(p.content, '') ILIKE ${pattern} ESCAPE ${likeEscape})
+          )
+        ) AS all
+    `,
+  ]);
+
+  const counts = {
+    all: Number(countResult[0]?.all ?? 0),
+    subpage: Number(countResult[0]?.subpage ?? 0),
+    post: Number(countResult[0]?.post ?? 0),
+  } satisfies Record<SearchContentType, number>;
+  const total = counts[type];
+
+  return {
+    items,
+    total,
+    counts,
+    totalPages: Math.ceil(total / pageSize),
+    page,
+    pageSize,
+    type,
+  };
 }

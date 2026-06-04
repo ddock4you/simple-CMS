@@ -2,7 +2,7 @@
  * 시연 모드 snapshot export 코어 (PR6).
  *
  * - 운영(__PROD__) 또는 dev 환경의 16모델 row를 SnapshotPayload JSON으로 직렬화
- * - Media binary는 callback으로 download → processMediaForExport(sharp 1600px) → base64
+ * - Media binary는 callback으로 download → processMediaForExport(JPEG 최적화, 투명 이미지 원본 유지) → base64
  * - User.password 제외 (export payload에 포함 X)
  * - Media.uploadedById = null 일괄 (anonymization)
  * - AuditLog / ErrorLog는 포함하되 IP/UA/민감 JSON 키 익명화

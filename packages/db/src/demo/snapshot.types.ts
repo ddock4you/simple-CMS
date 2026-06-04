@@ -16,7 +16,7 @@
  *
  * **Media.base64Data**:
  *   import 시 `__SEED__/<category>/<filename>` 경로로 Storage에 적재.
- *   sharp로 1600px 리사이즈 + JPEG quality 80 (이미지 한정), 그 외 mimeType 원본 유지.
+ *   JPEG는 sharp로 1600px 리사이즈 + quality 80, 투명도가 필요한 PNG/WEBP 등은 원본 유지.
  *
  * **User.password**:
  *   export 시 제거. import 시 placeholder bcrypt hash로 채움 (시드 User 로그인 차단).
@@ -312,21 +312,27 @@ const snapshotPayloadV1Schema = z.object({
   models: snapshotModelsSchema.omit({ AuditLog: true, ErrorLog: true }),
 });
 
-export const snapshotPayloadSchema = z.preprocess((raw) => {
-  const payload = raw as
-    | { schemaVersion?: unknown; models?: Record<string, unknown> }
-    | null;
-  if (payload?.schemaVersion !== 1 || !payload.models) return raw;
-  return {
-    ...payload,
-    schemaVersion: SNAPSHOT_SCHEMA_VERSION,
-    models: {
-      ...payload.models,
-      AuditLog: [],
-      ErrorLog: [],
-    },
-  };
-}, z.union([snapshotPayloadV2Schema, snapshotPayloadV1Schema]).pipe(snapshotPayloadV2Schema));
+export const snapshotPayloadSchema = z.preprocess(
+  (raw) => {
+    const payload = raw as {
+      schemaVersion?: unknown;
+      models?: Record<string, unknown>;
+    } | null;
+    if (payload?.schemaVersion !== 1 || !payload.models) return raw;
+    return {
+      ...payload,
+      schemaVersion: SNAPSHOT_SCHEMA_VERSION,
+      models: {
+        ...payload.models,
+        AuditLog: [],
+        ErrorLog: [],
+      },
+    };
+  },
+  z
+    .union([snapshotPayloadV2Schema, snapshotPayloadV1Schema])
+    .pipe(snapshotPayloadV2Schema),
+);
 
 export type SnapshotPayload = z.infer<typeof snapshotPayloadV2Schema>;
 export type SnapshotRoleRow = z.infer<typeof roleRowSchema>;
@@ -344,6 +350,8 @@ export type SnapshotNavigationMenuItemRow = z.infer<
   typeof navigationMenuItemRowSchema
 >;
 export type SnapshotSubpageVersionRow = z.infer<typeof subpageVersionRowSchema>;
-export type SnapshotSubpageFeedbackRow = z.infer<typeof subpageFeedbackRowSchema>;
+export type SnapshotSubpageFeedbackRow = z.infer<
+  typeof subpageFeedbackRowSchema
+>;
 export type SnapshotAuditLogRow = z.infer<typeof auditLogRowSchema>;
 export type SnapshotErrorLogRow = z.infer<typeof errorLogRowSchema>;

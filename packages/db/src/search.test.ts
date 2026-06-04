@@ -14,16 +14,34 @@ const mockQueryRaw = prisma.$queryRaw as ReturnType<typeof vi.fn>;
 function mockSearchResult(
   items: unknown[] = [],
   counts: { subpage?: bigint; post?: bigint; all?: bigint } = {},
+  fallback?: {
+    items?: unknown[];
+    counts?: { subpage?: bigint; post?: bigint; all?: bigint };
+  },
 ) {
-  mockQueryRaw
-    .mockResolvedValueOnce(items)
-    .mockResolvedValueOnce([
-      {
-        subpage: counts.subpage ?? 0n,
-        post: counts.post ?? 0n,
-        all: counts.all ?? 0n,
-      },
-    ]);
+  const all = counts.all ?? 0n;
+  const subpage = counts.subpage ?? 0n;
+  const post = counts.post ?? 0n;
+  mockQueryRaw.mockResolvedValueOnce(items).mockResolvedValueOnce([
+    {
+      subpage,
+      post,
+      all,
+    },
+  ]);
+
+  if (all === 0n && subpage === 0n && post === 0n) {
+    const fallbackCounts = fallback?.counts ?? {};
+    mockQueryRaw
+      .mockResolvedValueOnce(fallback?.items ?? [])
+      .mockResolvedValueOnce([
+        {
+          subpage: fallbackCounts.subpage ?? 0n,
+          post: fallbackCounts.post ?? 0n,
+          all: fallbackCounts.all ?? 0n,
+        },
+      ]);
+  }
 }
 
 const emptyResult = {
@@ -92,6 +110,36 @@ describe('searchContent', () => {
     mockQueryRaw.mockRejectedValueOnce(new Error('DB connection failed'));
     const result = await searchContent('test');
     expect(result).toEqual(emptyResult);
+  });
+
+  it('PGroonga 결과가 0건이면 ILIKE fallback 결과를 반환', async () => {
+    mockSearchResult(
+      [],
+      {},
+      {
+        items: [
+          {
+            id: 'subpage-1',
+            type: 'subpage',
+            title: '테스트 페이지',
+            excerpt: '테스트 본문',
+            slug: 'test-page',
+            publishedAt: null,
+            score: 2,
+            boardName: null,
+            boardSlug: null,
+          },
+        ],
+        counts: { all: 1n, subpage: 1n, post: 0n },
+      },
+    );
+
+    const result = await searchContent('테스트');
+
+    expect(result.total).toBe(1);
+    expect(result.counts).toEqual({ all: 1, subpage: 1, post: 0 });
+    expect(result.items).toHaveLength(1);
+    expect(mockQueryRaw).toHaveBeenCalledTimes(4);
   });
 
   it('type=subpage이면 subpage 카운트를 total로 사용', async () => {

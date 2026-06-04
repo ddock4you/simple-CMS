@@ -2,8 +2,8 @@
  * 시연 모드 snapshot export 시 Media 바이너리 처리.
  *
  * - provider 분기 (local fs / Supabase Storage)로 buffer 회수
- * - sharp 1600px 리사이즈 + JPEG quality 80 (이미지 한정)
- * - SVG / GIF / non-image (PDF 등)는 원본 유지 (transparent / animation 손실 방지)
+ * - JPEG만 sharp 1600px 리사이즈 + JPEG quality 80
+ * - PNG / WEBP / SVG / GIF / non-image (PDF 등)는 원본 유지 (transparent / animation 손실 방지)
  * - base64 인코딩
  *
  * 호출 측: exportSnapshot.ts가 각 Media row마다 이 함수를 invoke.
@@ -18,13 +18,10 @@ const JPEG_QUALITY = 80;
 
 /**
  * 이미지 mimeType — sharp 리사이즈 대상.
+ * PNG/WEBP는 투명 배경이 로고/파비콘에서 중요하므로 JPEG 변환하지 않는다.
  * SVG (vector, 리사이즈 무의미), GIF (animation 손실), ICO (favicon 단일 사이즈) 제외.
  */
-const RESIZABLE_IMAGE_MIME_PREFIXES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-];
+const RESIZABLE_IMAGE_MIME_PREFIXES = ['image/jpeg'];
 
 function isResizableImage(mimeType: string): boolean {
   return RESIZABLE_IMAGE_MIME_PREFIXES.some((prefix) =>
