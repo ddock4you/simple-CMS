@@ -13,6 +13,7 @@ import { getCachedDomain } from '@/shared/lib/domainCache';
 function nextWithPathname(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', request.nextUrl.pathname);
+  requestHeaders.set('x-search', request.nextUrl.search);
   return NextResponse.next({ request: { headers: requestHeaders } });
 }
 

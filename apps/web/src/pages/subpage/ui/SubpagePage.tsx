@@ -9,6 +9,7 @@ import {
 } from '@/entities/subpage/api/getSubpage';
 import { PreviewBanner } from '@/features/preview/ui/PreviewBanner';
 import { getPreviewSession } from '@/shared/lib/previewSession';
+import { runWithDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
 import { ErrorBoundary } from '@/shared/ui/ErrorBoundary';
 import {
   buildContentBreadcrumbItems,
@@ -92,6 +93,14 @@ function SubpageArticle({
 }
 
 export async function SubpagePage({ slug }: SubpagePageProps) {
+  return runWithDemoSessionFromCookies(
+    `/p/${slug}`,
+    async () => renderSubpagePage(slug),
+    { required: true },
+  );
+}
+
+async function renderSubpagePage(slug: string) {
   const session = await getPreviewSession();
 
   if (session?.entityType === 'SUBPAGE') {

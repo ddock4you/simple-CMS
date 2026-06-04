@@ -10,5 +10,7 @@ import { headers } from 'next/headers';
 
 export async function getCurrentPathname(): Promise<string> {
   const h = await headers();
-  return h.get('x-pathname') ?? '/';
+  const pathname = h.get('x-pathname') ?? '/';
+  const search = h.get('x-search') ?? '';
+  return search ? `${pathname}${search}` : pathname;
 }

@@ -2,15 +2,14 @@ import { HomeSections } from '@/widgets/home-sections/ui/HomeSections';
 import { HomePopupModal } from '@/widgets/home-popup/ui/HomePopupModal';
 import { getActiveHomePopups } from '@/entities/home-popup/api/getActiveHomePopups';
 import { getHomeSections } from '@/entities/home-section/api/getHomeSections';
-import { enterDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
+import { runWithDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
 import { ErrorBoundary } from '@/shared/ui/ErrorBoundary';
 
 export async function HomePage() {
-  const demoSession = await enterDemoSessionFromCookies();
-  if (process.env.DEMO_MODE === 'true' && !demoSession) {
-    return null;
-  }
+  return runWithDemoSessionFromCookies('/', renderHomePage, { required: true });
+}
 
+async function renderHomePage() {
   const [popups, sections] = await Promise.all([
     getActiveHomePopups(),
     getHomeSections(),

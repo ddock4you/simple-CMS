@@ -1,8 +1,10 @@
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 import { demo, prisma } from '@simple-cms/db';
 
 const SESSION_COOKIE_NAME = 'session-token';
+const BOOTSTRAP_PATH_PREFIX = '/demo-bootstrap';
 
 export interface RequestDemoSession {
   sessionId: string;
@@ -44,6 +46,10 @@ async function findDemoSession(
   };
 }
 
+function toBootstrapPath(currentPath: string): string {
+  return `${BOOTSTRAP_PATH_PREFIX}?next=${encodeURIComponent(currentPath)}`;
+}
+
 export async function enterDemoSessionFromCookies(): Promise<RequestDemoSession | null> {
   if (process.env.DEMO_MODE !== 'true') return null;
   const cookieStore = await cookies();
@@ -51,6 +57,43 @@ export async function enterDemoSessionFromCookies(): Promise<RequestDemoSession 
   if (!session) return null;
   demo.enterWith({ sessionId: session.sessionId });
   return session;
+}
+
+export async function getDemoSessionFromCookies(): Promise<RequestDemoSession | null> {
+  if (process.env.DEMO_MODE !== 'true') return null;
+  const cookieStore = await cookies();
+  return findDemoSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
+}
+
+export async function runWithDemoSessionFromCookies<T>(
+  currentPath: string,
+  fn: (session: RequestDemoSession | null) => Promise<T>,
+  options: { required?: boolean } = {},
+): Promise<T> {
+  if (process.env.DEMO_MODE !== 'true') {
+    return fn(null);
+  }
+
+  if (currentPath.startsWith(BOOTSTRAP_PATH_PREFIX)) {
+    return fn(null);
+  }
+
+  const session = await getDemoSessionFromCookies();
+  if (!session) {
+    if (options.required) {
+      redirect(toBootstrapPath(currentPath));
+    }
+    return fn(null);
+  }
+
+  if (process.env.DEMO_SESSION_DEBUG === 'true') {
+    console.info('[web demo session]', {
+      path: currentPath,
+      sessionId: session.sessionId,
+    });
+  }
+
+  return demo.runWith({ sessionId: session.sessionId }, () => fn(session));
 }
 
 export async function runWithRequestDemoSession<T>(

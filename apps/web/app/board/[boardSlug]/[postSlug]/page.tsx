@@ -9,7 +9,7 @@ import {
 } from '@/entities/post/api/getPost';
 import { PreviewBanner } from '@/features/preview/ui/PreviewBanner';
 import { getCachedBranding } from '@/shared/lib/brandingCache';
-import { enterDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
+import { runWithDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
 import { renderTiptapContent } from '@/shared/lib/renderContent';
 import { getPreviewSession } from '@/shared/lib/previewSession';
 import { getSiteUrl } from '@/shared/lib/siteUrl';
@@ -32,37 +32,49 @@ function summarizeContent(raw: string | null, max = 160): string | undefined {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const demoSession = await enterDemoSessionFromCookies();
-  if (process.env.DEMO_MODE === 'true' && !demoSession) {
-    return { title: '시연 모드' };
-  }
-
   const { boardSlug, postSlug } = await params;
-  const board = await getPublishedBoard(boardSlug);
-  if (!board) return { title: '게시글을 찾을 수 없습니다' };
+  return runWithDemoSessionFromCookies(
+    `/board/${boardSlug}/${postSlug}`,
+    async (demoSession) => {
+      if (process.env.DEMO_MODE === 'true' && !demoSession) {
+        return { title: '시연 모드' };
+      }
 
-  const post = await getPublishedPost(board.id, postSlug);
-  if (!post) return { title: '게시글을 찾을 수 없습니다' };
+      const board = await getPublishedBoard(boardSlug);
+      if (!board) return { title: '게시글을 찾을 수 없습니다' };
 
-  const title = post.seoTitle?.trim() || post.title;
-  const description =
-    post.seoDescription?.trim() || summarizeContent(post.content);
+      const post = await getPublishedPost(board.id, postSlug);
+      if (!post) return { title: '게시글을 찾을 수 없습니다' };
 
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      type: 'article',
-      publishedTime: post.publishedAt?.toISOString(),
-      modifiedTime: post.updatedAt.toISOString(),
+      const title = post.seoTitle?.trim() || post.title;
+      const description =
+        post.seoDescription?.trim() || summarizeContent(post.content);
+
+      return {
+        title,
+        description,
+        openGraph: {
+          title,
+          description,
+          type: 'article',
+          publishedTime: post.publishedAt?.toISOString(),
+          modifiedTime: post.updatedAt.toISOString(),
+        },
+      };
     },
-  };
+  );
 }
 
 export default async function Page({ params }: PageProps) {
   const { boardSlug, postSlug } = await params;
+  return runWithDemoSessionFromCookies(
+    `/board/${boardSlug}/${postSlug}`,
+    async () => renderPostRoute(boardSlug, postSlug),
+    { required: true },
+  );
+}
+
+async function renderPostRoute(boardSlug: string, postSlug: string) {
   const session = await getPreviewSession();
 
   if (session?.entityType === 'POST') {

@@ -5,7 +5,7 @@ import { getPublishedBoard } from '@/entities/board/api/getBoard';
 import { resolveContentNavigation } from '@/entities/navigation/lib/resolveContentNavigation';
 import { getPublishedPosts } from '@/entities/post/api/getPostList';
 import { getCachedBranding } from '@/shared/lib/brandingCache';
-import { enterDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
+import { runWithDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
 import { getSiteUrl } from '@/shared/lib/siteUrl';
 import {
   buildBreadcrumbJsonLd,
@@ -19,28 +19,59 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const demoSession = await enterDemoSessionFromCookies();
-  if (process.env.DEMO_MODE === 'true' && !demoSession) {
-    return { title: '시연 모드' };
-  }
-
   const { boardSlug } = await params;
-  const board = await getPublishedBoard(boardSlug);
+  return runWithDemoSessionFromCookies(
+    `/board/${boardSlug}`,
+    async (demoSession) => {
+      if (process.env.DEMO_MODE === 'true' && !demoSession) {
+        return { title: '시연 모드' };
+      }
 
-  if (!board) {
-    return { title: '게시판을 찾을 수 없습니다' };
-  }
+      const board = await getPublishedBoard(boardSlug);
 
-  return {
-    title: board.name,
-    description: board.description || `${board.name} 게시판`,
-  };
+      if (!board) {
+        return { title: '게시판을 찾을 수 없습니다' };
+      }
+
+      return {
+        title: board.name,
+        description: board.description || `${board.name} 게시판`,
+      };
+    },
+  );
 }
 
 export default async function Page({ params, searchParams }: PageProps) {
   const { boardSlug } = await params;
   const { page: pageParam, q: queryParam } = await searchParams;
+  const currentPath = buildBoardPath(boardSlug, pageParam, queryParam);
 
+  return runWithDemoSessionFromCookies(
+    currentPath,
+    async () => renderBoardRoute(boardSlug, pageParam, queryParam),
+    { required: true },
+  );
+}
+
+function buildBoardPath(
+  boardSlug: string,
+  pageParam: string | undefined,
+  queryParam: string | undefined,
+): string {
+  const params = new URLSearchParams();
+  if (pageParam) params.set('page', pageParam);
+  if (queryParam) params.set('q', queryParam);
+  const queryString = params.toString();
+  return queryString
+    ? `/board/${boardSlug}?${queryString}`
+    : `/board/${boardSlug}`;
+}
+
+async function renderBoardRoute(
+  boardSlug: string,
+  pageParam: string | undefined,
+  queryParam: string | undefined,
+) {
   const board = await getPublishedBoard(boardSlug);
   if (!board) notFound();
 
