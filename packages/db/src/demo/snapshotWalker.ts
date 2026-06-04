@@ -33,6 +33,12 @@ type IdMap = Map<string, string>;
 type UrlMap = Map<string, string>;
 type RemapKind = 'mediaId' | 'boardId';
 
+const MEDIA_ID_SETTING_KEYS = new Set([
+  'SITE_LOGO_MEDIA_ID',
+  'SITE_FAVICON_MEDIA_ID',
+  'SITE_OG_IMAGE_MEDIA_ID',
+]);
+
 // ─── Tiptap 재귀 walker (image 노드의 attrs.mediaId 재매핑) ────
 
 function remapTiptapNode(
@@ -356,6 +362,40 @@ export function remapPostContentJsonReferences(
   remapPostContent(contentJson, mediaIdMap, mediaUrlMap);
 }
 
+// ─── SiteSettings value 재매핑 ─────────────────────────────
+
+export function remapSiteSettingValueReferences(
+  key: string,
+  value: string,
+  mediaIdMap: IdMap,
+): string {
+  if (!value) return value;
+
+  if (MEDIA_ID_SETTING_KEYS.has(key)) {
+    return mediaIdMap.get(value) ?? value;
+  }
+
+  if (key !== 'SITE_FOOTER_CONFIG') {
+    return value;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return value;
+    }
+
+    const config = parsed as { footerLogoMediaId?: unknown };
+    if (typeof config.footerLogoMediaId === 'string') {
+      config.footerLogoMediaId =
+        mediaIdMap.get(config.footerLogoMediaId) ?? config.footerLogoMediaId;
+    }
+    return JSON.stringify(parsed);
+  } catch {
+    return value;
+  }
+}
+
 // ─── 최상위 진입점 ────────────────────────────────────────
 
 /**
@@ -383,6 +423,14 @@ export function walkSnapshotForRemap(
   }
 
   if (kind !== 'mediaId') return; // boardId는 HomeSection까지만
+
+  for (const setting of payload.models.SiteSettings) {
+    setting.value = remapSiteSettingValueReferences(
+      setting.key,
+      setting.value,
+      idMap,
+    );
+  }
 
   // Post.contentJson — Tiptap (image 노드 mediaId)
   for (const post of payload.models.Post) {

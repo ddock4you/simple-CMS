@@ -604,6 +604,61 @@ describe('walkSnapshotForRemap — edge', () => {
 });
 
 describe('snapshotWalker clone helpers', () => {
+  it('remaps SiteSettings media-bearing values', () => {
+    const payload = emptyPayload();
+    payload.models.SiteSettings = [
+      {
+        id: 'setting-logo',
+        key: 'SITE_LOGO_MEDIA_ID',
+        value: 'seed-logo',
+        description: null,
+      },
+      {
+        id: 'setting-favicon',
+        key: 'SITE_FAVICON_MEDIA_ID',
+        value: 'seed-favicon',
+        description: null,
+      },
+      {
+        id: 'setting-og',
+        key: 'SITE_OG_IMAGE_MEDIA_ID',
+        value: 'seed-og',
+        description: null,
+      },
+      {
+        id: 'setting-footer',
+        key: 'SITE_FOOTER_CONFIG',
+        value: JSON.stringify({ footerLogoMediaId: 'seed-footer' }),
+        description: null,
+      },
+      {
+        id: 'setting-name',
+        key: 'SITE_NAME',
+        value: '시연 CMS',
+        description: null,
+      },
+    ];
+
+    walkSnapshotForRemap(
+      payload,
+      new Map([
+        ['seed-logo', 'visitor-logo'],
+        ['seed-favicon', 'visitor-favicon'],
+        ['seed-og', 'visitor-og'],
+        ['seed-footer', 'visitor-footer'],
+      ]),
+      'mediaId',
+    );
+
+    expect(payload.models.SiteSettings[0]!.value).toBe('visitor-logo');
+    expect(payload.models.SiteSettings[1]!.value).toBe('visitor-favicon');
+    expect(payload.models.SiteSettings[2]!.value).toBe('visitor-og');
+    expect(JSON.parse(payload.models.SiteSettings[3]!.value!)).toEqual({
+      footerLogoMediaId: 'visitor-footer',
+    });
+    expect(payload.models.SiteSettings[4]!.value).toBe('시연 CMS');
+  });
+
   it('remaps HomeSection mediaId and boardId references in one pass', () => {
     const mediaIdMap = new Map([['seed-media', 'visitor-media']]);
     const boardIdMap = new Map([['seed-board', 'visitor-board']]);

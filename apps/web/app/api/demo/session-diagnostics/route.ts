@@ -14,7 +14,11 @@ export async function GET(request: Request): Promise<NextResponse> {
   }
 
   return runWithRequestDemoSession(request, async (session) => {
-    const diagnostics = await buildDemoSessionDiagnostics(session);
+    const requestUrl = new URL(request.url);
+    const diagnostics = await buildDemoSessionDiagnostics(
+      session,
+      requestUrl.searchParams.get('q'),
+    );
     const response = NextResponse.json(
       { success: true, data: diagnostics },
       {

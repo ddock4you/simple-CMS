@@ -29,6 +29,7 @@ import {
   remapHomeSectionJsonReferences,
   remapPageBlockConfigJsonReferences,
   remapPostContentJsonReferences,
+  remapSiteSettingValueReferences,
   remapSubpageVersionSnapshotJsonReferences,
 } from './snapshotWalker';
 import {
@@ -221,7 +222,7 @@ export async function cloneSeedToSession(
           id: newId,
           sessionId: newSessionId,
           key: s.key,
-          value: s.value,
+          value: remapSiteSettingValueReferences(s.key, s.value, mediaIdMap),
           description: s.description,
         };
       });
