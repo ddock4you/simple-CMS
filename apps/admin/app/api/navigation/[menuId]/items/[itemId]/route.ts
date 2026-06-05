@@ -4,6 +4,7 @@ import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
 import { updateMenuItemSchema } from '@/features/navigation-management/model/navigationSchemas';
 
@@ -14,6 +15,7 @@ export async function PATCH(
   const { user, error } = await requirePermission('navigation', 'update');
   if (error) return error;
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const { menuId, itemId } = await params;
     const item = await prisma.navigationMenuItem.findUnique({ where: { id: itemId } });
@@ -129,6 +131,7 @@ export async function PATCH(
       { status: 500 },
     );
   }
+  });
 }
 
 export async function DELETE(
@@ -138,6 +141,7 @@ export async function DELETE(
   const { user, error } = await requirePermission('navigation', 'delete');
   if (error) return error;
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const { menuId, itemId } = await params;
     const item = await prisma.navigationMenuItem.findUnique({ where: { id: itemId } });
@@ -185,4 +189,5 @@ export async function DELETE(
       { status: 500 },
     );
   }
+  });
 }

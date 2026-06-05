@@ -8,6 +8,7 @@ import { SidebarProvider, SidebarInset } from '@/shared/ui/shadcn/sidebar';
 import { AppSidebar } from '@/shared/ui/layout/AppSidebar';
 import { AdminHeader } from '@/widgets/admin-header/ui/AdminHeader';
 import { CommandPalette } from '@/features/quick-switcher/ui/CommandPalette';
+import { QueryProvider } from '@/shared/api/QueryProvider';
 import { DemoBanner } from '@/shared/ui/DemoBanner';
 import { ensureDemoSession } from '@/shared/lib/ensureDemoSession';
 import { getCurrentPathname } from '@/shared/lib/getCurrentPathname';
@@ -37,23 +38,26 @@ export default async function AuthenticatedLayout({
   const stickyOffsetStyle = demoSession
     ? ({ '--demo-banner-h': '2.25rem' } as CSSProperties)
     : undefined;
+  const queryProviderKey = demoSession?.sessionId ?? 'prod';
 
   return (
-    <SidebarProvider style={stickyOffsetStyle}>
-      <AppSidebar user={layoutUser} />
-      <SidebarInset>
-        {demoSession && <DemoBanner expiresAt={demoSession.expiresAt} />}
-        <AdminHeader user={layoutUser} />
-        <div className="flex-1 p-6">
-          <PermissionProvider
-            permissions={(layoutUser.role?.permissions ?? {}) as PermissionMap}
-            isSystem={layoutUser.role?.isSystem ?? false}
-          >
-            {children}
-            <CommandPalette />
-          </PermissionProvider>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <QueryProvider key={queryProviderKey}>
+      <SidebarProvider style={stickyOffsetStyle}>
+        <AppSidebar user={layoutUser} />
+        <SidebarInset>
+          {demoSession && <DemoBanner expiresAt={demoSession.expiresAt} />}
+          <AdminHeader user={layoutUser} />
+          <div className="flex-1 p-6">
+            <PermissionProvider
+              permissions={(layoutUser.role?.permissions ?? {}) as PermissionMap}
+              isSystem={layoutUser.role?.isSystem ?? false}
+            >
+              {children}
+              <CommandPalette />
+            </PermissionProvider>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </QueryProvider>
   );
 }

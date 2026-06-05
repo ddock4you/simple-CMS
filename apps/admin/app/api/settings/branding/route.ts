@@ -142,6 +142,7 @@ export async function PATCH(request: Request): Promise<NextResponse> {
   const { user, error } = await requirePermission('settings', 'update');
   if (error) return error;
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const body = await request.json();
     const parsed = updateBrandingSchema.safeParse(body);
@@ -261,12 +262,14 @@ export async function PATCH(request: Request): Promise<NextResponse> {
       { status: 500 },
     );
   }
+  });
 }
 
 export async function DELETE(request: Request): Promise<NextResponse> {
   const { user, error } = await requirePermission('settings', 'update');
   if (error) return error;
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const url = new URL(request.url);
     const kind = url.searchParams.get('kind') as BrandingAssetKind | null;
@@ -327,4 +330,5 @@ export async function DELETE(request: Request): Promise<NextResponse> {
       { status: 500 },
     );
   }
+  });
 }

@@ -3,7 +3,6 @@ import { Geist } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-import { QueryProvider } from '@/shared/api/QueryProvider';
 import { TooltipProvider } from '@/shared/ui/shadcn/tooltip';
 import { Toaster } from '@/shared/ui/shadcn/sonner';
 import { cn } from '@/shared/lib/utils';
@@ -30,11 +29,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <QueryProvider>
-            <TooltipProvider>
-              {children}
-            </TooltipProvider>
-          </QueryProvider>
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
           <Toaster />
         </ThemeProvider>
         <SpeedInsights />

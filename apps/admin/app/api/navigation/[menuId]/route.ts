@@ -139,6 +139,7 @@ export async function PATCH(
   const { user, error } = await requirePermission('navigation', 'update');
   if (error) return error;
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const { menuId } = await params;
     const menu = await prisma.navigationMenu.findUnique({ where: { id: menuId } });
@@ -237,6 +238,7 @@ export async function PATCH(
       { status: 500 },
     );
   }
+  });
 }
 
 export async function DELETE(
@@ -246,6 +248,7 @@ export async function DELETE(
   const { user, error } = await requirePermission('navigation', 'delete');
   if (error) return error;
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const { menuId } = await params;
     const menu = await prisma.navigationMenu.findUnique({ where: { id: menuId } });
@@ -280,4 +283,5 @@ export async function DELETE(
       { status: 500 },
     );
   }
+  });
 }

@@ -11,6 +11,7 @@ import {
 import type { ApiResponse, UploadMediaResponse } from '@simple-cms/types';
 
 import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
 import { getStorageAdapter } from '@/shared/lib/storage';
 
@@ -39,6 +40,7 @@ const ALLOWED_IMAGE_MIME = new Set([
 export async function POST(request: Request): Promise<NextResponse> {
   const user = await requireAuth();
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const formData = await request.formData();
     const file = formData.get('file');
@@ -201,4 +203,5 @@ export async function POST(request: Request): Promise<NextResponse> {
       { status: 500 },
     );
   }
+  });
 }

@@ -53,6 +53,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   const { user, error } = await requirePermission('navigation', 'create');
   if (error) return error;
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const body = await request.json();
     const parsed = createMenuSchema.safeParse(body);
@@ -118,4 +119,5 @@ export async function POST(request: Request): Promise<NextResponse> {
       { status: 500 },
     );
   }
+  });
 }

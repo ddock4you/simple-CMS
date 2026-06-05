@@ -5,6 +5,7 @@ import { logAuditEvent, prisma } from '@simple-cms/db';
 import type { AuditAction, AuditEntityType } from '@simple-cms/db';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { auditLogExportQuerySchema } from '@/features/audit-log/model/auditLogSchemas';
 import {
   ACTION_LABELS,
@@ -22,6 +23,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   const { user, error } = await requirePermission('auditLogs', 'read');
   if (error) return error;
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const { searchParams } = new URL(request.url);
     const parsed = auditLogExportQuerySchema.safeParse({
@@ -53,6 +55,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         lte: kstEndOfDay(toKey),
       },
     };
+    if (process.env.DEMO_MODE === 'true') where.sessionId = user.sessionId;
     if (action && action !== 'ALL') where.action = action;
     if (entityType) where.entityType = entityType;
     if (userId) where.userId = userId;
@@ -146,4 +149,5 @@ export async function GET(request: Request): Promise<NextResponse> {
       { status: 500 },
     );
   }
+  });
 }

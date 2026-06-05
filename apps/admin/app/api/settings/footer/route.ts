@@ -116,6 +116,7 @@ export async function PATCH(request: Request): Promise<NextResponse> {
   const { user, error } = await requirePermission('settings', 'update');
   if (error) return error;
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const body: unknown = await request.json();
     const parsed = updateFooterSchema.safeParse(body);
@@ -204,4 +205,5 @@ export async function PATCH(request: Request): Promise<NextResponse> {
       { status: 500 },
     );
   }
+  });
 }

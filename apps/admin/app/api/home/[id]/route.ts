@@ -67,6 +67,7 @@ export async function PATCH(
   const { user, error } = await requirePermission('home', 'update');
   if (error) return error;
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const { id } = await params;
     const section = await prisma.homeSection.findUnique({ where: { id } });
@@ -175,4 +176,5 @@ export async function PATCH(
       { status: 500 },
     );
   }
+  });
 }

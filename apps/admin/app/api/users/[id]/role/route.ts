@@ -4,6 +4,7 @@ import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
 import { roleChangeSchema } from '@/features/user-management/model/userSchemas';
 
@@ -11,10 +12,11 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  try {
-    const { user: currentUser, error } = await requirePermission('users', 'update');
-    if (error) return error;
+  const { user: currentUser, error } = await requirePermission('users', 'update');
+  if (error) return error;
 
+  return runWithUserDemoSession(currentUser, async () => {
+  try {
     const { id } = await params;
     const body = await request.json();
     const parsed = roleChangeSchema.safeParse(body);
@@ -96,4 +98,5 @@ export async function PATCH(
       { status: 500 },
     );
   }
+  });
 }

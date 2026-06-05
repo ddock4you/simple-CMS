@@ -4,6 +4,7 @@ import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
 import { reorderHomeSectionsSchema } from '@/features/home-management/model/homeSchemas';
 
@@ -11,6 +12,7 @@ export async function PATCH(request: Request): Promise<NextResponse> {
   const { user, error } = await requirePermission('home', 'update');
   if (error) return error;
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const body = await request.json();
     const parsed = reorderHomeSectionsSchema.safeParse(body);
@@ -88,4 +90,5 @@ export async function PATCH(request: Request): Promise<NextResponse> {
       { status: 500 },
     );
   }
+  });
 }

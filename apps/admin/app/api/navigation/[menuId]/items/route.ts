@@ -4,6 +4,7 @@ import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
+import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
 import { createMenuItemSchema } from '@/features/navigation-management/model/navigationSchemas';
 
@@ -14,6 +15,7 @@ export async function POST(
   const { user, error } = await requirePermission('navigation', 'create');
   if (error) return error;
 
+  return runWithUserDemoSession(user, async () => {
   try {
     const { menuId } = await params;
     const menu = await prisma.navigationMenu.findUnique({ where: { id: menuId } });
@@ -134,4 +136,5 @@ export async function POST(
       { status: 500 },
     );
   }
+  });
 }

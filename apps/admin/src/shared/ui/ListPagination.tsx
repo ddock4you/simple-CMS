@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 import {
   Pagination,
@@ -19,13 +19,12 @@ interface ListPaginationProps {
 }
 
 function buildPageUrl(
-  pathname: string | null,
   searchParams: ReturnType<typeof useSearchParams>,
   targetPage: number,
 ): string {
   const params = new URLSearchParams(searchParams?.toString() ?? '');
   params.set('page', String(targetPage));
-  return `${pathname ?? ''}?${params.toString()}`;
+  return `?${params.toString()}`;
 }
 
 function getPageRange(current: number, total: number): (number | 'ellipsis')[] {
@@ -49,7 +48,6 @@ function getPageRange(current: number, total: number): (number | 'ellipsis')[] {
 }
 
 export function ListPagination({ page, pageSize, total }: ListPaginationProps) {
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const totalPages = Math.ceil(total / pageSize);
 
@@ -62,7 +60,7 @@ export function ListPagination({ page, pageSize, total }: ListPaginationProps) {
       <PaginationContent>
         <PaginationItem>
           <PaginationPrevious
-            href={buildPageUrl(pathname, searchParams, page - 1)}
+            href={buildPageUrl(searchParams, page - 1)}
             text="이전"
             aria-disabled={page <= 1}
             tabIndex={page <= 1 ? -1 : undefined}
@@ -78,7 +76,7 @@ export function ListPagination({ page, pageSize, total }: ListPaginationProps) {
           ) : (
             <PaginationItem key={item}>
               <PaginationLink
-                href={buildPageUrl(pathname, searchParams, item)}
+                href={buildPageUrl(searchParams, item)}
                 isActive={item === page}
               >
                 {item}
@@ -89,7 +87,7 @@ export function ListPagination({ page, pageSize, total }: ListPaginationProps) {
 
         <PaginationItem>
           <PaginationNext
-            href={buildPageUrl(pathname, searchParams, page + 1)}
+            href={buildPageUrl(searchParams, page + 1)}
             text="다음"
             aria-disabled={page >= totalPages}
             tabIndex={page >= totalPages ? -1 : undefined}
