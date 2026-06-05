@@ -50,12 +50,12 @@ export async function GET(request: Request): Promise<NextResponse> {
     const toKey = parsed.data.to ?? fallbackToKey;
 
     const where: Record<string, unknown> = {
+      sessionId: user.sessionId,
       createdAt: {
         gte: kstStartOfDay(fromKey),
         lte: kstEndOfDay(toKey),
       },
     };
-    if (process.env.DEMO_MODE === 'true') where.sessionId = user.sessionId;
     if (action && action !== 'ALL') where.action = action;
     if (entityType) where.entityType = entityType;
     if (userId) where.userId = userId;

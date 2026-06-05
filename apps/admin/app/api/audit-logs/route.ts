@@ -35,8 +35,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     const { action, entityType, userId, from, to, page, pageSize, q } = parsed.data;
 
-    const where: Record<string, unknown> = {};
-    if (process.env.DEMO_MODE === 'true') where.sessionId = user.sessionId;
+    const where: Record<string, unknown> = { sessionId: user.sessionId };
     if (action !== 'ALL') where.action = action;
     if (entityType) where.entityType = entityType;
     if (userId) where.userId = userId;
