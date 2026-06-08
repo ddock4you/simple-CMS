@@ -79,9 +79,8 @@ const DELETE_ORDER: ReadonlyArray<{
   {
     name: 'Post',
     run: async () =>
-      (
-        await prisma.post.deleteMany({ where: { sessionId: SEED_SENTINEL } })
-      ).count,
+      (await prisma.post.deleteMany({ where: { sessionId: SEED_SENTINEL } }))
+        .count,
   },
   {
     name: 'Subpage',
@@ -194,7 +193,7 @@ export async function resetSeedData(
       errors: [],
     };
 
-    // 1. 16모델 deleteMany
+    // 1. 14개 seed 모델 + 과거 snapshot 정책으로 남은 누적 로그 정리
     for (const step of DELETE_ORDER) {
       try {
         const count = await step.run();

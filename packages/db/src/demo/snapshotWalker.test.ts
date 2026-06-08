@@ -43,8 +43,6 @@ function emptyPayload(): SnapshotPayload {
       NavigationMenuItem: [],
       SubpageVersion: [],
       SubpageFeedback: [],
-      AuditLog: [],
-      ErrorLog: [],
     },
   };
 }

@@ -5,12 +5,12 @@
  * Zod로 런타임 검증 + TypeScript inference.
  *
  * **schemaVersion**:
- *   - 2 (현재). v1 snapshot은 import 시 AuditLog/ErrorLog 빈 배열로 보정
+ *   - 2 (현재). v1/v2 legacy snapshot에 AuditLog/ErrorLog가 있어도 import 시 무시
  *
- * **포함**: 16개 cloneSeedToSession 모델
+ * **포함**: 14개 cloneSeedToSession 모델
  *   Role / User / Media / SiteSettings / NavigationMenu / Board / HomeSection /
  *   Subpage / Post / PageBlock / HomePopup / NavigationMenuItem / SubpageVersion /
- *   SubpageFeedback / AuditLog / ErrorLog
+ *   SubpageFeedback
  *
  * **제외**: Session / PreviewToken
  *
@@ -218,65 +218,6 @@ const subpageFeedbackRowSchema = z.object({
   userAgent: z.string().nullable(),
 });
 
-const auditLogRowSchema = z.object({
-  id: cuidString,
-  action: z.enum(['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT']),
-  entityType: z
-    .enum([
-      'SUBPAGE',
-      'SUBPAGE_VERSION',
-      'SUBPAGE_FEEDBACK',
-      'BOARD',
-      'POST',
-      'NAVIGATION_MENU',
-      'NAVIGATION_MENU_ITEM',
-      'HOME_SECTION',
-      'HOME_POPUP',
-      'PAGE_BLOCK',
-      'USER',
-      'ROLE',
-      'SITE_SETTINGS',
-      'ERROR_LOG',
-      'MEDIA',
-      'AUDIT_LOG',
-    ])
-    .nullable(),
-  entityId: z.string().nullable(),
-  entityTitle: z.string().nullable(),
-  changes: jsonValueSchema.nullable(),
-  userId: cuidString.nullable(),
-  ipAddress: z.string().nullable(),
-  userAgent: z.string().nullable(),
-  createdAt: isoDateString,
-});
-
-const errorLogRowSchema = z.object({
-  id: cuidString,
-  level: z.enum(['ERROR', 'WARN']),
-  source: z.enum([
-    'SERVER_SSR',
-    'SERVER_API',
-    'SERVER_MIDDLEWARE',
-    'CLIENT_REACT',
-    'CLIENT_JS',
-  ]),
-  message: z.string(),
-  stack: z.string().nullable(),
-  url: z.string().nullable(),
-  method: z.string().nullable(),
-  statusCode: z.number().int().nullable(),
-  userAgent: z.string().nullable(),
-  ipAddress: z.string().nullable(),
-  referer: z.string().nullable(),
-  digest: z.string().nullable(),
-  fingerprint: z.string().nullable(),
-  metadata: jsonValueSchema.nullable(),
-  isResolved: z.boolean(),
-  resolvedAt: isoDateString.nullable(),
-  resolvedBy: cuidString.nullable(),
-  createdAt: isoDateString,
-});
-
 // ─── 최상위 payload schema ────────────────────────
 
 export const SNAPSHOT_SCHEMA_VERSION = 2 as const;
@@ -296,8 +237,6 @@ const snapshotModelsSchema = z.object({
   NavigationMenuItem: z.array(navigationMenuItemRowSchema),
   SubpageVersion: z.array(subpageVersionRowSchema),
   SubpageFeedback: z.array(subpageFeedbackRowSchema),
-  AuditLog: z.array(auditLogRowSchema),
-  ErrorLog: z.array(errorLogRowSchema),
 });
 
 const snapshotPayloadV2Schema = z.object({
@@ -309,7 +248,7 @@ const snapshotPayloadV2Schema = z.object({
 const snapshotPayloadV1Schema = z.object({
   schemaVersion: z.literal(1),
   exportedAt: isoDateString,
-  models: snapshotModelsSchema.omit({ AuditLog: true, ErrorLog: true }),
+  models: snapshotModelsSchema,
 });
 
 export const snapshotPayloadSchema = z.preprocess(
@@ -322,11 +261,7 @@ export const snapshotPayloadSchema = z.preprocess(
     return {
       ...payload,
       schemaVersion: SNAPSHOT_SCHEMA_VERSION,
-      models: {
-        ...payload.models,
-        AuditLog: [],
-        ErrorLog: [],
-      },
+      models: payload.models,
     };
   },
   z
@@ -353,5 +288,3 @@ export type SnapshotSubpageVersionRow = z.infer<typeof subpageVersionRowSchema>;
 export type SnapshotSubpageFeedbackRow = z.infer<
   typeof subpageFeedbackRowSchema
 >;
-export type SnapshotAuditLogRow = z.infer<typeof auditLogRowSchema>;
-export type SnapshotErrorLogRow = z.infer<typeof errorLogRowSchema>;

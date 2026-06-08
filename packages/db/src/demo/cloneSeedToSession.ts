@@ -32,13 +32,6 @@ import {
   remapSiteSettingValueReferences,
   remapSubpageVersionSnapshotJsonReferences,
 } from './snapshotWalker';
-import {
-  anonymizeIp,
-  anonymizeUserAgent,
-  remapAuditEntityId,
-  sanitizeSnapshotJson,
-  type SnapshotIdMaps,
-} from './snapshotLogSanitizer';
 
 /** demo-seed.ts와 cloneSeedToSession이 공유하는 demo 관리자 username 상수. */
 export const DEMO_ADMIN_USERNAME = 'demo_admin';
@@ -86,8 +79,6 @@ export interface CloneStats {
   NavigationMenuItem: number;
   SubpageVersion: number;
   SubpageFeedback: number;
-  ErrorLog: number;
-  AuditLog: number;
 }
 
 export interface CloneResult {
@@ -97,7 +88,7 @@ export interface CloneResult {
 }
 
 /**
- * `__SEED__` row 16모델을 새 sessionId로 클론.
+ * `__SEED__` row 14모델을 새 sessionId로 클론.
  *
  * @throws {SeedNotFoundError} `__SEED__` Role 또는 demo_admin User가 없으면.
  *   bootstrap API는 이 에러를 503 + `{ code: 'SEED_NOT_FOUND' }`로 변환한다.
@@ -354,11 +345,7 @@ export async function cloneSeedToSession(
           const newId = createId();
           postIdMap.set(p.id, newId);
           const contentJson = cloneJson(p.contentJson);
-          remapPostContentJsonReferences(
-            contentJson,
-            mediaIdMap,
-            mediaUrlMap,
-          );
+          remapPostContentJsonReferences(contentJson, mediaIdMap, mediaUrlMap);
 
           return {
             id: newId,
@@ -439,7 +426,7 @@ export async function cloneSeedToSession(
         );
         const imageUrl =
           p.imageMediaId && p.imageUrl
-            ? mediaUrlMap.get(p.imageMediaId) ?? p.imageUrl
+            ? (mediaUrlMap.get(p.imageMediaId) ?? p.imageUrl)
             : p.imageUrl;
 
         return {
@@ -579,93 +566,6 @@ export async function cloneSeedToSession(
         await tx.subpageFeedback.createMany({ data: feedbackData });
       }
 
-      // ─── 15) ErrorLog ──────────────────────────────────
-      const seedErrorLogs = await tx.errorLog.findMany({
-        where: { sessionId: SEED_SENTINEL },
-        orderBy: { id: 'asc' },
-      });
-      const errorLogIdMap = new Map<string, string>();
-      const errorLogData = seedErrorLogs.map((l) => {
-        const newId = createId();
-        errorLogIdMap.set(l.id, newId);
-        return {
-          id: newId,
-          sessionId: newSessionId,
-          level: l.level,
-          source: l.source,
-          message: l.message,
-          stack: l.stack,
-          url: l.url,
-          method: l.method,
-          statusCode: l.statusCode,
-          userAgent: anonymizeUserAgent(l.userAgent),
-          ipAddress: anonymizeIp(l.ipAddress),
-          referer: null,
-          digest: l.digest,
-          fingerprint: l.fingerprint,
-          metadata:
-            (sanitizeSnapshotJson(l.metadata) as Prisma.InputJsonValue | null) ??
-            Prisma.JsonNull,
-          isResolved: l.isResolved,
-          resolvedAt: l.resolvedAt,
-          resolvedBy: l.resolvedBy
-            ? (userIdMap.get(l.resolvedBy) ?? null)
-            : null,
-          createdAt: l.createdAt,
-        };
-      });
-      if (errorLogData.length > 0) {
-        await tx.errorLog.createMany({ data: errorLogData });
-      }
-
-      // ─── 16) AuditLog ──────────────────────────────────
-      const seedAuditLogs = await tx.auditLog.findMany({
-        where: { sessionId: SEED_SENTINEL },
-        orderBy: { id: 'asc' },
-      });
-      const auditLogIdMap = new Map<string, string>();
-      for (const l of seedAuditLogs) {
-        auditLogIdMap.set(l.id, createId());
-      }
-      const snapshotMaps: SnapshotIdMaps = {
-        Role: roleIdMap,
-        User: userIdMap,
-        Media: mediaIdMap,
-        SiteSettings: siteSettingsIdMap,
-        NavigationMenu: menuIdMap,
-        Board: boardIdMap,
-        HomeSection: homeSectionIdMap,
-        Subpage: subpageIdMap,
-        Post: postIdMap,
-        PageBlock: pageBlockIdMap,
-        HomePopup: homePopupIdMap,
-        NavigationMenuItem: itemIdMap,
-        SubpageVersion: subpageVersionIdMap,
-        SubpageFeedback: subpageFeedbackIdMap,
-        ErrorLog: errorLogIdMap,
-        AuditLog: auditLogIdMap,
-      };
-      const auditLogData = seedAuditLogs.map((l) => {
-        return {
-          id: auditLogIdMap.get(l.id)!,
-          sessionId: newSessionId,
-          action: l.action,
-          entityType: l.entityType,
-          entityId: remapAuditEntityId(l.entityType, l.entityId, snapshotMaps),
-          entityTitle: l.entityTitle,
-          changes:
-            (sanitizeSnapshotJson(l.changes) as Prisma.InputJsonValue | null) ??
-            Prisma.JsonNull,
-          userId: l.userId ? (userIdMap.get(l.userId) ?? null) : null,
-          ipAddress: anonymizeIp(l.ipAddress),
-          userAgent: anonymizeUserAgent(l.userAgent),
-          createdAt: l.createdAt,
-        };
-      });
-      if (auditLogData.length > 0) {
-        await tx.auditLog.createMany({ data: auditLogData });
-      }
-
       const stats: CloneStats = {
         Role: roleData.length,
         User: userData.length,
@@ -681,8 +581,6 @@ export async function cloneSeedToSession(
         NavigationMenuItem: itemDataPass1.length,
         SubpageVersion: versionData.length,
         SubpageFeedback: feedbackData.length,
-        ErrorLog: errorLogData.length,
-        AuditLog: auditLogData.length,
       };
 
       return { stats, demoAdminId };
