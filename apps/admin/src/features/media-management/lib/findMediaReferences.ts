@@ -33,7 +33,7 @@ export function containsMediaReference(
  * 스캔 대상:
  * 1. Subpage.featuredImageId (FK)
  * 2. Post.featuredImageId (FK)
- * 3. HomeSection.configJson (JSONB: HERO slides[i].mediaId, BRIEF_INTRO mediaId, RECOMMENDED items[i].mediaId)
+ * 3. HomeSection.configJson (JSONB: HERO slides[i].mediaId, BRIEF_INTRO mediaId, FREQUENT_MENU items[i].iconMediaId)
  * 4. Post.contentJson (Tiptap JSON: image 노드의 attrs.mediaId)
  * 5. HomePopup.imageMediaId (FK, Stage 5b)
  * 6. PageBlock IMAGE 블록 configJson.imageMediaId (JSONB containment, Stage 6)
@@ -82,7 +82,7 @@ export async function findMediaReferences(
   }
 
   // ─── 3. HomeSection.configJson (JSONB containment) ───────────
-  // HERO: configJson.slides[i].mediaId, BRIEF_INTRO: configJson.mediaId, RECOMMENDED/SUB_CAROUSEL: configJson.items[i].mediaId,
+  // HERO: configJson.slides[i].mediaId, BRIEF_INTRO: configJson.mediaId,
   // FREQUENT_MENU: configJson.items[i].iconMediaId
   // PostgreSQL의 jsonb @> 연산자는 배열 안 객체 부분 매칭을 지원한다.
   type HomeSectionRaw = {
@@ -98,7 +98,6 @@ export async function findMediaReferences(
     WHERE "sessionId" = ${sessionId}
       AND (("configJson" -> 'slides') @> ${JSON.stringify([{ mediaId }])}::jsonb
         OR "configJson" @> ${JSON.stringify({ mediaId })}::jsonb
-        OR ("configJson" -> 'items') @> ${JSON.stringify([{ mediaId }])}::jsonb
         OR ("configJson" -> 'items') @> ${JSON.stringify([{ iconMediaId: mediaId }])}::jsonb)
   `;
   for (const sec of homeSectionMatches) {

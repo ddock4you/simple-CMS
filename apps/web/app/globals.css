@@ -202,8 +202,7 @@
 /* ========================= HERO Carousel Width Guard =========================
    Hero 섹션(slidesPerView=1)에서 swiper의 mount 측정/재측정 race로 인해
    slide의 inline style.width가 비정상 큰 값(예: 22369600px)으로 박히는 회귀를
-   CSS로 무력화. slidesPerView=1 Hero에서 각 slide는 항상 container 100% 너비.
-   RECOMMENDED 등 slidesPerView 가변 Carousel에는 적용되지 않도록 Hero 전용 selector 사용. */
+   CSS로 무력화. slidesPerView=1 Hero에서 각 slide는 항상 container 100% 너비. */
 [data-hero-carousel] .swiper,
 [data-hero-carousel] .swiper-wrapper {
   width: 100%;
@@ -272,34 +271,6 @@
   width: 20px;
   background: #1e2124;
   transform: none;
-}
-
-/* Carousel 모드 (RECOMMENDED) — swiper slide에 카드 형태 유지 */
-.home-recommended .krds-carousel .swiper-slide {
-  display: flex;
-  height: auto;
-}
-
-/* Recommended Carousel Width Guard
-   Hero와 동일한 swiper mount 측정 race로 slide.style.width가 비정상 값으로
-   박히는 회귀를 CSS로 무력화. Recommended는 viewport별 slidesPerView 가변
-   (base/small 1 / medium 2 / large 3), spaceBetween (base/medium 16 / large 24).
-   swiper의 slideSize 공식 (containerSize - spaceBetween * (slidesPerView - 1)) / slidesPerView
-   에 맞춰 calc()로 강제. RecommendedSection의 breakpoints prop과 1:1 매핑이라
-   변경 시 양쪽 동기화 필요. */
-.home-recommended .swiper-slide {
-  width: 100% !important;
-  flex-shrink: 0;
-}
-@media (min-width: 768px) {
-  .home-recommended .swiper-slide {
-    width: calc((100% - 16px) / 2) !important;
-  }
-}
-@media (min-width: 1024px) {
-  .home-recommended .swiper-slide {
-    width: calc((100% - 48px) / 3) !important;
-  }
 }
 
 /* ========================= Carousel 공통 컨트롤 ========================= */
@@ -579,26 +550,4 @@
   padding: 2px 8px;
   border-radius: 3px;
   z-index: 1;
-}
-/* ==========================================================================
-   8. SUB_CAROUSEL Swiper guard
-   ========================================================================== */
-
-/* Swiper 22M 회귀 방어 — SubCarouselSection.tsx breakpoints/spaceBetween과 1:1 동기화 필수
-   base/small: slidesPerView=1, spaceBetween=16
-   medium(≥768): slidesPerView=2, spaceBetween=16 → calc((100% - 16px) / 2)
-   large(≥1024): slidesPerView=4, spaceBetween=24 → calc((100% - 72px) / 4) */
-.home-sub-carousel .swiper-slide {
-  width: 100% !important;
-  flex-shrink: 0;
-}
-@media (min-width: 768px) {
-  .home-sub-carousel .swiper-slide {
-    width: calc((100% - 16px) / 2) !important;
-  }
-}
-@media (min-width: 1024px) {
-  .home-sub-carousel .swiper-slide {
-    width: calc((100% - 72px) / 4) !important;
-  }
 }

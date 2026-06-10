@@ -3,12 +3,7 @@ import { z } from 'zod';
 import type {
   HeroConfig,
   BriefIntroConfig,
-  RecommendedConfig,
-  ShortcutConfig,
-  LatestPostsConfig,
-  CtaConfig,
   NoticeConfig,
-  SubCarouselConfig,
   FrequentMenuConfig,
   GalleryCollectionConfig,
 } from '@simple-cms/types';
@@ -54,35 +49,6 @@ const briefIntroSchema = z.object({
   mediaId: z.string().nullable().optional(),
 });
 
-const recommendedSchema = z.object({
-  heading: z.string(),
-  description: z.string().nullable().optional(),
-  items: z.array(
-    z.object({
-      imageUrl: z.string(),
-      imageAlt: z.string(),
-      title: z.string(),
-      description: z.string().nullable().optional(),
-      url: z.string().nullable().optional(),
-      imageOriginalName: z.string().nullable().optional(),
-      mediaId: z.string().nullable().optional(),
-    }),
-  ),
-  slideOptions: slideOptionsSchema,
-});
-
-const shortcutSchema = z.object({
-  heading: z.string(),
-  description: z.string().nullable().optional(),
-  items: z.array(
-    z.object({
-      label: z.string(),
-      description: z.string().nullable().optional(),
-      url: z.string(),
-    }),
-  ),
-});
-
 const frequentMenuSchema = z.object({
   heading: z.string(),
   items: z.array(
@@ -100,20 +66,6 @@ const frequentMenuSchema = z.object({
       iconOriginalName: z.string().nullable().optional(),
     }),
   ),
-});
-
-const latestPostsSchema = z.object({
-  heading: z.string(),
-  description: z.string().nullable().optional(),
-  boardId: z.string().nullable(),
-  limit: z.number().int().min(1).max(20),
-});
-
-const ctaSchema = z.object({
-  heading: z.string(),
-  description: z.string().nullable().optional(),
-  buttonLabel: z.string(),
-  buttonUrl: z.string(),
 });
 
 const noticeSchema = z.object({
@@ -153,31 +105,11 @@ export function parseBriefIntroConfig(raw: unknown): BriefIntroConfig | null {
   return result.success ? (result.data as BriefIntroConfig) : null;
 }
 
-export function parseRecommendedConfig(raw: unknown): RecommendedConfig | null {
-  const result = recommendedSchema.safeParse(raw);
-  return result.success ? (result.data as RecommendedConfig) : null;
-}
-
-export function parseShortcutConfig(raw: unknown): ShortcutConfig | null {
-  const result = shortcutSchema.safeParse(raw);
-  return result.success ? (result.data as ShortcutConfig) : null;
-}
-
 export function parseFrequentMenuConfig(
   raw: unknown,
 ): FrequentMenuConfig | null {
   const result = frequentMenuSchema.safeParse(raw);
   return result.success ? (result.data as FrequentMenuConfig) : null;
-}
-
-export function parseLatestPostsConfig(raw: unknown): LatestPostsConfig | null {
-  const result = latestPostsSchema.safeParse(raw);
-  return result.success ? (result.data as LatestPostsConfig) : null;
-}
-
-export function parseCtaConfig(raw: unknown): CtaConfig | null {
-  const result = ctaSchema.safeParse(raw);
-  return result.success ? (result.data as CtaConfig) : null;
 }
 
 export function parseNoticeConfig(raw: unknown): NoticeConfig | null {
@@ -205,28 +137,4 @@ export function parseGalleryCollectionConfig(
 ): GalleryCollectionConfig | null {
   const result = galleryCollectionSchema.safeParse(raw);
   return result.success ? (result.data as GalleryCollectionConfig) : null;
-}
-
-const subCarouselSchema = z.object({
-  tagline: z.string().nullable(),
-  mainHeading: z.string(),
-  subHeading: z.string().nullable(),
-  description: z.string().nullable().optional(),
-  items: z.array(
-    z.object({
-      imageUrl: z.string(),
-      imageAlt: z.string(),
-      title: z.string(),
-      subtitle: z.string().nullable().optional(),
-      url: z.string().nullable().optional(),
-      imageOriginalName: z.string().nullable().optional(),
-      mediaId: z.string().nullable().optional(),
-    }),
-  ),
-  slideOptions: slideOptionsSchema,
-});
-
-export function parseSubCarouselConfig(raw: unknown): SubCarouselConfig | null {
-  const result = subCarouselSchema.safeParse(raw);
-  return result.success ? (result.data as SubCarouselConfig) : null;
 }

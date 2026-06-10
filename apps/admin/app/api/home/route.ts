@@ -11,12 +11,7 @@ import {
   type FrequentMenuConfigData,
   type GalleryCollectionConfigData,
   type HeroConfigData,
-  type LatestPostsConfigData,
   type NoticeConfigData,
-  type RecommendedConfigData,
-  type ShortcutConfigData,
-  type SubCarouselConfigData,
-  type CtaConfigData,
 } from '@/features/home-management/model/homeSchemas';
 import {
   SECTION_TYPE_LABELS,
@@ -27,13 +22,8 @@ type FixedHomeSectionType = (typeof SECTION_TYPE_ORDER)[number];
 type DefaultHomeSectionConfig =
   | HeroConfigData
   | BriefIntroConfigData
-  | RecommendedConfigData
-  | SubCarouselConfigData
   | FrequentMenuConfigData
-  | ShortcutConfigData
-  | LatestPostsConfigData
   | GalleryCollectionConfigData
-  | CtaConfigData
   | NoticeConfigData;
 
 export async function GET(_request: Request): Promise<NextResponse> {

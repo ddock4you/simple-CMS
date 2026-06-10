@@ -13,7 +13,7 @@ import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 
 /**
- * 슬라이드 옵션 공통 패널 (HERO, RECOMMENDED에서 재사용).
+ * 슬라이드 옵션 공통 패널 (HERO에서 사용).
  *
  * react-hook-form 제네릭으로 폼 내 어느 경로(`slideOptions`)에 중첩되어도 사용 가능.
  * 각 필드명은 항상 `slideOptions.{field}` 형태로 구성되므로,

@@ -30,7 +30,7 @@ interface LinkTargetInputProps {
   id?: string;
   /**
    * NONE(링크 없음) 옵션 노출 여부. 기본 true.
-   * url이 필수 필드인 호출자(예: ShortcutFields)는 false 전달.
+   * url이 필수 필드인 호출자는 false 전달.
    * false면 NONE 옵션이 select에서 숨겨지고, 빈 value 진입 시 EXTERNAL 모드가 default.
    */
   allowNone?: boolean;

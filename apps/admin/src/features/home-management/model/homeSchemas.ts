@@ -8,11 +8,6 @@ import { z } from 'zod';
  * - API 핸들러는 body의 sectionType이 아닌 DB의 sectionType을 기준으로 재검증
  */
 
-const urlString = z
-  .string()
-  .min(1, 'URL을 입력해주세요.')
-  .max(2000, 'URL은 2000자 이하여야 합니다.');
-
 const optionalUrlString = z
   .string()
   .max(2000, 'URL은 2000자 이하여야 합니다.')
@@ -20,7 +15,7 @@ const optionalUrlString = z
   .optional();
 
 /**
- * 공통 슬라이드 옵션 스키마 (HERO, RECOMMENDED).
+ * 공통 슬라이드 옵션 스키마 (HERO).
  * autoPlay/autoPlayInterval은 showPlayPause=false여도 값은 저장되나 무시됨.
  */
 export const slideOptionsSchema = z.object({
@@ -98,44 +93,6 @@ export const briefIntroConfigSchema = z
   });
 export type BriefIntroConfigData = z.infer<typeof briefIntroConfigSchema>;
 
-const recommendedItemSchema = z.object({
-  imageUrl: z.string().min(1, '이미지 URL을 입력해주세요.').max(2000),
-  imageAlt: z.string().min(1, '이미지 대체 텍스트를 입력해주세요.').max(200),
-  title: z.string().min(1, '제목을 입력해주세요.').max(200),
-  description: z.string().max(500).nullable().optional(),
-  url: optionalUrlString,
-  imageOriginalName: z.string().max(255).nullable().optional(),
-  mediaId: z.string().max(64).nullable().optional(),
-});
-
-export const recommendedConfigSchema = z.object({
-  heading: z
-    .string()
-    .min(1, '섹션 제목을 입력해주세요.')
-    .max(200, '제목은 200자 이하여야 합니다.'),
-  description: z.string().max(500).nullable().optional(),
-  items: z
-    .array(recommendedItemSchema)
-    .max(12, '최대 12개까지 등록할 수 있습니다.'),
-  slideOptions: slideOptionsSchema,
-});
-export type RecommendedConfigData = z.infer<typeof recommendedConfigSchema>;
-
-export const shortcutConfigSchema = z.object({
-  heading: z.string().min(1, '섹션 제목을 입력해주세요.').max(200),
-  description: z.string().max(500).nullable().optional(),
-  items: z
-    .array(
-      z.object({
-        label: z.string().min(1, '라벨을 입력해주세요.').max(100),
-        description: z.string().max(200).nullable().optional(),
-        url: urlString,
-      }),
-    )
-    .max(8, '최대 8개까지 등록할 수 있습니다.'),
-});
-export type ShortcutConfigData = z.infer<typeof shortcutConfigSchema>;
-
 const frequentMenuItemSchema = z.object({
   title: z.string().min(1, '제목을 입력해주세요.').max(100),
   itemType: z.enum(['SUBPAGE', 'BOARD', 'EXTERNAL', 'CUSTOM']),
@@ -157,22 +114,6 @@ export const frequentMenuConfigSchema = z.object({
     .max(6, '최대 6개까지 등록할 수 있습니다.'),
 });
 export type FrequentMenuConfigData = z.infer<typeof frequentMenuConfigSchema>;
-
-export const latestPostsConfigSchema = z.object({
-  heading: z.string().min(1, '섹션 제목을 입력해주세요.').max(200),
-  description: z.string().max(500).nullable().optional(),
-  boardId: z.string().nullable(),
-  limit: z.number().int().min(1).max(10),
-});
-export type LatestPostsConfigData = z.infer<typeof latestPostsConfigSchema>;
-
-export const ctaConfigSchema = z.object({
-  heading: z.string().min(1, '섹션 제목을 입력해주세요.').max(200),
-  description: z.string().max(1000).nullable().optional(),
-  buttonLabel: z.string().min(1, '버튼 라벨을 입력해주세요.').max(50),
-  buttonUrl: urlString,
-});
-export type CtaConfigData = z.infer<typeof ctaConfigSchema>;
 
 export const noticeConfigSchema = z.object({
   heading: z.string().min(1, '섹션 제목을 입력해주세요.').max(200),
@@ -205,40 +146,13 @@ export type GalleryCollectionConfigData = z.infer<
   typeof galleryCollectionConfigSchema
 >;
 
-const subCarouselItemSchema = z.object({
-  imageUrl: z.string().min(1, '이미지 URL을 입력해주세요.').max(2000),
-  imageAlt: z.string().min(1, '이미지 대체 텍스트를 입력해주세요.').max(200),
-  title: z.string().min(1, '이름을 입력해주세요.').max(200),
-  subtitle: z.string().max(200).nullable().optional(),
-  url: optionalUrlString,
-  imageOriginalName: z.string().max(255).nullable().optional(),
-  mediaId: z.string().max(64).nullable().optional(),
-});
-
-export const subCarouselConfigSchema = z.object({
-  tagline: z.string().max(200).nullable(),
-  mainHeading: z.string().min(1, '메인 제목을 입력해주세요.').max(400),
-  subHeading: z.string().max(200).nullable(),
-  description: z.string().max(500).nullable().optional(),
-  items: z
-    .array(subCarouselItemSchema)
-    .max(12, '최대 12개까지 등록할 수 있습니다.'),
-  slideOptions: slideOptionsSchema,
-});
-export type SubCarouselConfigData = z.infer<typeof subCarouselConfigSchema>;
-
 /**
  * 섹션 타입 → Zod 스키마 매핑 (API 핸들러에서 재검증용)
  */
 export const configSchemaByType = {
   HERO: heroConfigSchema,
   BRIEF_INTRO: briefIntroConfigSchema,
-  RECOMMENDED: recommendedConfigSchema,
-  SUB_CAROUSEL: subCarouselConfigSchema,
   FREQUENT_MENU: frequentMenuConfigSchema,
-  SHORTCUT: shortcutConfigSchema,
-  LATEST_POSTS: latestPostsConfigSchema,
-  CTA: ctaConfigSchema,
   NOTICE: noticeConfigSchema,
   GALLERY_COLLECTION: galleryCollectionConfigSchema,
 } as const;
@@ -261,41 +175,10 @@ export const defaultConfigByType = {
     imageOriginalName: null,
     mediaId: null,
   } satisfies BriefIntroConfigData,
-  RECOMMENDED: {
-    heading: '',
-    description: null,
-    items: [],
-    slideOptions: DEFAULT_SLIDE_OPTIONS,
-  } satisfies RecommendedConfigData,
-  SUB_CAROUSEL: {
-    tagline: null,
-    mainHeading: '',
-    subHeading: null,
-    description: null,
-    items: [],
-    slideOptions: DEFAULT_SLIDE_OPTIONS,
-  } satisfies SubCarouselConfigData,
   FREQUENT_MENU: {
     heading: '자주찾는 메뉴',
     items: [],
   } satisfies FrequentMenuConfigData,
-  SHORTCUT: {
-    heading: '',
-    description: null,
-    items: [],
-  } satisfies ShortcutConfigData,
-  LATEST_POSTS: {
-    heading: '',
-    description: null,
-    boardId: null,
-    limit: 5,
-  } satisfies LatestPostsConfigData,
-  CTA: {
-    heading: '',
-    description: null,
-    buttonLabel: '',
-    buttonUrl: '',
-  } satisfies CtaConfigData,
   NOTICE: {
     heading: '공지 알림',
     description: null,
@@ -323,16 +206,16 @@ export const updateHomeSectionSchema = z.object({
 export type UpdateHomeSectionData = z.infer<typeof updateHomeSectionSchema>;
 
 /**
- * 섹션 순서 변경 스키마 — 항상 전체 10개 섹션의 id+displayOrder를 포함해야 함
+ * 섹션 순서 변경 스키마 — 항상 전체 5개 섹션의 id+displayOrder를 포함해야 함
  */
 export const reorderHomeSectionsSchema = z.object({
   sections: z
     .array(
       z.object({
         id: z.string().min(1),
-        displayOrder: z.number().int().min(0).max(9),
+        displayOrder: z.number().int().min(0).max(4),
       }),
     )
-    .length(10, '전체 섹션(10개)을 포함해야 합니다.'),
+    .length(5, '전체 섹션(5개)을 포함해야 합니다.'),
 });
 export type ReorderHomeSectionsData = z.infer<typeof reorderHomeSectionsSchema>;

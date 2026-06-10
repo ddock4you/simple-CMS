@@ -17,6 +17,7 @@
     "studio": "prisma studio",
     "seed": "prisma db seed",
     "demo-seed": "tsx prisma/demo-seed.ts",
+    "prune-home-sections": "tsx prisma/prune-removed-home-sections.ts",
     "demo-export": "tsx --env-file=../../.env scripts/demo-export.ts",
     "demo-import": "tsx --env-file=../../.env scripts/demo-import.ts",
     "pgroonga:setup": "tsx prisma/pgroonga-setup.ts"

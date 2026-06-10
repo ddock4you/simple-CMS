@@ -33,10 +33,8 @@ export interface ReorderHomeSectionsDto {
 
 /**
  * Edit Dialog의 드롭다운용 참조 데이터 묶음.
- * RECOMMENDED(subpage/post), LATEST_POSTS(board) 선택 시 사용.
+ * NOTICE / GALLERY_COLLECTION 게시판 선택 시 사용.
  */
 export interface HomeReferencesDto {
-  subpages: Array<{ id: string; title: string }>;
   boards: Array<{ id: string; name: string }>;
-  posts: Array<{ id: string; title: string; boardName: string }>;
 }

@@ -115,15 +115,15 @@ Codex automatically reads AGENTS.md files by directory scope.
 
 **Web 쪽 DOMPurify**: `apps/web/src/shared/lib/renderContent.ts`의 ALLOWED_ATTR에 `data-media-id` 추가.
 
-### Phase F: HERO/RECOMMENDED 통합
+### Phase F: HERO 통합
 
 | 대상 | 파일 | 변경 |
 | ---- | ---- | ---- |
-| 도메인 타입 | `packages/types/src/domain/home.types.ts` | HeroSlide/RecommendedItem에 `mediaId?: string \| null` 추가 |
+| 도메인 타입 | `packages/types/src/domain/home.types.ts` | HeroSlide에 `mediaId?: string \| null` 추가 |
 | Zod 스키마 | `apps/admin/src/features/home-management/model/homeSchemas.ts` | heroSlideSchema/recommendedItemSchema에 `mediaId: z.string().max(64).nullable().optional()` |
 | Web 파서 | `apps/web/src/entities/home-section/lib/parseConfig.ts` | mediaId optional 허용 (저장값 보존) |
 | ImageUrlInput | `apps/admin/src/entities/media/ui/ImageUrlInput.tsx` | `value`/`mediaId`/`originalName` props + 단일 `onChange(next: ImageUrlInputValue)`, [라이브러리] 버튼 + MediaPicker, `MediaUploadButton` 재사용. 호출 측에서 `import { ImageUrlInput } from '@/entities/media/ui/ImageUrlInput'` |
-| HeroFields/RecommendedFields | 같은 폴더 | `append()` 기본값에 `mediaId: null`, 서브필드에서 mediaId watch/setValue |
+| HeroFields | 같은 폴더 | `append()` 기본값에 `mediaId: null`, 서브필드에서 mediaId watch/setValue |
 
 ### Phase G: Tiptap 확장 + 에디터 통합
 

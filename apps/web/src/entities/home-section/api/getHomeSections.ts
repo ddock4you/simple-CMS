@@ -5,12 +5,7 @@ import type {
   HomeSectionType,
   HeroConfig,
   BriefIntroConfig,
-  RecommendedConfig,
-  SubCarouselConfig,
   FrequentMenuConfig,
-  ShortcutConfig,
-  LatestPostsConfig,
-  CtaConfig,
   NoticeConfig,
   GalleryCollectionConfig,
 } from '@simple-cms/types';
@@ -18,22 +13,15 @@ import type {
 import { extractFirstImageFromTiptap } from '@/entities/post/lib/extractFirstImageFromTiptap';
 import {
   parseBriefIntroConfig,
-  parseCtaConfig,
   parseFrequentMenuConfig,
   parseGalleryCollectionConfig,
   parseHeroConfig,
-  parseLatestPostsConfig,
   parseNoticeConfig,
-  parseRecommendedConfig,
-  parseShortcutConfig,
-  parseSubCarouselConfig,
 } from '../lib/parseConfig';
 
 /**
  * 공개 웹 메인 페이지에 렌더링할 섹션 데이터.
  * - 섹션 본문은 configJson 타입별 파싱 후 태그된 유니온으로 반환
- * - LATEST_POSTS의 참조(board + post)는 해결된 상태로 props에 포함
- * - RECOMMENDED는 자유 갤러리 (수동 입력) — 외부 참조 없음
  * - 파싱 실패 섹션은 skip (에러 없이)
  */
 
@@ -43,22 +31,10 @@ export interface ResolvedHeroSection {
   config: HeroConfig;
 }
 
-export interface ResolvedRecommendedSection {
-  id: string;
-  sectionType: 'RECOMMENDED';
-  config: RecommendedConfig;
-}
-
 export interface ResolvedBriefIntroSection {
   id: string;
   sectionType: 'BRIEF_INTRO';
   config: BriefIntroConfig;
-}
-
-export interface ResolvedShortcutSection {
-  id: string;
-  sectionType: 'SHORTCUT';
-  config: ShortcutConfig;
 }
 
 export interface ResolvedFrequentMenuItem {
@@ -76,34 +52,12 @@ export interface ResolvedFrequentMenuSection {
   items: ResolvedFrequentMenuItem[];
 }
 
-export interface ResolvedLatestPostsItem {
-  id: string;
-  title: string;
-  href: string;
-  publishedAt: Date | null;
-}
-
-export interface ResolvedLatestPostsSection {
-  id: string;
-  sectionType: 'LATEST_POSTS';
-  config: LatestPostsConfig;
-  boardName: string | null;
-  boardSlug: string | null;
-  items: ResolvedLatestPostsItem[];
-}
-
 export interface ResolvedNoticePostItem {
   id: string;
   title: string;
   href: string;
   publishedAt: Date | null;
   description: string | null;
-}
-
-export interface ResolvedCtaSection {
-  id: string;
-  sectionType: 'CTA';
-  config: CtaConfig;
 }
 
 export interface ResolvedNoticeSection {
@@ -114,12 +68,6 @@ export interface ResolvedNoticeSection {
   boardSlug: string | null;
   featuredItem: ResolvedNoticePostItem | null;
   items: ResolvedNoticePostItem[];
-}
-
-export interface ResolvedSubCarouselSection {
-  id: string;
-  sectionType: 'SUB_CAROUSEL';
-  config: SubCarouselConfig;
 }
 
 export interface ResolvedGalleryCollectionItem {
@@ -151,12 +99,7 @@ export interface ResolvedGalleryCollectionSection {
 export type ResolvedSection =
   | ResolvedHeroSection
   | ResolvedBriefIntroSection
-  | ResolvedRecommendedSection
-  | ResolvedSubCarouselSection
   | ResolvedFrequentMenuSection
-  | ResolvedShortcutSection
-  | ResolvedLatestPostsSection
-  | ResolvedCtaSection
   | ResolvedNoticeSection
   | ResolvedGalleryCollectionSection;
 
@@ -194,9 +137,7 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
     },
   });
 
-  // 2. 참조 엔티티 ID 수집 (LATEST_POSTS만 해당)
-  const latestPostsBoardIds = new Set<string>();
-  const latestPostsLimitByBoard = new Map<string, number>();
+  // 2. 참조 엔티티 ID 수집
   const noticeBoardIds = new Set<string>();
   const noticeLimitByBoard = new Map<string, number>();
   const galleryCollectionBoardIds = new Set<string>();
@@ -210,12 +151,7 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
     config:
       | HeroConfig
       | BriefIntroConfig
-      | RecommendedConfig
-      | SubCarouselConfig
       | FrequentMenuConfig
-      | ShortcutConfig
-      | LatestPostsConfig
-      | CtaConfig
       | NoticeConfig
       | GalleryCollectionConfig;
   }> = [];
@@ -228,20 +164,8 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
         parsedSections.push({ ...section, config });
         break;
       }
-      case 'RECOMMENDED': {
-        const config = parseRecommendedConfig(section.configJson);
-        if (!config) continue;
-        parsedSections.push({ ...section, config });
-        break;
-      }
       case 'BRIEF_INTRO': {
         const config = parseBriefIntroConfig(section.configJson);
-        if (!config) continue;
-        parsedSections.push({ ...section, config });
-        break;
-      }
-      case 'SHORTCUT': {
-        const config = parseShortcutConfig(section.configJson);
         if (!config) continue;
         parsedSections.push({ ...section, config });
         break;
@@ -261,28 +185,6 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
         parsedSections.push({ ...section, config });
         break;
       }
-      case 'LATEST_POSTS': {
-        const config = parseLatestPostsConfig(section.configJson);
-        if (!config) continue;
-        if (config.boardId) {
-          latestPostsBoardIds.add(config.boardId);
-          latestPostsLimitByBoard.set(
-            config.boardId,
-            Math.max(
-              latestPostsLimitByBoard.get(config.boardId) ?? 0,
-              config.limit,
-            ),
-          );
-        }
-        parsedSections.push({ ...section, config });
-        break;
-      }
-      case 'CTA': {
-        const config = parseCtaConfig(section.configJson);
-        if (!config) continue;
-        parsedSections.push({ ...section, config });
-        break;
-      }
       case 'NOTICE': {
         const config = parseNoticeConfig(section.configJson);
         if (!config) continue;
@@ -293,12 +195,6 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
             Math.max(noticeLimitByBoard.get(config.boardId) ?? 0, config.limit),
           );
         }
-        parsedSections.push({ ...section, config });
-        break;
-      }
-      case 'SUB_CAROUSEL': {
-        const config = parseSubCarouselConfig(section.configJson);
-        if (!config) continue;
         parsedSections.push({ ...section, config });
         break;
       }
@@ -321,10 +217,8 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
     }
   }
 
-  // 3. 게시판 참조 배치 조회 (LATEST_POSTS + NOTICE, N+1 방지)
+  // 3. 게시판 참조 배치 조회 (NOTICE + GALLERY_COLLECTION, N+1 방지)
   const [
-    boards,
-    latestPostGroups,
     noticeBoards,
     noticeImportantGroups,
     noticeRegularGroups,
@@ -333,38 +227,6 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
     galleryCollectionBoards,
     galleryCollectionPostGroups,
   ] = await Promise.all([
-    latestPostsBoardIds.size > 0
-      ? prisma.board.findMany({
-          where: {
-            id: { in: Array.from(latestPostsBoardIds) },
-            isPublic: true,
-          },
-          select: { id: true, name: true, slug: true },
-        })
-      : Promise.resolve([]),
-    latestPostsBoardIds.size > 0
-      ? Promise.all(
-          Array.from(latestPostsBoardIds).map((boardId) =>
-            prisma.post.findMany({
-              where: {
-                boardId,
-                status: 'PUBLISHED',
-                board: { isPublic: true },
-              },
-              select: {
-                id: true,
-                title: true,
-                slug: true,
-                publishedAt: true,
-                boardId: true,
-                board: { select: { slug: true, name: true } },
-              },
-              orderBy: [{ isImportant: 'desc' }, { publishedAt: 'desc' }],
-              take: latestPostsLimitByBoard.get(boardId) ?? 0,
-            }),
-          ),
-        )
-      : Promise.resolve([]),
     noticeBoardIds.size > 0
       ? prisma.board.findMany({
           where: {
@@ -480,15 +342,6 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
       : Promise.resolve([]),
   ]);
 
-  const boardMap = new Map(boards.map((b) => [b.id, b]));
-  const latestPostsByBoard = latestPostGroups.flat();
-  const postsByBoard = new Map<string, typeof latestPostsByBoard>();
-  for (const post of latestPostsByBoard) {
-    const existing = postsByBoard.get(post.boardId) ?? [];
-    existing.push(post);
-    postsByBoard.set(post.boardId, existing);
-  }
-
   const noticeBoardMap = new Map(noticeBoards.map((b) => [b.id, b]));
   const importantNoticePostsByBoard = groupPostsByBoard(
     noticeImportantGroups.flat(),
@@ -520,25 +373,11 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
           config: section.config as HeroConfig,
         });
         break;
-      case 'RECOMMENDED':
-        resolved.push({
-          id: section.id,
-          sectionType: 'RECOMMENDED',
-          config: section.config as RecommendedConfig,
-        });
-        break;
       case 'BRIEF_INTRO':
         resolved.push({
           id: section.id,
           sectionType: 'BRIEF_INTRO',
           config: section.config as BriefIntroConfig,
-        });
-        break;
-      case 'SHORTCUT':
-        resolved.push({
-          id: section.id,
-          sectionType: 'SHORTCUT',
-          config: section.config as ShortcutConfig,
         });
         break;
       case 'FREQUENT_MENU': {
@@ -555,35 +394,6 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
         });
         break;
       }
-      case 'LATEST_POSTS': {
-        const config = section.config as LatestPostsConfig;
-        const board = config.boardId ? boardMap.get(config.boardId) : null;
-        const posts = config.boardId
-          ? (postsByBoard.get(config.boardId) ?? []).slice(0, config.limit)
-          : [];
-        const items: ResolvedLatestPostsItem[] = posts.map((p) => ({
-          id: p.id,
-          title: p.title,
-          href: `/board/${p.board.slug}/${p.slug}`,
-          publishedAt: p.publishedAt,
-        }));
-        resolved.push({
-          id: section.id,
-          sectionType: 'LATEST_POSTS',
-          config,
-          boardName: board?.name ?? null,
-          boardSlug: board?.slug ?? null,
-          items,
-        });
-        break;
-      }
-      case 'CTA':
-        resolved.push({
-          id: section.id,
-          sectionType: 'CTA',
-          config: section.config as CtaConfig,
-        });
-        break;
       case 'NOTICE': {
         const config = section.config as NoticeConfig;
         const board = config.boardId
@@ -610,13 +420,6 @@ export const getHomeSections = cache(async (): Promise<ResolvedSection[]> => {
         });
         break;
       }
-      case 'SUB_CAROUSEL':
-        resolved.push({
-          id: section.id,
-          sectionType: 'SUB_CAROUSEL',
-          config: section.config as SubCarouselConfig,
-        });
-        break;
       case 'GALLERY_COLLECTION': {
         const config = section.config as GalleryCollectionConfig;
         const tabs = resolveGalleryCollectionTabs(

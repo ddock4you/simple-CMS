@@ -8,12 +8,7 @@
 export type HomeSectionType =
   | 'HERO'
   | 'BRIEF_INTRO'
-  | 'RECOMMENDED'
-  | 'SUB_CAROUSEL'
   | 'FREQUENT_MENU'
-  | 'SHORTCUT'
-  | 'LATEST_POSTS'
-  | 'CTA'
   | 'NOTICE'
   | 'GALLERY_COLLECTION';
 
@@ -23,7 +18,7 @@ export interface HomeSectionButton {
 }
 
 /**
- * 슬라이드 옵션 (HERO, RECOMMENDED 공통).
+ * 슬라이드 옵션 (HERO).
  * showPlayPause가 false면 autoPlay/autoPlayInterval은 무시된다.
  */
 export interface SlideOptions {
@@ -66,63 +61,6 @@ export interface BriefIntroConfig {
   mediaId?: string | null;
 }
 
-/**
- * 추천 콘텐츠 아이템 (자유 갤러리 — subpage/post 참조 아님).
- * imageOriginalName은 admin 관리용 (업로드 시 원본 파일명 보존).
- * mediaId는 Media 라이브러리 참조 — 미디어 삭제 시 사용처 추적용 (Stage 5a-2).
- */
-export interface RecommendedItem {
-  imageUrl: string;
-  imageAlt: string;
-  title: string;
-  description?: string | null;
-  url?: string | null;
-  imageOriginalName?: string | null;
-  mediaId?: string | null;
-}
-
-export interface RecommendedConfig {
-  heading: string;
-  description?: string | null;
-  items: RecommendedItem[];
-  slideOptions: SlideOptions;
-}
-
-/**
- * 서브 캐러셀 아이템 (원형 썸네일 + 제목 + 학명/영문 부제목).
- * mediaId는 Media 라이브러리 참조 — 미디어 삭제 시 사용처 추적용.
- */
-export interface SubCarouselItem {
-  imageUrl: string;
-  imageAlt: string;
-  title: string;
-  subtitle?: string | null;
-  url?: string | null;
-  imageOriginalName?: string | null;
-  mediaId?: string | null;
-}
-
-export interface SubCarouselConfig {
-  tagline: string | null;
-  mainHeading: string;
-  subHeading: string | null;
-  description?: string | null;
-  items: SubCarouselItem[];
-  slideOptions: SlideOptions;
-}
-
-export interface ShortcutItem {
-  label: string;
-  description?: string | null;
-  url: string;
-}
-
-export interface ShortcutConfig {
-  heading: string;
-  description?: string | null;
-  items: ShortcutItem[];
-}
-
 export type FrequentMenuItemType = 'SUBPAGE' | 'BOARD' | 'EXTERNAL' | 'CUSTOM';
 
 export interface FrequentMenuItem {
@@ -142,20 +80,6 @@ export interface FrequentMenuItem {
 export interface FrequentMenuConfig {
   heading: string;
   items: FrequentMenuItem[];
-}
-
-export interface LatestPostsConfig {
-  heading: string;
-  description?: string | null;
-  boardId: string | null;
-  limit: number;
-}
-
-export interface CtaConfig {
-  heading: string;
-  description?: string | null;
-  buttonLabel: string;
-  buttonUrl: string;
 }
 
 export interface LegacyNoticeItem {
@@ -184,12 +108,7 @@ export interface GalleryCollectionConfig {
 export type HomeSectionConfig =
   | ({ sectionType: 'HERO' } & { config: HeroConfig })
   | ({ sectionType: 'BRIEF_INTRO' } & { config: BriefIntroConfig })
-  | ({ sectionType: 'RECOMMENDED' } & { config: RecommendedConfig })
-  | ({ sectionType: 'SUB_CAROUSEL' } & { config: SubCarouselConfig })
   | ({ sectionType: 'FREQUENT_MENU' } & { config: FrequentMenuConfig })
-  | ({ sectionType: 'SHORTCUT' } & { config: ShortcutConfig })
-  | ({ sectionType: 'LATEST_POSTS' } & { config: LatestPostsConfig })
-  | ({ sectionType: 'CTA' } & { config: CtaConfig })
   | ({ sectionType: 'NOTICE' } & { config: NoticeConfig })
   | ({ sectionType: 'GALLERY_COLLECTION' } & {
       config: GalleryCollectionConfig;

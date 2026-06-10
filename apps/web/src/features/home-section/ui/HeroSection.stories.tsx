@@ -59,7 +59,7 @@ export const SingleSlide: Story = {
 };
 
 /**
- * 다중 슬라이드 히어로 렌더. Carousel을 유지하되 slide 전체가 아닌 CTA만 링크로 동작한다.
+ * 다중 슬라이드 히어로 렌더. Carousel을 유지하되 slide 전체가 아닌 버튼만 링크로 동작한다.
  */
 export const MultipleSlides: Story = {
   args: {
@@ -80,7 +80,7 @@ export const MultipleSlides: Story = {
             imageUrl: 'https://via.placeholder.com/1600x560/247B5C/ffffff',
             imageAlt: '공공서비스 안내 이미지',
             title: '필요한 서비스를\n더 편리하게 안내합니다.',
-            description: '새로운 소식과 추천 콘텐츠를 메인에서 확인하세요.',
+            description: '새로운 소식과 주요 안내를 메인에서 확인하세요.',
             url: null,
           },
         ],

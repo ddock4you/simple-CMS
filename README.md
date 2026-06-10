@@ -164,7 +164,7 @@ Next.js 기반의 관리자 CMS와 공개 웹을 하나의 모노레포에서 �
 ### Web UI / SEO
 
 - **KRDS React / KRDS UIUX**: 공개 웹 레이아웃
-- **Swiper**: 홈 섹션 캐러셀
+- **Swiper**: 히어로/팝업/이미지 블록 캐러셀
 - **isomorphic-dompurify**: SSR 호환 HTML sanitize
 - **Schema.org JSON-LD**: Article, BreadcrumbList, Organization, WebSite 구조화 데이터
 

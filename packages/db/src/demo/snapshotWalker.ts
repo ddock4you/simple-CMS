@@ -14,8 +14,8 @@
  *   - HomeSection.configJson:
  *     - HERO    `slides[].mediaId`   (field: `mediaId`)
  *     - BRIEF_INTRO `mediaId` (top-level)
- *     - RECOMMENDED `items[].mediaId` (field: `mediaId`)
- *     - LATEST_POSTS `boardId` (top-level)
+ *     - FREQUENT_MENU `items[].iconMediaId` (field: `iconMediaId`)
+ *     - NOTICE `boardId` (top-level)
  *     - GALLERY_COLLECTION `boardIds[]` (top-level)
  *   - PageBlock.configJson:
  *     - IMAGE  `imageMediaId` (field 다름)
@@ -114,28 +114,11 @@ function remapHomeSectionConfig(
       const newUrl = mediaUrlMap.get(oldMediaId);
       if (newUrl && typeof cfg.imageUrl === 'string') cfg.imageUrl = newUrl;
     }
-    // RECOMMENDED / SUB_CAROUSEL items[].mediaId, FREQUENT_MENU items[].iconMediaId
-    if (
-      (sectionType === 'RECOMMENDED' ||
-        sectionType === 'SUB_CAROUSEL' ||
-        sectionType === 'FREQUENT_MENU') &&
-      Array.isArray(cfg.items)
-    ) {
+    // FREQUENT_MENU items[].iconMediaId
+    if (sectionType === 'FREQUENT_MENU' && Array.isArray(cfg.items)) {
       for (const item of cfg.items) {
         if (item && typeof item === 'object') {
           const i = item as { mediaId?: unknown; iconMediaId?: unknown };
-          if (typeof i.mediaId === 'string') {
-            const oldMediaId = i.mediaId;
-            const newId = idMap.get(i.mediaId);
-            if (newId) i.mediaId = newId;
-            const newUrl = mediaUrlMap.get(oldMediaId);
-            if (
-              newUrl &&
-              typeof (i as { imageUrl?: unknown }).imageUrl === 'string'
-            ) {
-              (i as { imageUrl: string }).imageUrl = newUrl;
-            }
-          }
           if (typeof i.iconMediaId === 'string') {
             const oldMediaId = i.iconMediaId;
             const newId = idMap.get(i.iconMediaId);
@@ -154,11 +137,7 @@ function remapHomeSectionConfig(
   }
 
   if (kind === 'boardId') {
-    // LATEST_POSTS / NOTICE boardId (top-level)
-    if (sectionType === 'LATEST_POSTS' && typeof cfg.boardId === 'string') {
-      const newId = idMap.get(cfg.boardId);
-      if (newId) cfg.boardId = newId;
-    }
+    // NOTICE boardId (top-level)
     if (sectionType === 'NOTICE' && typeof cfg.boardId === 'string') {
       const newId = idMap.get(cfg.boardId);
       if (newId) cfg.boardId = newId;

@@ -3,8 +3,8 @@
  *
  * 위치별 field name 분기를 모두 커버:
  *   - HomeSection HERO `slides[].mediaId`
- *   - HomeSection RECOMMENDED `items[].mediaId`
- *   - HomeSection LATEST_POSTS `boardId` (top-level)
+ *   - HomeSection FREQUENT_MENU `items[].iconMediaId`
+ *   - HomeSection NOTICE `boardId` (top-level)
  *   - PageBlock IMAGE `imageMediaId` (field name 다름!)
  *   - PageBlock RICH_TEXT `contentJson` 재귀 → image.attrs.mediaId
  *   - HomePopup CONTENT `contentJson` 재귀
@@ -78,31 +78,6 @@ describe('walkSnapshotForRemap — HomeSection', () => {
     expect(cfg.slides[1]!.mediaId).toBe('new-2');
   });
 
-  it('RECOMMENDED items[].mediaId 재매핑', () => {
-    const payload = emptyPayload();
-    payload.models.HomeSection.push({
-      id: 'sec-2',
-      sectionType: 'RECOMMENDED',
-      title: 'test-section',
-      configJson: {
-        heading: 'Picks',
-        items: [
-          { imageUrl: '/u/c.jpg', imageAlt: 'c', title: 'C', mediaId: 'm-3' },
-        ],
-        slideOptions: {},
-      },
-      isVisible: true,
-      displayOrder: 1,
-    });
-
-    walkSnapshotForRemap(payload, new Map([['m-3', 'm-new']]), 'mediaId');
-
-    const cfg = payload.models.HomeSection[0]!.configJson as {
-      items: Array<{ mediaId: string }>;
-    };
-    expect(cfg.items[0]!.mediaId).toBe('m-new');
-  });
-
   it('FREQUENT_MENU items[].iconMediaId 재매핑', () => {
     const payload = emptyPayload();
     payload.models.HomeSection.push({
@@ -140,14 +115,14 @@ describe('walkSnapshotForRemap — HomeSection', () => {
     expect(cfg.items[0]!.iconMediaId).toBe('m-icon-new');
   });
 
-  it('LATEST_POSTS boardId 재매핑 (kind=boardId)', () => {
+  it('NOTICE boardId 재매핑 (kind=boardId)', () => {
     const payload = emptyPayload();
     payload.models.HomeSection.push({
       id: 'sec-3',
-      sectionType: 'LATEST_POSTS',
+      sectionType: 'NOTICE',
       title: 'test-section',
       configJson: {
-        heading: '최신 공지',
+        heading: '공지 알림',
         boardId: 'board-old',
         limit: 5,
       },
@@ -201,11 +176,11 @@ describe('walkSnapshotForRemap — HomeSection', () => {
     ]);
   });
 
-  it('LATEST_POSTS boardId — kind=mediaId면 변경 안 됨', () => {
+  it('NOTICE boardId — kind=mediaId면 변경 안 됨', () => {
     const payload = emptyPayload();
     payload.models.HomeSection.push({
       id: 'sec-4',
-      sectionType: 'LATEST_POSTS',
+      sectionType: 'NOTICE',
       title: 'test-section',
       configJson: { heading: 't', boardId: 'board-old', limit: 5 },
       isVisible: true,
@@ -674,16 +649,6 @@ describe('snapshotWalker clone helpers', () => {
     );
     expect(heroConfig.slides[0]!.mediaId).toBe('visitor-media');
     expect(heroConfig.slides[1]!.mediaId).toBe('unmapped-media');
-
-    const latestPostsConfig = { boardId: 'seed-board' };
-    remapHomeSectionJsonReferences(
-      'LATEST_POSTS',
-      latestPostsConfig,
-      mediaIdMap,
-      boardIdMap,
-      subpageIdMap,
-    );
-    expect(latestPostsConfig.boardId).toBe('visitor-board');
 
     const noticeConfig = { boardId: 'seed-board' };
     remapHomeSectionJsonReferences(

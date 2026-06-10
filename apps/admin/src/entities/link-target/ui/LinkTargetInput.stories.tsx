@@ -7,7 +7,7 @@ import { linkTargetReferencesOptions } from '../api/linkTargetReferencesQueries'
 import { LinkTargetInput } from './LinkTargetInput';
 
 /**
- * 메인 팝업 + 홈 섹션(CTA/Hero/Recommended/Shortcut/Notice) 공용 URL 입력 컴포넌트.
+ * 메인 팝업 + 홈 섹션(Hero/BriefIntro/Notice) 공용 URL 입력 컴포넌트.
  * 단일 `linkUrl: string`을 4가지 UX 모드(NONE/SUBPAGE/BOARD/EXTERNAL)로 분기
  * 입력하며, 편집 진입 시 저장된 url을 정규식 파싱해 탭을 자동 활성화합니다.
  *
@@ -15,8 +15,8 @@ import { LinkTargetInput } from './LinkTargetInput';
  * `withMockRefs` decorator로 QueryClient를 덮어쓰고 `setQueryData`로 모의
  * references 주입 (MSW 무의존 패턴, 7h probe와 동일 계열).
  *
- * `allowNone=false`는 url 필수 필드(예: ShortcutFields, CtaFields)에서만 사용.
- * 그 외는 기본 true로 '링크 없음' 옵션 노출.
+ * 기본 true로 '링크 없음' 옵션을 노출하며, 필수 링크 입력이 필요한
+ * 호출자는 `allowNone=false`를 전달한다.
  */
 
 const MOCK_REFS = {

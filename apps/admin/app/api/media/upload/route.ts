@@ -67,7 +67,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const fileName = file.name;
     const mimeType = file.type || 'application/octet-stream';
 
-    // 이 엔드포인트는 이미지 전용 (HERO/RECOMMENDED/Tiptap 본문 대상)
+    // 이 엔드포인트는 이미지 전용 (홈 섹션/Tiptap 본문 대상)
     if (!ALLOWED_IMAGE_MIME.has(mimeType)) {
       return NextResponse.json(
         {

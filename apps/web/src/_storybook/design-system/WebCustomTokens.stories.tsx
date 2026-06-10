@@ -131,12 +131,6 @@ export const ScopedClasses: Story = {
             note: '블록 렌더러가 생성하는 pseudo label이라 전역 유지',
           },
           {
-            scope: '.home-recommended/.home-sub-carousel .swiper-slide',
-            range: 'globals.css Swiper width guard',
-            purpose: 'Swiper mount 측정 race로 인한 비정상 slide width 방어',
-            note: '컴포넌트 breakpoints와 1:1 동기화 필요',
-          },
-          {
             scope: '.kogl-mark',
             range: 'globals.css ~111줄',
             purpose: '공공누리 라이선스 마크 컨테이너 (margin-top 2rem, border-top)',
@@ -178,7 +172,7 @@ export const CarouselWidthGuard: Story = {
   render: () => (
     <div className="max-w-4xl mx-auto">
       <SectionHeader
-        title="Hero · Recommended 캐러셀 너비 guard"
+        title="Hero 캐러셀 너비 guard"
         description="Carousel.tsx의 RAF×2 + window load + ResizeObserver 트리거와 함께 작동하는 CSS guard. JS만으로는 첫 mount race를 완전히 막을 수 없어 CSS로 한 번 더 강제."
       />
       <div className="space-y-[16px]">
@@ -200,62 +194,6 @@ export const CarouselWidthGuard: Story = {
   width: 100% !important;
   max-width: 100%;
   flex-shrink: 0;
-}`}
-          </pre>
-        </div>
-        <div
-          className="p-[20px]"
-          style={{ borderRadius: 8, border: '1px solid #E4E4E4', backgroundColor: '#FFFFFF' }}
-        >
-          <GroupHeader
-            title="Recommended (slidesPerView 가변)"
-            description="base 1 / medium 2 / large 3 — RecommendedSection.tsx의 breakpoints prop과 1:1 동기화 필요."
-          />
-          <pre
-            className="overflow-x-auto p-[16px] font-mono text-[12px] leading-relaxed"
-            style={{ backgroundColor: '#F8F8F8', borderRadius: 4 }}
-          >
-{`.home-recommended .swiper-slide {
-  width: 100% !important;
-  flex-shrink: 0;
-}
-@media (min-width: 768px) {
-  .home-recommended .swiper-slide {
-    width: calc((100% - 16px) / 2) !important;
-  }
-}
-@media (min-width: 1024px) {
-  .home-recommended .swiper-slide {
-    width: calc((100% - 48px) / 3) !important;
-  }
-}`}
-          </pre>
-        </div>
-        <div
-          className="p-[20px]"
-          style={{ borderRadius: 8, border: '1px solid #E4E4E4', backgroundColor: '#FFFFFF' }}
-        >
-          <GroupHeader
-            title="SubCarousel (slidesPerView 가변)"
-            description="base 1 / medium 2 / large 4 — SubCarouselSection.tsx의 breakpoints prop과 1:1 동기화 필요."
-          />
-          <pre
-            className="overflow-x-auto p-[16px] font-mono text-[12px] leading-relaxed"
-            style={{ backgroundColor: '#F8F8F8', borderRadius: 4 }}
-          >
-{`.home-sub-carousel .swiper-slide {
-  width: 100% !important;
-  flex-shrink: 0;
-}
-@media (min-width: 768px) {
-  .home-sub-carousel .swiper-slide {
-    width: calc((100% - 16px) / 2) !important;
-  }
-}
-@media (min-width: 1024px) {
-  .home-sub-carousel .swiper-slide {
-    width: calc((100% - 72px) / 4) !important;
-  }
 }`}
           </pre>
         </div>

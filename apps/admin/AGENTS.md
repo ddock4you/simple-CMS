@@ -422,27 +422,23 @@ src/
 
 - 일반 서브 페이지와 분리된 **섹션 기반 관리**
 - 레이아웃은 코드에서 통제, 운영자는 섹션 데이터+순서 관리
-- **고정 세트 모델** (Stage 5a): 10개 타입 각 1개씩 seed로 생성, 추가/삭제 UI 없음 — R/U만 지원
-  - 타입: HERO, BRIEF_INTRO, SUB_CAROUSEL, FREQUENT_MENU, RECOMMENDED, SHORTCUT, LATEST_POSTS, GALLERY_COLLECTION, CTA, NOTICE
+- **고정 세트 모델**: 5개 타입 각 1개씩 seed로 생성, 추가/삭제 UI 없음 — R/U만 지원
+  - 타입: HERO, BRIEF_INTRO, FREQUENT_MENU, GALLERY_COLLECTION, NOTICE
 - 섹션별 `configJson` 스키마 (Zod, `features/home-management/model/homeSchemas.ts`):
   - **HERO**: slides[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 10개, 1개=단일 배너, 2개 이상=슬라이드) + slideOptions
   - **BRIEF_INTRO**: heading, description?, imageUrl?, imageAlt?, linkLabel?, linkUrl?, mediaId? — 간략 소개 영역
-  - **RECOMMENDED**: heading, description?, items[]: `{imageUrl, imageAlt, title, description?, url?}` (최대 12개, 자유 갤러리) + slideOptions
-  - **SHORTCUT**: heading, description?, items[]: `{label, description?, url}` (최대 8개)
-  - **LATEST_POSTS**: heading, description?, boardId(nullable), limit(1~10) — 지정 게시판 최신 N개 자동 표시
   - **GALLERY_COLLECTION (갤러리 모아보기)**: heading, description?, boardIds[](1~12), boardTabLabels?, limit(1~12) — 여러 공개 게시판의 최신 게시글을 KRDS Line 탭 + 갤러리 카드로 표시. 게시판별 공개 탭 이름은 수동 입력 가능하며 빈 값은 게시판명으로 폴백
-  - **CTA**: heading, description?, buttonLabel, buttonUrl
   - **NOTICE (대표 게시판)**: heading, description?, boardId(nullable), limit(1~10) — 선택한 게시판의 중요 게시글 최신 1건 + 일반 최신글 N개 자동 표시
-- **SlideOptions 공통 스키마** (HERO, RECOMMENDED):
+- **SlideOptions 스키마** (HERO):
   - `showPrevNext`, `showPlayPause`, `showDots`: boolean 토글
   - `autoPlay`, `autoPlayInterval`(ms, 1000~30000): `showPlayPause=true`일 때만 의미
-  - `SlideOptionsPanel` 컴포넌트가 두 섹션 Fields에서 재사용됨
+  - `SlideOptionsPanel` 컴포넌트가 HERO Fields에서 사용됨
 - 이미지는 **외부 URL 입력 + 파일 업로드** 모두 지원
   - `ImageUrlInput` 공통 컴포넌트: URL text input + [파일 선택] 버튼 + 미리보기 + 제거 버튼
   - 업로드 API: `POST /api/media/upload` (multipart/form-data, `file` + `category='home'`)
   - 스토리지: 루트 AGENTS.md "파일 업로드 스토리지 정책" 참조 (`STORAGE_PROVIDER=local|supabase`)
   - Media 테이블에 레코드 생성 + `MEDIA` 감사 로그 기록
-- 링크 URL은 optional — 입력 시 해당 슬라이드/카드 전체가 `<Link>`로 감싸짐. **Stage 7i부터 모든 fields(CTA/Hero/Recommended/Shortcut/Notice)의 URL 입력이 `@/entities/link-target/ui/LinkTargetInput` 공용 컴포넌트로 통합** — NONE/SUBPAGE/BOARD/EXTERNAL 분기 입력으로 slug 변경에 안전. CtaFields + ShortcutFields는 url 필수라 `allowNone={false}` 전달
+- 링크 URL은 optional — 입력 시 해당 슬라이드/카드 전체가 `<Link>`로 감싸짐. URL 입력은 `@/entities/link-target/ui/LinkTargetInput` 공용 컴포넌트로 통합 — NONE/SUBPAGE/BOARD/EXTERNAL 분기 입력으로 slug 변경에 안전.
 - URL은 내부 경로(`/about`)와 외부 URL(`https://...`) 모두 허용
 - **Tiptap 미사용** — 모든 섹션을 단순 text 필드로 관리
 - **UI**: `/home` 단일 페이지, 고정 섹션 카드 + dnd-kit 드래그 순서변경 + 노출토글 + 타입별 편집 Dialog
@@ -452,10 +448,10 @@ src/
   - `GET /api/home` — 섹션 목록 (`home:read`)
   - `GET/PATCH /api/home/[id]` — 단건 상세/수정 (`home:read`/`home:update`)
   - `PATCH /api/home/reorder` — 순서 변경 + 트랜잭션 루프 (`home:update`)
-  - `GET /api/home/references` — Edit Dialog 드롭다운용 `{subpages, boards, posts}` 묶음 (`home:read`)
+  - `GET /api/home/references` — Edit Dialog 드롭다운용 `{boards}` 묶음 (`home:read`)
 - 감사 로그 entityType: `HOME_SECTION`, action `UPDATE`만 사용
   - 편집: `{ before, after }` diff 기록 (변경 필드만)
-  - 순서변경: `{ after: { reorderedSections: '6건' } }`
+  - 순서변경: `{ after: { reorderedSections: '5건' } }`
 - FSD: `features/home-management/`, `pages/home-management/`
 - 참고: 시안 확정 후 web의 섹션 컴포넌트를 대체하는 흐름으로 설계됨 (admin UI는 안정)
 
@@ -488,8 +484,8 @@ src/
   - **게시판**: 공개 Board 드롭다운 → `/board/{slug}` 자동 생성
   - **외부 URL**: 자유 입력 (`https://...`)
 - 편집 시 저장된 URL을 파싱해 어느 탭이 활성인지 자동 추론 (references 캐시 기반). 매칭 실패 시 EXTERNAL 폴백 + 원본 url 보존
-- **`allowNone?: boolean` prop** (default true): url이 필수 필드인 호출자(CtaFields/ShortcutFields)는 `false` 전달
-- **Stage 7i 사용처**: popup(content/image), home-management(CTA/Hero/Recommended/Shortcut/Notice). API endpoint는 Stage 7k-1에서 `/api/link-target/references`로 rename 완료 (의미 일관성 확보)
+- **`allowNone?: boolean` prop** (default true): url이 필수 필드인 호출자는 `false` 전달
+- **Stage 7i 사용처**: popup(content/image), home-management의 링크 입력 필드. API endpoint는 Stage 7k-1에서 `/api/link-target/references`로 rename 완료 (의미 일관성 확보)
 
 #### API Routes
 
@@ -1321,8 +1317,8 @@ admin도 web과 함께 Stage 7f에서 Storybook + Vitest 2-track 테스트 인�
   - Sidebar 카테고리 5개 신규 (`Admin/Shared/Dialog`, `Admin/Shared/AlertDialog`, `Admin/Shared/InlineStatusToggle`, `Admin/Shared/InlineBooleanToggle`, **`Admin/Entities/LinkTarget/LinkTargetInput`**). 총 변동 — admin 17 files / **52 tests** (기존 35 → +17). Stage 14f에서 `Admin/Shared/InlineStatusSwitchToggle` (4 variants) 추가 → 현재 **56 tests**. Stage 17에서 `Admin/Design System/*` 6파일 28 stories 추가 → **84 tests**
   - **Dialog `NestedDialog` play 재현 조건**: 자식 Dialog를 부모 Dialog의 children으로 렌더해야 Base-UI가 nested 관계를 인식하고 `data-nested-dialog-open`을 부모 Popup에 부착. sibling으로 두면 미부착 (구현 중 발견). 실사용 예: `MenuItemDialog`가 `<Dialog>`의 children 영역에 `<ConfirmLeaveDialog>`를 sibling으로 렌더
   - **LinkTargetInput 승격 경로**: `features/popup-management/ui/LinkTargetInput.tsx` → `entities/link-target/ui/LinkTargetInput.tsx`. 쿼리도 `homePopupReferencesOptions` → `linkTargetReferencesOptions`로 rename하며 `entities/link-target/api/linkTargetReferencesQueries.ts`로 이동. API endpoint는 Stage 7k-1에서 `/api/link-target/references`로 rename 완료
-  - **`allowNone?: boolean` prop 신규** (default true): url이 필수 필드인 CtaFields + ShortcutFields가 `allowNone={false}` 전달해 NONE 옵션 숨김. 빈 value 진입 시 EXTERNAL 모드 default 활성
-  - **home-management 5개 fields 적용**: CtaFields(buttonUrl 필수 → allowNone=false) + HeroFields(slides[].url) + RecommendedFields(items[].url) + ShortcutFields(items[].url 필수 → allowNone=false) + NoticeFields(items[].url nullable, `?? ''` 정규화). CtaFields는 control prop 신규 추가 → CtaSectionForm에서 `form.control` 전달
+  - **`allowNone?: boolean` prop 신규** (default true): url이 필수 필드인 호출자가 `allowNone={false}` 전달해 NONE 옵션 숨김. 빈 value 진입 시 EXTERNAL 모드 default 활성
+  - **home-management 링크 입력 적용**: HeroFields(slides[].url) + NoticeFields(items[].url nullable, `?? ''` 정규화)
   - **호환성**: 기존 저장된 URL은 자동 EXTERNAL 탭 폴백 + 원본 보존. DB 마이그레이션 0. 운영 시 내부 페이지 참조로 전환하려면 SUBPAGE/BOARD 탭에서 재선택
   - **MSW 무의존 패턴**: LinkTargetInput story는 `withMockRefs` decorator가 자체 `QueryClientProvider`를 래핑하여 `setQueryData(linkTargetReferencesOptions().queryKey, MOCK_REFS)` 주입. 7h probe 패턴과 일관
 - **Stage 7g에서 만난 이슈 — Storybook addon-vitest dep cache**: story 대량 추가 후 첫 vitest run에서 `TypeError: Failed to fetch dynamically imported module: .../sb-vitest/deps/@storybook_react-dom-shim.js?v=...` 발생. 해결: `rm -rf node_modules/.cache/storybook node_modules/.vite` 후 재실행. 향후 의존성 업데이트나 story 대량 추가 시 cleanup 절차로 참고

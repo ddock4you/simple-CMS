@@ -54,7 +54,7 @@ originSessionId: 1a163919-6e9b-4728-9ba3-889a763293fa
 
 **Known limitations (PR9/11 walker로 일괄 처리 예정):**
 - SubpageVersion.snapshot Json 내부 mediaId/blockId stale id 잔존 (롤백 시 image dangling 가능)
-- HomeSection.configJson 내부 boardId stale id (LATEST_POSTS placeholder)
+- HomeSection.configJson 내부 boardId stale id (NOTICE/GALLERY_COLLECTION 참조)
 - RICH_TEXT 블록 Tiptap image의 attrs.mediaId stale (시각 렌더는 url 별도 보존이라 무관)
 
 **진행 단계 현황 (2026-05-20 갱신):**
