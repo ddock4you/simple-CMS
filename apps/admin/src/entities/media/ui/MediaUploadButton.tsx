@@ -36,6 +36,7 @@ interface MediaUploadButtonProps {
    * 브랜딩(SVG 차단)은 호출자가 명시적으로 좁혀서 전달.
    */
   acceptMimeTypes?: string[];
+  disabled?: boolean;
 }
 
 export function MediaUploadButton({
@@ -47,6 +48,7 @@ export function MediaUploadButton({
   label = '업로드',
   endpoint,
   acceptMimeTypes,
+  disabled = false,
 }: MediaUploadButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const upload = useUploadMedia({ onSuccess: onUploaded, silent });
@@ -69,7 +71,7 @@ export function MediaUploadButton({
       <Button
         type="button"
         onClick={handleClick}
-        disabled={upload.isPending}
+        disabled={disabled || upload.isPending}
         size={size}
         variant={variant}
       >

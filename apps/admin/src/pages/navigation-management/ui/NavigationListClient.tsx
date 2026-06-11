@@ -12,9 +12,17 @@ import {
 
 interface NavigationListClientProps {
   canCreate: boolean;
+  editBasePath?: string;
+  createRedirectBasePath?: string;
+  deleteRedirectPath?: string;
 }
 
-export function NavigationListClient({ canCreate }: NavigationListClientProps) {
+export function NavigationListClient({
+  canCreate,
+  editBasePath = '/navigation',
+  createRedirectBasePath = '/navigation',
+  deleteRedirectPath = '/navigation',
+}: NavigationListClientProps) {
   const {
     data: menus,
     isPending,
@@ -26,7 +34,7 @@ export function NavigationListClient({ canCreate }: NavigationListClientProps) {
     <div className="space-y-4">
       {canCreate && (
         <div className="flex justify-end">
-          <MenuSetDialog />
+          <MenuSetDialog redirectBasePath={createRedirectBasePath} />
         </div>
       )}
       {isPending ? (
@@ -42,7 +50,12 @@ export function NavigationListClient({ canCreate }: NavigationListClientProps) {
       ) : (
         <div className="grid gap-4">
           {menus.map((menu) => (
-            <MenuSetCard key={menu.id} menu={menu} />
+            <MenuSetCard
+              key={menu.id}
+              menu={menu}
+              editBasePath={editBasePath}
+              deleteRedirectPath={deleteRedirectPath}
+            />
           ))}
         </div>
       )}

@@ -456,6 +456,7 @@ apps/{앱}/
 `/boards`, `/boards/new`, `/boards/[id]`, `/boards/[id]/edit`,
 `/posts`, `/posts/new`, `/posts/[id]`, `/posts/[id]/edit`,
 `/navigation`, `/navigation/[menuId]`,
+`/site-layout`, `/site-layout/header`, `/site-layout/menus`, `/site-layout/menus/[menuId]`, `/site-layout/footer`,
 `/home`, `/popups`, `/popups/new`, `/popups/[id]`, `/popups/[id]/edit`,
 `/media`, `/users`, `/profile`,
 `/subpage-feedback`,

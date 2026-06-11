@@ -13,8 +13,15 @@ import {
   SidebarMenuItem,
 } from '@/shared/ui/shadcn/sidebar';
 
-function isActive(pathname: string | null, url: string): boolean {
+function isActive(
+  pathname: string | null,
+  url: string,
+  activePrefix?: string,
+): boolean {
   if (!pathname) return false;
+  if (activePrefix) {
+    return pathname === activePrefix || pathname.startsWith(activePrefix + '/');
+  }
   if (url === '/dashboard') return pathname === '/dashboard';
   return pathname === url || pathname.startsWith(url + '/');
 }
@@ -38,7 +45,7 @@ export function SidebarMainNav({ user }: { user: SidebarUser | null }) {
             <SidebarMenuItem key={item.url}>
               <SidebarMenuButton
                 render={<Link href={item.url} />}
-                isActive={isActive(pathname, item.url)}
+                isActive={isActive(pathname, item.url, item.activePrefix)}
               >
                 <item.icon />
                 <span>{item.title}</span>
@@ -66,7 +73,7 @@ export function SidebarNavGroups({ user }: { user: SidebarUser | null }) {
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton
                     render={<Link href={item.url} />}
-                    isActive={isActive(pathname, item.url)}
+                    isActive={isActive(pathname, item.url, item.activePrefix)}
                   >
                     <item.icon />
                     <span>{item.title}</span>

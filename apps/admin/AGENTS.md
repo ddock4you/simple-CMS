@@ -134,8 +134,13 @@ src/
 /posts/[id]             # 게시글 상세 (읽기 전용 뷰)
 /posts/[id]/edit        # 게시글 편집
 /posts/new              # 게시글 생성
-/navigation             # 메뉴 관리
-/navigation/[menuId]    # 메뉴 세트 편집
+/site-layout            # 사이트 화면 관리 (헤더 탭으로 리다이렉트)
+/site-layout/header     # 헤더 로고 + HEADER 슬롯 메뉴 관리
+/site-layout/menus      # 메뉴 관리 (HEADER/FOOTER/SIDEBAR 슬롯)
+/site-layout/menus/[menuId] # 메뉴 세트 편집
+/site-layout/footer     # 푸터 설정 + FOOTER 슬롯 메뉴 관리
+/navigation             # 메뉴 관리 호환 라우트
+/navigation/[menuId]    # 메뉴 세트 편집 호환 라우트
 /home                   # 메인 페이지 관리
 /popups                 # 메인 팝업 관리 (목록) — /home/popups/* 는 308 redirect
 /popups/new             # 메인 팝업 생성
@@ -412,11 +417,32 @@ src/
 - 연결은 엔티티 참조 방식 우선 (URL 직접 입력 아님), slug 변경 시 메뉴 안 깨짐
 - 메뉴명: 엔티티 연결 시 label 자동 채움, 이후 수동 수정 가능
 - dnd-kit으로 같은 부모 내 드래그&드롭 순서 변경
-- UI: `/navigation` = 카드형 메뉴 세트 목록, `/navigation/[menuId]` = 트리 편집 + 항목 Dialog
+- UI: 사이드바 기본 진입점은 `/site-layout/menus`이며, `/navigation`과 `/navigation/[menuId]`는 기존 북마크/검색 호환 라우트로 유지
+  - `/site-layout/menus` = 카드형 메뉴 세트 목록
+  - `/site-layout/menus/[menuId]` = 트리 편집 + 항목 Dialog
+  - `MenuSetCard`/`NavigationListClient`/`NavigationEditPage`는 `editBasePath`/`backHref` prop으로 `/navigation`과 `/site-layout/menus` 양쪽에서 재사용
 - **권한 기반 UI**: 생성(`navigation:create`), 편집(`navigation:update`), 삭제(`navigation:delete`)
 - API Routes: `GET/POST /api/navigation`, `GET/PATCH/DELETE /api/navigation/[menuId]`, `POST /api/navigation/[menuId]/items`, `PATCH/DELETE /api/navigation/[menuId]/items/[itemId]`, `PATCH /api/navigation/[menuId]/reorder`
 - FSD: `features/navigation-management/`, `pages/navigation-management/`
 - 미리보기: 2차 범위
+
+### 사이트 화면 관리
+
+- 사이드바 라벨: `사이트 화면 관리`
+- 라우트: `/site-layout` → `/site-layout/header` redirect
+  - 사이드바 링크는 redirect 페이지가 아니라 `/site-layout/header`를 직접 가리킨다. Next dev/Turbopack의 `Performance.measure` 음수 timestamp 오류를 피하기 위한 정책이며, 활성 판정은 `activePrefix: '/site-layout'`로 처리한다.
+- 탭: `SiteLayoutNav` 라우트 기반 탭
+  - `/site-layout/header`: `HeaderLogoSettingsForm`으로 헤더 로고/alt 관리 + `HEADER` 슬롯 메뉴 카드/생성 버튼
+  - `/site-layout/menus`: 기존 메뉴 관리 목록 재사용
+  - `/site-layout/footer`: 기존 `FooterSettingsForm` + `FOOTER` 슬롯 메뉴 카드/생성 버튼
+- 권한:
+  - 사이드바 노출은 `settings:read` 또는 `navigation:read` 중 하나라도 있으면 허용 (`NavItem.anyOf`)
+  - 헤더/푸터 탭은 각각 설정 read와 메뉴 read를 독립적으로 반영한다. 설정 권한만 있으면 로고/푸터 폼만, 메뉴 권한만 있으면 슬롯 메뉴 카드만 보인다.
+  - 메뉴 생성/편집/삭제는 기존 `navigation:create|update|delete`, 로고/푸터 저장은 기존 `settings:update`를 그대로 사용한다.
+- 데이터/API:
+  - 새 API/DB/권한 리소스 없음. `/api/settings/branding`, `/api/settings/footer`, `/api/navigation/*`를 조합한다.
+  - 헤더 로고 전용 저장은 `/api/settings/branding` PATCH를 사용하되 siteName/siteDescription/favicon/OG 기존 값을 보존한 payload를 보낸다.
+- FSD: `features/site-layout/`, `pages/site-layout/`
 
 ### 메인 페이지 관리
 
@@ -724,6 +750,7 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 ### 사이트 설정 관리
 
 - **SettingsNav 8탭**: 도메인 | 보안 | 업로드 | 권한 | 브랜딩 | 푸터 | SEO | 시연 스냅샷 (탭은 Stage 2f 이후 점진 확장됨)
+- 공개 웹의 헤더/메뉴/푸터 운영자용 통합 진입점은 별도 `/site-layout/*` 영역이다. `/settings/branding`과 `/settings/footer`는 기존 설정 탭으로 유지한다.
 - DB 헬퍼: `packages/db/src/siteSettings.ts` (getSiteSetting/setSiteSetting), `packages/db/src/uploadRestriction.ts` (getUploadRestrictions/validateFileUpload)
 - 라우트: `/settings/domain`
 - FSD: `features/site-settings/` (api, model, ui)
@@ -880,6 +907,7 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 ### 사이트 브랜딩 + SEO 메타데이터 관리 (Stage 7l)
 
 - 라우트: `/settings/branding` (SettingsNav 5번째 탭)
+- 헤더 로고만 빠르게 관리하는 운영자용 경로는 `/site-layout/header`; 이 경로는 같은 branding API를 사용하되 로고 관련 필드만 변경하고 나머지 브랜딩 값을 보존한다.
 - FSD: `features/site-settings/` (도메인/보안/업로드 설정과 동일 슬라이스에 추가)
 - 권한: 기존 `settings:read|update` 그대로 사용 (변경 없음)
 
@@ -989,11 +1017,12 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 ### 푸터 설정 관리
 
 - 라우트: `/settings/footer` (SettingsNav 브랜딩 다음 탭)
+- 운영자용 통합 경로: `/site-layout/footer` (푸터 설정 폼 + FOOTER 슬롯 메뉴 카드)
 - FSD: `features/site-settings/` (도메인/보안/업로드/브랜딩/SEO와 동일 SiteSettings 슬라이스)
 - 권한: 기존 `settings:read|update` 재사용
 - SiteSettings 키: `SITE_FOOTER_CONFIG` JSON 문자열
 - 관리 필드: `address`, `contacts[]`, `quickLinks[]`, `socialLinks[]`, `bottomLinks[]`, `identifierText`, `copyright`, `hideQuickLinks`, `hideIdentifier`
-- 일반 푸터 탐색 링크는 이 화면에서 관리하지 않고 메뉴 관리의 `FOOTER` 슬롯을 KRDS Footer `links`로 매핑한다. `bottomLinks`는 개인정보처리방침/저작권 정책 같은 법적·정책 링크 전용
+- 일반 푸터 탐색 링크는 `FOOTER` 슬롯 메뉴를 KRDS Footer `links`로 매핑한다. `/site-layout/footer`에서 해당 슬롯 메뉴 카드와 푸터 설정 폼을 함께 보여주며, `/settings/footer`는 설정 폼 중심의 기존 경로로 유지한다. `bottomLinks`는 개인정보처리방침/저작권 정책 같은 법적·정책 링크 전용
 - API Routes: `GET/PATCH /api/settings/footer` (`settings:read|update`), Zod 검증 후 `setSiteSetting`, 변경 시 `SITE_SETTINGS UPDATE` 감사 로그 기록
 - 공개 웹 반영: `apps/web/src/shared/lib/footerConfigCache.ts` 인메모리 60s prod / 5s dev TTL. UI에는 "최대 1분 후 반영" 안내
 

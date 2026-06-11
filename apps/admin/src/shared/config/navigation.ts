@@ -4,7 +4,7 @@ import {
   FileText,
   SquareKanban,
   PenSquare,
-  PanelLeft,
+  PanelsTopLeft,
   Home,
   Megaphone,
   Image as ImageIcon,
@@ -16,12 +16,15 @@ import {
 } from 'lucide-react';
 
 import type { ResourceKey } from '@simple-cms/types';
+import type { Action } from '@simple-cms/types';
 
 export interface NavItem {
   title: string;
   url: string;
+  activePrefix?: string;
   icon: LucideIcon;
   resource?: ResourceKey;
+  anyOf?: Array<{ resource: ResourceKey; action: Action }>;
 }
 
 export interface NavGroup {
@@ -40,7 +43,16 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: '서브 페이지', url: '/subpages', icon: FileText, resource: 'subpages' },
       { title: '게시판', url: '/boards', icon: SquareKanban, resource: 'boards' },
       { title: '게시글', url: '/posts', icon: PenSquare, resource: 'posts' },
-      { title: '메뉴 관리', url: '/navigation', icon: PanelLeft, resource: 'navigation' },
+      {
+        title: '사이트 화면 관리',
+        url: '/site-layout/header',
+        activePrefix: '/site-layout',
+        icon: PanelsTopLeft,
+        anyOf: [
+          { resource: 'settings', action: 'read' },
+          { resource: 'navigation', action: 'read' },
+        ],
+      },
       { title: '메인 페이지', url: '/home', icon: Home, resource: 'home' },
       { title: '메인 팝업', url: '/popups', icon: Megaphone, resource: 'home-popups' },
       { title: '미디어', url: '/media', icon: ImageIcon, resource: 'media' },

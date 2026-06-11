@@ -24,7 +24,7 @@ export default async function FooterSettingsPage() {
         <h2 className="text-lg font-semibold">푸터 설정</h2>
         <p className="text-sm text-muted-foreground mb-4">
           공개 웹 하단 KRDS Footer에 표시할 기관 정보, 관련 사이트, 정책 링크를
-          관리합니다. 일반 푸터 메뉴는 메뉴 관리의 FOOTER 슬롯에서 관리합니다.
+          관리합니다. 일반 푸터 메뉴는 사이트 화면 관리의 FOOTER 슬롯에서 관리합니다.
         </p>
         <HydrationBoundary state={dehydrate(queryClient)}>
           <FooterSettingsForm />

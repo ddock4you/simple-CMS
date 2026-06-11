@@ -20,9 +20,15 @@ import { SLOT_LABELS } from '@/features/navigation-management/ui/slotLabels';
 
 interface NavigationEditClientProps {
   menuId: string;
+  backHref?: string;
+  backLabel?: string;
 }
 
-export function NavigationEditClient({ menuId }: NavigationEditClientProps) {
+export function NavigationEditClient({
+  menuId,
+  backHref = '/navigation',
+  backLabel = '목록으로',
+}: NavigationEditClientProps) {
   const { data, isPending, isError, error } = useQuery(
     menuSetDetailOptions(menuId),
   );
@@ -50,10 +56,10 @@ export function NavigationEditClient({ menuId }: NavigationEditClientProps) {
             variant="ghost"
             size="sm"
             nativeButton={false}
-            render={<Link href="/navigation" />}
+            render={<Link href={backHref} />}
           >
             <ArrowLeft className="size-4" />
-            목록으로
+            {backLabel}
           </Button>
         }
         title={

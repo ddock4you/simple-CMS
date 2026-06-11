@@ -28,6 +28,11 @@ export function getVisibleMenuItems(user: SidebarUser | null): {
   const groups = NAV_GROUPS.map((group) => ({
     ...group,
     items: group.items.filter((item) => {
+      if (item.anyOf) {
+        return item.anyOf.some(
+          (guard) => permissions[guard.resource]?.[guard.action] === true,
+        );
+      }
       if (!item.resource) return true;
       return permissions[item.resource]?.read === true;
     }),

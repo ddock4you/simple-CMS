@@ -55,4 +55,20 @@ describe('getVisibleMenuItems', () => {
     expect(systemGroup?.items).toHaveLength(1);
     expect(systemGroup?.items[0].resource).toBe('users');
   });
+
+  it('settings:read만 있으면 사이트 화면 관리가 보인다', () => {
+    const result = getVisibleMenuItems(makeUser({ settings: { read: true } }));
+    const contentGroup = result.groups.find((g) => g.label === '콘텐츠');
+
+    expect(contentGroup?.items).toHaveLength(1);
+    expect(contentGroup?.items[0].title).toBe('사이트 화면 관리');
+  });
+
+  it('navigation:read만 있으면 사이트 화면 관리가 보인다', () => {
+    const result = getVisibleMenuItems(makeUser({ navigation: { read: true } }));
+    const contentGroup = result.groups.find((g) => g.label === '콘텐츠');
+
+    expect(contentGroup?.items).toHaveLength(1);
+    expect(contentGroup?.items[0].title).toBe('사이트 화면 관리');
+  });
 });

@@ -2,6 +2,7 @@
 
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { NavigationMenuSlot } from '@simple-cms/db';
 
 import { Button } from '@/shared/ui/Button';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
@@ -24,8 +25,18 @@ import {
 import { SLOT_OPTIONS } from './slotLabels';
 import { useCreateMenuSet } from '../api/useNavigationMutations';
 
-export function MenuSetDialog() {
-  const createMutation = useCreateMenuSet();
+interface MenuSetDialogProps {
+  defaultSlots?: NavigationMenuSlot[];
+  redirectBasePath?: string;
+  triggerLabel?: string;
+}
+
+export function MenuSetDialog({
+  defaultSlots = [],
+  redirectBasePath = '/navigation',
+  triggerLabel = '새 메뉴',
+}: MenuSetDialogProps) {
+  const createMutation = useCreateMenuSet(redirectBasePath);
 
   const {
     register,
@@ -35,12 +46,12 @@ export function MenuSetDialog() {
     reset,
   } = useForm<CreateMenuData>({
     resolver: zodResolver(createMenuSchema),
-    defaultValues: { name: '', description: '', slots: [] },
+    defaultValues: { name: '', description: '', slots: defaultSlots },
   });
 
   const onSubmit = (data: CreateMenuData) => {
     createMutation.mutate(data, {
-      onSuccess: () => reset(),
+      onSuccess: () => reset({ name: '', description: '', slots: defaultSlots }),
     });
   };
 
@@ -49,7 +60,7 @@ export function MenuSetDialog() {
       <DialogTrigger
         render={<Button />}
       >
-        새 메뉴
+        {triggerLabel}
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>

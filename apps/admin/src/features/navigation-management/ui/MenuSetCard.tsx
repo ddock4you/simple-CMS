@@ -21,12 +21,18 @@ import { useDeleteMenuSet } from '../api/useNavigationMutations';
 
 interface MenuSetCardProps {
   menu: MenuSetListItem;
+  editBasePath?: string;
+  deleteRedirectPath?: string;
 }
 
-export function MenuSetCard({ menu }: MenuSetCardProps) {
+export function MenuSetCard({
+  menu,
+  editBasePath = '/navigation',
+  deleteRedirectPath = '/navigation',
+}: MenuSetCardProps) {
   const canUpdate = usePermission('navigation', 'update');
   const canDelete = usePermission('navigation', 'delete');
-  const deleteMutation = useDeleteMenuSet();
+  const deleteMutation = useDeleteMenuSet(deleteRedirectPath);
 
   return (
     <Card>
@@ -52,7 +58,7 @@ export function MenuSetCard({ menu }: MenuSetCardProps) {
               variant="ghost"
               size="sm"
               nativeButton={false}
-              render={<Link href={`/navigation/${menu.id}`} />}
+              render={<Link href={`${editBasePath}/${menu.id}`} />}
             >
               편집
               <ChevronRight className="size-4" />

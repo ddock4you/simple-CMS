@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 import { DEFAULT_SITE_FOOTER_CONFIG } from '@simple-cms/types';
 
+import { usePermission } from '@/entities/auth/ui/PermissionProvider';
 import { footerSettingsOptions } from '@/features/site-settings/api/settingsQueries';
 import { useUpdateFooter } from '@/features/site-settings/api/useSettingsMutations';
 import {
@@ -60,6 +61,7 @@ export function FooterSettingsForm() {
     footerSettingsOptions(),
   );
   const updateMutation = useUpdateFooter();
+  const canUpdate = usePermission('settings', 'update');
   const [footerLogoUrlOverride, setFooterLogoUrlOverride] = useState<
     string | null
   >(null);
@@ -88,6 +90,7 @@ export function FooterSettingsForm() {
   }, [data, reset]);
 
   const onSubmit = (formData: UpdateFooterData) => {
+    if (!canUpdate) return;
     updateMutation.mutate(formData);
   };
 
@@ -135,9 +138,9 @@ export function FooterSettingsForm() {
       form={form}
       onSubmit={onSubmit}
       isPending={updateMutation.isPending}
-      disabled={!isDirty}
+      disabled={!canUpdate || !isDirty}
     >
-      <div className="space-y-8">
+      <fieldset disabled={!canUpdate} className="space-y-8">
         <section className="rounded-lg border p-4">
           <div className="mb-4">
             <h3 className="flex items-center gap-2 text-base font-medium">
@@ -161,6 +164,7 @@ export function FooterSettingsForm() {
                 acceptMimeTypes={FOOTER_LOGO_MIME}
                 disabledReason={FOOTER_LOGO_REASON}
                 disableUrlInput
+                disabled={!canUpdate}
                 onChange={handleFooterLogoChange}
               />
               <p className="text-xs text-muted-foreground">
@@ -186,6 +190,7 @@ export function FooterSettingsForm() {
                 variant="outline"
                 size="sm"
                 onClick={handleRemoveFooterLogo}
+                disabled={!canUpdate}
               >
                 <Trash2 className="size-4" />
                 푸터 로고 제거
@@ -507,7 +512,7 @@ export function FooterSettingsForm() {
               <h3 className="text-base font-medium">하단 정책 링크</h3>
               <p className="text-xs text-muted-foreground">
                 개인정보처리방침, 저작권 정책 같은 법적/정책 링크입니다. 일반
-                푸터 메뉴는 메뉴 관리의 FOOTER 슬롯에서 관리합니다.
+                푸터 메뉴는 사이트 화면 관리의 FOOTER 슬롯에서 관리합니다.
               </p>
             </div>
             <Button
@@ -593,7 +598,7 @@ export function FooterSettingsForm() {
             ))}
           </div>
         </section>
-      </div>
+      </fieldset>
     </SettingsCardForm>
   );
 }

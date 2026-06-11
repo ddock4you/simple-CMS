@@ -11,9 +11,15 @@ import { NavigationEditClient } from './NavigationEditClient';
 
 interface NavigationEditPageProps {
   menuId: string;
+  backHref?: string;
+  backLabel?: string;
 }
 
-export default async function NavigationEditPage({ menuId }: NavigationEditPageProps) {
+export default async function NavigationEditPage({
+  menuId,
+  backHref,
+  backLabel,
+}: NavigationEditPageProps) {
   await requireAuth();
 
   const queryClient = getQueryClient();
@@ -25,7 +31,11 @@ export default async function NavigationEditPage({ menuId }: NavigationEditPageP
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <NavigationEditClient menuId={menuId} />
+      <NavigationEditClient
+        menuId={menuId}
+        backHref={backHref}
+        backLabel={backLabel}
+      />
     </HydrationBoundary>
   );
 }

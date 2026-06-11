@@ -157,7 +157,7 @@ export async function GET(request: Request): Promise<NextResponse> {
                 id: m.id,
                 title: m.label,
                 subtitle: m.menu.name,
-                href: `/navigation/${m.menuId}`,
+                href: `/site-layout/menus/${m.menuId}`,
               }),
             ),
           ),

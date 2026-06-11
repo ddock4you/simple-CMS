@@ -7,7 +7,17 @@ import { PageHeader } from '@/shared/ui/PageHeader';
 import { menuSetListOptions } from '@/features/navigation-management/api/navigationQueries';
 import { NavigationListClient } from './NavigationListClient';
 
-export default async function NavigationListPage() {
+interface NavigationListPageProps {
+  editBasePath?: string;
+  createRedirectBasePath?: string;
+  deleteRedirectPath?: string;
+}
+
+export default async function NavigationListPage({
+  editBasePath,
+  createRedirectBasePath,
+  deleteRedirectPath,
+}: NavigationListPageProps = {}) {
   const user = await requireAuth();
   const canCreate = hasPermission(user, 'navigation', 'create');
 
@@ -18,7 +28,12 @@ export default async function NavigationListPage() {
     <div className="space-y-6">
       <PageHeader title="메뉴 관리" description="사이트 네비게이션 메뉴를 관리합니다." />
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <NavigationListClient canCreate={canCreate} />
+        <NavigationListClient
+          canCreate={canCreate}
+          editBasePath={editBasePath}
+          createRedirectBasePath={createRedirectBasePath}
+          deleteRedirectPath={deleteRedirectPath}
+        />
       </HydrationBoundary>
     </div>
   );

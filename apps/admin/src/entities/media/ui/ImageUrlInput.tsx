@@ -64,6 +64,7 @@ interface ImageUrlInputProps {
    * true면 Input이 readOnly + 안내 문구 표시. 업로드/라이브러리만 허용.
    */
   disableUrlInput?: boolean;
+  disabled?: boolean;
 }
 
 /**
@@ -110,6 +111,7 @@ export function ImageUrlInput({
   acceptMimeTypes,
   disabledReason,
   disableUrlInput = false,
+  disabled = false,
 }: ImageUrlInputProps) {
   const [previewError, setPreviewError] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -146,6 +148,7 @@ export function ImageUrlInput({
               : placeholder
           }
           readOnly={disableUrlInput}
+          disabled={disabled}
           className="min-w-[200px] flex-1"
         />
         <MediaUploadButton
@@ -154,6 +157,7 @@ export function ImageUrlInput({
           acceptMimeTypes={acceptMimeTypes}
           variant="outline"
           label="업로드"
+          disabled={disabled}
           onUploaded={(uploaded) => {
             onChange({
               url: uploaded.url,
@@ -167,6 +171,7 @@ export function ImageUrlInput({
           <Button
             type="button"
             variant="outline"
+            disabled={disabled}
             onClick={() => setPickerOpen(true)}
             title="미디어 라이브러리에서 선택"
           >
@@ -179,6 +184,7 @@ export function ImageUrlInput({
             type="button"
             variant="ghost"
             size="sm"
+            disabled={disabled}
             onClick={handleClear}
             title="이미지 제거"
           >

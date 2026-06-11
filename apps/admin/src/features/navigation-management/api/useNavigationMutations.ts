@@ -24,7 +24,7 @@ import {
 } from './navigationFetchers';
 
 // Menu set mutations
-export function useCreateMenuSet() {
+export function useCreateMenuSet(redirectBasePath = '/navigation') {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -33,7 +33,7 @@ export function useCreateMenuSet() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: navigationKeys.lists() });
       toast.success('메뉴가 생성되었습니다.');
-      router.push(`/navigation/${result.id}`);
+      router.push(`${redirectBasePath}/${result.id}`);
     },
     onError: (error: FetchError) => {
       toast.error(error.message);
@@ -57,7 +57,7 @@ export function useUpdateMenuSet(menuId: string) {
   });
 }
 
-export function useDeleteMenuSet() {
+export function useDeleteMenuSet(redirectPath = '/navigation') {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -66,7 +66,7 @@ export function useDeleteMenuSet() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: navigationKeys.lists() });
       toast.success('메뉴가 삭제되었습니다.');
-      router.push('/navigation');
+      router.push(redirectPath);
     },
     onError: (error: FetchError) => {
       toast.error(error.message);
