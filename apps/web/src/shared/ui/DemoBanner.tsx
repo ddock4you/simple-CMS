@@ -17,6 +17,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { demoAdminApiPath, DEMO_BOOTSTRAP_PATH } from '@simple-cms/types';
+
 interface DemoBannerProps {
   /** Session.expires ISO string. ensureDemoSession이 layout에서 prop으로 전달 */
   expiresAt: string;
@@ -38,7 +40,7 @@ function formatRemaining(ms: number): string {
 
 export function DemoBanner({
   expiresAt,
-  resetEndpoint = '/_cms/admin/api/demo/reset',
+  resetEndpoint = demoAdminApiPath('/api/demo/reset'),
 }: DemoBannerProps) {
   const router = useRouter();
   const expiresMs = useRef(new Date(expiresAt).getTime());
@@ -79,7 +81,7 @@ export function DemoBanner({
         window.alert(json?.error ?? '세션 초기화 중 오류가 발생했습니다.');
         return;
       }
-      const redirectTo = json.data?.redirectTo ?? '/demo-bootstrap';
+      const redirectTo = json.data?.redirectTo ?? DEMO_BOOTSTRAP_PATH;
       router.replace(redirectTo);
     } catch (err) {
       console.error('[DemoBanner] reset error', err);

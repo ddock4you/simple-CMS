@@ -1,3 +1,5 @@
+import { DEMO_ADMIN_BASE_PATH, demoAdminApiPath } from '@simple-cms/types';
+
 export class FetchError extends Error {
   constructor(
     message: string,
@@ -8,8 +10,6 @@ export class FetchError extends Error {
     this.name = 'FetchError';
   }
 }
-
-const DEMO_ADMIN_BASE_PATH = '/_cms/admin';
 
 function isDemoAdminBrowserPath(): boolean {
   if (typeof window === 'undefined') return false;
@@ -28,7 +28,7 @@ function shouldUseDemoAdminBasePath(): boolean {
 export function resolveAdminApiPath(path: string): string {
   if (!path.startsWith('/api/')) return path;
   if (!shouldUseDemoAdminBasePath()) return path;
-  return `${DEMO_ADMIN_BASE_PATH}${path}`;
+  return demoAdminApiPath(path);
 }
 
 function getBaseUrl(): string {

@@ -9,9 +9,9 @@
  */
 import { cookies } from 'next/headers';
 
-const SESSION_COOKIE_NAME = 'session-token';
+import { DEMO_SESSION_COOKIE_NAME } from '@simple-cms/types';
 
 export async function getSessionCookie(): Promise<string | undefined> {
   const cookieStore = await cookies();
-  return cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  return cookieStore.get(DEMO_SESSION_COOKIE_NAME)?.value;
 }

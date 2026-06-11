@@ -17,6 +17,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
+import { demoAdminApiPath, DEMO_BOOTSTRAP_PATH } from '@simple-cms/types';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,7 +58,7 @@ function formatRemaining(ms: number): string {
 
 export function DemoBanner({
   expiresAt,
-  resetEndpoint = '/_cms/admin/api/demo/reset',
+  resetEndpoint = demoAdminApiPath('/api/demo/reset'),
 }: DemoBannerProps) {
   const router = useRouter();
   const expiresMs = useRef(new Date(expiresAt).getTime());
@@ -92,7 +94,7 @@ export function DemoBanner({
         toast.error(json?.error ?? '세션 초기화 중 오류가 발생했습니다.');
         return;
       }
-      const redirectTo = json.data?.redirectTo ?? '/demo-bootstrap';
+      const redirectTo = json.data?.redirectTo ?? DEMO_BOOTSTRAP_PATH;
       setDialogOpen(false);
       router.replace(redirectTo);
     } catch (err) {

@@ -14,7 +14,7 @@
 import { NextResponse } from 'next/server';
 
 import { demo, prisma, cleanupExpiredSessions } from '@simple-cms/db';
-import type { ApiResponse } from '@simple-cms/types';
+import { DEMO_BOOTSTRAP_PATH, type ApiResponse } from '@simple-cms/types';
 
 import { clearSessionCookie, getSessionCookie } from '@/shared/lib/cookies';
 import { getStorageAdapter } from '@/shared/lib/storage';
@@ -24,7 +24,7 @@ interface ResetResponse {
   redirectTo: string;
 }
 
-const REDIRECT_TO = '/demo-bootstrap';
+const REDIRECT_TO = DEMO_BOOTSTRAP_PATH;
 
 export async function POST(): Promise<NextResponse<ApiResponse<ResetResponse>>> {
   if (process.env.DEMO_MODE !== 'true') {

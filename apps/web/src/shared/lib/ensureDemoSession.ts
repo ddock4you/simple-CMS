@@ -15,10 +15,10 @@ import { redirect } from 'next/navigation';
 import { after } from 'next/server';
 
 import { demo, prisma, cleanupExpiredSessions } from '@simple-cms/db';
+import { DEMO_BOOTSTRAP_PATH, demoBootstrapPath } from '@simple-cms/types';
 
 import { getSessionCookie } from '@/shared/lib/cookies';
 
-const BOOTSTRAP_PATH_PREFIX = '/demo-bootstrap';
 const LAZY_CLEANUP_PROBABILITY = 0.05;
 
 export interface DemoSessionInfo {
@@ -32,7 +32,7 @@ export async function ensureDemoSession(
   currentPath: string,
 ): Promise<DemoSessionInfo | null> {
   if (process.env.DEMO_MODE !== 'true') return null;
-  if (currentPath.startsWith(BOOTSTRAP_PATH_PREFIX)) return null;
+  if (currentPath.startsWith(DEMO_BOOTSTRAP_PATH)) return null;
 
   const token = await getSessionCookie();
   if (token) {
@@ -66,7 +66,5 @@ export async function ensureDemoSession(
     }
   }
 
-  redirect(
-    `${BOOTSTRAP_PATH_PREFIX}?next=${encodeURIComponent(currentPath)}`,
-  );
+  redirect(demoBootstrapPath(currentPath));
 }

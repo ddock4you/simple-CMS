@@ -10,6 +10,8 @@
  */
 import { notFound } from 'next/navigation';
 
+import { DEMO_ADMIN_BASE_PATH } from '@simple-cms/types';
+
 import { DemoBootstrapClient } from './DemoBootstrapClient';
 
 interface DemoBootstrapPageProps {
@@ -17,10 +19,11 @@ interface DemoBootstrapPageProps {
 }
 
 function sanitizeNextPath(raw: string | undefined): string {
-  if (!raw) return '/_cms/admin/dashboard';
+  const fallbackPath = `${DEMO_ADMIN_BASE_PATH}/dashboard`;
+  if (!raw) return fallbackPath;
   // open redirect 방어
   if (!raw.startsWith('/') || raw.startsWith('//')) {
-    return '/_cms/admin/dashboard';
+    return fallbackPath;
   }
   return raw;
 }

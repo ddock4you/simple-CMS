@@ -12,6 +12,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { demoAdminApiPath } from '@simple-cms/types';
+
 const STAGE_MESSAGES = [
   '데이터베이스 초기화 중...',
   '예시 콘텐츠 불러오는 중...',
@@ -22,7 +24,7 @@ const STAGE_INTERVAL_MS = 700;
 // Next.js의 client-side fetch는 basePath를 자동 prepend하지 않으므로 명시 prefix 필수.
 // admin Vercel 직접 접근(같은 origin) + web origin 통한 진입(web rewrites로 admin proxy) 양쪽 모두에서
 // 정확히 admin의 bootstrap endpoint로 도달.
-const BOOTSTRAP_ENDPOINT = '/_cms/admin/api/demo/bootstrap';
+const BOOTSTRAP_ENDPOINT = demoAdminApiPath('/api/demo/bootstrap');
 
 type Status = 'pending' | 'success' | 'seed_not_found' | 'error';
 

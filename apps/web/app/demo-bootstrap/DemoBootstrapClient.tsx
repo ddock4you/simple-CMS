@@ -15,6 +15,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { demoAdminApiPath } from '@simple-cms/types';
+
 const STAGE_MESSAGES = [
   '데이터베이스 초기화 중...',
   '예시 콘텐츠 불러오는 중...',
@@ -22,7 +24,7 @@ const STAGE_MESSAGES = [
 ] as const;
 
 const STAGE_INTERVAL_MS = 700;
-const BOOTSTRAP_ENDPOINT = '/_cms/admin/api/demo/bootstrap';
+const BOOTSTRAP_ENDPOINT = demoAdminApiPath('/api/demo/bootstrap');
 
 type Status = 'pending' | 'success' | 'seed_not_found' | 'error';
 

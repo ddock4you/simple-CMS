@@ -13,6 +13,15 @@ export type {
 } from './domain/permission.types';
 export { RESOURCE_ACTIONS } from './domain/permission.types';
 
+export {
+  DEMO_ADMIN_BASE_PATH,
+  DEMO_BOOTSTRAP_PATH,
+  DEMO_SESSION_COOKIE_NAME,
+  demoAdminApiPath,
+  demoBootstrapPath,
+  stripDemoAdminBasePath,
+} from './domain/demo.types';
+
 export type {
   HomeSectionType,
   HomeSectionButton,

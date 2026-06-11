@@ -20,10 +20,10 @@ import { redirect } from 'next/navigation';
 import { after } from 'next/server';
 
 import { demo, cleanupExpiredSessions } from '@simple-cms/db';
+import { DEMO_BOOTSTRAP_PATH, demoBootstrapPath } from '@simple-cms/types';
 
 import { getCachedSession } from '@/shared/lib/cachedSession';
 
-const BOOTSTRAP_PATH_PREFIX = '/demo-bootstrap';
 const LAZY_CLEANUP_PROBABILITY = 0.05;
 
 export interface DemoSessionInfo {
@@ -37,7 +37,7 @@ export async function ensureDemoSession(
   currentPath: string,
 ): Promise<DemoSessionInfo | null> {
   if (process.env.DEMO_MODE !== 'true') return null;
-  if (currentPath.startsWith(BOOTSTRAP_PATH_PREFIX)) return null;
+  if (currentPath.startsWith(DEMO_BOOTSTRAP_PATH)) return null;
 
   // `getCachedSession`이 React `cache()`로 같은 요청 내 호출을 dedup.
   // `getCurrentUser`/`requireAuth`도 같은 헬퍼를 사용하므로 admin layout의
@@ -63,7 +63,5 @@ export async function ensureDemoSession(
     };
   }
 
-  redirect(
-    `${BOOTSTRAP_PATH_PREFIX}?next=${encodeURIComponent(currentPath)}`,
-  );
+  redirect(demoBootstrapPath(currentPath));
 }

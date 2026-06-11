@@ -2,9 +2,11 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { demo, prisma } from '@simple-cms/db';
-
-const SESSION_COOKIE_NAME = 'session-token';
-const BOOTSTRAP_PATH_PREFIX = '/demo-bootstrap';
+import {
+  DEMO_BOOTSTRAP_PATH,
+  DEMO_SESSION_COOKIE_NAME,
+  demoBootstrapPath,
+} from '@simple-cms/types';
 
 export interface RequestDemoSession {
   sessionId: string;
@@ -46,14 +48,12 @@ async function findDemoSession(
   };
 }
 
-function toBootstrapPath(currentPath: string): string {
-  return `${BOOTSTRAP_PATH_PREFIX}?next=${encodeURIComponent(currentPath)}`;
-}
-
 export async function enterDemoSessionFromCookies(): Promise<RequestDemoSession | null> {
   if (process.env.DEMO_MODE !== 'true') return null;
   const cookieStore = await cookies();
-  const session = await findDemoSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
+  const session = await findDemoSession(
+    cookieStore.get(DEMO_SESSION_COOKIE_NAME)?.value,
+  );
   if (!session) return null;
   demo.enterWith({ sessionId: session.sessionId });
   return session;
@@ -62,7 +62,7 @@ export async function enterDemoSessionFromCookies(): Promise<RequestDemoSession 
 export async function getDemoSessionFromCookies(): Promise<RequestDemoSession | null> {
   if (process.env.DEMO_MODE !== 'true') return null;
   const cookieStore = await cookies();
-  return findDemoSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
+  return findDemoSession(cookieStore.get(DEMO_SESSION_COOKIE_NAME)?.value);
 }
 
 export async function runWithDemoSessionFromCookies<T>(
@@ -74,14 +74,14 @@ export async function runWithDemoSessionFromCookies<T>(
     return fn(null);
   }
 
-  if (currentPath.startsWith(BOOTSTRAP_PATH_PREFIX)) {
+  if (currentPath.startsWith(DEMO_BOOTSTRAP_PATH)) {
     return fn(null);
   }
 
   const session = await getDemoSessionFromCookies();
   if (!session) {
     if (options.required) {
-      redirect(toBootstrapPath(currentPath));
+      redirect(demoBootstrapPath(currentPath));
     }
     return fn(null);
   }
@@ -104,7 +104,10 @@ export async function runWithRequestDemoSession<T>(
     return fn(null);
   }
 
-  const token = readCookie(request.headers.get('cookie'), SESSION_COOKIE_NAME);
+  const token = readCookie(
+    request.headers.get('cookie'),
+    DEMO_SESSION_COOKIE_NAME,
+  );
   const session = await findDemoSession(token);
   if (!session) {
     return fn(null);
