@@ -15,6 +15,10 @@
  */
 import { prisma } from '../client';
 
+import {
+  SEED_RESET_DELETE_ORDER,
+  type SeedResetDeleteModelName,
+} from './modelRegistry';
 import { isBypassed, runWithBypass, SEED_SENTINEL } from './sessionContext';
 
 export interface ResetSeedDataResult {
@@ -35,153 +39,108 @@ export interface ResetSeedDataOptions {
   cleanupStorage?: () => Promise<{ filesDeleted: number; errors: string[] }>;
 }
 
-const DELETE_ORDER: ReadonlyArray<{
-  name: string;
-  run: () => Promise<number>;
-}> = [
-  // 자식 → 부모 순 (FK 의존성). cloneSeedToSession INSERT 순서 역순.
-  {
-    name: 'NavigationMenuItem',
-    run: async () =>
-      (
-        await prisma.navigationMenuItem.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'SubpageFeedback',
-    run: async () =>
-      (
-        await prisma.subpageFeedback.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'SubpageVersion',
-    run: async () =>
-      (
-        await prisma.subpageVersion.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'PageBlock',
-    run: async () =>
-      (
-        await prisma.pageBlock.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'Post',
-    run: async () =>
-      (await prisma.post.deleteMany({ where: { sessionId: SEED_SENTINEL } }))
-        .count,
-  },
-  {
-    name: 'Subpage',
-    run: async () =>
-      (
-        await prisma.subpage.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'HomePopup',
-    run: async () =>
-      (
-        await prisma.homePopup.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'HomeSection',
-    run: async () =>
-      (
-        await prisma.homeSection.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'Board',
-    run: async () =>
-      (
-        await prisma.board.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'NavigationMenu',
-    run: async () =>
-      (
-        await prisma.navigationMenu.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'Media',
-    run: async () =>
-      (
-        await prisma.media.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'SiteSettings',
-    run: async () =>
-      (
-        await prisma.siteSettings.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'AuditLog',
-    run: async () =>
-      (
-        await prisma.auditLog.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'ErrorLog',
-    run: async () =>
-      (
-        await prisma.errorLog.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'User',
-    run: async () =>
-      (
-        await prisma.user.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-  {
-    name: 'Role',
-    run: async () =>
-      (
-        await prisma.role.deleteMany({
-          where: { sessionId: SEED_SENTINEL },
-        })
-      ).count,
-  },
-];
+// 자식 → 부모 순 (FK 의존성). cloneSeedToSession INSERT 순서 역순.
+const DELETE_STEPS: Record<SeedResetDeleteModelName, () => Promise<number>> = {
+  NavigationMenuItem: async () =>
+    (
+      await prisma.navigationMenuItem.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  SubpageFeedback: async () =>
+    (
+      await prisma.subpageFeedback.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  SubpageVersion: async () =>
+    (
+      await prisma.subpageVersion.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  PageBlock: async () =>
+    (
+      await prisma.pageBlock.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  Post: async () =>
+    (await prisma.post.deleteMany({ where: { sessionId: SEED_SENTINEL } }))
+      .count,
+  Subpage: async () =>
+    (
+      await prisma.subpage.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  HomePopup: async () =>
+    (
+      await prisma.homePopup.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  HomeSection: async () =>
+    (
+      await prisma.homeSection.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  Board: async () =>
+    (
+      await prisma.board.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  NavigationMenu: async () =>
+    (
+      await prisma.navigationMenu.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  Media: async () =>
+    (
+      await prisma.media.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  SiteSettings: async () =>
+    (
+      await prisma.siteSettings.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  AuditLog: async () =>
+    (
+      await prisma.auditLog.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  ErrorLog: async () =>
+    (
+      await prisma.errorLog.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  PreviewToken: async () =>
+    (
+      await prisma.previewToken.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  User: async () =>
+    (
+      await prisma.user.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+  Role: async () =>
+    (
+      await prisma.role.deleteMany({
+        where: { sessionId: SEED_SENTINEL },
+      })
+    ).count,
+};
 
 export async function resetSeedData(
   options: ResetSeedDataOptions = {},
@@ -194,13 +153,13 @@ export async function resetSeedData(
     };
 
     // 1. 14개 seed 모델 + 과거 snapshot 정책으로 남은 누적 로그 정리
-    for (const step of DELETE_ORDER) {
+    for (const name of SEED_RESET_DELETE_ORDER) {
       try {
-        const count = await step.run();
-        result.rowsDeletedByModel[step.name] = count;
+        const count = await DELETE_STEPS[name]();
+        result.rowsDeletedByModel[name] = count;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        result.errors.push(`${step.name}: ${msg}`);
+        result.errors.push(`${name}: ${msg}`);
       }
     }
 

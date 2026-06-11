@@ -17,6 +17,7 @@ export {
   createSupabaseMediaDownloader,
   extractStorageKeyFromUrl,
   processMediaForExport,
+  SNAPSHOT_MODEL_NAMES,
 } from './demo';
 export type {
   CloneStats,
@@ -29,6 +30,7 @@ export type {
   ImportOptions,
   ImportStats,
   SnapshotPayload,
+  SnapshotModelName,
 } from './demo';
 
 export {

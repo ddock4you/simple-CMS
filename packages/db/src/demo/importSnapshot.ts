@@ -24,6 +24,7 @@ import { prisma } from '../client';
 import { Prisma } from '../generated/prisma/client';
 
 import { resetSeedData, type ResetSeedDataOptions } from './resetSeedData';
+import { SNAPSHOT_MODEL_NAMES, type SnapshotModelName } from './modelRegistry';
 import { isBypassed, runWithBypass, SEED_SENTINEL } from './sessionContext';
 import {
   snapshotPayloadSchema,
@@ -575,22 +576,7 @@ async function ensureDemoAdminSeed(): Promise<{
   return { roleCreated, userCreated };
 }
 
-interface IdMaps {
-  Role: Map<string, string>;
-  User: Map<string, string>;
-  Media: Map<string, string>;
-  SiteSettings: Map<string, string>;
-  NavigationMenu: Map<string, string>;
-  Board: Map<string, string>;
-  HomeSection: Map<string, string>;
-  Subpage: Map<string, string>;
-  Post: Map<string, string>;
-  PageBlock: Map<string, string>;
-  HomePopup: Map<string, string>;
-  NavigationMenuItem: Map<string, string>;
-  SubpageVersion: Map<string, string>;
-  SubpageFeedback: Map<string, string>;
-}
+type IdMaps = Record<SnapshotModelName, Map<string, string>>;
 
 function buildIdMaps(payload: SnapshotPayload): IdMaps {
   const map = <T extends { id: string }>(rows: T[]): Map<string, string> => {
@@ -600,22 +586,12 @@ function buildIdMaps(payload: SnapshotPayload): IdMaps {
     }
     return m;
   };
-  return {
-    Role: map(payload.models.Role),
-    User: map(payload.models.User),
-    Media: map(payload.models.Media),
-    SiteSettings: map(payload.models.SiteSettings),
-    NavigationMenu: map(payload.models.NavigationMenu),
-    Board: map(payload.models.Board),
-    HomeSection: map(payload.models.HomeSection),
-    Subpage: map(payload.models.Subpage),
-    Post: map(payload.models.Post),
-    PageBlock: map(payload.models.PageBlock),
-    HomePopup: map(payload.models.HomePopup),
-    NavigationMenuItem: map(payload.models.NavigationMenuItem),
-    SubpageVersion: map(payload.models.SubpageVersion),
-    SubpageFeedback: map(payload.models.SubpageFeedback),
-  };
+  return Object.fromEntries(
+    SNAPSHOT_MODEL_NAMES.map((name) => [
+      name,
+      map(payload.models[name] as Array<{ id: string }>),
+    ]),
+  ) as IdMaps;
 }
 
 /** url에서 category 부분 추출 (`/uploads/home/abc.jpg` → `home`) */

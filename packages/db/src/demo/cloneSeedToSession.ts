@@ -22,6 +22,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { prisma } from '../client';
 import { Prisma } from '../generated/prisma/client';
 
+import type { SnapshotModelName } from './modelRegistry';
 import { isBypassed, SEED_SENTINEL } from './sessionContext';
 import { SeedNotFoundError } from './SeedNotFoundError';
 import {
@@ -64,22 +65,7 @@ function normalizeSeedMediaUrl(url: string, filename: string): string {
   return `${supabaseUrl}/storage/v1/object/public/${bucket}/${SEED_SENTINEL}/${category}/${filename}`;
 }
 
-export interface CloneStats {
-  Role: number;
-  User: number;
-  Media: number;
-  SiteSettings: number;
-  NavigationMenu: number;
-  Board: number;
-  HomeSection: number;
-  Subpage: number;
-  Post: number;
-  PageBlock: number;
-  HomePopup: number;
-  NavigationMenuItem: number;
-  SubpageVersion: number;
-  SubpageFeedback: number;
-}
+export type CloneStats = Record<SnapshotModelName, number>;
 
 export interface CloneResult {
   stats: CloneStats;
@@ -566,7 +552,7 @@ export async function cloneSeedToSession(
         await tx.subpageFeedback.createMany({ data: feedbackData });
       }
 
-      const stats: CloneStats = {
+      const stats = {
         Role: roleData.length,
         User: userData.length,
         Media: mediaData.length,
@@ -581,7 +567,7 @@ export async function cloneSeedToSession(
         NavigationMenuItem: itemDataPass1.length,
         SubpageVersion: versionData.length,
         SubpageFeedback: feedbackData.length,
-      };
+      } satisfies CloneStats;
 
       return { stats, demoAdminId };
     },

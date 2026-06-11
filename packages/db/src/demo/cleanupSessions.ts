@@ -19,6 +19,10 @@
 import { prisma } from '../client';
 
 import {
+  CLEANUP_DELETE_ORDER,
+  type CleanupDeleteModelName,
+} from './modelRegistry';
+import {
   isBypassed,
   RESERVED_SESSION_IDS,
   runWithBypass,
@@ -65,164 +69,113 @@ export interface CleanupOptions {
  * 17개 모델 deleteMany 순서 (자식 → 부모, FK 의존성 따라).
  * cloneSeedToSession의 INSERT 순서를 역순으로 + AuditLog/ErrorLog/PreviewToken 추가.
  */
-const DELETE_ORDER: ReadonlyArray<{
-  name: string;
-  run: (ids: string[]) => Promise<number>;
-}> = [
-  {
-    name: 'NavigationMenuItem',
-    run: async (ids) =>
-      (
-        await prisma.navigationMenuItem.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'SubpageFeedback',
-    run: async (ids) =>
-      (
-        await prisma.subpageFeedback.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'SubpageVersion',
-    run: async (ids) =>
-      (
-        await prisma.subpageVersion.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'PageBlock',
-    run: async (ids) =>
-      (
-        await prisma.pageBlock.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'Post',
-    run: async (ids) =>
-      (
-        await prisma.post.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'Subpage',
-    run: async (ids) =>
-      (
-        await prisma.subpage.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'HomePopup',
-    run: async (ids) =>
-      (
-        await prisma.homePopup.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'HomeSection',
-    run: async (ids) =>
-      (
-        await prisma.homeSection.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'Board',
-    run: async (ids) =>
-      (
-        await prisma.board.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'NavigationMenu',
-    run: async (ids) =>
-      (
-        await prisma.navigationMenu.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'Media',
-    run: async (ids) =>
-      (
-        await prisma.media.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'SiteSettings',
-    run: async (ids) =>
-      (
-        await prisma.siteSettings.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'AuditLog',
-    run: async (ids) =>
-      (
-        await prisma.auditLog.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'ErrorLog',
-    run: async (ids) =>
-      (
-        await prisma.errorLog.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'PreviewToken',
-    run: async (ids) =>
-      (
-        await prisma.previewToken.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'User',
-    run: async (ids) =>
-      (
-        await prisma.user.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-  {
-    name: 'Role',
-    run: async (ids) =>
-      (
-        await prisma.role.deleteMany({
-          where: { sessionId: { in: ids } },
-        })
-      ).count,
-  },
-];
+const DELETE_STEPS: Record<
+  CleanupDeleteModelName,
+  (ids: string[]) => Promise<number>
+> = {
+  NavigationMenuItem: async (ids) =>
+    (
+      await prisma.navigationMenuItem.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  SubpageFeedback: async (ids) =>
+    (
+      await prisma.subpageFeedback.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  SubpageVersion: async (ids) =>
+    (
+      await prisma.subpageVersion.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  PageBlock: async (ids) =>
+    (
+      await prisma.pageBlock.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  Post: async (ids) =>
+    (
+      await prisma.post.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  Subpage: async (ids) =>
+    (
+      await prisma.subpage.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  HomePopup: async (ids) =>
+    (
+      await prisma.homePopup.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  HomeSection: async (ids) =>
+    (
+      await prisma.homeSection.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  Board: async (ids) =>
+    (
+      await prisma.board.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  NavigationMenu: async (ids) =>
+    (
+      await prisma.navigationMenu.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  Media: async (ids) =>
+    (
+      await prisma.media.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  SiteSettings: async (ids) =>
+    (
+      await prisma.siteSettings.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  AuditLog: async (ids) =>
+    (
+      await prisma.auditLog.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  ErrorLog: async (ids) =>
+    (
+      await prisma.errorLog.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  PreviewToken: async (ids) =>
+    (
+      await prisma.previewToken.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  User: async (ids) =>
+    (
+      await prisma.user.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+  Role: async (ids) =>
+    (
+      await prisma.role.deleteMany({
+        where: { sessionId: { in: ids } },
+      })
+    ).count,
+};
 
 async function findExpiredIsolationIds(now: Date): Promise<string[]> {
   // Session은 extension EXCLUDED라 sessionId 필터 우회. user를 join해 visitor 격리 식별자 회수.
@@ -260,13 +213,13 @@ async function executeCleanup(
   }
 
   // 1. 17 모델 deleteMany — 자식부터
-  for (const step of DELETE_ORDER) {
+  for (const name of CLEANUP_DELETE_ORDER) {
     try {
-      const count = await step.run(isolationIds);
-      result.rowsDeletedByModel[step.name] = count;
+      const count = await DELETE_STEPS[name](isolationIds);
+      result.rowsDeletedByModel[name] = count;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      result.errors.push(`${step.name}: ${msg}`);
+      result.errors.push(`${name}: ${msg}`);
     }
   }
 

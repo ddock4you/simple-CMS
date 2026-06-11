@@ -23,6 +23,8 @@
  */
 import { z } from 'zod';
 
+import { SNAPSHOT_MODEL_NAMES } from './modelRegistry';
+
 // ─── 공용 ──────────────────────────────────────────
 
 const isoDateString = z.string().datetime();
@@ -217,7 +219,7 @@ const subpageFeedbackRowSchema = z.object({
 
 export const SNAPSHOT_SCHEMA_VERSION = 2 as const;
 
-const snapshotModelsSchema = z.object({
+export const snapshotModelsSchema = z.object({
   Role: z.array(roleRowSchema),
   User: z.array(userRowSchema),
   Media: z.array(mediaRowSchema),
@@ -233,6 +235,13 @@ const snapshotModelsSchema = z.object({
   SubpageVersion: z.array(subpageVersionRowSchema),
   SubpageFeedback: z.array(subpageFeedbackRowSchema),
 });
+
+const snapshotModelSchemaKeys = Object.keys(snapshotModelsSchema.shape);
+if (snapshotModelSchemaKeys.join('|') !== SNAPSHOT_MODEL_NAMES.join('|')) {
+  throw new Error(
+    'snapshotModelsSchema and SNAPSHOT_MODEL_NAMES are out of sync',
+  );
+}
 
 const snapshotPayloadV2Schema = z.object({
   schemaVersion: z.literal(2),

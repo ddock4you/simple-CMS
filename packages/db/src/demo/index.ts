@@ -17,10 +17,7 @@ export type { DemoContext } from './sessionContext';
 
 export { demoExtension } from './clientExtension';
 
-export {
-  cloneSeedToSession,
-  DEMO_ADMIN_USERNAME,
-} from './cloneSeedToSession';
+export { cloneSeedToSession, DEMO_ADMIN_USERNAME } from './cloneSeedToSession';
 export type { CloneStats, CloneResult } from './cloneSeedToSession';
 
 export { SeedNotFoundError } from './SeedNotFoundError';
@@ -52,12 +49,25 @@ export {
   createSupabaseMediaDownloader,
   extractStorageKeyFromUrl,
 } from './exportMedia';
-export type {
-  ProcessedMediaResult,
-  SupabaseDownloader,
-} from './exportMedia';
+export type { ProcessedMediaResult, SupabaseDownloader } from './exportMedia';
 
 export { walkSnapshotForRemap } from './snapshotWalker';
+
+export {
+  CLEANUP_DELETE_ORDER,
+  CLONE_MODEL_NAMES,
+  DEMO_ISOLATED_MODEL_NAMES,
+  SEED_RESET_DELETE_ORDER,
+  SNAPSHOT_EXCLUDED_MODEL_NAMES,
+  SNAPSHOT_MODEL_NAMES,
+} from './modelRegistry';
+export type {
+  CleanupDeleteModelName,
+  CloneModelName,
+  DemoIsolatedModelName,
+  SeedResetDeleteModelName,
+  SnapshotModelName,
+} from './modelRegistry';
 
 export {
   snapshotPayloadSchema,

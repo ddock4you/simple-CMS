@@ -3,7 +3,7 @@
 /**
  * 시연 스냅샷 관리 Client Form (PR7).
  *
- * - StatCard로 14개 snapshot 대상 모델 row count + Media 합계 사이즈 미리보기
+ * - StatCard로 snapshot 대상 모델 row count + Media 합계 사이즈 미리보기
  * - [내보내기] — GET /api/demo/snapshot/export → blob download
  * - [Supabase 즉시 적용] — file input → POST /api/demo/snapshot/import →
  *   AlertDialog confirm → 결과 toast + router.refresh
@@ -60,13 +60,17 @@ interface DemoSnapshotFormProps {
   canExport: boolean;
   canImport: boolean;
   isDemoMode: boolean;
+  modelCount: number;
 }
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
+  const i = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(k)),
+    sizes.length - 1,
+  );
   return `${(bytes / Math.pow(k, i)).toFixed(i === 0 ? 0 : 2)} ${sizes[i]}`;
 }
 
@@ -75,6 +79,7 @@ export function DemoSnapshotForm({
   canExport,
   canImport,
   isDemoMode,
+  modelCount,
 }: DemoSnapshotFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,20 +87,25 @@ export function DemoSnapshotForm({
   const [isImporting, setIsImporting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [importResult, setImportResult] = useState<ImportStatsShape | null>(null);
+  const [importResult, setImportResult] = useState<ImportStatsShape | null>(
+    null,
+  );
 
   const handleExport = async () => {
     if (isExporting) return;
     setIsExporting(true);
     try {
-      const res = await fetch(resolveAdminApiPath('/api/demo/snapshot/export'), {
-        method: 'GET',
-        credentials: 'same-origin',
-      });
+      const res = await fetch(
+        resolveAdminApiPath('/api/demo/snapshot/export'),
+        {
+          method: 'GET',
+          credentials: 'same-origin',
+        },
+      );
       if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const body = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         toast.error(body?.error ?? '스냅샷 내보내기 실패');
         return;
       }
@@ -142,15 +152,20 @@ export function DemoSnapshotForm({
     setImportResult(null);
     try {
       const text = await pendingFile.text();
-      const res = await fetch(resolveAdminApiPath('/api/demo/snapshot/import'), {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: text,
-      });
-      const json = (await res.json().catch(() => null)) as
-        | { success: boolean; data?: { stats: ImportStatsShape }; error?: string }
-        | null;
+      const res = await fetch(
+        resolveAdminApiPath('/api/demo/snapshot/import'),
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: text,
+        },
+      );
+      const json = (await res.json().catch(() => null)) as {
+        success: boolean;
+        data?: { stats: ImportStatsShape };
+        error?: string;
+      } | null;
       if (!res.ok || !json?.success || !json.data) {
         toast.error(json?.error ?? '스냅샷 적용 실패');
         return;
@@ -181,7 +196,7 @@ export function DemoSnapshotForm({
         <StatCard
           title="총 row 수"
           value={stats.totalRows}
-          description="snapshot 대상 14모델 합계"
+          description={`snapshot 대상 ${modelCount}모델 합계`}
           icon={Database}
         />
         <StatCard
@@ -275,8 +290,8 @@ export function DemoSnapshotForm({
       {!isDemoMode && canImport && (
         <p className="text-xs text-muted-foreground">
           현재 환경은 운영 모드(<code>DEMO_MODE</code> 미설정)이므로 [Supabase에
-          즉시 적용]은 비활성화됩니다. 시연 환경에서 사용하거나 CLI(<code>pnpm
-          demo:import</code>)를 이용하세요.
+          즉시 적용]은 비활성화됩니다. 시연 환경에서 사용하거나 CLI(
+          <code>pnpm demo:import</code>)를 이용하세요.
         </p>
       )}
 
@@ -284,7 +299,9 @@ export function DemoSnapshotForm({
       {importResult && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">최근 적용 결과</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              최근 적용 결과
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>
@@ -328,11 +345,13 @@ export function DemoSnapshotForm({
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent size="default">
           <AlertDialogHeader>
-            <AlertDialogTitle>시연 시드를 새 스냅샷으로 갱신할까요?</AlertDialogTitle>
+            <AlertDialogTitle>
+              시연 시드를 새 스냅샷으로 갱신할까요?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              기존 <code>__SEED__</code> row와 Storage 파일이 모두 삭제되고 업로드한
-              스냅샷으로 대체됩니다. 이미 진입한 visitor는 영향을 받지 않으며 다음
-              방문자부터 새 시드로 시작합니다.
+              기존 <code>__SEED__</code> row와 Storage 파일이 모두 삭제되고
+              업로드한 스냅샷으로 대체됩니다. 이미 진입한 visitor는 영향을 받지
+              않으며 다음 방문자부터 새 시드로 시작합니다.
               <br />
               파일: <strong>{pendingFile?.name}</strong> (
               {pendingFile ? formatBytes(pendingFile.size) : ''})
@@ -347,7 +366,10 @@ export function DemoSnapshotForm({
             >
               취소
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleImportConfirm} disabled={isImporting}>
+            <AlertDialogAction
+              onClick={handleImportConfirm}
+              disabled={isImporting}
+            >
               {isImporting ? '적용 중…' : '적용'}
             </AlertDialogAction>
           </AlertDialogFooter>
