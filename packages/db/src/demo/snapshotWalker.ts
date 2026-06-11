@@ -100,9 +100,6 @@ function remapHomeSectionConfig(
             ) {
               (s as { imageUrl: string }).imageUrl = newUrl;
             }
-            if (newUrl && typeof (s as { url?: unknown }).url === 'string') {
-              (s as { url: string }).url = newUrl;
-            }
           }
         }
       }

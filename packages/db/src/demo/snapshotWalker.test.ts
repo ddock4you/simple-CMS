@@ -876,7 +876,13 @@ describe('snapshotWalker clone helpers', () => {
         sectionType: 'HERO',
         title: 'Hero',
         configJson: {
-          slides: [{ mediaId: 'media-1', imageUrl: '/uploads/home/a.jpg' }],
+          slides: [
+            {
+              mediaId: 'media-1',
+              imageUrl: '/uploads/home/a.jpg',
+              url: '/p/linked-subpage',
+            },
+          ],
         },
         isVisible: true,
         displayOrder: 0,
@@ -901,13 +907,14 @@ describe('snapshotWalker clone helpers', () => {
     expect(
       (
         payload.models.HomeSection[0]!.configJson as {
-          slides: Array<{ mediaId: string; imageUrl: string }>;
+          slides: Array<{ mediaId: string; imageUrl: string; url: string }>;
         }
       ).slides[0],
     ).toEqual({
       mediaId: 'seed-media-1',
       imageUrl:
         'https://example.supabase.co/storage/v1/object/public/uploads/__SEED__/home/a.jpg',
+      url: '/p/linked-subpage',
     });
   });
 

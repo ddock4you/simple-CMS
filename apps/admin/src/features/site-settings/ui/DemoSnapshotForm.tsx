@@ -3,7 +3,7 @@
 /**
  * 시연 스냅샷 관리 Client Form (PR7).
  *
- * - StatCard로 16모델 row count + Media 합계 사이즈 미리보기
+ * - StatCard로 14개 snapshot 대상 모델 row count + Media 합계 사이즈 미리보기
  * - [내보내기] — GET /api/demo/snapshot/export → blob download
  * - [Supabase 즉시 적용] — file input → POST /api/demo/snapshot/import →
  *   AlertDialog confirm → 결과 toast + router.refresh
@@ -181,7 +181,7 @@ export function DemoSnapshotForm({
         <StatCard
           title="총 row 수"
           value={stats.totalRows}
-          description="16모델 합계"
+          description="snapshot 대상 14모델 합계"
           icon={Database}
         />
         <StatCard
@@ -199,7 +199,7 @@ export function DemoSnapshotForm({
         <StatCard
           title="버전 스냅샷"
           value={stats.rowCounts.SubpageVersion ?? 0}
-          description={`로그 ${((stats.rowCounts.AuditLog ?? 0) + (stats.rowCounts.ErrorLog ?? 0)).toLocaleString('ko-KR')}`}
+          description={`피드백 ${(stats.rowCounts.SubpageFeedback ?? 0).toLocaleString('ko-KR')}`}
           icon={HardDrive}
         />
       </div>
@@ -208,7 +208,7 @@ export function DemoSnapshotForm({
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium">
-            모델별 row 수 (운영 sentinel <code>__PROD__</code>)
+            snapshot 대상 모델별 row 수 (운영 sentinel <code>__PROD__</code>)
           </CardTitle>
         </CardHeader>
         <CardContent>

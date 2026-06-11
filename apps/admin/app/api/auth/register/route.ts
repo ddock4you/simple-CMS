@@ -9,6 +9,16 @@ import { getAuditContext } from '@/shared/lib/auditHelpers';
 import { registerSchema } from '@/features/auth/model/registerSchema';
 
 export async function POST(request: Request): Promise<NextResponse> {
+  if (process.env.DEMO_MODE === 'true') {
+    return NextResponse.json(
+      {
+        success: false,
+        error: '시연 모드에서는 회원가입 API를 직접 사용할 수 없습니다.',
+      } satisfies ApiResponse<never>,
+      { status: 403 },
+    );
+  }
+
   try {
     const body = await request.json();
     const result = registerSchema.safeParse(body);
