@@ -3,26 +3,22 @@ import { NextResponse } from 'next/server';
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { getCurrentUser } from '@/entities/auth/lib/getCurrentUser';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { withAdminRouteScope } from '@/shared/api/withAdminRouteScope';
 import { profileSchema } from '@/features/auth/model/profileSchema';
 
-export async function PATCH(request: Request): Promise<NextResponse> {
+export const PATCH = withAdminRouteScope(async (request, ctx) => {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return NextResponse.json(
-        { success: false, error: '인증이 필요합니다.' } satisfies ApiResponse<never>,
-        { status: 401 },
-      );
-    }
+    const currentUser = ctx.user;
 
     const body = await request.json();
     const parsed = profileSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: parsed.error.issues[0].message } satisfies ApiResponse<never>,
+        {
+          success: false,
+          error: parsed.error.issues[0].message,
+        } satisfies ApiResponse<never>,
         { status: 400 },
       );
     }
@@ -35,7 +31,10 @@ export async function PATCH(request: Request): Promise<NextResponse> {
       });
       if (existingEmail && existingEmail.id !== currentUser.id) {
         return NextResponse.json(
-          { success: false, error: '이미 사용 중인 이메일입니다.' } satisfies ApiResponse<never>,
+          {
+            success: false,
+            error: '이미 사용 중인 이메일입니다.',
+          } satisfies ApiResponse<never>,
           { status: 409 },
         );
       }
@@ -59,7 +58,6 @@ export async function PATCH(request: Request): Promise<NextResponse> {
     });
 
     if (Object.keys(after).length > 0) {
-      const auditContext = getAuditContext(request);
       logAuditEvent({
         action: 'UPDATE',
         entityType: 'USER',
@@ -67,14 +65,15 @@ export async function PATCH(request: Request): Promise<NextResponse> {
         entityTitle: currentUser.username,
         changes: { before, after },
         userId: currentUser.id,
-        ipAddress: auditContext.ipAddress,
-        userAgent: auditContext.userAgent,
+        ipAddress: ctx.auditCtx.ipAddress,
+        userAgent: ctx.auditCtx.userAgent,
       });
     }
 
-    return NextResponse.json(
-      { success: true, data: null } satisfies ApiResponse<null>,
-    );
+    return NextResponse.json({
+      success: true,
+      data: null,
+    } satisfies ApiResponse<null>);
   } catch (error) {
     if (
       error instanceof Error &&
@@ -82,15 +81,21 @@ export async function PATCH(request: Request): Promise<NextResponse> {
       (error as { code: string }).code === 'P2002'
     ) {
       return NextResponse.json(
-        { success: false, error: '이미 사용 중인 이메일입니다.' } satisfies ApiResponse<never>,
+        {
+          success: false,
+          error: '이미 사용 중인 이메일입니다.',
+        } satisfies ApiResponse<never>,
         { status: 409 },
       );
     }
 
     console.error('[Profile API] Unexpected error:', error);
     return NextResponse.json(
-      { success: false, error: '프로필 변경에 실패했습니다.' } satisfies ApiResponse<never>,
+      {
+        success: false,
+        error: '프로필 변경에 실패했습니다.',
+      } satisfies ApiResponse<never>,
       { status: 500 },
     );
   }
-}
+});

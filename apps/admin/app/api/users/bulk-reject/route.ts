@@ -4,8 +4,7 @@ import { z } from 'zod';
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { withPermissionRoute } from '@/shared/api/withAdminRouteScope';
 
 const bulkRejectSchema = z.object({
   ids: z
@@ -25,68 +24,72 @@ interface BulkRejectResponse {
   blocked: BlockedItem[];
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
-  const { user: currentUser, error } = await requirePermission('users', 'delete');
-  if (error) return error;
+export const POST = withPermissionRoute(
+  'users',
+  'delete',
+  async (request, ctx) => {
+    try {
+      const body = await request.json();
+      const parsed = bulkRejectSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: parsed.error.issues[0]?.message ?? '잘못된 요청입니다.',
+          } satisfies ApiResponse<never>,
+          { status: 400 },
+        );
+      }
 
-  try {
-    const body = await request.json();
-    const parsed = bulkRejectSchema.safeParse(body);
-    if (!parsed.success) {
+      const ids = Array.from(new Set(parsed.data.ids));
+
+      const users = await prisma.user.findMany({ where: { id: { in: ids } } });
+
+      const deleted: string[] = [];
+      const blocked: BlockedItem[] = [];
+
+      for (const targetUser of users) {
+        if (targetUser.status !== 'PENDING') {
+          blocked.push({
+            id: targetUser.id,
+            username: targetUser.username,
+            reason: '승인 대기 상태가 아닙니다.',
+          });
+          continue;
+        }
+
+        await prisma.user.delete({ where: { id: targetUser.id } });
+
+        logAuditEvent({
+          action: 'DELETE',
+          entityType: 'USER',
+          entityId: targetUser.id,
+          entityTitle: targetUser.username,
+          changes: {
+            before: { status: 'PENDING', username: targetUser.username },
+          },
+          userId: ctx.user.id,
+          ipAddress: ctx.auditCtx.ipAddress,
+          userAgent: ctx.auditCtx.userAgent,
+        });
+
+        deleted.push(targetUser.id);
+      }
+
+      const data: BulkRejectResponse = { deleted, blocked };
+      return NextResponse.json({
+        success: true,
+        data,
+      } satisfies ApiResponse<BulkRejectResponse>);
+    } catch (err) {
+      console.error('[Users bulk-reject] Unexpected error:', err);
       return NextResponse.json(
         {
           success: false,
-          error: parsed.error.issues[0]?.message ?? '잘못된 요청입니다.',
+          error: '일괄 거절에 실패했습니다.',
         } satisfies ApiResponse<never>,
-        { status: 400 },
+        { status: 500 },
       );
     }
-
-    const ids = Array.from(new Set(parsed.data.ids));
-
-    const users = await prisma.user.findMany({ where: { id: { in: ids } } });
-
-    const auditContext = getAuditContext(request);
-    const deleted: string[] = [];
-    const blocked: BlockedItem[] = [];
-
-    for (const targetUser of users) {
-      if (targetUser.status !== 'PENDING') {
-        blocked.push({
-          id: targetUser.id,
-          username: targetUser.username,
-          reason: '승인 대기 상태가 아닙니다.',
-        });
-        continue;
-      }
-
-      await prisma.user.delete({ where: { id: targetUser.id } });
-
-      logAuditEvent({
-        action: 'DELETE',
-        entityType: 'USER',
-        entityId: targetUser.id,
-        entityTitle: targetUser.username,
-        changes: {
-          before: { status: 'PENDING', username: targetUser.username },
-        },
-        userId: currentUser!.id,
-        ipAddress: auditContext.ipAddress,
-        userAgent: auditContext.userAgent,
-      });
-
-      deleted.push(targetUser.id);
-    }
-
-    const data: BulkRejectResponse = { deleted, blocked };
-    return NextResponse.json(
-      { success: true, data } satisfies ApiResponse<BulkRejectResponse>,
-    );
-  } catch (err) {
-    console.error('[Users bulk-reject] Unexpected error:', err);
-    return NextResponse.json(
-      { success: false, error: '일괄 거절에 실패했습니다.' } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+  },
+);

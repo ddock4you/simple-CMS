@@ -4,8 +4,7 @@ import { z } from 'zod';
 import { prisma, logAuditEvent, deleteUserSessions } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { getAuditContext } from '@/shared/lib/auditHelpers';
+import { withPermissionRoute } from '@/shared/api/withAdminRouteScope';
 import {
   assertNotLastSystemAdmin,
   LastSystemAdminError,
@@ -29,100 +28,104 @@ interface BulkSuspendResponse {
   blocked: BlockedItem[];
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
-  const { user: currentUser, error } = await requirePermission('users', 'update');
-  if (error) return error;
-
-  try {
-    const body = await request.json();
-    const parsed = bulkSuspendSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: parsed.error.issues[0]?.message ?? '잘못된 요청입니다.',
-        } satisfies ApiResponse<never>,
-        { status: 400 },
-      );
-    }
-
-    const ids = Array.from(new Set(parsed.data.ids));
-
-    const users = await prisma.user.findMany({
-      where: { id: { in: ids } },
-      include: { role: true },
-    });
-
-    const auditContext = getAuditContext(request);
-    const updated: string[] = [];
-    const blocked: BlockedItem[] = [];
-
-    for (const targetUser of users) {
-      if (targetUser.id === currentUser!.id) {
-        blocked.push({
-          id: targetUser.id,
-          username: targetUser.username,
-          reason: '자기 자신을 정지할 수 없습니다.',
-        });
-        continue;
+export const POST = withPermissionRoute(
+  'users',
+  'update',
+  async (request, ctx) => {
+    try {
+      const body = await request.json();
+      const parsed = bulkSuspendSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: parsed.error.issues[0]?.message ?? '잘못된 요청입니다.',
+          } satisfies ApiResponse<never>,
+          { status: 400 },
+        );
       }
 
-      if (targetUser.status !== 'ACTIVE') {
-        blocked.push({
-          id: targetUser.id,
-          username: targetUser.username,
-          reason: '활성 상태가 아닙니다.',
-        });
-        continue;
-      }
+      const ids = Array.from(new Set(parsed.data.ids));
 
-      try {
-        await assertNotLastSystemAdmin(targetUser);
-      } catch (e) {
-        if (e instanceof LastSystemAdminError) {
+      const users = await prisma.user.findMany({
+        where: { id: { in: ids } },
+        include: { role: true },
+      });
+
+      const updated: string[] = [];
+      const blocked: BlockedItem[] = [];
+
+      for (const targetUser of users) {
+        if (targetUser.id === ctx.user.id) {
           blocked.push({
             id: targetUser.id,
             username: targetUser.username,
-            reason: e.message,
+            reason: '자기 자신을 정지할 수 없습니다.',
           });
           continue;
         }
-        throw e;
+
+        if (targetUser.status !== 'ACTIVE') {
+          blocked.push({
+            id: targetUser.id,
+            username: targetUser.username,
+            reason: '활성 상태가 아닙니다.',
+          });
+          continue;
+        }
+
+        try {
+          await assertNotLastSystemAdmin(targetUser);
+        } catch (e) {
+          if (e instanceof LastSystemAdminError) {
+            blocked.push({
+              id: targetUser.id,
+              username: targetUser.username,
+              reason: e.message,
+            });
+            continue;
+          }
+          throw e;
+        }
+
+        await prisma.user.update({
+          where: { id: targetUser.id },
+          data: { status: 'SUSPENDED' },
+        });
+
+        await deleteUserSessions(targetUser.id);
+
+        logAuditEvent({
+          action: 'UPDATE',
+          entityType: 'USER',
+          entityId: targetUser.id,
+          entityTitle: targetUser.username,
+          changes: {
+            before: { status: 'ACTIVE' },
+            after: { status: 'SUSPENDED' },
+          },
+          userId: ctx.user.id,
+          ipAddress: ctx.auditCtx.ipAddress,
+          userAgent: ctx.auditCtx.userAgent,
+        });
+
+        updated.push(targetUser.id);
       }
 
-      await prisma.user.update({
-        where: { id: targetUser.id },
-        data: { status: 'SUSPENDED' },
-      });
-
-      await deleteUserSessions(targetUser.id);
-
-      logAuditEvent({
-        action: 'UPDATE',
-        entityType: 'USER',
-        entityId: targetUser.id,
-        entityTitle: targetUser.username,
-        changes: {
-          before: { status: 'ACTIVE' },
-          after: { status: 'SUSPENDED' },
-        },
-        userId: currentUser!.id,
-        ipAddress: auditContext.ipAddress,
-        userAgent: auditContext.userAgent,
-      });
-
-      updated.push(targetUser.id);
+      const data: BulkSuspendResponse = { updated, blocked };
+      return NextResponse.json({
+        success: true,
+        data,
+      } satisfies ApiResponse<BulkSuspendResponse>);
+    } catch (err) {
+      console.error('[Users bulk-suspend] Unexpected error:', err);
+      return NextResponse.json(
+        {
+          success: false,
+          error: '일괄 정지에 실패했습니다.',
+        } satisfies ApiResponse<never>,
+        { status: 500 },
+      );
     }
-
-    const data: BulkSuspendResponse = { updated, blocked };
-    return NextResponse.json(
-      { success: true, data } satisfies ApiResponse<BulkSuspendResponse>,
-    );
-  } catch (err) {
-    console.error('[Users bulk-suspend] Unexpected error:', err);
-    return NextResponse.json(
-      { success: false, error: '일괄 정지에 실패했습니다.' } satisfies ApiResponse<never>,
-      { status: 500 },
-    );
-  }
-}
+  },
+);
