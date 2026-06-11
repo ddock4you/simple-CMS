@@ -24,11 +24,6 @@ const TABS: TabConfig[] = [
     ],
   },
   {
-    label: '메뉴',
-    href: '/site-layout/menus',
-    anyOf: [{ resource: 'navigation', action: 'read' }],
-  },
-  {
     label: '푸터',
     href: '/site-layout/footer',
     anyOf: [

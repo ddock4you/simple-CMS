@@ -6,9 +6,10 @@ import { menuSetListOptions } from '@/features/navigation-management/api/navigat
 import { footerSettingsOptions } from '@/features/site-settings/api/settingsQueries';
 import { FooterSettingsForm } from '@/features/site-settings/ui/FooterSettingsForm';
 import { SiteLayoutNav } from '@/features/site-layout/ui/SiteLayoutNav';
-import { SlotMenuSection } from '@/features/site-layout/ui/SlotMenuSection';
+import { SlotMenuToolbarAction } from '@/features/site-layout/ui/SlotMenuToolbarAction';
 import { getQueryClient } from '@/shared/api/queryClient';
 import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { QueryStateMessage } from '@/shared/ui/QueryStateMessage';
 
 export default async function SiteLayoutFooterPage() {
@@ -30,7 +31,7 @@ export default async function SiteLayoutFooterPage() {
     <div className="space-y-6">
       <PageHeader
         title="사이트 화면 관리"
-        description="공개 웹 헤더, 메뉴, 푸터 구성을 관리합니다."
+        description="공개 웹 푸터 표시 요소와 하단 메뉴를 관리합니다."
         tabs={<SiteLayoutNav />}
       />
 
@@ -42,14 +43,13 @@ export default async function SiteLayoutFooterPage() {
       ) : (
         <HydrationBoundary state={dehydrate(queryClient)}>
           <div className="space-y-6">
-            {canReadSettings && <FooterSettingsForm />}
             {canReadNavigation && (
-              <SlotMenuSection
-                slot="FOOTER"
-                title="푸터 메뉴"
-                description="공개 웹 푸터 본문 링크 영역에 배치되는 FOOTER 슬롯 메뉴입니다."
+              <PageToolbar
+                right={<SlotMenuToolbarAction slot="FOOTER" />}
+                mobileRightLabel="푸터 메뉴"
               />
             )}
+            {canReadSettings && <FooterSettingsForm />}
           </div>
         </HydrationBoundary>
       )}

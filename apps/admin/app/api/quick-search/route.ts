@@ -146,19 +146,27 @@ export async function GET(request: Request): Promise<NextResponse> {
         prisma.navigationMenuItem
           .findMany({
             where: { label: { contains: q, mode: 'insensitive' } },
-            include: { menu: { select: { id: true, name: true } } },
+            include: { menu: { select: { id: true, name: true, slots: true } } },
             take: limit,
             orderBy: { updatedAt: 'desc' },
           })
           .then((items) =>
             items.map(
-              (m): QuickSearchResult => ({
-                type: 'menu',
-                id: m.id,
-                title: m.label,
-                subtitle: m.menu.name,
-                href: `/site-layout/menus/${m.menuId}`,
-              }),
+              (m): QuickSearchResult => {
+                const href = m.menu.slots.includes('HEADER')
+                  ? `/site-layout/header/menu/${m.menuId}`
+                  : m.menu.slots.includes('FOOTER')
+                    ? `/site-layout/footer/menu/${m.menuId}`
+                    : `/navigation/${m.menuId}`;
+
+                return {
+                  type: 'menu',
+                  id: m.id,
+                  title: m.label,
+                  subtitle: m.menu.name,
+                  href,
+                };
+              },
             ),
           ),
       );

@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/shared/ui/Button';
@@ -38,7 +38,6 @@ import {
 
 const BRANDING_ENDPOINT = '/api/media/branding-upload';
 
-const LOGO_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 const FAVICON_MIME = [
   'image/png',
   'image/webp',
@@ -47,9 +46,9 @@ const FAVICON_MIME = [
 ];
 const OG_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 
-const LOGO_REASON = '로고는 PNG, JPG, WEBP만 사용할 수 있습니다.';
 const FAVICON_REASON = '파비콘은 PNG, WEBP, ICO만 사용할 수 있습니다.';
 const OG_REASON = 'OG 이미지는 PNG, JPG, WEBP만 사용할 수 있습니다.';
+type VisibleBrandingAssetKind = Exclude<BrandingAssetKind, 'logo'>;
 
 export function BrandingSettingsForm() {
   const { data, isPending, isError, error } = useQuery(
@@ -59,15 +58,18 @@ export function BrandingSettingsForm() {
   const deleteAssetMutation = useDeleteBrandingAsset();
 
   // 표시용 url state — form 필드(mediaId만)와 분리
-  const [logoUrl, setLogoUrl] = useState<string>('');
-  const [faviconUrl, setFaviconUrl] = useState<string>('');
-  const [ogImageUrl, setOgImageUrl] = useState<string>('');
+  const [faviconUrlOverride, setFaviconUrlOverride] = useState<string | null>(
+    null,
+  );
+  const [ogImageUrlOverride, setOgImageUrlOverride] = useState<string | null>(
+    null,
+  );
 
   const {
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     reset,
     formState: { errors, isDirty },
   } = useForm<UpdateBrandingData>({
@@ -93,15 +95,16 @@ export function BrandingSettingsForm() {
       faviconMediaId: data.faviconMediaId,
       ogImageMediaId: data.ogImageMediaId,
     });
-    setLogoUrl(data.logoUrl ?? '');
-    setFaviconUrl(data.faviconUrl ?? '');
-    setOgImageUrl(data.ogImageUrl ?? '');
   }, [data, reset]);
 
   const dirtyGuard = useDirtyGuard(isDirty);
 
   const onSubmit = (formData: UpdateBrandingData) => {
-    updateMutation.mutate(formData);
+    updateMutation.mutate({
+      ...formData,
+      logoMediaId: data?.logoMediaId ?? null,
+      logoAlt: data?.logoAlt ?? null,
+    });
   };
 
   /**
@@ -109,7 +112,7 @@ export function BrandingSettingsForm() {
    * disableUrlInput=true로 input은 readOnly이지만, 만약을 위해 onChange에서도 한 번 더 검증.
    */
   const handleAssetChange = (
-    field: 'logoMediaId' | 'faviconMediaId' | 'ogImageMediaId',
+    field: 'faviconMediaId' | 'ogImageMediaId',
     setLocalUrl: (url: string) => void,
     next: { url: string; mediaId: string | null },
   ) => {
@@ -121,27 +124,24 @@ export function BrandingSettingsForm() {
     setLocalUrl(next.url);
   };
 
-  const handleDeleteAsset = (kind: BrandingAssetKind) => {
+  const handleDeleteAsset = (kind: VisibleBrandingAssetKind) => {
     deleteAssetMutation.mutate(kind, {
       onSuccess: () => {
-        if (kind === 'logo') {
-          setValue('logoMediaId', null, { shouldDirty: false });
-          setValue('logoAlt', null, { shouldDirty: false });
-          setLogoUrl('');
-        } else if (kind === 'favicon') {
+        if (kind === 'favicon') {
           setValue('faviconMediaId', null, { shouldDirty: false });
-          setFaviconUrl('');
+          setFaviconUrlOverride('');
         } else {
           setValue('ogImageMediaId', null, { shouldDirty: false });
-          setOgImageUrl('');
+          setOgImageUrlOverride('');
         }
       },
     });
   };
 
-  const watchLogoMediaId = watch('logoMediaId');
-  const watchFaviconMediaId = watch('faviconMediaId');
-  const watchOgImageMediaId = watch('ogImageMediaId');
+  const watchFaviconMediaId = useWatch({ control, name: 'faviconMediaId' });
+  const watchOgImageMediaId = useWatch({ control, name: 'ogImageMediaId' });
+  const faviconUrl = faviconUrlOverride ?? data?.faviconUrl ?? '';
+  const ogImageUrl = ogImageUrlOverride ?? data?.ogImageUrl ?? '';
 
   if (isError) {
     return (
@@ -179,7 +179,7 @@ export function BrandingSettingsForm() {
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                헤더 폴백 텍스트, 메타데이터 title, 푸터 copyright에 사용됩니다.
+                메타데이터 title과 푸터 copyright에 사용됩니다.
               </p>
             </div>
 
@@ -189,9 +189,9 @@ export function BrandingSettingsForm() {
                 id="siteDescription"
                 {...register('siteDescription', {
                   setValueAs: (v) => {
-                  const s = typeof v === 'string' ? v.trim() : '';
-                  return s === '' ? null : s;
-                },
+                    const s = typeof v === 'string' ? v.trim() : '';
+                    return s === '' ? null : s;
+                  },
                 })}
                 placeholder="검색 엔진과 SNS 미리보기에 표시되는 설명 (200자 이내 권장)"
                 maxLength={200}
@@ -203,69 +203,6 @@ export function BrandingSettingsForm() {
                 </p>
               )}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ImageIcon className="size-5" />
-              로고
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>로고 이미지</Label>
-              <ImageUrlInput
-                value={logoUrl}
-                mediaId={watchLogoMediaId}
-                category="branding"
-                endpoint={BRANDING_ENDPOINT}
-                acceptMimeTypes={LOGO_MIME}
-                disabledReason={LOGO_REASON}
-                disableUrlInput
-                onChange={(next) =>
-                  handleAssetChange('logoMediaId', setLogoUrl, next)
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                권장: 가로형 PNG/WEBP. 헤더 max-height에 맞춰 표시됩니다. SVG는
-                보안상 차단됩니다.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="logoAlt">로고 대체 텍스트 (alt)</Label>
-              <Input
-                id="logoAlt"
-                {...register('logoAlt', {
-                  setValueAs: (v) => {
-                  const s = typeof v === 'string' ? v.trim() : '';
-                  return s === '' ? null : s;
-                },
-                })}
-                placeholder="비우면 사이트명을 사용합니다."
-                maxLength={120}
-              />
-              {errors.logoAlt && (
-                <p className="text-sm text-destructive">
-                  {errors.logoAlt.message}
-                </p>
-              )}
-            </div>
-
-            {watchLogoMediaId && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleDeleteAsset('logo')}
-                disabled={deleteAssetMutation.isPending}
-              >
-                <Trash2 className="size-4" />
-                로고 제거
-              </Button>
-            )}
           </CardContent>
         </Card>
 
@@ -284,7 +221,11 @@ export function BrandingSettingsForm() {
                 disabledReason={FAVICON_REASON}
                 disableUrlInput
                 onChange={(next) =>
-                  handleAssetChange('faviconMediaId', setFaviconUrl, next)
+                  handleAssetChange(
+                    'faviconMediaId',
+                    setFaviconUrlOverride,
+                    next,
+                  )
                 }
               />
               <p className="text-xs text-muted-foreground">
@@ -324,7 +265,11 @@ export function BrandingSettingsForm() {
                 disabledReason={OG_REASON}
                 disableUrlInput
                 onChange={(next) =>
-                  handleAssetChange('ogImageMediaId', setOgImageUrl, next)
+                  handleAssetChange(
+                    'ogImageMediaId',
+                    setOgImageUrlOverride,
+                    next,
+                  )
                 }
               />
               <p className="text-xs text-muted-foreground">

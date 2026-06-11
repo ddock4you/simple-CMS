@@ -80,7 +80,6 @@ export function FooterSettingsForm() {
   } = form;
 
   const contacts = useFieldArray({ control, name: 'contacts' });
-  const quickLinks = useFieldArray({ control, name: 'quickLinks' });
   const socialLinks = useFieldArray({ control, name: 'socialLinks' });
   const bottomLinks = useFieldArray({ control, name: 'bottomLinks' });
 
@@ -244,12 +243,6 @@ export function FooterSettingsForm() {
           <div className="grid gap-4 md:grid-cols-2">
             <BooleanSwitchField
               control={control}
-              name="hideQuickLinks"
-              label="퀵 링크 영역 숨김"
-              description="관련 사이트 버튼 영역을 숨깁니다."
-            />
-            <BooleanSwitchField
-              control={control}
               name="hideIdentifier"
               label="식별자 영역 숨김"
               description="하단 기관 식별자 문구 영역을 숨깁니다."
@@ -316,86 +309,6 @@ export function FooterSettingsForm() {
             {contacts.fields.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 등록된 연락처가 없습니다.
-              </p>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-lg border p-4">
-          <div className="mb-4 flex items-start justify-between gap-4">
-            <div>
-              <h3 className="text-base font-medium">퀵 링크</h3>
-              <p className="text-xs text-muted-foreground">
-                KRDS Footer 상단 관련 사이트 버튼입니다. 최대 4개까지 등록할 수
-                있습니다.
-              </p>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                quickLinks.append({ title: '', url: '', openInNewTab: false })
-              }
-              disabled={quickLinks.fields.length >= 4}
-            >
-              <Plus className="size-4" />
-              추가
-            </Button>
-          </div>
-          <div className="space-y-3">
-            {quickLinks.fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="grid gap-3 rounded-lg bg-muted/40 p-3 md:grid-cols-[1fr_1.5fr_auto_auto]"
-              >
-                <div className="space-y-1">
-                  <Label>제목</Label>
-                  <Input
-                    {...register(`quickLinks.${index}.title`)}
-                    placeholder="관련 사이트"
-                  />
-                  <ErrorText
-                    message={errors.quickLinks?.[index]?.title?.message}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>URL</Label>
-                  <Input
-                    {...register(`quickLinks.${index}.url`)}
-                    placeholder="/p/example 또는 https://example.com"
-                  />
-                  <ErrorText
-                    message={errors.quickLinks?.[index]?.url?.message}
-                  />
-                </div>
-                <label className="flex items-center gap-2 pt-6 text-sm">
-                  <Controller
-                    control={control}
-                    name={`quickLinks.${index}.openInNewTab`}
-                    render={({ field: switchField }) => (
-                      <Switch
-                        checked={switchField.value ?? false}
-                        onCheckedChange={switchField.onChange}
-                      />
-                    )}
-                  />
-                  새 탭
-                </label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => quickLinks.remove(index)}
-                >
-                  <Trash2 className="size-4" />
-                  삭제
-                </Button>
-              </div>
-            ))}
-            {quickLinks.fields.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                등록된 퀵 링크가 없습니다.
               </p>
             )}
           </div>

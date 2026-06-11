@@ -5,10 +5,11 @@ import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { brandingSettingsOptions } from '@/features/site-settings/api/settingsQueries';
 import { HeaderLogoSettingsForm } from '@/features/site-layout/ui/HeaderLogoSettingsForm';
 import { SiteLayoutNav } from '@/features/site-layout/ui/SiteLayoutNav';
-import { SlotMenuSection } from '@/features/site-layout/ui/SlotMenuSection';
+import { SlotMenuToolbarAction } from '@/features/site-layout/ui/SlotMenuToolbarAction';
 import { menuSetListOptions } from '@/features/navigation-management/api/navigationQueries';
 import { getQueryClient } from '@/shared/api/queryClient';
 import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { QueryStateMessage } from '@/shared/ui/QueryStateMessage';
 
 export default async function SiteLayoutHeaderPage() {
@@ -30,7 +31,7 @@ export default async function SiteLayoutHeaderPage() {
     <div className="space-y-6">
       <PageHeader
         title="사이트 화면 관리"
-        description="공개 웹 헤더, 메뉴, 푸터 구성을 관리합니다."
+        description="공개 웹 헤더 표시 요소와 상단 메뉴를 관리합니다."
         tabs={<SiteLayoutNav />}
       />
 
@@ -42,14 +43,13 @@ export default async function SiteLayoutHeaderPage() {
       ) : (
         <HydrationBoundary state={dehydrate(queryClient)}>
           <div className="space-y-6">
-            {canReadSettings && <HeaderLogoSettingsForm />}
             {canReadNavigation && (
-              <SlotMenuSection
-                slot="HEADER"
-                title="헤더 메뉴"
-                description="공개 웹 상단 GNB에 배치되는 HEADER 슬롯 메뉴입니다."
+              <PageToolbar
+                right={<SlotMenuToolbarAction slot="HEADER" />}
+                mobileRightLabel="헤더 메뉴"
               />
             )}
+            {canReadSettings && <HeaderLogoSettingsForm />}
           </div>
         </HydrationBoundary>
       )}

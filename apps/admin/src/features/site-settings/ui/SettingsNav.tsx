@@ -21,7 +21,6 @@ const TABS: TabConfig[] = [
   { label: '업로드', href: '/settings/upload' },
   { label: '권한', href: '/settings/roles' },
   { label: '브랜딩', href: '/settings/branding' },
-  { label: '푸터', href: '/settings/footer' },
   { label: 'SEO', href: '/settings/seo' },
   {
     label: '시연 스냅샷',

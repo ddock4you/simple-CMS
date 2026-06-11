@@ -1,3 +1,5 @@
-import SiteLayoutMenusPage from '@/pages/site-layout/ui/SiteLayoutMenusPage';
+import { redirect } from 'next/navigation';
 
-export default SiteLayoutMenusPage;
+export default function SiteLayoutMenusPage() {
+  redirect('/site-layout/header');
+}

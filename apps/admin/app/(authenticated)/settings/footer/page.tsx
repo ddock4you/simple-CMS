@@ -1,3 +1,5 @@
-import FooterSettingsPage from '@/pages/site-settings/ui/FooterSettingsPage';
+import { redirect } from 'next/navigation';
 
-export default FooterSettingsPage;
+export default function FooterSettingsRoute() {
+  redirect('/site-layout/footer');
+}

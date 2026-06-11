@@ -23,8 +23,8 @@ export default async function BrandingSettingsPage() {
       <div>
         <h2 className="text-lg font-semibold">브랜딩 + SEO 메타데이터</h2>
         <p className="text-sm text-muted-foreground mb-4">
-          공개 웹 헤더의 로고와 사이트명, 파비콘, OG 이미지, SEO 설명을 한
-          곳에서 관리합니다. 외부 URL 직접 입력은 보안상 차단되며 업로드 또는
+          사이트명, 파비콘, OG 이미지, SEO 설명을 한 곳에서 관리합니다.
+          헤더 로고는 사이트 화면 관리에서 관리합니다. 외부 URL 직접 입력은 보안상 차단되며 업로드 또는
           미디어 라이브러리에서 선택해주세요.
         </p>
         <HydrationBoundary state={dehydrate(queryClient)}>
