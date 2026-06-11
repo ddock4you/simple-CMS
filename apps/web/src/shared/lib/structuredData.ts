@@ -9,7 +9,7 @@
 
 type JsonLdValue = string | number | boolean | null | JsonLdObject | JsonLdValue[];
 
-interface JsonLdObject {
+export interface JsonLdObject {
   '@context'?: string;
   '@type': string | string[];
   [key: string]: JsonLdValue | undefined;

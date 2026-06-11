@@ -2,6 +2,10 @@ import type { MetadataRoute } from 'next';
 
 import { prisma } from '@simple-cms/db';
 
+import {
+  buildDemoSitemap,
+  buildPublicSitemap,
+} from '@/shared/lib/seo/sitemap';
 import { getSiteUrl } from '@/shared/lib/siteUrl';
 
 // sitemap.xml은 visitor와 무관한 공개 콘텐츠 URL 목록이라 시연/운영 모두 5분 ISR로 통일.
@@ -15,14 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   if (process.env.DEMO_MODE === 'true') {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    return [
-      {
-        url: baseUrl,
-        lastModified: now,
-        changeFrequency: 'daily',
-        priority: 0.1,
-      },
-    ];
+    return buildDemoSitemap({ baseUrl, now });
   }
 
   const baseUrl = await getSiteUrl();
@@ -53,30 +50,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   ]);
 
-  return [
-    {
-      url: baseUrl,
-      lastModified: now,
-      changeFrequency: 'daily',
-      priority: 1.0,
-    },
-    ...subpages.map((s) => ({
-      url: `${baseUrl}/p/${s.slug}`,
-      lastModified: s.updatedAt ?? s.publishedAt ?? now,
-      changeFrequency: 'monthly' as const,
-      priority: 0.8,
-    })),
-    ...boards.map((b) => ({
-      url: `${baseUrl}/board/${b.slug}`,
-      lastModified: b.updatedAt ?? now,
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    })),
-    ...posts.map((p) => ({
-      url: `${baseUrl}/board/${p.board.slug}/${p.slug}`,
-      lastModified: p.updatedAt ?? p.publishedAt ?? now,
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    })),
-  ];
+  return buildPublicSitemap({ baseUrl, now, subpages, boards, posts });
 }

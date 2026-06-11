@@ -11,14 +11,15 @@ import { ensureDemoSession } from '@/shared/lib/ensureDemoSession';
 import { getCachedFooterConfig } from '@/shared/lib/footerConfigCache';
 import { getCurrentPathname } from '@/shared/lib/getCurrentPathname';
 import { runWithDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
-import { getSiteUrl } from '@/shared/lib/siteUrl';
+import { buildGlobalJsonLd } from '@/shared/lib/seo/jsonLd';
 import {
-  buildOrganizationJsonLd,
-  buildWebSiteJsonLd,
-  serializeJsonLd,
-} from '@/shared/lib/structuredData';
+  buildDemoPendingMetadata,
+  buildRootMetadata,
+} from '@/shared/lib/seo/metadata';
+import { getSiteUrl } from '@/shared/lib/siteUrl';
 import { DemoBanner } from '@/shared/ui/DemoBanner';
 import { ErrorReporterMount } from '@/shared/ui/ErrorReporterMount';
+import { JsonLdScripts } from '@/shared/ui/JsonLdScripts';
 import { PageLayout } from '@/widgets/layout/ui/PageLayout';
 
 import './globals.css';
@@ -42,43 +43,11 @@ export const revalidate = 60;
 export async function generateMetadata(): Promise<Metadata> {
   return runWithDemoSessionFromCookies('/', async (demoSession) => {
     if (process.env.DEMO_MODE === 'true' && !demoSession) {
-      return {
-        title: '시연 모드',
-        description: '시연 세션을 준비하고 있습니다.',
-      };
+      return buildDemoPendingMetadata();
     }
 
     const branding = await getCachedBranding();
-
-    const metadata: Metadata = {
-      title: {
-        default: branding.siteName,
-        template: `%s | ${branding.siteName}`,
-      },
-      description: branding.siteDescription,
-    };
-
-    if (branding.faviconUrl) {
-      // ?v={mediaId}로 cache busting — 동일 바이너리 재업로드는 같은 mediaId라 무효화 발생 안 함 (의도적)
-      metadata.icons = {
-        icon: `${branding.faviconUrl}?v=${branding.faviconMediaId ?? ''}`,
-      };
-    }
-
-    if (branding.ogImageUrl) {
-      metadata.openGraph = {
-        images: [
-          {
-            url: branding.ogImageUrl,
-            width: 1200,
-            height: 630,
-            alt: branding.siteName,
-          },
-        ],
-      };
-    }
-
-    return metadata;
+    return buildRootMetadata(branding);
   });
 }
 
@@ -110,16 +79,7 @@ export default async function RootLayout({
     const footerMenu = menus.FOOTER;
     const sidebarMenu = menus.SIDEBAR;
 
-    const organizationJsonLd = buildOrganizationJsonLd({
-      siteName: branding.siteName,
-      baseUrl,
-      logoUrl: branding.logoUrl,
-    });
-    const websiteJsonLd = buildWebSiteJsonLd({
-      siteName: branding.siteName,
-      siteDescription: branding.siteDescription,
-      baseUrl,
-    });
+    const jsonLdItems = buildGlobalJsonLd({ branding, baseUrl });
 
     return (
       <html lang="ko">
@@ -129,16 +89,7 @@ export default async function RootLayout({
             as="style"
             href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
           />
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: serializeJsonLd(organizationJsonLd),
-            }}
-          />
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: serializeJsonLd(websiteJsonLd) }}
-          />
+          <JsonLdScripts items={jsonLdItems} />
         </head>
         <body>
           {demoSession && <DemoBanner expiresAt={demoSession.expiresAt} />}

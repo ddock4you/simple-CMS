@@ -12,23 +12,18 @@ import { getCachedBranding } from '@/shared/lib/brandingCache';
 import { runWithDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
 import { renderTiptapContent } from '@/shared/lib/renderContent';
 import { getPreviewSession } from '@/shared/lib/previewSession';
-import { getSiteUrl } from '@/shared/lib/siteUrl';
+import { buildPostJsonLd } from '@/shared/lib/seo/jsonLd';
 import {
-  buildArticleJsonLd,
-  buildBreadcrumbJsonLd,
-  serializeJsonLd,
-} from '@/shared/lib/structuredData';
+  buildDemoPendingTitleMetadata,
+  buildMissingMetadata,
+  buildPostMetadata,
+} from '@/shared/lib/seo/metadata';
+import { getSiteUrl } from '@/shared/lib/siteUrl';
+import { JsonLdScripts } from '@/shared/ui/JsonLdScripts';
 import { PostPage } from '@/pages/post/ui/PostPage';
 
 interface PageProps {
   params: Promise<{ boardSlug: string; postSlug: string }>;
-}
-
-function summarizeContent(raw: string | null, max = 160): string | undefined {
-  if (!raw) return undefined;
-  const normalized = raw.replace(/\s+/g, ' ').trim();
-  if (!normalized) return undefined;
-  return normalized.length <= max ? normalized : `${normalized.slice(0, max)}…`;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -37,30 +32,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     `/board/${boardSlug}/${postSlug}`,
     async (demoSession) => {
       if (process.env.DEMO_MODE === 'true' && !demoSession) {
-        return { title: '시연 모드' };
+        return buildDemoPendingTitleMetadata();
       }
 
       const board = await getPublishedBoard(boardSlug);
-      if (!board) return { title: '게시글을 찾을 수 없습니다' };
+      if (!board) return buildMissingMetadata('게시글을 찾을 수 없습니다');
 
       const post = await getPublishedPost(board.id, postSlug);
-      if (!post) return { title: '게시글을 찾을 수 없습니다' };
+      if (!post) return buildMissingMetadata('게시글을 찾을 수 없습니다');
 
-      const title = post.seoTitle?.trim() || post.title;
-      const description =
-        post.seoDescription?.trim() || summarizeContent(post.content);
-
-      return {
-        title,
-        description,
-        openGraph: {
-          title,
-          description,
-          type: 'article',
-          publishedTime: post.publishedAt?.toISOString(),
-          modifiedTime: post.updatedAt.toISOString(),
-        },
-      };
+      return buildPostMetadata(post);
     },
   );
 }
@@ -118,38 +99,11 @@ async function renderPostRoute(boardSlug: string, postSlug: string) {
     getCachedBranding(),
     getSiteUrl(),
   ]);
-  const postUrl = `${baseUrl}/board/${boardSlug}/${postSlug}`;
-  const articleJsonLd = buildArticleJsonLd({
-    url: postUrl,
-    headline: post.seoTitle?.trim() || post.title,
-    description:
-      post.seoDescription?.trim() || summarizeContent(post.content),
-    publishedAt: post.publishedAt,
-    modifiedAt: post.updatedAt,
-    authorName: post.author?.name ?? null,
-    siteName: branding.siteName,
-    baseUrl,
-    logoUrl: branding.logoUrl,
-    imageUrl: branding.ogImageUrl,
-  });
-  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: branding.siteName, url: baseUrl },
-    { name: board.name, url: `${baseUrl}/board/${boardSlug}` },
-    { name: post.title, url: postUrl },
-  ]);
+  const jsonLdItems = buildPostJsonLd({ post, branding, baseUrl });
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleJsonLd) }}
-      />
-      {breadcrumbJsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
-        />
-      )}
+      <JsonLdScripts items={jsonLdItems} />
       <PostPage
         post={{
           title: post.title,

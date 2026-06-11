@@ -5,6 +5,10 @@ import type { SearchContentType } from '@simple-cms/db';
 import { getSearchResults } from '@/entities/search/api/getSearchResults';
 import { SearchPage } from '@/pages/search/ui/SearchPage';
 import { runWithDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
+import {
+  buildDemoPendingTitleMetadata,
+  buildSearchMetadata,
+} from '@/shared/lib/seo/metadata';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,12 +28,10 @@ export async function generateMetadata({
     buildSearchPath(q, undefined, undefined),
     async (demoSession) => {
       if (process.env.DEMO_MODE === 'true' && !demoSession) {
-        return { title: '시연 모드' };
+        return buildDemoPendingTitleMetadata();
       }
 
-      return {
-        title: q ? `"${q}" 검색 결과` : '검색',
-      };
+      return buildSearchMetadata(q);
     },
   );
 }

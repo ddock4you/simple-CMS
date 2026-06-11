@@ -6,11 +6,14 @@ import { resolveContentNavigation } from '@/entities/navigation/lib/resolveConte
 import { getPublishedPosts } from '@/entities/post/api/getPostList';
 import { getCachedBranding } from '@/shared/lib/brandingCache';
 import { runWithDemoSessionFromCookies } from '@/shared/lib/requestDemoSession';
-import { getSiteUrl } from '@/shared/lib/siteUrl';
+import { buildBoardJsonLd } from '@/shared/lib/seo/jsonLd';
 import {
-  buildBreadcrumbJsonLd,
-  serializeJsonLd,
-} from '@/shared/lib/structuredData';
+  buildBoardMetadata,
+  buildDemoPendingTitleMetadata,
+  buildMissingMetadata,
+} from '@/shared/lib/seo/metadata';
+import { getSiteUrl } from '@/shared/lib/siteUrl';
+import { JsonLdScripts } from '@/shared/ui/JsonLdScripts';
 import { BoardPage } from '@/pages/board/ui/BoardPage';
 
 interface PageProps {
@@ -24,19 +27,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     `/board/${boardSlug}`,
     async (demoSession) => {
       if (process.env.DEMO_MODE === 'true' && !demoSession) {
-        return { title: '시연 모드' };
+        return buildDemoPendingTitleMetadata();
       }
 
       const board = await getPublishedBoard(boardSlug);
 
       if (!board) {
-        return { title: '게시판을 찾을 수 없습니다' };
+        return buildMissingMetadata('게시판을 찾을 수 없습니다');
       }
 
-      return {
-        title: board.name,
-        description: board.description || `${board.name} 게시판`,
-      };
+      return buildBoardMetadata(board);
     },
   );
 }
@@ -86,19 +86,11 @@ async function renderBoardRoute(
     getCachedBranding(),
     getSiteUrl(),
   ]);
-  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: branding.siteName, url: baseUrl },
-    { name: board.name, url: `${baseUrl}/board/${boardSlug}` },
-  ]);
+  const jsonLdItems = buildBoardJsonLd({ board, branding, baseUrl });
 
   return (
     <>
-      {breadcrumbJsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
-        />
-      )}
+      <JsonLdScripts items={jsonLdItems} />
       <BoardPage
         board={board}
         posts={posts}
