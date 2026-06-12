@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { withPermissionRoute } from '@/shared/api/withAdminRouteScope';
+import { withPermissionRoute } from '@/entities/auth/lib/withAdminRouteScope';
 import { reorderHomePopupsSchema } from '@/features/popup-management/model/popupSchemas';
 
 export const PATCH = withPermissionRoute(

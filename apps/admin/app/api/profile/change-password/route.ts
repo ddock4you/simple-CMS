@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { withAdminRouteScope } from '@/shared/api/withAdminRouteScope';
+import { withAdminRouteScope } from '@/entities/auth/lib/withAdminRouteScope';
 import { changePasswordSchema } from '@/features/auth/model/profileSchema';
 
 export const POST = withAdminRouteScope(async (request, ctx) => {

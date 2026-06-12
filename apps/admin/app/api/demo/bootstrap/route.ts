@@ -12,7 +12,7 @@
  *   2. demo.runWithBypass 안에서 cloneSeedToSession 호출 → 14모델 row + demoAdminId 반환
  *   3. createSession(demoAdminId) — Session은 EXCLUDED라 sessionId 무관
  *   4. setSessionCookie(token)
- *   5. JSON 응답 (data: { sessionId, redirectTo })
+ *   5. JSON 응답 (data: { sessionId })
  *
  * 감사 로그 미기록 — 시연 부트스트랩은 운영자 액션이 아니라 anonymous 입수 트래픽이고
  * sessionId 자체가 추적 ID 역할 (PR4 후속에서 cleanup cron이 정리).
@@ -34,7 +34,6 @@ import { getAuditContext } from '@/shared/lib/auditHelpers';
 
 interface BootstrapResponse {
   sessionId: string;
-  redirectTo: string;
 }
 
 export async function POST(
@@ -66,7 +65,7 @@ export async function POST(
     return NextResponse.json(
       {
         success: true,
-        data: { sessionId: newSessionId, redirectTo: '/' },
+        data: { sessionId: newSessionId },
       } satisfies ApiResponse<BootstrapResponse>,
       { status: 200 },
     );

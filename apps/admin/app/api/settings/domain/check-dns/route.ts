@@ -4,7 +4,7 @@ import dns from 'node:dns/promises';
 import { getSiteSetting, setSiteSetting, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { withPermissionRoute } from '@/shared/api/withAdminRouteScope';
+import { withPermissionRoute } from '@/entities/auth/lib/withAdminRouteScope';
 import type { DnsCheckResult } from '@/features/site-settings/model/settingsSchemas';
 
 export const POST = withPermissionRoute(

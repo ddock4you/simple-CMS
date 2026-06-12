@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { withPermissionRoute } from '@/shared/api/withAdminRouteScope';
+import { withPermissionRoute } from '@/entities/auth/lib/withAdminRouteScope';
 import {
   assertNotLastSystemAdmin,
   LastSystemAdminError,

@@ -8,7 +8,7 @@ import {
 } from '@simple-cms/types';
 
 import { feedbackExportQuerySchema } from '@/features/subpage-feedback/model/feedbackExportSchema';
-import { withPermissionRoute } from '@/shared/api/withAdminRouteScope';
+import { withPermissionRoute } from '@/entities/auth/lib/withAdminRouteScope';
 import {
   kstStartOfDay,
   kstEndOfDay,

@@ -4,7 +4,7 @@ import { prisma } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { hasPermission } from '@/entities/auth/lib/checkPermission';
-import { withAnyPermissionRoute } from '@/shared/api/withAdminRouteScope';
+import { withAnyPermissionRoute } from '@/entities/auth/lib/withAdminRouteScope';
 
 export type QuickSearchType = 'subpage' | 'post' | 'board' | 'menu';
 
