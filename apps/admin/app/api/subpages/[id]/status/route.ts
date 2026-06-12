@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 
 const statusSchema = z.object({
   status: z.enum(['DRAFT', 'PUBLISHED']),

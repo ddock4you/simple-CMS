@@ -14,7 +14,7 @@ import type {
 } from '@simple-cms/types';
 import { SUBPAGE_VERSION_LABEL_MAX_LENGTH } from '@simple-cms/types';
 
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 
 const listQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional().default(1),

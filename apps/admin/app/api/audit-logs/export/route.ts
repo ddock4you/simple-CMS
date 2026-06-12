@@ -5,7 +5,7 @@ import { logAuditEvent, prisma } from '@simple-cms/db';
 import type { AuditAction, AuditEntityType } from '@simple-cms/db';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 import { auditLogExportQuerySchema } from '@/features/audit-log/model/auditLogSchemas';
 import {
   ACTION_LABELS,

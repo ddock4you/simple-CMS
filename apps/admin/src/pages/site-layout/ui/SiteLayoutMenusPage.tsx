@@ -4,10 +4,10 @@ import { hasPermission } from '@/entities/auth/lib/checkPermission';
 import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { menuSetListOptions } from '@/features/navigation-management/api/navigationQueries';
 import { NavigationListClient } from '@/pages/navigation-management/ui/NavigationListClient';
-import { SiteLayoutNav } from '@/features/site-layout/ui/SiteLayoutNav';
 import { getQueryClient } from '@/shared/api/queryClient';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { QueryStateMessage } from '@/shared/ui/QueryStateMessage';
+import { SiteLayoutNav } from './local/SiteLayoutNav';
 
 const SITE_LAYOUT_MENU_PATH = '/site-layout/menus';
 

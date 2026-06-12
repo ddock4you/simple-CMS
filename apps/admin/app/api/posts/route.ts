@@ -5,7 +5,7 @@ import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse, PaginatedResponse } from '@simple-cms/types';
 import { extractTextFromTiptap } from '@simple-cms/editor';
 
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 import { createUniquePostSlug } from '@/shared/lib/opaqueSlug';
 import {
   postListQuerySchema,

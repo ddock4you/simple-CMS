@@ -4,7 +4,7 @@ import { prisma } from '@simple-cms/db';
 import type { ApiResponse, HomeReferencesDto } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 
 /**
  * 섹션 편집 Dialog의 드롭다운용 참조 데이터 묶음.

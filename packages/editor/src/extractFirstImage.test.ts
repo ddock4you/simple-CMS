@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractFirstImageFromTiptap } from './extractFirstImageFromTiptap';
+import { extractFirstImageFromTiptap } from './extractFirstImage';
 
 describe('extractFirstImageFromTiptap', () => {
   it('returns null for empty content', () => {

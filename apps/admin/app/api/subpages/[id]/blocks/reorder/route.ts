@@ -6,7 +6,7 @@ import { prisma, logAuditEvent } from '@simple-cms/db';
 
 import { reorderBlocksSchema } from '@/features/block-management/model/blockSchemas';
 import { recalculateSubpageContent } from '@/shared/lib/blockContentRecalculation';
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 
 export const PATCH = defineRoute<z.infer<typeof reorderBlocksSchema>, null>({
   resource: 'subpages',

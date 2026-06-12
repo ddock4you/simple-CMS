@@ -4,7 +4,7 @@ import { prisma } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 import { generateSlug } from '@simple-cms/editor';
 
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 import { renormalizeDisplayOrder } from '@/shared/api/renormalizeDisplayOrder';
 import { updateBoardSchema } from '@/features/board-management/model/boardSchemas';
 import type { UpdateBoardData } from '@/features/board-management/model/boardSchemas';

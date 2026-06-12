@@ -14,7 +14,7 @@ import { FeedbackFilters } from '@/features/subpage-feedback/ui/FeedbackFilters'
 import { FeedbackListTable } from '@/features/subpage-feedback/ui/FeedbackListTable';
 import { FeedbackStatsSection } from '@/features/subpage-feedback/ui/FeedbackStatsSection';
 import { getQueryClient } from '@/shared/api/queryClient';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
 

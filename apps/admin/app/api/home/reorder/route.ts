@@ -4,7 +4,7 @@ import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
 import { reorderHomeSectionsSchema } from '@/features/home-management/model/homeSchemas';
 

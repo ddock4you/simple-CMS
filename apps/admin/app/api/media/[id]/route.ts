@@ -4,7 +4,7 @@ import type { z } from 'zod';
 import { prisma } from '@simple-cms/db';
 import type { ApiResponse, MediaDetail } from '@simple-cms/types';
 
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 import { findMediaReferences } from '@/features/media-management/lib/findMediaReferences';
 import { updateMediaSchema } from '@/features/media-management/model/mediaSchemas';
 import { getStorageAdapter } from '@/shared/lib/storage';

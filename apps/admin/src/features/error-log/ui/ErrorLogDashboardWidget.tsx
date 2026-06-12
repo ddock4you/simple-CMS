@@ -4,7 +4,7 @@ import { prisma } from '@simple-cms/db';
 
 import { hasPermission } from '@/entities/auth/lib/checkPermission';
 import { getCurrentUser } from '@/entities/auth/lib/getCurrentUser';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 import { StatCard } from '@/shared/ui/layout/StatCard';
 
 export async function ErrorLogDashboardWidget() {

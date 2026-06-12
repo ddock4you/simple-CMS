@@ -18,7 +18,7 @@ import {
 } from '@/features/block-management/model/blockLabels';
 import { recalculateSubpageContent } from '@/shared/lib/blockContentRecalculation';
 import { renormalizeDisplayOrder } from '@/shared/api/renormalizeDisplayOrder';
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 
 type BlockDeleteResult = {
   entityTitle: string;

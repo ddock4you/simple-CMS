@@ -4,7 +4,7 @@ import { prisma } from '@simple-cms/db';
 import type { ApiResponse, HomePopupReferencesDto } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 
 /**
  * LinkTargetInput 공용 참조 데이터 (팝업 + 홈 섹션 공통).

@@ -22,7 +22,7 @@ vi.mock('@/entities/auth/lib/requireAnyPermission', () => ({
   requireAnyPermission: mocks.requireAnyPermission,
 }));
 
-vi.mock('@/shared/api/runWithUserDemoSession', () => ({
+vi.mock('@/entities/auth/lib/runWithUserDemoSession', () => ({
   runWithUserDemoSession: mocks.runWithUserDemoSession,
 }));
 

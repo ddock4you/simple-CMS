@@ -2,15 +2,15 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 
 import { hasPermission } from '@/entities/auth/lib/checkPermission';
 import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
-import { brandingSettingsOptions } from '@/features/site-settings/api/settingsQueries';
-import { HeaderLogoSettingsForm } from '@/features/site-layout/ui/HeaderLogoSettingsForm';
-import { SiteLayoutNav } from '@/features/site-layout/ui/SiteLayoutNav';
-import { SlotMenuToolbarAction } from '@/features/site-layout/ui/SlotMenuToolbarAction';
 import { menuSetListOptions } from '@/features/navigation-management/api/navigationQueries';
+import { brandingSettingsOptions } from '@/features/site-settings/api/settingsQueries';
 import { getQueryClient } from '@/shared/api/queryClient';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { QueryStateMessage } from '@/shared/ui/QueryStateMessage';
+import { HeaderLogoSettingsForm } from './local/HeaderLogoSettingsForm';
+import { SiteLayoutNav } from './local/SiteLayoutNav';
+import { SlotMenuToolbarAction } from './local/SlotMenuToolbarAction';
 
 export default async function SiteLayoutHeaderPage() {
   const user = await requireAuth();

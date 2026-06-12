@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { prisma, logAuditEvent } from '@simple-cms/db';
 
-import { defineBulkOperation } from '@/shared/api/defineBulkOperation';
+import { defineBulkOperation } from '@/entities/auth/lib/defineBulkOperation';
 import { renormalizeDisplayOrder } from '@/shared/api/renormalizeDisplayOrder';
 
 const bulkDeleteSchema = z.object({

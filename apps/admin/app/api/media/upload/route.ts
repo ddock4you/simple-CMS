@@ -11,7 +11,7 @@ import {
 import type { ApiResponse, UploadMediaResponse } from '@simple-cms/types';
 
 import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
 import { getStorageAdapter } from '@/shared/lib/storage';
 

@@ -6,7 +6,7 @@ import type { z } from 'zod';
 
 import { createSubpageSchema, subpageListQuerySchema } from '@/features/subpage-management/model/subpageSchemas';
 import type { SubpageListItem } from '@/features/subpage-management/model/subpageFilters';
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 import { createUniqueSubpageSlug } from '@/shared/lib/opaqueSlug';
 
 export const GET = defineRoute<undefined, PaginatedResponse<SubpageListItem>>({

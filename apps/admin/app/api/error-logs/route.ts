@@ -4,7 +4,7 @@ import { prisma } from '@simple-cms/db';
 import type { ApiResponse, PaginatedResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 import type {
   ErrorLogGroupItem,
   ErrorLogListItem,

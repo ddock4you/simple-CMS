@@ -10,7 +10,7 @@ import {
 } from '@simple-cms/db';
 import type { SubpageVersionDetail, SubpageVersionSnapshot } from '@simple-cms/types';
 
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 
 const updateSchema = z.object({
   isPinned: z.boolean(),

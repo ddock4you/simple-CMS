@@ -6,7 +6,7 @@ import { extractTextFromTiptap } from '@simple-cms/editor';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 import { updateHomePopupSchema } from '@/features/popup-management/model/popupSchemas';
 
 export async function GET(

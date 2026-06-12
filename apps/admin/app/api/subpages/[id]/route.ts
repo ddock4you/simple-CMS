@@ -6,7 +6,7 @@ import type { z } from 'zod';
 
 import { updateSubpageSchema } from '@/features/subpage-management/model/subpageSchemas';
 import type { SubpageDetail } from '@/features/subpage-management/model/subpageFilters';
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 import { renormalizeDisplayOrder } from '@/shared/api/renormalizeDisplayOrder';
 
 export const GET = defineRoute<undefined, SubpageDetail>({

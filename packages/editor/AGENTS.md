@@ -11,6 +11,7 @@ admin/web 양쪽에서 동일한 Tiptap 콘텐츠 렌더링을 보장하기 위�
 
 - 공유 Tiptap 확장 정의 (`getSharedExtensions()`) — admin 편집 / web 렌더링이 동일한 노드/마크 사용
 - Tiptap JSON → plain text 추출 유틸 (`extractTextFromTiptap()`) — PGroonga 검색 인덱싱용
+- Tiptap JSON → 첫 이미지 참조 추출 유틸 (`extractFirstImageFromTiptap()`) — 게시글/홈 섹션 썸네일 fallback용
 - slug 생성 유틸 (`generateSlug()`)
 - `@tiptap/html`의 `generateHTML` re-export
 
@@ -24,6 +25,7 @@ packages/editor/
 │   ├── imageWithMediaId.ts   # 기본 Image 확장 + mediaId attr (Stage 5a-2)
 │   ├── uploadPlugin.ts       # paste/drop 자동 업로드 ProseMirror plugin (Stage 5a-2)
 │   ├── extractText.ts        # Tiptap JSON → plain text
+│   ├── extractFirstImage.ts   # Tiptap JSON → 첫 이미지 참조
 │   └── generateSlug.ts       # 한글 슬러그 생성
 └── package.json
 ```

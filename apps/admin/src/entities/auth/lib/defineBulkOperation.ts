@@ -5,7 +5,7 @@ import type { ZodType } from 'zod';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 import type { HandlerContext } from './defineRoute';
 
 interface DefineBulkOperationOptions<TParsed extends { ids: string[] }, TFail> {

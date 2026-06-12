@@ -5,7 +5,7 @@ import { prisma } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 import { extractTextFromTiptap } from '@simple-cms/editor';
 
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 import { renormalizeDisplayOrder } from '@/shared/api/renormalizeDisplayOrder';
 import { updatePostSchema } from '@/features/post-management/model/postSchemas';
 import { buildPostPatchDiff } from '@/features/post-management/lib/buildPostPatchDiff';

@@ -5,12 +5,12 @@ import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { menuSetListOptions } from '@/features/navigation-management/api/navigationQueries';
 import { footerSettingsOptions } from '@/features/site-settings/api/settingsQueries';
 import { FooterSettingsForm } from '@/features/site-settings/ui/FooterSettingsForm';
-import { SiteLayoutNav } from '@/features/site-layout/ui/SiteLayoutNav';
-import { SlotMenuToolbarAction } from '@/features/site-layout/ui/SlotMenuToolbarAction';
 import { getQueryClient } from '@/shared/api/queryClient';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { QueryStateMessage } from '@/shared/ui/QueryStateMessage';
+import { SiteLayoutNav } from './local/SiteLayoutNav';
+import { SlotMenuToolbarAction } from './local/SlotMenuToolbarAction';
 
 export default async function SiteLayoutFooterPage() {
   const user = await requireAuth();

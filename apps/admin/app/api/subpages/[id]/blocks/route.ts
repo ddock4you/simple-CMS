@@ -17,7 +17,7 @@ import {
   normalizeIframeEmbedUrl,
 } from '@/features/block-management/model/blockLabels';
 import { recalculateSubpageContent } from '@/shared/lib/blockContentRecalculation';
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 
 function toListItem(b: {
   id: string;

@@ -16,7 +16,7 @@ import {
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 import {
   updateFooterSchema,
   type FooterSettingsData,

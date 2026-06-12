@@ -12,7 +12,7 @@ import {
 } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 import { feedbackStatsQuerySchema } from '@/features/subpage-feedback/model/feedbackFilters';
 import {
   DAY_MS,

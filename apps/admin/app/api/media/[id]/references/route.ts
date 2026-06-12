@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@simple-cms/db';
 import type { ApiResponse, MediaReferencesResponse } from '@simple-cms/types';
 
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 import { findMediaReferences } from '@/features/media-management/lib/findMediaReferences';
 
 export const GET = defineRoute<undefined, MediaReferencesResponse>({

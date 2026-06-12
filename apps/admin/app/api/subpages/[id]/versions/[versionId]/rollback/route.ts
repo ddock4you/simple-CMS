@@ -11,7 +11,7 @@ import {
 } from '@simple-cms/db';
 
 import { recalculateSubpageContent } from '@/shared/lib/blockContentRecalculation';
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 
 const rollbackSchema = z.object({
   expectedRevision: z.number().int().nonnegative(),

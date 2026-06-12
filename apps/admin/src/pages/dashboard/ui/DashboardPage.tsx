@@ -4,7 +4,7 @@ import { prisma } from '@simple-cms/db';
 
 import { requireAuth } from '@/entities/auth/lib/getCurrentUser';
 import { ErrorLogDashboardWidget } from '@/features/error-log/ui/ErrorLogDashboardWidget';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 import { StatCard } from '@/shared/ui/layout/StatCard';
 import { PageHeader } from '@/shared/ui/PageHeader';
 

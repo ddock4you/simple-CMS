@@ -4,7 +4,7 @@ import { logAuditEvent, prisma } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
 import { errorLogBulkResolveBodySchema } from '@/features/error-log/model/errorLogSchemas';
 

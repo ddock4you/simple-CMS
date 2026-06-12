@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { logAuditEvent, prisma } from '@simple-cms/db';
 import type { BulkDeleteMediaResponse } from '@simple-cms/types';
 
-import { defineBulkOperation } from '@/shared/api/defineBulkOperation';
+import { defineBulkOperation } from '@/entities/auth/lib/defineBulkOperation';
 import { findMediaReferences } from '@/features/media-management/lib/findMediaReferences';
 import { getStorageAdapter } from '@/shared/lib/storage';
 

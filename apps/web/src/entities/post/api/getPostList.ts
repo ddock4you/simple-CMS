@@ -2,8 +2,7 @@ import { cache } from 'react';
 
 import { prisma } from '@simple-cms/db';
 import type { Prisma } from '@simple-cms/db';
-
-import { extractFirstImageFromTiptap } from '../lib/extractFirstImageFromTiptap';
+import { extractFirstImageFromTiptap } from '@simple-cms/editor';
 
 const DEFAULT_PAGE_SIZE = 20;
 

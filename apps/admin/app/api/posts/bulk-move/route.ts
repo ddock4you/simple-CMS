@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { prisma, logAuditEvent } from '@simple-cms/db';
 import type { ApiResponse } from '@simple-cms/types';
 
-import { defineRoute } from '@/shared/api/defineRoute';
+import { defineRoute } from '@/entities/auth/lib/defineRoute';
 
 const bulkMoveSchema = z.object({
   ids: z

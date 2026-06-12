@@ -7,7 +7,7 @@ import type { ZodType, ZodTypeDef } from 'zod';
 import { requirePermission } from '@/entities/auth/lib/requirePermission';
 import type { SessionUser } from '@/entities/auth/model/auth.types';
 import { getAuditContext } from '@/shared/lib/auditHelpers';
-import { runWithUserDemoSession } from '@/shared/api/runWithUserDemoSession';
+import { runWithUserDemoSession } from '@/entities/auth/lib/runWithUserDemoSession';
 
 type AuditEventPayload = Omit<Parameters<typeof logAuditEvent>[0], 'userId' | 'ipAddress' | 'userAgent'>;
 

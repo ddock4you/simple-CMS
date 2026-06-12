@@ -444,7 +444,7 @@ src/
 - 데이터/API:
   - 새 API/DB/권한 리소스 없음. `/api/settings/branding`, `/api/settings/footer`, `/api/navigation/*`를 조합한다.
   - 헤더 로고 전용 저장은 `/api/settings/branding` PATCH를 사용하되 siteName/siteDescription/favicon/OG 기존 값을 보존한 payload를 보낸다.
-- FSD: `features/site-layout/`, `pages/site-layout/`
+- FSD: 별도 `features/site-layout/` 슬라이스 없이 `pages/site-layout/`의 page-local UI에서 `features/site-settings/`와 `features/navigation-management/`를 조합한다.
 
 ### 메인 페이지 관리
 
@@ -1382,14 +1382,14 @@ app/api/{domain}/[id]/{action}/route.ts # 특수 액션 (approve, suspend 등)
 
 #### defineRoute 패턴
 
-`shared/api/defineRoute.ts` 팩토리 (Stage 16b-1). `requirePermission` → Zod 파싱 → handler → `{ success: true, data }` 래핑 → 감사 로그를 공통 처리.
+`entities/auth/lib/defineRoute.ts` 팩토리 (Stage 16b-1). `requirePermission` → Zod 파싱 → handler → `{ success: true, data }` 래핑 → 감사 로그를 공통 처리.
 
 - **단일 라우트** (`PATCH /api/subpages/[id]/status`): `handler`가 TResult 반환 → `audit.build(result, ctx)`로 감사 로그 자동 기록
 - **bulk 라우트** (`POST /api/subpages/bulk-delete`): `defineBulkOperation`이 id 배열 순회 → `{ deleted, blocked }` 응답 자동 조립
 - **다중 audit** (`POST /api/subpages/[id]/versions/[versionId]/rollback`): `audit.build`에서 배열 반환 시 여러 entityType에 감사 이벤트 동시 기록 (SUBPAGE UPDATE + SUBPAGE_VERSION CREATE)
 - **escape hatch**: handler가 `NextResponse`를 직접 반환하면 래핑·감사 로그 우회 (404·409·400 도메인 에러에 사용)
 - **no-op 패턴**: handler가 `null`을 반환하면 `audit.build` 호출 skip (PATCH 무변경 경로 등)
-- **인프라 위치**: `shared/api/{defineRoute,defineBulkOperation,renormalizeDisplayOrder}.ts`
+- **인프라 위치**: 인증/권한 결합 route helper는 `entities/auth/lib/{defineRoute,defineBulkOperation,runWithUserDemoSession}.ts`, 순수 정렬 유틸은 `shared/api/renormalizeDisplayOrder.ts`
 
 **적용 범위**: subpages 도메인 11 라우트 완료. 나머지 도메인(posts/boards/navigation/home 등)은 16b-2~N에서 점진 확장.
 

@@ -9,8 +9,8 @@ import type {
   NoticeConfig,
   GalleryCollectionConfig,
 } from '@simple-cms/types';
+import { extractFirstImageFromTiptap } from '@simple-cms/editor';
 
-import { extractFirstImageFromTiptap } from '@/entities/post/lib/extractFirstImageFromTiptap';
 import {
   parseBriefIntroConfig,
   parseFrequentMenuConfig,
