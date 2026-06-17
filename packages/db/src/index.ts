@@ -15,6 +15,7 @@ export {
   SNAPSHOT_SCHEMA_VERSION,
   createLocalMediaDownloader,
   createSupabaseMediaDownloader,
+  createSupabaseSeedStorageCallbacks,
   extractStorageKeyFromUrl,
   processMediaForExport,
   SNAPSHOT_MODEL_NAMES,
@@ -29,6 +30,7 @@ export type {
   ExportOptions,
   ImportOptions,
   ImportStats,
+  SupabaseSeedStorageConfig,
   SnapshotPayload,
   SnapshotModelName,
 } from './demo';

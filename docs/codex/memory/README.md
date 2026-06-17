@@ -19,6 +19,8 @@ Prefer the scoped `AGENTS.md` files for active coding rules, and use these memor
 - `project_db_migration_policy` — `docs/codex/memory/project_db_migration_policy.md`
 - `project_demo_deployment_pitfalls` — `docs/codex/memory/project_demo_deployment_pitfalls.md`
 - `project_demo_mode` — `docs/codex/memory/project_demo_mode.md`
+- `project_demo_mode_modularization_plan` — `docs/codex/memory/project_demo_mode_modularization_plan.md`
+- `project_demo_mode_modularization_execution_plan` — `docs/codex/memory/project_demo_mode_modularization_execution_plan.md`
 - `project_gallery_thumbnail` — `docs/codex/memory/project_gallery_thumbnail.md`
 - `project_stage15_design_system` — `docs/codex/memory/project_stage15_design_system.md`
 - `project_stage16_progress` — `docs/codex/memory/project_stage16_progress.md`

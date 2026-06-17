@@ -20,6 +20,8 @@ Codex automatically reads AGENTS.md files by directory scope.
 - [Search Form Submit Pattern](feedback_search_form_submit.md) — admin 검색은 Enter + [검색] 버튼 form submit. debounce 자동 검색 금지(서버 부담)
 - [Stage 15 Design System](project_stage15_design_system.md) — 디자이너 부재로 design.md가 admin 시각 결정의 단일 진실원. export css-tailwind 금지, brand color 추가 금지
 - [Demo Mode Master-merge Strategy](project_demo_mode.md) — DEMO_MODE 격리 인프라는 master에 통합. sentinel '**PROD**' + composite unique + findFirst/upsert 회피 관습
+- [Demo Mode Modularization Plan](project_demo_mode_modularization_plan.md) — 2026-06-11 시연 배포 장애 후 코드 전수 검토. session scope, demo constants, snapshot registry, storage, diagnostics 정리 계획
+- [Demo Mode Modularization Execution Plan](project_demo_mode_modularization_execution_plan.md) — 시연 모드 정리·모듈화 실제 작업 순서, PR0~PR5 범위, 위험도, 검증 명령 인계 메모
 - [build:demo Storybook bundling](project_build_demo_bundling.md) — 시연 Storybook을 web 빌드에 동봉(2 Vercel 프로젝트). Windows self-nesting/EPERM/long-path 함정 회피 패턴
 - [Stage 16 진행 현황](project_stage16_progress.md) — 16a/16c-1/16c-2/16d/16e/16b-1 완료. 다음: 16b-2(posts→boards→media 순 defineRoute 마이그레이션) + 16f(SettingsCardForm)
 - [Stage 18 성능 최적화](project_stage18_perf_optimization.md) — Vercel Hobby + Supabase us-east 정렬, cachedSession/getMenusBySlots 패턴, force-dynamic 회피

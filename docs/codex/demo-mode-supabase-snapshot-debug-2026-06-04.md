@@ -433,11 +433,19 @@ useEffect(() => {
 const { data, isPending, isError, error } = useQuery(options);
 
 if (isPending) {
-  return <div className="rounded-md border border-dashed p-8 text-center text-muted-foreground">불러오는 중...</div>;
+  return (
+    <div className="rounded-md border border-dashed p-8 text-center text-muted-foreground">
+      불러오는 중...
+    </div>
+  );
 }
 
 if (isError) {
-  return <div className="rounded-md border border-dashed p-8 text-center text-destructive">데이터를 불러오지 못했습니다. {error.message}</div>;
+  return (
+    <div className="rounded-md border border-dashed p-8 text-center text-destructive">
+      데이터를 불러오지 못했습니다. {error.message}
+    </div>
+  );
 }
 
 // 이 지점부터 data는 성공 결과로 취급한다.
@@ -529,19 +537,15 @@ cd /home/ddock4you/project/simple-CMS/apps/web
 7. API가 500이면 Vercel server log의 `console.error` 기준으로 route 내부 오류를 확인한다.
 8. visitor session row count 자체가 누락되어 있으면 clone/import 쪽으로 되돌아가 확인한다.
 
-## 2026-06-04 추가 작업: 개발 DB 스냅샷 전체 노출 보강
+## 2026-06-04 추가 작업: 개발 DB 스냅샷 노출 보강
 
-### 1. 스냅샷 범위 확장
+### 1. 스냅샷 범위 정정
 
-- 기존 snapshot v1은 14모델만 포함해 admin 체크리스트의 `/audit-logs`, `/error-logs`가 개발 DB 데이터와 맞을 수 없었다.
-- snapshot v2는 `AuditLog`, `ErrorLog`를 포함한 16모델로 확장한다.
-- 기존 v1 JSON은 import 시 `AuditLog: []`, `ErrorLog: []`로 보정해 하위 호환을 유지한다.
-- 로그는 포함하되 다음 값은 익명화한다.
-  - `ipAddress`: `0.0.0.0`
-  - `userAgent`: `Demo Snapshot`
-  - `referer`: `null`
-  - `changes` / `metadata` 내부 `token`, `password`, `cookie`, `email`, `ip`, `userAgent`, `session` 계열 키: `[REDACTED]`
-- `AuditLog.entityId`, `AuditLog.userId`, `ErrorLog.resolvedBy`는 import/clone 시 새 session row id로 재매핑한다. 매핑 불가 값은 `null` 처리한다.
+- 과거 검토 중 `AuditLog`, `ErrorLog`까지 포함한 16모델 snapshot 확장이 논의됐지만 현재 정책은 **14모델 snapshot**으로 확정됐다.
+- snapshot 포함 모델은 `Role`, `User`, `Media`, `SiteSettings`, `NavigationMenu`, `Board`, `HomeSection`, `Subpage`, `Post`, `PageBlock`, `HomePopup`, `NavigationMenuItem`, `SubpageVersion`, `SubpageFeedback`이다.
+- `AuditLog`와 `ErrorLog`는 누적 운영 로그라 시연 seed로 복제하면 출처와 의미가 왜곡된다. 따라서 export/import/clone 대상에서 제외한다.
+- legacy JSON에 `AuditLog`/`ErrorLog` 배열이 남아 있어도 `snapshotPayloadSchema`가 파싱 과정에서 무시한다. 새 snapshot UI와 통계도 14모델 기준이다.
+- `resetSeedData()`와 만료 cleanup은 과거 정책으로 남은 `AuditLog`/`ErrorLog` row를 정리할 수 있지만, 이는 snapshot 포함 정책이 아니라 잔여 데이터 청소 목적이다.
 
 ### 2. 공개 web 시연 세션 보강
 
@@ -558,8 +562,8 @@ cd /home/ddock4you/project/simple-CMS/apps/web
 
 admin:
 
-- `/audit-logs`, `/error-logs`에 개발 DB에서 가져온 로그가 익명화된 값으로 표시되는지 확인한다.
-- `/settings/demo-snapshot`의 총 row 설명이 16모델 기준이고 `AuditLog`, `ErrorLog` count가 포함되는지 확인한다.
+- `/settings/demo-snapshot`의 총 row 설명이 14모델 기준이고 `AuditLog`, `ErrorLog`가 snapshot 대상처럼 표시되지 않는지 확인한다.
+- `/audit-logs`, `/error-logs`는 snapshot seed 콘텐츠 확인 대상이 아니다. 해당 화면은 시연 중 발생한 visitor별 신규 로그/에러를 확인하는 운영 화면으로 본다.
 
 public web:
 
@@ -639,6 +643,8 @@ SubpageFeedback 0
 AuditLog 0
 ErrorLog 0
 ```
+
+주의: 위 count의 `AuditLog 0`, `ErrorLog 0`은 당시 DB 상태 참고값이다. 현재 snapshot/export/import 대상 14모델에는 포함되지 않는다.
 
 사용자 확인:
 

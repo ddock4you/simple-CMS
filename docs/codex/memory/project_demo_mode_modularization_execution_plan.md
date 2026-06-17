@@ -2,11 +2,14 @@
 Codex migration note: this file is a Codex-friendly instruction/reference file.
 Codex automatically reads AGENTS.md files by directory scope.
 -->
+
 ---
+
 name: Demo Mode Modularization Execution Plan
 description: 2026-06-11 시연 모드 정리·모듈화 실제 작업 순서, 위험도, 검증 명령 인계 메모
 type: project
 originSessionId: 2026-06-11-demo-mode-modularization-execution-plan
+
 ---
 
 # Demo Mode Modularization Execution Plan
@@ -240,8 +243,8 @@ PR4 시작 시 주의할 남은 리스크:
 - `modelRegistry.ts`는 schema/UI/cleanup/reset 정합성을 개선했지만, `exportSnapshot.ts`, `importSnapshot.ts`, `cloneSeedToSession.ts`는 여전히 모델별 Prisma 작업을 하드코딩한다.
   - 특히 `exportSnapshot.ts`는 최종 payload에 `as SnapshotPayload`를 사용하므로 신규 snapshot 모델 누락을 타입이 막지 못한다.
   - PR4에서 `snapshot/idMaps.ts`, `snapshot/mediaUpload.ts`, `seedClone/idMaps.ts`, `seedClone/cloneSteps.ts`를 분리할 때 `SNAPSHOT_MODEL_NAMES`/`CLONE_MODEL_NAMES` coverage 테스트를 추가한다.
-- `apps/admin/next.config.ts`와 `apps/web/next.config.ts`에는 `/_cms/admin` literal이 남아 있다. Next config에서 workspace package import 안정성을 판단한 뒤 PR4 또는 별도 cleanup에서 상수화한다. 지금은 runtime path helper drift가 더 중요한 문제였고, 런타임 호출부는 대부분 교체 완료됐다.
-- `docs/codex/demo-mode-supabase-snapshot-debug-2026-06-04.md`에는 과거 16모델 snapshot 메모가 남아 있다. 현재 실행 계획과 코드 기준은 14모델 snapshot + AuditLog/ErrorLog 제외다. 문서 정합화는 PR4 후 결과에 맞춰 별도 정리한다.
+- `apps/admin/next.config.ts`와 `apps/web/next.config.ts`에는 `/_cms/admin` literal이 남아 있었다. PR4 후속 정리에서 `@simple-cms/types`의 `DEMO_ADMIN_BASE_PATH`로 상수화했다.
+- `docs/codex/demo-mode-supabase-snapshot-debug-2026-06-04.md`에는 과거 16모델 snapshot 메모가 남아 있었다. PR4 후속 정리에서 현재 기준인 14모델 snapshot + AuditLog/ErrorLog 제외 정책으로 정정했다.
 
 PR4 진입 전 재검증 권장:
 
@@ -303,6 +306,43 @@ pnpm --filter @simple-cms/db test -- src/demo
 - `cloneSeedToSession(visitorId)` 실행
 - 14모델 count/FK remap 확인
 - `demo.runWith({ sessionId: visitorId })`에서 visitor row만 보이는지 확인
+
+### PR4 완료 메모 (2026-06-17)
+
+PR4(snapshot / clone / storage / CLI 모듈화)를 완료했다.
+
+- `packages/db/src/demo/snapshot/ensureDemoAdminSeed.ts` — import 후 `demo_admin`과 system role 복구 분리
+- `packages/db/src/demo/snapshot/idMaps.ts` — snapshot import idMap 생성 분리
+- `packages/db/src/demo/snapshot/mediaUpload.ts` — Phase 1 media upload + URL map 분리
+- `packages/db/src/demo/seedClone/idMaps.ts` — clone idMap 생성/조회 helper 분리
+- `packages/db/src/demo/seedClone/cloneSteps.ts` — 14모델 clone createMany/remap 단계 분리. `cloneSeedToSession.ts`는 bypass guard + transaction 소유만 담당
+- `packages/db/src/demo/storage/supabaseSeedStorage.ts` — CLI용 Supabase seed upload/cleanup callback factory 추가. `demo-import.ts`의 inline Supabase 구현 제거
+- `packages/db/scripts/demo-{export,import}.ts` — 자체 `new PrismaClient()` 제거, `packages/db/src/client.ts` singleton `prisma` 사용 후 disconnect
+- `apps/admin/src/shared/lib/storage/supabaseAdapter.ts` — `cleanupSessionFolder()`/`cleanupSeedFolder()` 중복을 내부 `cleanupFolder()`로 통합, `uploadObject()` helper 추가
+- `packages/db/src/demo/exportSnapshot.ts` — 최종 `as SnapshotPayload` 제거, `SnapshotPayload['models']`로 모델 누락을 타입이 잡게 변경
+- `apps/{admin,web}/next.config.ts` — `@simple-cms/types`의 `DEMO_ADMIN_BASE_PATH`로 `/_cms/admin` literal 상수화
+- `docs/codex/demo-mode-supabase-snapshot-debug-2026-06-04.md` — 과거 16모델 snapshot 메모를 현재 14모델 + AuditLog/ErrorLog 제외 정책으로 정정
+
+PR4 검증:
+
+```bash
+pnpm --filter @simple-cms/db test -- src/demo
+pnpm --filter @simple-cms/db typecheck
+pnpm --filter @simple-cms/admin typecheck
+pnpm --filter @simple-cms/web typecheck
+pnpm --filter @simple-cms/admin lint
+pnpm --filter @simple-cms/types typecheck
+git diff --check
+```
+
+`pnpm --filter @simple-cms/admin lint`는 기존 React Compiler/RHF warning만 남고 error 0건이었다.
+
+PR5 시작 전 권장 확인:
+
+- PR4 커밋 이후 `git status --short`로 untracked snapshot JSON이 커밋 대상이 아닌지 확인
+- `apps/web/app/api/demo/session-diagnostics/route.ts`와 `apps/web/src/shared/lib/demoSessionDiagnostics.ts` 현재 구현 확인
+- diagnostics 보호 정책을 먼저 정한다: `DEMO_SESSION_DEBUG=true` 또는 `Authorization: Bearer ${CRON_SECRET}` 중 하나 이상 요구
+- demo smoke E2E는 필수 CI가 아니라 `workflow_dispatch`/태그 기반 opt-in부터 시작한다
 
 ## PR5: diagnostics 보호와 demo smoke E2E
 

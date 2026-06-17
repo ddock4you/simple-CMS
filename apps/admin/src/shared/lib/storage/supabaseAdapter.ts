@@ -24,15 +24,109 @@ export class SupabaseStorageAdapter implements StorageAdapter {
   private readonly client;
   private readonly bucket: string;
 
-  constructor(config: {
-    url: string;
-    serviceRoleKey: string;
-    bucket: string;
-  }) {
+  constructor(config: { url: string; serviceRoleKey: string; bucket: string }) {
     this.client = createClient(config.url, config.serviceRoleKey, {
       auth: { persistSession: false },
     });
     this.bucket = config.bucket;
+  }
+
+  private buildStorageKey(category: string, filename: string): string {
+    const sessionId = demo.getCurrentSessionId();
+    const isolated =
+      process.env.DEMO_MODE === 'true' && sessionId !== demo.PROD_SENTINEL;
+
+    if (process.env.DEMO_MODE === 'true' && sessionId === demo.PROD_SENTINEL) {
+      console.warn(
+        '[SupabaseStorageAdapter] DEMO_MODE upload without demo session context; using non-isolated storage key.',
+      );
+    }
+
+    return isolated
+      ? `${sessionId}/${category}/${filename}`
+      : `${category}/${filename}`;
+  }
+
+  private async uploadObject(
+    storageKey: string,
+    buffer: Buffer,
+    mimeType: string,
+    upsert: boolean,
+  ): Promise<string> {
+    const { error } = await this.client.storage
+      .from(this.bucket)
+      .upload(storageKey, buffer, {
+        contentType: mimeType,
+        upsert,
+      });
+
+    if (error) {
+      throw new Error(`Supabase upload 실패 (${storageKey}): ${error.message}`);
+    }
+
+    const {
+      data: { publicUrl },
+    } = this.client.storage.from(this.bucket).getPublicUrl(storageKey);
+    return publicUrl;
+  }
+
+  private async cleanupFolder(rootPrefix: string): Promise<{
+    filesDeleted: number;
+    errors: string[];
+  }> {
+    const errors: string[] = [];
+    let filesDeleted = 0;
+
+    try {
+      const { data: categories, error: listErr } = await this.client.storage
+        .from(this.bucket)
+        .list(rootPrefix, { limit: 1000 });
+
+      if (listErr) {
+        errors.push(`list(${rootPrefix}): ${listErr.message}`);
+        return { filesDeleted, errors };
+      }
+      if (!categories || categories.length === 0) {
+        return { filesDeleted, errors };
+      }
+
+      for (const cat of categories) {
+        if (cat.id !== null) continue;
+
+        const prefix = `${rootPrefix}/${cat.name}`;
+        const { data: files, error: filesErr } = await this.client.storage
+          .from(this.bucket)
+          .list(prefix, { limit: 1000 });
+
+        if (filesErr) {
+          errors.push(`list(${prefix}): ${filesErr.message}`);
+          continue;
+        }
+        if (!files || files.length === 0) continue;
+
+        const paths = files
+          .filter((f) => f.id !== null)
+          .map((f) => `${prefix}/${f.name}`);
+        if (paths.length === 0) continue;
+
+        for (let i = 0; i < paths.length; i += 1000) {
+          const chunk = paths.slice(i, i + 1000);
+          const { error: rmErr } = await this.client.storage
+            .from(this.bucket)
+            .remove(chunk);
+          if (rmErr) {
+            errors.push(`remove(${prefix}): ${rmErr.message}`);
+          } else {
+            filesDeleted += chunk.length;
+          }
+        }
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      errors.push(msg);
+    }
+
+    return { filesDeleted, errors };
   }
 
   async upload(input: StorageUploadInput): Promise<StorageUploadResult> {
@@ -47,30 +141,13 @@ export class SupabaseStorageAdapter implements StorageAdapter {
     const safeExt = ext.replace(/[^a-z0-9.]/gi, '');
     const filename = `${Date.now()}-${randomUUID()}${safeExt}`;
 
-    // DEMO_MODE에서 visitor cuid 또는 '__SEED__' 컨텍스트면 sessionId prefix 추가.
-    // cleanup이 sessionId 폴더 단위로 list/remove 가능 + visitor 간 격리.
-    // 운영(__PROD__) 또는 비시연 환경은 prefix 없이 기존 동작.
-    const sessionId = demo.getCurrentSessionId();
-    const isolated =
-      process.env.DEMO_MODE === 'true' && sessionId !== demo.PROD_SENTINEL;
-    const storageKey = isolated
-      ? `${sessionId}/${safeCategory}/${filename}`
-      : `${safeCategory}/${filename}`;
-
-    const { error } = await this.client.storage
-      .from(this.bucket)
-      .upload(storageKey, buffer, {
-        contentType: mimeType,
-        upsert: false,
-      });
-
-    if (error) {
-      throw new Error(`Supabase 업로드 실패: ${error.message}`);
-    }
-
-    const {
-      data: { publicUrl },
-    } = this.client.storage.from(this.bucket).getPublicUrl(storageKey);
+    const storageKey = this.buildStorageKey(safeCategory, filename);
+    const publicUrl = await this.uploadObject(
+      storageKey,
+      buffer,
+      mimeType,
+      false,
+    );
 
     return {
       url: publicUrl,
@@ -115,71 +192,11 @@ export class SupabaseStorageAdapter implements StorageAdapter {
   async cleanupSessionFolder(
     sessionId: string,
   ): Promise<{ filesDeleted: number; errors: string[] }> {
-    const errors: string[] = [];
-    let filesDeleted = 0;
-
-    if (
-      sessionId === '__PROD__' ||
-      sessionId === '__SEED__' ||
-      !sessionId
-    ) {
+    if (!sessionId || demo.RESERVED_SESSION_IDS.has(sessionId)) {
       return { filesDeleted: 0, errors: [] };
     }
 
-    try {
-      // 1-pass: sessionId 폴더 안의 카테고리 목록
-      const { data: categories, error: listErr } = await this.client.storage
-        .from(this.bucket)
-        .list(sessionId, { limit: 1000 });
-
-      if (listErr) {
-        errors.push(`list(${sessionId}): ${listErr.message}`);
-        return { filesDeleted, errors };
-      }
-      if (!categories || categories.length === 0) {
-        return { filesDeleted, errors };
-      }
-
-      // 2-pass: 각 카테고리 폴더 안의 파일
-      for (const cat of categories) {
-        // Supabase: 폴더는 id가 null, 파일은 id 존재. 폴더만 처리
-        if (cat.id !== null) continue;
-
-        const prefix = `${sessionId}/${cat.name}`;
-        const { data: files, error: filesErr } = await this.client.storage
-          .from(this.bucket)
-          .list(prefix, { limit: 1000 });
-
-        if (filesErr) {
-          errors.push(`list(${prefix}): ${filesErr.message}`);
-          continue;
-        }
-        if (!files || files.length === 0) continue;
-
-        const paths = files
-          .filter((f) => f.id !== null)
-          .map((f) => `${prefix}/${f.name}`);
-        if (paths.length === 0) continue;
-
-        // chunk 1000 (Supabase remove 한도)
-        for (let i = 0; i < paths.length; i += 1000) {
-          const chunk = paths.slice(i, i + 1000);
-          const { error: rmErr } = await this.client.storage
-            .from(this.bucket)
-            .remove(chunk);
-          if (rmErr) {
-            errors.push(`remove(${prefix}): ${rmErr.message}`);
-          } else {
-            filesDeleted += chunk.length;
-          }
-        }
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      errors.push(msg);
-    }
-
-    return { filesDeleted, errors };
+    return this.cleanupFolder(sessionId);
   }
 
   /**
@@ -198,60 +215,7 @@ export class SupabaseStorageAdapter implements StorageAdapter {
     filesDeleted: number;
     errors: string[];
   }> {
-    const errors: string[] = [];
-    let filesDeleted = 0;
-    const seedPrefix = '__SEED__';
-
-    try {
-      const { data: categories, error: listErr } = await this.client.storage
-        .from(this.bucket)
-        .list(seedPrefix, { limit: 1000 });
-
-      if (listErr) {
-        errors.push(`list(${seedPrefix}): ${listErr.message}`);
-        return { filesDeleted, errors };
-      }
-      if (!categories || categories.length === 0) {
-        return { filesDeleted, errors };
-      }
-
-      for (const cat of categories) {
-        if (cat.id !== null) continue;
-
-        const prefix = `${seedPrefix}/${cat.name}`;
-        const { data: files, error: filesErr } = await this.client.storage
-          .from(this.bucket)
-          .list(prefix, { limit: 1000 });
-
-        if (filesErr) {
-          errors.push(`list(${prefix}): ${filesErr.message}`);
-          continue;
-        }
-        if (!files || files.length === 0) continue;
-
-        const paths = files
-          .filter((f) => f.id !== null)
-          .map((f) => `${prefix}/${f.name}`);
-        if (paths.length === 0) continue;
-
-        for (let i = 0; i < paths.length; i += 1000) {
-          const chunk = paths.slice(i, i + 1000);
-          const { error: rmErr } = await this.client.storage
-            .from(this.bucket)
-            .remove(chunk);
-          if (rmErr) {
-            errors.push(`remove(${prefix}): ${rmErr.message}`);
-          } else {
-            filesDeleted += chunk.length;
-          }
-        }
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      errors.push(msg);
-    }
-
-    return { filesDeleted, errors };
+    return this.cleanupFolder(demo.SEED_SENTINEL);
   }
 
   /**
@@ -271,24 +235,12 @@ export class SupabaseStorageAdapter implements StorageAdapter {
     buffer: Buffer,
     mimeType: string,
   ): Promise<string> {
-    if (!storageKey.startsWith('__SEED__/')) {
+    if (!storageKey.startsWith(`${demo.SEED_SENTINEL}/`)) {
       throw new Error(
-        `uploadToSeed는 __SEED__/ 경로에만 사용 가능합니다: ${storageKey}`,
+        `uploadToSeed는 ${demo.SEED_SENTINEL}/ 경로에만 사용 가능합니다: ${storageKey}`,
       );
     }
-    const { error } = await this.client.storage
-      .from(this.bucket)
-      .upload(storageKey, buffer, {
-        contentType: mimeType,
-        upsert: true, // import는 cleanupSeedFolder 후 호출되지만 안전장치
-      });
-    if (error) {
-      throw new Error(`Supabase upload 실패 (${storageKey}): ${error.message}`);
-    }
-    const {
-      data: { publicUrl },
-    } = this.client.storage.from(this.bucket).getPublicUrl(storageKey);
-    return publicUrl;
+    return this.uploadObject(storageKey, buffer, mimeType, true);
   }
 
   urlToStorageKey(url: string): string | null {

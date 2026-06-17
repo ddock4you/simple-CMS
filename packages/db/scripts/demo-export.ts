@@ -24,19 +24,13 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
-import { PrismaClient } from '../src/generated/prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-
+import { prisma } from '../src/client';
 import {
   exportSnapshot,
   createLocalMediaDownloader,
   createSupabaseMediaDownloader,
   extractStorageKeyFromUrl,
 } from '../src/demo';
-
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
-// CLI는 자체 PrismaClient — extension 미적용. exportSnapshot 안의 sourceSessionId WHERE로 회수.
-const prisma = new PrismaClient({ adapter });
 
 async function main() {
   const outputPath = process.argv[2];
@@ -77,11 +71,8 @@ async function main() {
   console.log('[demo-export] provider=%s', provider);
   console.log('[demo-export] sourceSessionId=__PROD__');
 
-  // CLI는 extension 미적용이지만 exportSnapshot이 내부에서 runWithBypass로 wrap.
-  // 그러나 자체 PrismaClient 사용 시 packages/db의 prisma 인스턴스가 아니므로
-  // 직접 query 후 in-process 매핑 필요. 대안: 본 CLI는 client 인스턴스를 prisma 모듈에
-  // 의존하므로 환경변수 DATABASE_URL이 같으면 동작 동일.
-  // (exportSnapshot 내부의 prisma는 packages/db/src/client.ts 인스턴스)
+  // CLI도 packages/db singleton prisma를 사용한다. exportSnapshot은 내부에서
+  // runWithBypass로 extension 필터를 우회하고 sourceSessionId WHERE를 명시한다.
   const payload = await exportSnapshot({
     sourceSessionId: '__PROD__',
     downloadMedia,

@@ -1,6 +1,7 @@
 import path from 'node:path';
 import dotenv from 'dotenv';
 import type { NextConfig } from 'next';
+import { DEMO_ADMIN_BASE_PATH } from '@simple-cms/types';
 
 // 모노레포 루트의 .env를 로드
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -18,8 +19,8 @@ const nextConfig: NextConfig = {
   // images.unoptimized: basePath 하의 Next Image Optimization API 안정성 확보.
   ...(isDemoMode
     ? {
-        basePath: '/_cms/admin',
-        assetPrefix: '/_cms/admin',
+        basePath: DEMO_ADMIN_BASE_PATH,
+        assetPrefix: DEMO_ADMIN_BASE_PATH,
         images: { unoptimized: true },
       }
     : {

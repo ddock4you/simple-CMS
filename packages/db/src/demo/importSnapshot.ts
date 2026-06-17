@@ -17,14 +17,10 @@
  *
  * 호출자: admin route handler `/api/demo/snapshot/import`, CLI `pnpm demo:import`.
  */
-import { createId } from '@paralleldrive/cuid2';
-import { hash } from 'bcryptjs';
-
 import { prisma } from '../client';
 import { Prisma } from '../generated/prisma/client';
 
 import { resetSeedData, type ResetSeedDataOptions } from './resetSeedData';
-import { SNAPSHOT_MODEL_NAMES, type SnapshotModelName } from './modelRegistry';
 import { isBypassed, runWithBypass, SEED_SENTINEL } from './sessionContext';
 import {
   snapshotPayloadSchema,
@@ -44,7 +40,10 @@ import {
   type SnapshotSubpageVersionRow,
   type SnapshotUserRow,
 } from './snapshot.types';
-import { DEMO_ADMIN_USERNAME } from './cloneSeedToSession';
+import { PLACEHOLDER_PASSWORD_HASH } from './snapshot/constants';
+import { ensureDemoAdminSeed } from './snapshot/ensureDemoAdminSeed';
+import { buildSnapshotIdMaps } from './snapshot/idMaps';
+import { uploadSnapshotMedia } from './snapshot/mediaUpload';
 import { anonymizeUserAgent } from './snapshotLogSanitizer';
 import {
   walkSnapshotForMediaUrlRemap,
@@ -53,33 +52,6 @@ import {
 
 const TRANSACTION_TIMEOUT_MS = 60_000; // import는 row 많을 수 있어 cloneSeedToSession(30s)보다 길게
 const TRANSACTION_MAX_WAIT_MS = 5_000;
-
-/**
- * payload에 password 필드가 없는 User row를 시드 적재할 때 채울 placeholder.
- * 시드 User로는 로그인 못 하게 함 (verify 못 통과하는 random hash).
- * demo_admin User만 demo-seed.ts가 별도 hash로 덮어써야 자동 진입 동작.
- */
-const PLACEHOLDER_PASSWORD_HASH =
-  '$2a$10$INVALIDhashINVALIDhashINVALIDhashINVALIDhashINVALIDhashIN';
-const DEMO_ADMIN_PASSWORD = 'demo_password';
-
-const DEMO_ADMIN_PERMISSIONS = {
-  dashboard: { read: true },
-  subpages: { create: true, read: true, update: true, delete: true },
-  'subpage-feedback': { read: true, delete: true },
-  boards: { create: true, read: true, update: true, delete: true },
-  posts: { create: true, read: true, update: true, delete: true },
-  navigation: { create: true, read: true, update: true, delete: true },
-  home: { create: true, read: true, update: true, delete: true },
-  'home-popups': { create: true, read: true, update: true, delete: true },
-  media: { create: true, read: true, update: true, delete: true },
-  users: { create: true, read: true, update: true, delete: true },
-  roles: { create: true, read: true, update: true, delete: true },
-  auditLogs: { read: true },
-  errorLogs: { read: true, update: true },
-  settings: { read: true, update: true },
-  'demo-snapshot': { read: true, create: true, update: true },
-};
 
 export interface ImportOptions {
   /**
@@ -151,33 +123,17 @@ async function doImport(
   stats.errors.push(...resetResult.errors);
 
   // ─── Phase 1b: Media upload + URL 매핑 (트랜잭션 밖) ──
-  // (oldId → { newId, newUrl }) 매핑. 같은 idMap을 Phase 2에서 모두 사용.
-  const mediaIdMap = new Map<string, string>();
-  const mediaUrlMap = new Map<string, string>();
   // 같은 cloneSeedToSession 패턴: 모든 14 모델에 대해 idMap 사전 생성
   // (응답 순서 보장 모호성 회피)
-  const idMaps = buildIdMaps(payload);
-
-  for (const media of payload.models.Media) {
-    const newId = idMaps.Media.get(media.id)!;
-    mediaIdMap.set(media.id, newId);
-    try {
-      const buffer = Buffer.from(media.base64Data, 'base64');
-      // category 추출: filename 앞부분 (저장 시 admin이 만든 storageKey 형식 동일하게)
-      // 보존 정책: snapshot의 url은 source DB의 `home/abc.jpg` 같은 형식 →
-      // category를 url에서 안전하게 회수
-      const category = extractCategoryFromUrl(media.url) ?? 'home';
-      const newKey = `${SEED_SENTINEL}/${category}/${media.filename}`;
-      const newUrl = await options.uploadMedia(newKey, buffer, media.mimeType);
-      mediaUrlMap.set(media.id, newUrl);
-      stats.mediaFilesUploaded += 1;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      stats.errors.push(`media[${media.id}] upload: ${msg}`);
-      // 파일 upload 실패 시에도 DB row는 적재 (url은 source 그대로 — broken image 표시)
-      mediaUrlMap.set(media.id, media.url);
-    }
-  }
+  const idMaps = buildSnapshotIdMaps(payload);
+  const mediaUpload = await uploadSnapshotMedia(
+    payload.models.Media,
+    idMaps,
+    options.uploadMedia,
+  );
+  const { mediaIdMap, mediaUrlMap } = mediaUpload;
+  stats.mediaFilesUploaded = mediaUpload.mediaFilesUploaded;
+  stats.errors.push(...mediaUpload.errors);
 
   // ─── Phase 1c: walker remap (in-place) ───────────────
   // URL 재작성은 old mediaId 기준 mediaUrlMap을 사용하므로 mediaId-only remap보다 먼저 수행한다.
@@ -506,109 +462,4 @@ async function doImport(
   }
 
   return stats;
-}
-
-// ─── helpers ──────────────────────────────────────
-
-async function ensureDemoAdminSeed(): Promise<{
-  roleCreated: boolean;
-  userCreated: boolean;
-}> {
-  let roleCreated = false;
-  let userCreated = false;
-
-  let systemRole = await prisma.role.findFirst({
-    where: { sessionId: SEED_SENTINEL, isSystem: true },
-    orderBy: { id: 'asc' },
-  });
-
-  if (!systemRole) {
-    systemRole = await prisma.role.create({
-      data: {
-        sessionId: SEED_SENTINEL,
-        name: '총괄 관리자',
-        description: '모든 권한을 보유한 시스템 관리자 (시연용)',
-        permissions: DEMO_ADMIN_PERMISSIONS,
-        isSystem: true,
-        isDefault: false,
-      },
-    });
-    roleCreated = true;
-  } else {
-    await prisma.role.update({
-      where: { id: systemRole.id },
-      data: {
-        permissions: DEMO_ADMIN_PERMISSIONS,
-        isSystem: true,
-      },
-    });
-  }
-
-  const password = await hash(DEMO_ADMIN_PASSWORD, 10);
-  const existingDemoAdmin = await prisma.user.findFirst({
-    where: { sessionId: SEED_SENTINEL, username: DEMO_ADMIN_USERNAME },
-  });
-
-  if (existingDemoAdmin) {
-    await prisma.user.update({
-      where: { id: existingDemoAdmin.id },
-      data: {
-        name: '시연 관리자',
-        password,
-        status: 'ACTIVE',
-        roleId: systemRole.id,
-      },
-    });
-  } else {
-    await prisma.user.create({
-      data: {
-        sessionId: SEED_SENTINEL,
-        username: DEMO_ADMIN_USERNAME,
-        password,
-        name: '시연 관리자',
-        status: 'ACTIVE',
-        roleId: systemRole.id,
-      },
-    });
-    userCreated = true;
-  }
-
-  return { roleCreated, userCreated };
-}
-
-type IdMaps = Record<SnapshotModelName, Map<string, string>>;
-
-function buildIdMaps(payload: SnapshotPayload): IdMaps {
-  const map = <T extends { id: string }>(rows: T[]): Map<string, string> => {
-    const m = new Map<string, string>();
-    for (const r of rows) {
-      m.set(r.id, createId());
-    }
-    return m;
-  };
-  return Object.fromEntries(
-    SNAPSHOT_MODEL_NAMES.map((name) => [
-      name,
-      map(payload.models[name] as Array<{ id: string }>),
-    ]),
-  ) as IdMaps;
-}
-
-/** url에서 category 부분 추출 (`/uploads/home/abc.jpg` → `home`) */
-function extractCategoryFromUrl(url: string): string | null {
-  // local URL: `/uploads/<cat>/<file>`
-  const localMatch = url.match(/^\/+uploads\/([a-z0-9-]+)\//i);
-  if (localMatch) return localMatch[1]!;
-  // Supabase URL: `https://.../public/<bucket>/<sessionId>/<cat>/<file>` 또는 `<cat>/<file>`
-  try {
-    const parsed = new URL(url);
-    const parts = parsed.pathname.split('/').filter(Boolean);
-    // 마지막에서 두 번째 segment (filename 직전)
-    if (parts.length >= 2) {
-      return parts[parts.length - 2]!;
-    }
-  } catch {
-    // not a URL
-  }
-  return null;
 }

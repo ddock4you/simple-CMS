@@ -26,15 +26,11 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
-import { createClient } from '@supabase/supabase-js';
-
-import { PrismaClient } from '../src/generated/prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-
-import { importSnapshotToSeed } from '../src/demo';
-
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
-const prisma = new PrismaClient({ adapter });
+import { prisma } from '../src/client';
+import {
+  createSupabaseSeedStorageCallbacks,
+  importSnapshotToSeed,
+} from '../src/demo';
 
 async function main() {
   const inputPath = process.argv[2];
@@ -68,82 +64,11 @@ async function main() {
     process.exit(1);
   }
 
-  const client = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
+  const { uploadMedia, cleanupStorage } = createSupabaseSeedStorageCallbacks({
+    url: supabaseUrl,
+    serviceRoleKey,
+    bucket,
   });
-
-  // upload + cleanup callback (admin SupabaseStorageAdapter와 같은 로직 inline)
-  const uploadMedia = async (
-    storageKey: string,
-    buffer: Buffer,
-    mimeType: string,
-  ): Promise<string> => {
-    if (!storageKey.startsWith('__SEED__/')) {
-      throw new Error(
-        `uploadMedia는 __SEED__/ 경로에만 사용 가능: ${storageKey}`,
-      );
-    }
-    const { error } = await client.storage.from(bucket).upload(storageKey, buffer, {
-      contentType: mimeType,
-      upsert: true,
-    });
-    if (error) {
-      throw new Error(`Supabase upload 실패 (${storageKey}): ${error.message}`);
-    }
-    const {
-      data: { publicUrl },
-    } = client.storage.from(bucket).getPublicUrl(storageKey);
-    return publicUrl;
-  };
-
-  const cleanupStorage = async (): Promise<{
-    filesDeleted: number;
-    errors: string[];
-  }> => {
-    const errors: string[] = [];
-    let filesDeleted = 0;
-    const seedPrefix = '__SEED__';
-
-    const { data: categories, error: listErr } = await client.storage
-      .from(bucket)
-      .list(seedPrefix, { limit: 1000 });
-    if (listErr) {
-      errors.push(`list(${seedPrefix}): ${listErr.message}`);
-      return { filesDeleted, errors };
-    }
-    if (!categories || categories.length === 0) {
-      return { filesDeleted, errors };
-    }
-
-    for (const cat of categories) {
-      if (cat.id !== null) continue;
-      const prefix = `${seedPrefix}/${cat.name}`;
-      const { data: files, error: filesErr } = await client.storage
-        .from(bucket)
-        .list(prefix, { limit: 1000 });
-      if (filesErr) {
-        errors.push(`list(${prefix}): ${filesErr.message}`);
-        continue;
-      }
-      if (!files || files.length === 0) continue;
-      const paths = files
-        .filter((f) => f.id !== null)
-        .map((f) => `${prefix}/${f.name}`);
-      if (paths.length === 0) continue;
-      for (let i = 0; i < paths.length; i += 1000) {
-        const chunk = paths.slice(i, i + 1000);
-        const { error: rmErr } = await client.storage
-          .from(bucket)
-          .remove(chunk);
-        if (rmErr) {
-          errors.push(`remove(${prefix}): ${rmErr.message}`);
-        } else {
-          filesDeleted += chunk.length;
-        }
-      }
-    }
-    return { filesDeleted, errors };
-  };
 
   console.log('[demo-import] reading %s', inputPath);
   const json = await fs.readFile(inputPath, 'utf-8');

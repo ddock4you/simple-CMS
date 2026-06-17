@@ -1,15 +1,21 @@
 import path from 'node:path';
 import dotenv from 'dotenv';
 import type { NextConfig } from 'next';
+import { DEMO_ADMIN_BASE_PATH } from '@simple-cms/types';
 
 // 모노레포 루트의 .env를 로드
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const isDemoMode = process.env.DEMO_MODE === 'true';
 const adminRewriteUrl = process.env.NEXT_PUBLIC_ADMIN_REWRITE_URL;
+const demoAdminDashboardPath = `${DEMO_ADMIN_BASE_PATH}/dashboard`;
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['@simple-cms/types', '@simple-cms/db', '@simple-cms/editor'],
+  transpilePackages: [
+    '@simple-cms/types',
+    '@simple-cms/db',
+    '@simple-cms/editor',
+  ],
   // Docker self-host: standalone 산출물 + 모노레포 workspace deps tracing.
   // outputFileTracingRoot가 없으면 .next/standalone에 @simple-cms/* 패키지가 빠짐.
   output: 'standalone',
@@ -54,12 +60,12 @@ const nextConfig: NextConfig = {
         async rewrites() {
           return [
             {
-              source: '/_cms/admin',
-              destination: `${adminRewriteUrl}/_cms/admin/dashboard`,
+              source: DEMO_ADMIN_BASE_PATH,
+              destination: `${adminRewriteUrl}${demoAdminDashboardPath}`,
             },
             {
-              source: '/_cms/admin/:path*',
-              destination: `${adminRewriteUrl}/_cms/admin/:path*`,
+              source: `${DEMO_ADMIN_BASE_PATH}/:path*`,
+              destination: `${adminRewriteUrl}${DEMO_ADMIN_BASE_PATH}/:path*`,
             },
           ];
         },

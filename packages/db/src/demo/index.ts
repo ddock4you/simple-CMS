@@ -37,6 +37,9 @@ export type { ExportOptions } from './exportSnapshot';
 export { importSnapshotToSeed } from './importSnapshot';
 export type { ImportOptions, ImportStats } from './importSnapshot';
 
+export { createSupabaseSeedStorageCallbacks } from './storage/supabaseSeedStorage';
+export type { SupabaseSeedStorageConfig } from './storage/supabaseSeedStorage';
+
 export { resetSeedData } from './resetSeedData';
 export type {
   ResetSeedDataOptions,
