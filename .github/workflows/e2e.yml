@@ -17,6 +17,12 @@ on:
   schedule:
     - cron: '0 17 * * *'
   workflow_dispatch:
+    inputs:
+      run_demo_smoke:
+        description: 'Run DEMO_MODE smoke E2E (requires demo seed setup)'
+        required: false
+        default: false
+        type: boolean
   push:
     branches: [main]
 
@@ -112,4 +118,94 @@ jobs:
           path: |
             admin.log
             web.log
+          retention-days: 7
+
+  demo-smoke:
+    name: Demo Smoke E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_demo_smoke }}
+    services:
+      postgres:
+        image: groonga/pgroonga:latest-alpine-17-slim
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: simple_cms_demo_smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/simple_cms_demo_smoke
+      SESSION_SECRET: ci-demo-smoke-session-secret-not-for-production
+      DEMO_MODE: 'true'
+      NEXT_PUBLIC_ADMIN_REWRITE_URL: http://localhost:3001
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      WEB_BASE_URL: http://localhost:3000
+      DEMO_E2E_BASE_URL: http://localhost:3000
+      FEEDBACK_IP_SALT: ci-demo-smoke-feedback-salt
+      CRON_SECRET: ci-demo-smoke-cron-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Setup demo database (push + pgroonga + demo seed)
+        run: |
+          pnpm db:generate
+          pnpm db:push
+          pnpm db:pgroonga
+          pnpm db:demo-seed
+
+      - name: Build admin + web in demo mode
+        run: |
+          pnpm --filter @simple-cms/admin build
+          pnpm --filter @simple-cms/web build
+
+      - name: Start admin + web (background)
+        run: |
+          pnpm --filter @simple-cms/admin start > admin-demo.log 2>&1 &
+          pnpm --filter @simple-cms/web start > web-demo.log 2>&1 &
+
+      - name: Wait for demo servers
+        run: |
+          npx wait-on http://localhost:3001/_cms/admin/demo-bootstrap http://localhost:3000/demo-bootstrap \
+            --timeout 60000 --interval 2000
+
+      - name: Run demo smoke E2E
+        run: pnpm e2e:demo
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-demo-smoke
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload demo server logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-server-logs
+          path: |
+            admin-demo.log
+            web-demo.log
           retention-days: 7

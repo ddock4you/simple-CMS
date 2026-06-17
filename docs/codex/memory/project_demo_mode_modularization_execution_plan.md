@@ -353,6 +353,11 @@ PR5 시작 전 권장 확인:
 - `apps/web/app/api/demo/session-diagnostics/route.ts`
 - `apps/web/src/shared/lib/demoSessionDiagnostics.ts`
 - `apps/web/src/shared/lib/demoSessionDiagnostics.test.ts`
+- `apps/web/src/shared/lib/demoSessionDiagnosticsRoute.test.ts`
+- `playwright.config.ts`
+- `e2e/demo/demo-smoke.spec.ts`
+- `.github/workflows/e2e.yml`
+- `package.json`
 
 정책:
 
@@ -376,11 +381,40 @@ Playwright demo smoke:
 검증:
 
 ```bash
-pnpm e2e -- --project=web
-pnpm e2e -- --project=admin
+pnpm e2e --list
+pnpm e2e:demo --list
 ```
 
-demo smoke는 별도 project 또는 grep tag로 opt-in 실행한다.
+demo smoke는 `demo-smoke` Playwright project + `pnpm e2e:demo`로 opt-in 실행한다. 기본 `pnpm e2e`는 기존 `admin`/`web`/`golden-flow`만 실행한다.
+
+### PR5 완료 메모 (2026-06-17)
+
+PR5(diagnostics 보호와 demo smoke E2E)를 완료했다.
+
+- `apps/web/app/api/demo/session-diagnostics/route.ts` — `DEMO_MODE=true`만으로 diagnostics를 열지 않고, `DEMO_SESSION_DEBUG=true` 또는 `Authorization: Bearer ${CRON_SECRET}` 중 하나를 요구한다. 보호 실패와 비시연 환경은 모두 `404 + Cache-Control: no-store`로 숨긴다. 보호 통과 전에는 `runWithRequestDemoSession()`과 DB diagnostics builder를 호출하지 않는다.
+- `apps/web/src/shared/lib/demoSessionDiagnosticsRoute.test.ts` — route handler 단위 테스트 6건 추가. 비시연/미인증/잘못된 Bearer는 session lookup과 diagnostics builder를 호출하지 않는 것을 검증한다. `src/` 아래에 둔 이유는 web Vitest unit include가 `src/**/*.test.{ts,tsx}`이기 때문이다.
+- `playwright.config.ts` — `demo-smoke` project 추가. baseURL은 `DEMO_E2E_BASE_URL ?? http://localhost:3000`.
+- `e2e/demo/demo-smoke.spec.ts` — 단일 origin 시연 smoke 1건 추가. `/` bootstrap → `session-token` 생성 → seed home/about 렌더 → `/_cms/admin/dashboard` 접근 → admin API로 PUBLISHED Subpage 생성 → web 반영 확인 → DemoBanner reset → 새 session token과 seed about 복구/생성 페이지 삭제 확인.
+- `package.json` — 기본 `pnpm e2e`는 기존 `admin`/`web`/`golden-flow` project만 실행하도록 고정하고, `pnpm e2e:demo`를 신규 opt-in 명령으로 추가했다.
+- `.github/workflows/e2e.yml` — `workflow_dispatch` input `run_demo_smoke` 추가. true일 때만 별도 `Demo Smoke E2E` job을 실행한다. 이 job은 `DEMO_MODE=true`, `NEXT_PUBLIC_ADMIN_REWRITE_URL=http://localhost:3001`, `db:demo-seed` 기반으로 admin/web을 demo mode build/start 후 `pnpm e2e:demo`를 실행한다. nightly/push 일반 E2E에는 demo smoke를 섞지 않는다.
+
+PR5 검증:
+
+```bash
+pnpm --filter @simple-cms/web exec vitest run --project unit src/shared/lib/demoSessionDiagnostics.test.ts src/shared/lib/demoSessionDiagnosticsRoute.test.ts
+pnpm --filter @simple-cms/web typecheck
+pnpm --filter @simple-cms/web lint
+pnpm e2e --list
+pnpm e2e:demo --list
+pnpm --filter @simple-cms/admin exec node -e "const fs=require('fs'); const YAML=require('yaml'); YAML.parse(fs.readFileSync('../../.github/workflows/e2e.yml','utf8')); console.log('yaml ok')"
+git diff --check
+```
+
+검증 메모:
+
+- `pnpm --filter @simple-cms/web test -- ...`는 unit 테스트는 통과했지만 Storybook browser project가 함께 뜨며 로컬 Playwright browser 미설치로 실패했다. 이후 `--project unit`으로 재실행해 diagnostics unit 9건 통과를 확인했다.
+- `pnpm --filter @simple-cms/web lint`는 기존 `KoglFooter.tsx` `<img>` warning 2건만 남고 error 0건이었다.
+- 실제 `pnpm e2e:demo` 실행은 DB push/build/start가 필요한 opt-in smoke라 CI `workflow_dispatch(run_demo_smoke=true)` 또는 준비된 로컬 demo 서버에서 수행한다.
 
 ## 검증 명령 모음
 

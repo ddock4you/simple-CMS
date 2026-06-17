@@ -62,5 +62,13 @@ export default defineConfig({
       },
       testMatch: '**/golden-flow.spec.ts',
     },
+    {
+      name: 'demo-smoke',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.DEMO_E2E_BASE_URL ?? 'http://localhost:3000',
+      },
+      testMatch: '**/demo/**/*.spec.ts',
+    },
   ],
 });

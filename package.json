@@ -30,7 +30,8 @@
     "demo:export": "pnpm --filter @simple-cms/db demo-export",
     "demo:import": "pnpm --filter @simple-cms/db demo-import",
     "db:pgroonga": "pnpm --filter @simple-cms/db pgroonga:setup",
-    "e2e": "playwright test",
+    "e2e": "playwright test --project=admin --project=web --project=golden-flow",
+    "e2e:demo": "playwright test --project=demo-smoke",
     "e2e:ui": "playwright test --ui",
     "e2e:report": "playwright show-report"
   },
