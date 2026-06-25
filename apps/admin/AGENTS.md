@@ -174,7 +174,7 @@ src/
 - 대표 이미지 필드
 - 미리보기 제공
 - 본문 편집: **통합 블록 모델** (Stage 6) — 제목·SEO·상태만 SubpageForm에서 관리하고, 본문과 부가 요소는 모두 PageBlock으로 편집. SubpageForm 내 Tiptap 에디터는 제거됨
-- 편집 화면 구성: SubpageForm(상단) + BlockManager(하단) 세로 배치. 생성 모드(/subpages/new)는 SubpageForm만 노출, 저장 후 상세에서 블록 추가
+- 편집 화면 구성: SubpageForm(상단) + BlockManager(하단) 세로 배치. 생성 모드(/subpages/new)는 SubpageForm만 노출하되 "콘텐츠는 저장 후 블록으로 작성" 안내 카드와 `저장하고 블록 추가하기` CTA를 보여준다. 생성 성공 후 `/subpages/[id]/edit`으로 이동해 곧바로 BlockManager에서 본문·이미지·HTML·아코디언 블록을 추가하는 흐름이다.
 - **뷰/편집 분리**: `/subpages/[id]` = 메타데이터 + 블록 구성 목록 + **콘텐츠 카드**(각 블록 입력값 표시), `/subpages/[id]/edit` = 폼 + BlockManager
 - **뷰 페이지 콘텐츠 카드** (`features/block-management/ui/BlockContentView.tsx`): 블록 순서대로 각 블록의 입력값을 표시 — 공개 웹과 동일한 실물 렌더는 상단 [미리보기] 버튼이 담당
   - RICH_TEXT: `renderTiptapContentForAdmin` → `<div className="prose prose-sm">` 렌더 (게시글 뷰 패턴 동일)

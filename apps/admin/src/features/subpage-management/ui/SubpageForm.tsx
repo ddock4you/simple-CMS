@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { AdminLink as Link } from '@/shared/ui/AdminLink';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Blocks, CheckCircle2 } from 'lucide-react';
 
 import { Button } from '@/shared/ui/Button';
 import { PageHeader } from '@/shared/ui/PageHeader';
@@ -89,6 +89,7 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+  const submitLabel = isCreate ? '저장하고 블록 추가하기' : '저장';
 
   const { confirmDialogProps: leaveDialogProps } = useDirtyGuard(isDirty);
 
@@ -133,12 +134,14 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
               type="submit"
               disabled={isPending || (!isDirty && !isCreate)}
             >
-              {isPending ? '저장 중...' : '저장'}
+              {isPending ? '저장 중...' : submitLabel}
             </Button>
           </>
         }
         mobileCollapseRight={false}
       />
+
+      {isCreate && <SubpageCreateGuide />}
 
       <Card>
         <CardHeader>
@@ -304,6 +307,44 @@ export function SubpageForm({ mode, initialData }: SubpageFormProps) {
         cancelLabel="취소"
       />
     </form>
+  );
+}
+
+function SubpageCreateGuide() {
+  const steps = [
+    '페이지 정보를 먼저 저장합니다.',
+    '저장 후 이어지는 편집 화면에서 콘텐츠 블록을 추가합니다.',
+    '미리보기로 확인한 뒤 발행합니다.',
+  ];
+
+  return (
+    <Card className="border-dashed bg-muted/20">
+      <CardContent className="py-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="flex gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-muted-foreground ring-1 ring-border">
+              <Blocks className="size-4" aria-hidden="true" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold">콘텐츠는 저장 후 블록으로 작성합니다</h2>
+              <p className="max-w-2xl text-sm text-muted-foreground">
+                서브페이지 본문은 블록으로 구성합니다. 먼저 제목, 발행 상태, SEO 정보를
+                저장하면 다음 화면에서 본문·이미지·HTML·아코디언 블록을 추가할 수
+                있습니다.
+              </p>
+            </div>
+          </div>
+          <ol className="grid gap-2 text-sm text-muted-foreground md:min-w-[280px]">
+            {steps.map((step) => (
+              <li key={step} className="flex items-center gap-2">
+                <CheckCircle2 className="size-4 text-success" aria-hidden="true" />
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -40,7 +40,7 @@ const {
     delete: '서브 페이지가 삭제되었습니다.',
   },
   routerPaths: {
-    afterCreate: (result) => `/subpages/${result.id}`,
+    afterCreate: (result) => `/subpages/${result.id}/edit`,
     afterUpdate: (id) => `/subpages/${id}`,
     afterDelete: '/subpages',
   },
