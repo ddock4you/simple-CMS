@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from '@/shared/ui/AlertDialog';
 import { Button } from '@/shared/ui/Button';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import {
   Card,
   CardContent,
@@ -191,6 +192,57 @@ export function DemoSnapshotForm({
 
   return (
     <div className="space-y-6">
+      <PageToolbar
+        right={
+          <>
+            {canExport && (
+              <Button
+                type="button"
+                onClick={handleExport}
+                disabled={isExporting}
+                className="gap-2"
+              >
+                <Download className="size-4" />
+                {isExporting ? '내보내는 중…' : '스냅샷 내보내기'}
+              </Button>
+            )}
+            {canImport && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  hidden
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    handleFileSelected(file);
+                    // 같은 파일 재선택 가능하도록 reset
+                    if (e.target) e.target.value = '';
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!isDemoMode || isImporting}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2"
+                  title={
+                    isDemoMode
+                      ? undefined
+                      : 'DEMO_MODE=true 시연 환경에서만 동작합니다.'
+                  }
+                >
+                  <Upload className="size-4" />
+                  Supabase에 즉시 적용
+                </Button>
+              </>
+            )}
+          </>
+        }
+        mobileCollapseRight={false}
+        breakout={false}
+      />
+
       {/* 미리보기 통계 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
@@ -240,52 +292,6 @@ export function DemoSnapshotForm({
           </dl>
         </CardContent>
       </Card>
-
-      {/* 액션 버튼 */}
-      <div className="flex flex-wrap gap-2">
-        {canExport && (
-          <Button
-            type="button"
-            onClick={handleExport}
-            disabled={isExporting}
-            className="gap-2"
-          >
-            <Download className="size-4" />
-            {isExporting ? '내보내는 중…' : '스냅샷 내보내기'}
-          </Button>
-        )}
-        {canImport && (
-          <>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/json,.json"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0] ?? null;
-                handleFileSelected(file);
-                // 같은 파일 재선택 가능하도록 reset
-                if (e.target) e.target.value = '';
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              disabled={!isDemoMode || isImporting}
-              onClick={() => fileInputRef.current?.click()}
-              className="gap-2"
-              title={
-                isDemoMode
-                  ? undefined
-                  : 'DEMO_MODE=true 시연 환경에서만 동작합니다.'
-              }
-            >
-              <Upload className="size-4" />
-              Supabase에 즉시 적용
-            </Button>
-          </>
-        )}
-      </div>
 
       {!isDemoMode && canImport && (
         <p className="text-xs text-muted-foreground">

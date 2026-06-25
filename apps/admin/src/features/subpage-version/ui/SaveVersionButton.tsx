@@ -10,9 +10,9 @@ import { SUBPAGE_VERSION_LABEL_MAX_LENGTH } from '@simple-cms/types';
 import { Button } from '@/shared/ui/Button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
@@ -20,6 +20,7 @@ import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
 import { useDialogDirtyGuard } from '@/shared/lib/useDialogDirtyGuard';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 
 import { useCreateSubpageVersion } from '../api/useVersionMutations';
 import {
@@ -104,16 +105,34 @@ export function SaveVersionButton({
         버전 저장
       </Button>
       <Dialog open={open} onOpenChange={safeOnOpenChange} disablePointerDismissal>
-        <DialogContent size="md">
-          <DialogHeader>
-            <DialogTitle>버전 저장</DialogTitle>
-            <DialogDescription>
-              지금 상태의 본문과 설정을 하나의 버전으로 보관합니다. 메모는 선택이며
-              깃 커밋 스타일로 작성할 수 있습니다.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={submit} className="space-y-3">
-            <div className="space-y-1.5">
+        <DialogContent size="md" bodyOnlyScroll>
+          <form onSubmit={submit} className="contents">
+            <DialogHeader>
+              <DialogTitle>버전 저장</DialogTitle>
+              <DialogDescription>
+                지금 상태의 본문과 설정을 하나의 버전으로 보관합니다. 메모는 선택이며
+                깃 커밋 스타일로 작성할 수 있습니다.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogToolbar
+              right={
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => safeOnOpenChange(false)}
+                    disabled={isPending}
+                  >
+                    취소
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? '저장 중...' : '버전 저장'}
+                  </Button>
+                </>
+              }
+            />
+            <DialogBody className="px-0">
+              <div className="space-y-1.5">
               <Label htmlFor="version-label">메모 (선택)</Label>
               <Textarea
                 id="version-label"
@@ -139,20 +158,8 @@ export function SaveVersionButton({
               {errors.label && (
                 <p className="text-xs text-destructive">{errors.label.message}</p>
               )}
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => safeOnOpenChange(false)}
-                disabled={isPending}
-              >
-                취소
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? '저장 중...' : '버전 저장'}
-              </Button>
-            </DialogFooter>
+              </div>
+            </DialogBody>
           </form>
         </DialogContent>
       </Dialog>

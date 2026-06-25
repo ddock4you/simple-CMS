@@ -6,11 +6,13 @@ import { format } from 'date-fns';
 
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 import { Badge } from '@/shared/ui/shadcn/badge';
 import { Button } from '@/shared/ui/Button';
 import { Separator } from '@/shared/ui/shadcn/separator';
@@ -45,17 +47,27 @@ export function ErrorLogDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] sm:max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent size="xl" bodyOnlyScroll className="w-[95vw]">
         <DialogHeader>
           <DialogTitle>에러 로그 상세</DialogTitle>
           <DialogDescription>
             에러 발생 시점의 전체 컨텍스트를 확인할 수 있습니다.
           </DialogDescription>
         </DialogHeader>
+        <DialogToolbar
+          right={
+            data && (
+              <ResolveErrorLogButton
+                id={data.id}
+                isResolved={data.isResolved}
+              />
+            )
+          }
+        />
         {!data ? (
           <p className="text-sm text-muted-foreground">로드 중...</p>
         ) : (
-          <div className="space-y-4">
+          <DialogBody className="space-y-4 px-0">
             <div className="flex flex-wrap items-center gap-2">
               <ErrorLevelBadge level={data.level} />
               <ErrorSourceBadge source={data.source} />
@@ -152,14 +164,7 @@ export function ErrorLogDetailDialog({
                 </p>
               </div>
             )}
-
-            <div className="flex justify-end">
-              <ResolveErrorLogButton
-                id={data.id}
-                isResolved={data.isResolved}
-              />
-            </div>
-          </div>
+          </DialogBody>
         )}
       </DialogContent>
     </Dialog>

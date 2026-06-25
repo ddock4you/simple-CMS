@@ -42,6 +42,8 @@ interface PageToolbarProps {
   mobileLeftIcon?: ReactNode;
   /** 모바일 right 트리거 아이콘 (기본값: MoreHorizontal 아이콘) */
   mobileRightIcon?: ReactNode;
+  /** 페이지 좌우 padding을 넘어 전체 폭으로 확장할지 여부. 기본값 true. */
+  breakout?: boolean;
 }
 
 interface ToolbarSlotProps {
@@ -93,6 +95,7 @@ export function PageToolbar({
   mobileRightLabel = '관리',
   mobileLeftIcon,
   mobileRightIcon,
+  breakout = true,
 }: PageToolbarProps) {
   const shouldCollapseLeft = mobileCollapseLeft ?? Boolean(left);
   const shouldCollapseRight = mobileCollapseRight ?? Boolean(right);
@@ -103,11 +106,12 @@ export function PageToolbar({
     <div
       data-testid="page-toolbar"
       className={cn(
-        'flex items-center justify-between gap-2 bg-background py-2',
+        'flex items-center justify-between gap-2 border-b bg-background py-4',
         // 시연 모드 DemoBanner가 있으면 `--demo-banner-h`(2.25rem)이 layout에서 주입됨.
         // 일반 모드는 default 0이라 기존 top-14와 동일.
         sticky &&
-          'sticky top-[calc(3.5rem+var(--demo-banner-h,0px))] z-20 -mx-6 px-6 shadow-toolbar',
+          'sticky top-[calc(3.5rem+var(--demo-banner-h,0px))] z-20',
+        sticky && breakout && '-mx-6 px-6',
       )}
     >
       <div className="flex items-center gap-2">

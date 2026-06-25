@@ -5,11 +5,11 @@ import type { FieldValues, SubmitHandler, UseFormReturn } from 'react-hook-form'
 import type { LucideIcon } from 'lucide-react';
 
 import { Button } from '@/shared/ui/Button';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/shared/ui/shadcn/card';
@@ -26,6 +26,7 @@ interface SettingsCardFormProps<TFormData extends FieldValues> {
   disabled?: boolean;
   submitLabel?: string;
   submittingLabel?: string;
+  toolbarSticky?: boolean;
   /** CardFooter에서 [저장] 버튼 왼쪽에 렌더되는 추가 액션 슬롯 */
   extraActions?: ReactNode;
   children: ReactNode;
@@ -41,27 +42,35 @@ export function SettingsCardForm<TFormData extends FieldValues>({
   disabled,
   submitLabel = '저장',
   submittingLabel = '저장 중...',
+  toolbarSticky = true,
   extraActions,
   children,
 }: SettingsCardFormProps<TFormData>) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {Icon && <Icon className="size-5" />}
-          {title}
-        </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <PageToolbar
+        right={
+          <>
+            {extraActions}
+            <Button type="submit" disabled={isPending || disabled}>
+              {isPending ? submittingLabel : submitLabel}
+            </Button>
+          </>
+        }
+        mobileCollapseRight={false}
+        sticky={toolbarSticky}
+        breakout={false}
+      />
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {Icon && <Icon className="size-5" />}
+            {title}
+          </CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
+        </CardHeader>
         <CardContent>{children}</CardContent>
-        <CardFooter className="justify-end gap-2">
-          {extraActions}
-          <Button type="submit" disabled={isPending || disabled}>
-            {isPending ? submittingLabel : submitLabel}
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+      </Card>
+    </form>
   );
 }

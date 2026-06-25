@@ -382,7 +382,7 @@ export const DialogSizeTokens: Story = {
         </div>
       </div>
       <p className="text-[14px] text-muted-foreground mt-6">
-        ‼ <code className="font-mono text-[12px]">bodyOnlyScroll</code> + <code className="font-mono text-[12px]">{'<DialogBody>'}</code> 슬롯 사용 의무 — Dialog 헤더/푸터 고정 + 본문만 스크롤.
+        ‼ 액션이 있는 일반 Dialog는 <code className="font-mono text-[12px]">{'<DialogToolbar>'}</code> + <code className="font-mono text-[12px]">bodyOnlyScroll</code> + <code className="font-mono text-[12px]">{'<DialogBody>'}</code> 조합 사용 — Dialog 헤더/툴바 고정 + 본문만 스크롤. AlertDialog는 제외.
       </p>
     </div>
   ),

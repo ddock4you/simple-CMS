@@ -6,6 +6,7 @@ import { RESOURCE_ACTIONS } from '@simple-cms/types';
 import type { ResourceKey, Action } from '@simple-cms/types';
 
 import { Button } from '@/shared/ui/Button';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
 import { useUpdatePermissions } from '@/features/role-management/api/useRoleMutations';
 
@@ -63,6 +64,25 @@ export function PermissionMatrix({
           총괄 관리자는 모든 권한을 보유하며 수정할 수 없습니다.
         </p>
       )}
+      {!isSystem && (
+        <PageToolbar
+          right={
+            <>
+              <Button
+                onClick={handleSave}
+                disabled={!hasChanges || updatePermissions.isPending}
+              >
+                {updatePermissions.isPending ? '저장 중...' : '저장'}
+              </Button>
+              <Button variant="outline" onClick={handleReset} disabled={!hasChanges}>
+                취소
+              </Button>
+            </>
+          }
+          mobileCollapseRight={false}
+          breakout={false}
+        />
+      )}
       <div className="overflow-auto rounded-md border">
         <table className="w-full text-sm">
           <thead>
@@ -104,19 +124,6 @@ export function PermissionMatrix({
           </tbody>
         </table>
       </div>
-      {!isSystem && (
-        <div className="flex gap-2">
-          <Button
-            onClick={handleSave}
-            disabled={!hasChanges || updatePermissions.isPending}
-          >
-            {updatePermissions.isPending ? '저장 중...' : '저장'}
-          </Button>
-          <Button variant="outline" onClick={handleReset} disabled={!hasChanges}>
-            취소
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

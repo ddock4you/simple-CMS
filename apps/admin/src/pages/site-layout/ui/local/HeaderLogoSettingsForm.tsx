@@ -18,6 +18,7 @@ import {
 import { useDirtyGuard } from '@/shared/lib/useDirtyGuard';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import {
   getQueryErrorMessage,
   QueryStateMessage,
@@ -40,7 +41,7 @@ function toNullable(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export function HeaderLogoSettingsForm() {
+export function HeaderLogoSettingsForm({ toolbarSticky = true }: { toolbarSticky?: boolean }) {
   const canUpdate = usePermission('settings', 'update');
   const { data, isPending, isError, error } = useQuery(
     brandingSettingsOptions(),
@@ -105,6 +106,20 @@ export function HeaderLogoSettingsForm() {
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <PageToolbar
+          right={
+            <Button
+              type="submit"
+              disabled={!canUpdate || updateMutation.isPending || !isDirty}
+            >
+              {updateMutation.isPending ? '저장 중...' : '저장'}
+            </Button>
+          }
+          mobileCollapseRight={false}
+          sticky={toolbarSticky}
+          breakout={false}
+        />
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -175,16 +190,10 @@ export function HeaderLogoSettingsForm() {
           </CardContent>
         </Card>
 
-        <div className="space-y-2">
+        <div>
           <p className="text-xs text-muted-foreground">
             변경사항은 공개 웹에 최대 1분 후 반영됩니다.
           </p>
-          <Button
-            type="submit"
-            disabled={!canUpdate || updateMutation.isPending || !isDirty}
-          >
-            {updateMutation.isPending ? '저장 중...' : '저장'}
-          </Button>
         </div>
       </form>
 

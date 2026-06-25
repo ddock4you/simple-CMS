@@ -12,14 +12,15 @@ import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/shared/ui/shadcn/dialog';
 import { useDialogDirtyGuard } from '@/shared/lib/useDialogDirtyGuard';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 
 import type { NavigationMenuSlot } from '@simple-cms/db';
 
@@ -80,12 +81,19 @@ export function MenuSetEditDialog({
         <Settings className="size-4" />
         메뉴 설정
       </DialogTrigger>
-      <DialogContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
+      <DialogContent bodyOnlyScroll>
+        <form onSubmit={handleSubmit(onSubmit)} className="contents">
           <DialogHeader>
             <DialogTitle>메뉴 설정 수정</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <DialogToolbar
+            right={
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? '저장 중...' : '저장'}
+              </Button>
+            }
+          />
+          <DialogBody className="space-y-4 px-0">
             <div className="space-y-2">
               <Label htmlFor="edit-name">메뉴 이름</Label>
               <Input
@@ -133,12 +141,7 @@ export function MenuSetEditDialog({
                 )}
               />
             </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? '저장 중...' : '저장'}
-            </Button>
-          </DialogFooter>
+          </DialogBody>
         </form>
       </DialogContent>
       <ConfirmLeaveDialog {...confirmDialogProps} />

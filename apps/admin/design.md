@@ -242,7 +242,7 @@ admin은 **데스크톱 우선**. 모바일(`< md`)에서는 PageToolbar가 Top 
 ```
 AdminHeader (sticky top-0 z-10)
 PageHeader  (페이지 제목 · back · tabs)
-PageToolbar (sticky top-14 z-20 · 필터/검색 left · CTA 버튼 right)
+PageToolbar (sticky top-14 z-20 · 하단 border · 필터/검색 left · CTA 버튼 right)
 본문 영역   (카드 · 테이블 · 편집 폼)
 ```
 
@@ -298,12 +298,11 @@ PageToolbar/Dialog 내부 모든 폼 컨트롤은 **32px (2rem) 단일 baseline*
 
 ### 그림자 토큰 (Stage 15b 추가)
 
-`globals.css`에 정의된 shadow CSS custom properties. Tailwind utility class(`shadow-card`, `shadow-toolbar`, `shadow-popover`)로 사용 가능.
+`globals.css`에 정의된 shadow CSS custom properties. Tailwind utility class(`shadow-card`, `shadow-popover`)로 사용 가능. Toolbar 계열은 그림자를 쓰지 않고 `{colors.border}` 하단 경계로 구분한다.
 
 | 토큰 | light | dark | 용도 |
 |---|---|---|---|
 | `shadow-card` | `0 1px 2px oklch(0 0 0 / 4%)` | `0 1px 3px oklch(0 0 0 / 20%)` | 카드 경계 강조 |
-| `shadow-toolbar` | `0 2px 8px oklch(0 0 0 / 6%)` | `0 2px 8px oklch(0 0 0 / 20%)` | sticky toolbar drop shadow (always-on) |
 | `shadow-popover` | `0 4px 24px oklch(0 0 0 / 8%), 0 2px 8px oklch(0 0 0 / 4%)` | `0 4px 24px oklch(0 0 0 / 30%), 0 2px 8px oklch(0 0 0 / 20%)` | Dialog·Tooltip 부유 |
 
 **구현 패턴**: `@theme inline { --shadow-card: var(--shadow-card-value); }` + `:root`/`.dark`에 `--shadow-card-value` 정의 (Tailwind v4 순환 참조 방지).
@@ -312,7 +311,6 @@ PageToolbar/Dialog 내부 모든 폼 컨트롤은 **32px (2rem) 단일 baseline*
 
 | 표면 | 컴포넌트 | 적용 방법 | Stage |
 |---|---|---|---|
-| sticky toolbar | `PageToolbar` | 직접 `shadow-toolbar` | 15c-1 |
 | 블록 콘텐츠 카드 | `BlockContentView` | 직접 `shadow-card` | 15c-1 |
 | Tiptap 팝업 (3곳) | `TiptapEditor` bubble/link/image | 직접 `shadow-popover` | 15c-1 |
 | AppSidebar floating/inset | `sidebar.tsx` (admin 변형 예외) | 직접 `shadow-card` | 15c-2 |
@@ -386,6 +384,11 @@ PageToolbar/Dialog 내부 모든 폼 컨트롤은 **32px (2rem) 단일 baseline*
 - Storybook: `Admin/Shared/PageToolbar`
 - 토큰: `{colors.background}` + sticky breakout(전체 폭), `{colors.border}` 하단 경계
 - 규칙: sticky top-14 z-20. left=필터/검색(Read), right=CUD 버튼. 편집 폼 [저장]/[삭제]는 반드시 right에
+
+**DialogToolbar** (`src/shared/ui/DialogToolbar.tsx`)
+- Storybook: `Admin/Shared/Dialog`의 `BodyOnlyScroll`
+- 토큰: `{colors.popover}` + `{colors.border}` 하단 경계
+- 규칙: 일반 Dialog에서 액션이 있으면 DialogHeader 아래에 배치. AlertDialog는 확인/취소 footer 패턴 유지. 긴 Dialog는 `bodyOnlyScroll` + `DialogBody`로 본문만 스크롤
 
 #### 데이터
 

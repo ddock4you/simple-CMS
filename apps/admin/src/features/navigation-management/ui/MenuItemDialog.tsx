@@ -10,8 +10,8 @@ import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
@@ -24,6 +24,7 @@ import {
 import { BooleanSwitchField } from '@/shared/ui/BooleanSwitchField';
 import { useDialogDirtyGuard } from '@/shared/lib/useDialogDirtyGuard';
 import { ConfirmLeaveDialog } from '@/shared/ui/ConfirmLeaveDialog';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 
 import type { MenuItemNode } from '../model/navigationFilters';
 import {
@@ -143,12 +144,20 @@ export function MenuItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={safeOnOpenChange} disablePointerDismissal>
-      <DialogContent>
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
+      <DialogContent size="md" bodyOnlyScroll>
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="contents">
           <DialogHeader>
             <DialogTitle>{editItem ? '메뉴 항목 수정' : '메뉴 항목 추가'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <DialogToolbar
+            right={
+              <Button type="submit" disabled={isPending}>
+                {isPending ? '저장 중...' : editItem ? '수정' : '추가'}
+              </Button>
+            }
+          />
+
+          <DialogBody className="space-y-4 px-0">
             <div className="space-y-2">
               <Label>항목 타입</Label>
               <Controller
@@ -293,12 +302,7 @@ export function MenuItemDialog({
                 />
               </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? '저장 중...' : editItem ? '수정' : '추가'}
-            </Button>
-          </DialogFooter>
+          </DialogBody>
         </form>
       </DialogContent>
       <ConfirmLeaveDialog {...confirmDialogProps} />

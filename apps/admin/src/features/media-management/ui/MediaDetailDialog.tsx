@@ -8,11 +8,13 @@ import { ExternalLink, Trash2 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Separator } from '@/shared/ui/shadcn/separator';
@@ -71,7 +73,7 @@ export function MediaDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal>
-        <DialogContent size="lg" className="w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent size="lg" bodyOnlyScroll className="w-[95vw]">
           <DialogHeader>
             <DialogTitle>미디어 상세</DialogTitle>
             <DialogDescription>
@@ -79,10 +81,36 @@ export function MediaDetailDialog({
             </DialogDescription>
           </DialogHeader>
 
+          <DialogToolbar
+            right={
+              data && (
+                <>
+                  {canDelete && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => setDeleteOpen(true)}
+                    >
+                      <Trash2 className="size-4" />
+                      삭제
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={handleSaveAlt}
+                    disabled={!canUpdate || !altChanged || update.isPending}
+                  >
+                    {update.isPending ? '저장 중...' : '저장'}
+                  </Button>
+                </>
+              )
+            }
+          />
+
           {!data ? (
             <p className="text-sm text-muted-foreground">로드 중...</p>
           ) : (
-            <div className="space-y-4">
+            <DialogBody className="space-y-4 px-0">
               <div className="rounded-md border bg-muted/30 p-3">
                 {isImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -146,16 +174,6 @@ export function MediaDetailDialog({
                   placeholder="이미지 설명 (스크린리더, SEO용)"
                   disabled={!canUpdate}
                 />
-                <div className="flex justify-end">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleSaveAlt}
-                    disabled={!canUpdate || !altChanged || update.isPending}
-                  >
-                    {update.isPending ? '저장 중...' : '저장'}
-                  </Button>
-                </div>
               </div>
 
               <Separator />
@@ -188,21 +206,7 @@ export function MediaDetailDialog({
                   </ul>
                 )}
               </div>
-
-              {canDelete && (
-                <div className="flex justify-end">
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setDeleteOpen(true)}
-                  >
-                    <Trash2 className="mr-1 size-4" />
-                    삭제
-                  </Button>
-                </div>
-              )}
-            </div>
+            </DialogBody>
           )}
         </DialogContent>
       </Dialog>

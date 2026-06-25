@@ -1230,7 +1230,7 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 - 슬롯: `back`, `title`, `description`, `tabs`
 - `actions` 슬롯은 **legacy — 신규 사용 금지** (PageToolbar.right로 대체)
 
-**PageToolbar** (`shared/ui/PageToolbar.tsx`): 필터·CUD 액션 one-row toolbar. **`sticky top-14 z-20`** (AdminHeader 바로 아래 고정).
+**PageToolbar** (`shared/ui/PageToolbar.tsx`): 필터·CUD 액션 one-row toolbar. **`sticky top-14 z-20`** (AdminHeader 바로 아래 고정). 그림자 없이 `border-b`로 PageHeader와 같은 하단 경계를 사용한다.
 
 - 슬롯: `left` (Read — 필터/검색), `right` (CUD — 추가/편집/삭제/저장)
 - 모바일(`<md`): 각 슬롯을 버튼으로 collapse → 클릭 시 Top Sheet 펼침
@@ -1268,8 +1268,9 @@ admin은 `/uploads/...` 상대 경로 이미지를 자신의 정적 파일로 �
 | `lg` | max-w-3xl |
 | `xl` | max-w-5xl |
 
-- `bodyOnlyScroll`: 헤더·푸터 고정 + 본문만 스크롤. `<DialogBody>` slot 사용 의무 (`<DialogBody className="px-0">...</DialogBody>`)
-- 새 Dialog 추가 시 `size` 토큰 + `bodyOnlyScroll` + `<DialogBody>` 세트 적용 기본값
+- `DialogToolbar` (`shared/ui/DialogToolbar.tsx`): 일반 Dialog 안의 저장/삭제/복원/닫기 같은 액션 one-row toolbar. `DialogHeader` 바로 아래에 두며, 액션이 없으면 렌더하지 않는다. AlertDialog는 제외하고 기존 확인/취소 footer 패턴을 유지한다.
+- `bodyOnlyScroll`: 헤더·DialogToolbar 고정 + 본문만 스크롤. `<DialogBody>` slot 사용 의무 (`<DialogBody className="px-0">...</DialogBody>`)
+- 새 일반 Dialog 추가 시 `size` 토큰 + `bodyOnlyScroll` + 액션이 있으면 `<DialogToolbar>` + `<DialogBody>` 세트 적용 기본값
 
 **리스트 공통 컴포넌트 (PR2)**
 

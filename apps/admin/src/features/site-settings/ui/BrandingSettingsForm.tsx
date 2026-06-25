@@ -8,6 +8,7 @@ import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/shared/ui/Button';
+import { PageToolbar } from '@/shared/ui/PageToolbar';
 import {
   Card,
   CardContent,
@@ -160,6 +161,19 @@ export function BrandingSettingsForm() {
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <PageToolbar
+          right={
+            <Button
+              type="submit"
+              disabled={updateMutation.isPending || !isDirty}
+            >
+              {updateMutation.isPending ? '저장 중...' : '저장'}
+            </Button>
+          }
+          mobileCollapseRight={false}
+          breakout={false}
+        />
+
         <Card>
           <CardHeader>
             <CardTitle>기본 정보</CardTitle>
@@ -293,16 +307,10 @@ export function BrandingSettingsForm() {
           </CardContent>
         </Card>
 
-        <div className="space-y-2">
+        <div>
           <p className="text-xs text-muted-foreground">
             변경사항은 공개 웹에 최대 1분 후 반영됩니다.
           </p>
-          <Button
-            type="submit"
-            disabled={updateMutation.isPending || !isDirty}
-          >
-            {updateMutation.isPending ? '저장 중...' : '저장'}
-          </Button>
         </div>
       </form>
 

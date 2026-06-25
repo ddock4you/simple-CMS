@@ -7,11 +7,13 @@ import type { MediaListFilters, MediaListItem } from '@simple-cms/types';
 
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 import { usePermission } from '@/entities/auth/ui/PermissionProvider'; // @fsd-allow: auth는 cross-cutting — PermissionProvider 추후 shared/ui로 이전 예정
 
 import { mediaListOptions } from '../api/mediaQueries';
@@ -93,20 +95,22 @@ export function MediaPicker({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="xl" className="w-[95vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent size="xl" bodyOnlyScroll className="w-[95vw]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <DialogToolbar
+          left={
             <MediaFilters
               currentQ={filters.q ?? null}
               currentMimeType={filters.mimeType ?? null}
               onChange={handleFilterChange}
             />
-            {canCreate && (
+          }
+          right={
+            canCreate && (
               <MediaUploadButton
                 category={category}
                 endpoint={endpoint}
@@ -127,9 +131,11 @@ export function MediaPicker({
                   })
                 }
               />
-            )}
-          </div>
+            )
+          }
+        />
 
+        <DialogBody className="space-y-4 px-0">
           <MediaGrid
             items={data?.items ?? []}
             isLoading={isLoading}
@@ -144,7 +150,7 @@ export function MediaPicker({
             total={data?.total ?? 0}
             onPageChange={handlePageChange}
           />
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

@@ -49,7 +49,7 @@ export default async function SiteLayoutFooterPage() {
                 mobileRightLabel="푸터 메뉴"
               />
             )}
-            {canReadSettings && <FooterSettingsForm />}
+            {canReadSettings && <FooterSettingsForm toolbarSticky={false} />}
           </div>
         </HydrationBoundary>
       )}

@@ -120,8 +120,7 @@ export const Sticky: Story = {
     const toolbar = within(canvasElement).getByTestId('page-toolbar');
     const style = window.getComputedStyle(toolbar);
     expect(style.position).toBe('sticky');
-    // 14a-3: border-b 제거 후 shadow-sm이 sticky 분기에서 적용됨을 보장
-    expect(style.boxShadow).not.toBe('none');
+    expect(style.borderBottomWidth).toBe('1px');
   },
 };
 

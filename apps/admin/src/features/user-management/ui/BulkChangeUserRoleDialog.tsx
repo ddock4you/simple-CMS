@@ -5,13 +5,14 @@ import { useQuery } from '@tanstack/react-query';
 
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
 import { Button } from '@/shared/ui/Button';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 import {
   Select,
   SelectContent,
@@ -88,7 +89,7 @@ export function BulkChangeUserRoleDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange} disablePointerDismissal>
-      <DialogContent size="sm">
+      <DialogContent size="sm" bodyOnlyScroll>
         {phase.kind === 'select' ? (
           <>
             <DialogHeader>
@@ -97,7 +98,28 @@ export function BulkChangeUserRoleDialog({
                 선택한 {ids.length}명의 역할을 변경합니다.
               </DialogDescription>
             </DialogHeader>
-            <div className="py-2">
+            <DialogToolbar
+              right={
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleClose}
+                    disabled={bulkChangeRole.isPending}
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleConfirm}
+                    disabled={!selectedRoleId || bulkChangeRole.isPending}
+                  >
+                    {bulkChangeRole.isPending ? '처리 중...' : `${ids.length}명 역할 변경`}
+                  </Button>
+                </>
+              }
+            />
+            <DialogBody className="px-0">
               <Select value={selectedRoleId} onValueChange={(v) => setSelectedRoleId(v ?? '')}>
                 <SelectTrigger>
                   <span>
@@ -114,24 +136,7 @@ export function BulkChangeUserRoleDialog({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                disabled={bulkChangeRole.isPending}
-              >
-                취소
-              </Button>
-              <Button
-                type="button"
-                onClick={handleConfirm}
-                disabled={!selectedRoleId || bulkChangeRole.isPending}
-              >
-                {bulkChangeRole.isPending ? '처리 중...' : `${ids.length}명 역할 변경`}
-              </Button>
-            </DialogFooter>
+            </DialogBody>
           </>
         ) : (
           <>
@@ -142,7 +147,14 @@ export function BulkChangeUserRoleDialog({
                 {phase.result.blocked.length}명은 처리되지 않았습니다.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-3">
+            <DialogToolbar
+              right={
+                <Button type="button" onClick={handleClose}>
+                  확인
+                </Button>
+              }
+            />
+            <DialogBody className="space-y-3 px-0">
               <p className="text-sm font-medium">처리되지 않은 사용자</p>
               <ul className="max-h-64 space-y-2 overflow-y-auto rounded-md border bg-muted/30 p-2 text-sm">
                 {phase.result.blocked.map((item) => (
@@ -155,12 +167,7 @@ export function BulkChangeUserRoleDialog({
                   </li>
                 ))}
               </ul>
-            </div>
-            <DialogFooter>
-              <Button type="button" onClick={handleClose}>
-                확인
-              </Button>
-            </DialogFooter>
+            </DialogBody>
           </>
         )}
       </DialogContent>

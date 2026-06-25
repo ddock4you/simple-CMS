@@ -43,7 +43,7 @@ export function SectionEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={safeOnOpenChange} disablePointerDismissal>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent size="lg" bodyOnlyScroll>
         {section && (
           <>
             <DialogHeader>

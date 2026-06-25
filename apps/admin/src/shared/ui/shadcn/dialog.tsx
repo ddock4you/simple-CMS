@@ -58,10 +58,11 @@ function DialogContent({
         data-slot="dialog-content"
         data-size={size}
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-200 outline-none transition-[opacity,filter,transform] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-[nested-dialog-open]:opacity-60 data-[nested-dialog-open]:blur-[1.5px] data-[nested-dialog-open]:pointer-events-none data-[nested-dialog-open]:scale-[0.98]",
+          "fixed top-1/2 left-1/2 z-50 w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-200 outline-none transition-[opacity,filter,transform] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-[nested-dialog-open]:opacity-60 data-[nested-dialog-open]:blur-[1.5px] data-[nested-dialog-open]:pointer-events-none data-[nested-dialog-open]:scale-[0.98]",
+          bodyOnlyScroll ? "flex" : "grid",
           !size && "sm:max-w-sm",
           "data-[size=sm]:max-w-md data-[size=md]:max-w-lg data-[size=lg]:max-w-3xl data-[size=xl]:max-w-5xl",
-          bodyOnlyScroll && "grid-rows-[auto_1fr_auto] max-h-[90vh] overflow-hidden",
+          bodyOnlyScroll && "flex max-h-[90vh] flex-col overflow-hidden",
           className
         )}
         {...props}
@@ -129,7 +130,7 @@ function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-body"
-      className={cn("overflow-y-auto px-1 py-2", className)}
+      className={cn("min-h-0 flex-1 overflow-y-auto px-1 py-2", className)}
       {...props}
     />
   )

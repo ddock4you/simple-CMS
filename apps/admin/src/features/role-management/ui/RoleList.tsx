@@ -21,7 +21,6 @@ import {
   useDeleteRole,
   useSetDefaultRole,
 } from '@/features/role-management/api/useRoleMutations';
-import { CreateRoleDialog } from '@/features/role-management/ui/CreateRoleDialog';
 import { SystemBadge, DefaultBadge } from '@/features/role-management/ui/RoleBadges';
 
 interface RoleListProps {
@@ -42,7 +41,6 @@ export function RoleList({ selectedId, onSelect }: RoleListProps) {
         <h2 className="text-sm font-medium text-muted-foreground">
           역할 목록
         </h2>
-        <CreateRoleDialog />
       </div>
 
       <div className="space-y-1">

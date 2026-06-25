@@ -56,7 +56,7 @@ function ErrorText({ message }: { message?: string }) {
   return <p className="text-xs text-destructive">{message}</p>;
 }
 
-export function FooterSettingsForm() {
+export function FooterSettingsForm({ toolbarSticky = true }: { toolbarSticky?: boolean }) {
   const { data, isPending, isError, error } = useQuery(
     footerSettingsOptions(),
   );
@@ -138,6 +138,7 @@ export function FooterSettingsForm() {
       onSubmit={onSubmit}
       isPending={updateMutation.isPending}
       disabled={!canUpdate || !isDirty}
+      toolbarSticky={toolbarSticky}
     >
       <fieldset disabled={!canUpdate} className="space-y-8">
         <section className="rounded-lg border p-4">

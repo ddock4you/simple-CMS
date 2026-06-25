@@ -12,7 +12,7 @@ admin 디자이너가 없으므로 `apps/admin/design.md`를 시각 결정의 �
 
 **완료 (2026-05-07):**
 - 15a: design.md 전면 재작성 (Stitch YAML + 한글 8섹션)
-- 15b: globals.css에 shadow 토큰 3개 추가 (`--shadow-card/toolbar/popover`, light/dark 페어)
+- 15b: globals.css에 shadow 토큰 추가 (`--shadow-card/popover`, light/dark 페어). 이후 정책 변경으로 PageToolbar/DialogToolbar는 shadow 없이 `border-b` 하단 경계 사용
 - 15c-1: shadow 토큰 실 컴포넌트 적용 (PageToolbar / BlockContentView / TiptapEditor 팝업 3곳)
 - 15c-2: shadow wrapper 4개(Popover/Select/DropdownMenu/Sheet) + 27파일 swap + BooleanSwitchField + 5폼 통일
 - 15c-3a: verify-design-tokens.mjs 신설 + success/warning 시맨틱 토큰 + design.md YAML 22토큰 보정

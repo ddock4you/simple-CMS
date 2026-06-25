@@ -47,7 +47,6 @@ export const ThemeInline: Story = {
 
   /* shadow 토큰 (Stage 15b) */
   --shadow-card: var(--shadow-card-value);
-  --shadow-toolbar: var(--shadow-toolbar-value);
   --shadow-popover: var(--shadow-popover-value);
 
   /* spacing 커스텀 */

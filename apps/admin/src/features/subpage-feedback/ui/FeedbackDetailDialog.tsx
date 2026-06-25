@@ -13,11 +13,12 @@ import { Badge } from '@/shared/ui/shadcn/badge';
 import { Button } from '@/shared/ui/Button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 
 import { useDeleteFeedback } from '../api/useFeedbackMutations';
 
@@ -55,11 +56,30 @@ export function FeedbackDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="md">
+      <DialogContent size="md" bodyOnlyScroll>
         <DialogHeader>
           <DialogTitle>피드백 상세</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <DialogToolbar
+          right={
+            <>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                닫기
+              </Button>
+              {canDelete && (
+                <Button
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="size-4" />
+                  삭제
+                </Button>
+              )}
+            </>
+          }
+        />
+        <DialogBody className="space-y-4 px-0">
           <div className="flex items-center justify-between gap-3">
             <RatingBadge rating={feedback.rating} />
             <span className="text-sm text-muted-foreground">
@@ -98,22 +118,7 @@ export function FeedbackDetailDialog({
               <p className="text-sm text-muted-foreground">(없음)</p>
             )}
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            닫기
-          </Button>
-          {canDelete && (
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleteMutation.isPending}
-            >
-              <Trash2 className="size-4" />
-              삭제
-            </Button>
-          )}
-        </DialogFooter>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

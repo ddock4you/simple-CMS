@@ -14,10 +14,10 @@ import {
   DialogBody,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import {
@@ -140,6 +140,18 @@ export function VersionHistoryDialog({
               저장된 버전 목록입니다. 필터로 범위를 좁히거나, 상세에서 내용을 확인한 뒤 복원하세요.
             </DialogDescription>
           </DialogHeader>
+
+          <DialogToolbar
+            right={
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+              >
+                닫기
+              </Button>
+            }
+          />
 
           <DialogBody className="px-0">
           {/* 필터 영역 */}
@@ -413,16 +425,6 @@ export function VersionHistoryDialog({
             </div>
           )}
           </DialogBody>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-            >
-              닫기
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

@@ -49,7 +49,7 @@ export default async function SiteLayoutHeaderPage() {
                 mobileRightLabel="헤더 메뉴"
               />
             )}
-            {canReadSettings && <HeaderLogoSettingsForm />}
+            {canReadSettings && <HeaderLogoSettingsForm toolbarSticky={false} />}
           </div>
         </HydrationBoundary>
       )}

@@ -197,13 +197,6 @@ export const SHADOW_TOKENS: ShadowToken[] = [
     usage: 'BlockContentView · MediaCard 선택 배지 · AppSidebar floating',
   },
   {
-    name: 'toolbar',
-    utility: 'shadow-toolbar',
-    cssVar: '--shadow-toolbar-value',
-    description: 'light: 0 2px 8px 6% / dark: 0 2px 8px 20%',
-    usage: 'PageToolbar sticky drop shadow (always-on)',
-  },
-  {
     name: 'popover',
     utility: 'shadow-popover',
     cssVar: '--shadow-popover-value',

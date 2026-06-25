@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { Button } from '@/shared/ui/Button';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import {
@@ -11,7 +12,6 @@ import {
   DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
@@ -43,7 +43,7 @@ function BasicDemo() {
     <>
       <Button onClick={() => setOpen(true)}>Dialog 열기</Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent bodyOnlyScroll>
           <DialogHeader>
             <DialogTitle>기본 Dialog</DialogTitle>
             <DialogDescription>
@@ -51,12 +51,19 @@ function BasicDemo() {
               외부 클릭/ESC 모두 닫기를 허용하는 기본 상태.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <DialogClose
-              render={<Button variant="outline">닫기</Button>}
-            />
-            <Button onClick={() => setOpen(false)}>저장</Button>
-          </DialogFooter>
+          <DialogToolbar
+            right={
+              <>
+                <DialogClose render={<Button variant="outline">닫기</Button>} />
+                <Button onClick={() => setOpen(false)}>저장</Button>
+              </>
+            }
+          />
+          <DialogBody>
+            <p className="text-sm text-muted-foreground">
+              액션이 있는 일반 Dialog는 하단 footer 대신 DialogToolbar를 사용합니다.
+            </p>
+          </DialogBody>
         </DialogContent>
       </Dialog>
     </>
@@ -77,7 +84,7 @@ function DisablePointerDismissalDemo() {
         onOpenChange={setOpen}
         disablePointerDismissal
       >
-        <DialogContent>
+        <DialogContent bodyOnlyScroll>
           <DialogHeader>
             <DialogTitle>외부 클릭 닫기 차단</DialogTitle>
             <DialogDescription>
@@ -85,9 +92,12 @@ function DisablePointerDismissalDemo() {
               Dialog가 닫히지 않습니다. ESC 키는 여전히 동작합니다.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setOpen(false)}>닫기</Button>
-          </DialogFooter>
+          <DialogToolbar right={<Button onClick={() => setOpen(false)}>닫기</Button>} />
+          <DialogBody>
+            <p className="text-sm text-muted-foreground">
+              바깥 영역을 클릭해도 닫히지 않는 입력형 모달에서 사용합니다.
+            </p>
+          </DialogBody>
         </DialogContent>
       </Dialog>
     </>
@@ -105,7 +115,7 @@ function NestedDialogDemo() {
     <>
       <Button onClick={() => setParentOpen(true)}>부모 Dialog 열기</Button>
       <Dialog open={parentOpen} onOpenChange={setParentOpen}>
-        <DialogContent>
+        <DialogContent bodyOnlyScroll>
           <DialogHeader>
             <DialogTitle>부모 Dialog</DialogTitle>
             <DialogDescription>
@@ -114,33 +124,35 @@ function NestedDialogDemo() {
               scale 전환이 적용됩니다.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
-            <Button onClick={() => setChildOpen(true)}>
-              자식 Dialog 열기
-            </Button>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setParentOpen(false)}
-            >
-              닫기
-            </Button>
-          </DialogFooter>
+          <DialogToolbar
+            right={
+              <Button variant="outline" onClick={() => setParentOpen(false)}>
+                닫기
+              </Button>
+            }
+          />
+          <DialogBody>
+            <Button onClick={() => setChildOpen(true)}>자식 Dialog 열기</Button>
+          </DialogBody>
         </DialogContent>
         {/* 자식 Dialog는 부모 Dialog의 children으로 렌더되어야 Base-UI가
             nested 관계로 인식하고 부모 Popup에 data-nested-dialog-open을 부착. */}
         <Dialog open={childOpen} onOpenChange={setChildOpen}>
-          <DialogContent>
+          <DialogContent bodyOnlyScroll>
             <DialogHeader>
               <DialogTitle>자식 Dialog</DialogTitle>
               <DialogDescription>
                 이 Dialog가 열린 동안 부모 Popup은 시각적으로 물러나야 합니다.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
-              <Button onClick={() => setChildOpen(false)}>자식 닫기</Button>
-            </DialogFooter>
+            <DialogToolbar
+              right={<Button onClick={() => setChildOpen(false)}>자식 닫기</Button>}
+            />
+            <DialogBody>
+              <p className="text-sm text-muted-foreground">
+                중첩 Dialog도 액션이 있으면 DialogToolbar를 사용합니다.
+              </p>
+            </DialogBody>
           </DialogContent>
         </Dialog>
       </Dialog>
@@ -176,7 +188,7 @@ function WithFormDemo() {
     <>
       <Button onClick={() => setOpen(true)}>폼 Dialog 열기</Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent bodyOnlyScroll>
           <DialogHeader>
             <DialogTitle>이름 입력</DialogTitle>
             <DialogDescription>
@@ -184,21 +196,25 @@ function WithFormDemo() {
               시연.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="demo-name">이름</Label>
-            <Input
-              id="demo-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="홍길동"
-            />
-          </div>
-          <DialogFooter>
-            <DialogClose
-              render={<Button variant="outline">취소</Button>}
-            />
-            <Button onClick={() => setOpen(false)}>저장</Button>
-          </DialogFooter>
+          <DialogToolbar
+            right={
+              <>
+                <DialogClose render={<Button variant="outline">취소</Button>} />
+                <Button onClick={() => setOpen(false)}>저장</Button>
+              </>
+            }
+          />
+          <DialogBody>
+            <div className="space-y-2">
+              <Label htmlFor="demo-name">이름</Label>
+              <Input
+                id="demo-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="홍길동"
+              />
+            </div>
+          </DialogBody>
         </DialogContent>
       </Dialog>
     </>
@@ -242,9 +258,6 @@ function WithSizeLgDemo() {
               <p className="text-muted-foreground">64rem</p>
             </div>
           </div>
-          <DialogFooter>
-            <DialogClose render={<Button variant="outline">닫기</Button>} />
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
@@ -273,21 +286,25 @@ function BodyOnlyScrollDemo() {
           <DialogHeader>
             <DialogTitle>본문만 스크롤 (bodyOnlyScroll)</DialogTitle>
             <DialogDescription>
-              헤더와 푸터는 고정된 채 본문(<code>DialogBody</code>)만 스크롤됩니다.
+              헤더와 툴바는 고정된 채 본문(<code>DialogBody</code>)만 스크롤됩니다.
             </DialogDescription>
           </DialogHeader>
+          <DialogToolbar
+            right={
+              <>
+                <DialogClose render={<Button variant="outline">취소</Button>} />
+                <Button onClick={() => setOpen(false)}>확인</Button>
+              </>
+            }
+          />
           <DialogBody>
             {Array.from({ length: 20 }).map((_, i) => (
               <p key={i} className="mb-3 text-sm text-muted-foreground">
                 스크롤 테스트 항목 {i + 1}. 긴 목록이나 폼이 들어올 때 헤더와
-                푸터가 화면에 고정되어 사용자가 항상 액션 버튼에 접근할 수 있습니다.
+                툴바가 화면에 고정되어 사용자가 항상 액션 버튼에 접근할 수 있습니다.
               </p>
             ))}
           </DialogBody>
-          <DialogFooter>
-            <DialogClose render={<Button variant="outline">취소</Button>} />
-            <Button onClick={() => setOpen(false)}>확인</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
@@ -302,7 +319,9 @@ export const BodyOnlyScroll: Story = {
 
     const body = within(document.body);
     await body.findByRole('dialog');
+    const dialogToolbar = document.querySelector('[data-slot="dialog-toolbar"]');
     const dialogBody = document.querySelector('[data-slot="dialog-body"]');
+    expect(dialogToolbar).not.toBeNull();
     expect(dialogBody).not.toBeNull();
   },
 };

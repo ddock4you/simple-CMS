@@ -17,10 +17,10 @@ import {
   DialogBody,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 import { Separator } from '@/shared/ui/shadcn/separator';
 import { Skeleton } from '@/shared/ui/shadcn/skeleton';
 
@@ -159,6 +159,54 @@ export function VersionDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <DialogToolbar
+          left={
+            versionDetail && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={pinPending}
+                onClick={() =>
+                  togglePin({
+                    versionId: versionDetail.id,
+                    isPinned: !versionDetail.isPinned,
+                  })
+                }
+              >
+                {versionDetail.isPinned ? (
+                  <>
+                    <PinOff className="size-4" aria-hidden /> 고정 해제
+                  </>
+                ) : (
+                  <>
+                    <Pin className="size-4" aria-hidden /> 고정
+                  </>
+                )}
+              </Button>
+            )
+          }
+          right={
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+              >
+                닫기
+              </Button>
+              {versionDetail && (
+                <Button
+                  type="button"
+                  onClick={() => onRollbackClick(versionDetail.id)}
+                >
+                  <RotateCcw className="size-4" aria-hidden /> 이 버전으로 복원
+                </Button>
+              )}
+            </>
+          }
+        />
+
         <DialogBody className="px-0">
         {versionLoading && (
           <div className="space-y-3">
@@ -293,52 +341,6 @@ export function VersionDetailDialog({
           </div>
         )}
         </DialogBody>
-
-        <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
-          <div>
-            {versionDetail && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={pinPending}
-                onClick={() =>
-                  togglePin({
-                    versionId: versionDetail.id,
-                    isPinned: !versionDetail.isPinned,
-                  })
-                }
-              >
-                {versionDetail.isPinned ? (
-                  <>
-                    <PinOff className="size-4" aria-hidden /> 고정 해제
-                  </>
-                ) : (
-                  <>
-                    <Pin className="size-4" aria-hidden /> 고정
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-            >
-              닫기
-            </Button>
-            {versionDetail && (
-              <Button
-                type="button"
-                onClick={() => onRollbackClick(versionDetail.id)}
-              >
-                <RotateCcw className="size-4" aria-hidden /> 이 버전으로 복원
-              </Button>
-            )}
-          </div>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

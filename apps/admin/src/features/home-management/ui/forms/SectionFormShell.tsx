@@ -6,7 +6,8 @@ import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/shadcn/input';
 import { Label } from '@/shared/ui/shadcn/label';
 import { Checkbox } from '@/shared/ui/shadcn/checkbox';
-import { DialogFooter } from '@/shared/ui/shadcn/dialog';
+import { DialogBody } from '@/shared/ui/shadcn/dialog';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 
 interface SectionFormShellProps {
   title: string;
@@ -32,8 +33,21 @@ export function SectionFormShell({
   children,
 }: SectionFormShellProps) {
   return (
-    <form onSubmit={onSubmit}>
-      <div className="space-y-6 py-4">
+    <form onSubmit={onSubmit} className="contents">
+      <DialogToolbar
+        right={
+          <>
+            <Button type="button" variant="outline" onClick={onCancel}>
+              취소
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? '저장 중...' : '저장'}
+            </Button>
+          </>
+        }
+      />
+
+      <DialogBody className="space-y-6 px-0">
         <div className="space-y-4 rounded-md border p-3">
           <div className="space-y-2">
             <Label htmlFor="section-title">관리용 제목 *</Label>
@@ -63,16 +77,7 @@ export function SectionFormShell({
         </div>
 
         {children}
-      </div>
-
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel}>
-          취소
-        </Button>
-        <Button type="submit" disabled={isPending}>
-          {isPending ? '저장 중...' : '저장'}
-        </Button>
-      </DialogFooter>
+      </DialogBody>
     </form>
   );
 }

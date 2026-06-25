@@ -17,10 +17,10 @@ import {
   DialogBody,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/shadcn/dialog';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 import { Label } from '@/shared/ui/shadcn/label';
 
 import {
@@ -161,6 +161,23 @@ export function BlockEditDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <DialogToolbar
+          right={
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                disabled={isPending}
+              >
+                취소
+              </Button>
+              <Button onClick={handleSubmit} disabled={isPending}>
+                {isPending ? '저장 중...' : '저장'}
+              </Button>
+            </>
+          }
+        />
+
         <DialogBody className="space-y-4 px-0">
           {activeType === 'RICH_TEXT' && (
             <RichTextBlockFields
@@ -204,19 +221,6 @@ export function BlockEditDialog({
             </Label>
           </div>
         </DialogBody>
-
-        <DialogFooter>
-          <Button
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            취소
-          </Button>
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? '저장 중...' : '저장'}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

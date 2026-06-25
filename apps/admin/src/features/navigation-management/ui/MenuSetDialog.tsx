@@ -11,12 +11,13 @@ import { Label } from '@/shared/ui/shadcn/label';
 import { Textarea } from '@/shared/ui/shadcn/textarea';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/shared/ui/shadcn/dialog';
+import { DialogToolbar } from '@/shared/ui/DialogToolbar';
 
 import {
   createMenuSchema,
@@ -62,12 +63,19 @@ export function MenuSetDialog({
       >
         {triggerLabel}
       </DialogTrigger>
-      <DialogContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
+      <DialogContent bodyOnlyScroll>
+        <form onSubmit={handleSubmit(onSubmit)} className="contents">
           <DialogHeader>
             <DialogTitle>새 메뉴 생성</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <DialogToolbar
+            right={
+              <Button type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? '생성 중...' : '생성'}
+              </Button>
+            }
+          />
+          <DialogBody className="space-y-4 px-0">
             <div className="space-y-2">
               <Label htmlFor="name">메뉴 이름</Label>
               <Input
@@ -116,12 +124,7 @@ export function MenuSetDialog({
                 )}
               />
             </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? '생성 중...' : '생성'}
-            </Button>
-          </DialogFooter>
+          </DialogBody>
         </form>
       </DialogContent>
     </Dialog>
